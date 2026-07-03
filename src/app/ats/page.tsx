@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import {
@@ -18,10 +18,29 @@ import {
   type ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
+import {
+  clearSavedJobMatches,
+  deleteSavedJobMatch,
+  getLatestJobMatch,
+  getSavedJobMatches,
+  saveJobMatch,
+  type SavedJobMatch,
+} from "@/lib/storage/jdMatchHistory";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 const MIN_JOB_DESCRIPTION_LENGTH = 80;
+
+type ActiveJobMatch = {
+  id?: string;
+  jobTitle: string;
+  companyName: string;
+  jobDescription: string;
+  result: JobDescriptionMatchResult;
+  improvementPlan: ResumeImprovementPlan | null;
+  rewritePlan: ResumeRewritePlan | null;
+  analyzedAt: string;
+};
 
 export default function ATSMatcherPage() {
   const storedAnalysis = useSyncExternalStore(
@@ -34,13 +53,22 @@ export default function ATSMatcherPage() {
     [storedAnalysis],
   );
   const [jobDescription, setJobDescription] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [error, setError] = useState("");
-  const [matchResult, setMatchResult] =
-    useState<JobDescriptionMatchResult | null>(null);
-  const [improvementPlan, setImprovementPlan] =
-    useState<ResumeImprovementPlan | null>(null);
-  const [rewritePlan, setRewritePlan] =
-    useState<ResumeRewritePlan | null>(null);
+  const [savedJobMatches, setSavedJobMatches] = useState<SavedJobMatch[]>([]);
+  const [activeMatch, setActiveMatch] = useState<ActiveJobMatch | null>(null);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const savedMatches = getSavedJobMatches();
+
+      setSavedJobMatches(savedMatches);
+      setActiveMatch(readLatestJobMatch() ?? getLatestJobMatch());
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   if (!userProfile) {
     return (
@@ -73,9 +101,7 @@ export default function ATSMatcherPage() {
   function handleAnalyzeMatch() {
     if (!userProfile) {
       setError("Upload and analyze your resume before matching a JD.");
-      setMatchResult(null);
-      setImprovementPlan(null);
-      setRewritePlan(null);
+      setActiveMatch(null);
       return;
     }
 
@@ -85,9 +111,7 @@ export default function ATSMatcherPage() {
       setError(
         "Paste a fuller job description with responsibilities and required skills.",
       );
-      setMatchResult(null);
-      setImprovementPlan(null);
-      setRewritePlan(null);
+      setActiveMatch(null);
       return;
     }
 
@@ -108,11 +132,60 @@ export default function ATSMatcherPage() {
       plan,
       trimmedJobDescription,
     );
+    const analyzedAt = new Date().toISOString();
+    const savedMatch: SavedJobMatch = {
+      id: createSavedJobMatchId(analyzedAt),
+      jobTitle: getFallbackText(jobTitle, "Untitled Role"),
+      companyName: getFallbackText(companyName, "Unknown Company"),
+      jobDescription: trimmedJobDescription,
+      result,
+      improvementPlan: plan,
+      rewritePlan: rewrite,
+      analyzedAt,
+    };
 
-    setMatchResult(result);
-    setImprovementPlan(plan);
-    setRewritePlan(rewrite);
-    persistMatchResult(trimmedJobDescription, result, plan, rewrite);
+    setActiveMatch(savedMatch);
+    setSavedJobMatches(saveJobMatch(savedMatch));
+    persistLatestJobMatch(savedMatch);
+  }
+
+  function handleViewSavedMatch(match: SavedJobMatch) {
+    setError("");
+    setActiveMatch(match);
+    persistLatestJobMatch(match);
+  }
+
+  function handleDeleteSavedMatch(id: string) {
+    const nextMatches = deleteSavedJobMatch(id);
+
+    setSavedJobMatches(nextMatches);
+
+    if (activeMatch?.id !== id) {
+      return;
+    }
+
+    const nextActiveMatch = nextMatches[0] ?? null;
+
+    setActiveMatch(nextActiveMatch);
+
+    if (nextActiveMatch) {
+      persistLatestJobMatch(nextActiveMatch);
+    } else {
+      clearLatestJobMatch();
+    }
+  }
+
+  function handleClearHistory() {
+    if (!window.confirm("Clear all saved job match history?")) {
+      return;
+    }
+
+    clearSavedJobMatches();
+    setSavedJobMatches([]);
+
+    if (activeMatch) {
+      persistLatestJobMatch(activeMatch);
+    }
   }
 
   return (
@@ -161,6 +234,42 @@ export default function ATSMatcherPage() {
             </span>
           </div>
 
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="job-title"
+                className="text-sm font-semibold text-gray-200"
+              >
+                Job title
+              </label>
+
+              <input
+                id="job-title"
+                value={jobTitle}
+                onChange={(event) => setJobTitle(event.target.value)}
+                placeholder="Frontend Intern"
+                className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="company-name"
+                className="text-sm font-semibold text-gray-200"
+              >
+                Company name
+              </label>
+
+              <input
+                id="company-name"
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+                placeholder="Acme"
+                className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+              />
+            </div>
+          </div>
+
           <textarea
             id="job-description"
             value={jobDescription}
@@ -185,11 +294,9 @@ export default function ATSMatcherPage() {
           </button>
         </section>
 
-        {matchResult ? (
+        {activeMatch ? (
           <MatchResultPanel
-            result={matchResult}
-            improvementPlan={improvementPlan}
-            rewritePlan={rewritePlan}
+            match={activeMatch}
           />
         ) : (
           <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
@@ -202,28 +309,50 @@ export default function ATSMatcherPage() {
             </p>
           </section>
         )}
+
+        <JobMatchHistoryPanel
+          matches={savedJobMatches}
+          activeMatchId={activeMatch?.id ?? null}
+          onView={handleViewSavedMatch}
+          onDelete={handleDeleteSavedMatch}
+          onClear={handleClearHistory}
+        />
       </section>
     </DashboardLayout>
   );
 }
 
 type MatchResultPanelProps = {
-  result: JobDescriptionMatchResult;
-  improvementPlan: ResumeImprovementPlan | null;
-  rewritePlan: ResumeRewritePlan | null;
+  match: ActiveJobMatch;
 };
 
-function MatchResultPanel({
-  result,
-  improvementPlan,
-  rewritePlan,
-}: MatchResultPanelProps) {
+function MatchResultPanel({ match }: MatchResultPanelProps) {
+  const { result, improvementPlan, rewritePlan } = match;
+
   return (
     <section className="mt-6 space-y-6">
       <article className="rounded-lg border border-green-500/30 bg-green-500/10 p-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-300/80">
-          Strict ATS Match
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-300/80">
+              Strict ATS Match
+            </p>
+
+            <h2 className="mt-3 text-2xl font-bold text-white">
+              {match.jobTitle}
+            </h2>
+
+            <p className="mt-1 text-sm text-green-50/70">
+              {match.companyName} - {formatAnalyzedAt(match.analyzedAt)}
+            </p>
+          </div>
+
+          {match.id && (
+            <span className="w-fit rounded-full border border-green-500/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-100">
+              Saved
+            </span>
+          )}
+        </div>
 
         <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
@@ -274,6 +403,131 @@ function MatchResultPanel({
 
       {rewritePlan && (
         <RewritePlanPanel plan={rewritePlan} />
+      )}
+    </section>
+  );
+}
+
+type JobMatchHistoryPanelProps = {
+  matches: SavedJobMatch[];
+  activeMatchId: string | null;
+  onView: (match: SavedJobMatch) => void;
+  onDelete: (id: string) => void;
+  onClear: () => void;
+};
+
+function JobMatchHistoryPanel({
+  matches,
+  activeMatchId,
+  onView,
+  onDelete,
+  onClear,
+}: JobMatchHistoryPanelProps) {
+  return (
+    <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">
+            Job Match History
+          </h2>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+            History is stored locally in your browser for now. Database sync
+            will come later.
+          </p>
+        </div>
+
+        {matches.length > 0 && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="w-fit rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-red-500/60 hover:text-red-200"
+          >
+            Clear history
+          </button>
+        )}
+      </div>
+
+      {matches.length ? (
+        <div className="mt-5 grid gap-3">
+          {matches.map((match) => {
+            const isActive = activeMatchId === match.id;
+            const cardClassName = isActive
+              ? "border-green-500/40 bg-green-500/10"
+              : "border-gray-800 bg-black/30";
+
+            return (
+              <article
+                key={match.id}
+                className={`rounded-lg border p-4 ${cardClassName}`}
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="break-words text-base font-bold text-white">
+                        {match.jobTitle}
+                      </h3>
+
+                      {isActive && (
+                        <span className="rounded-full border border-green-500/30 px-2.5 py-1 text-xs font-semibold text-green-200">
+                          Viewing
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-1 break-words text-sm text-gray-400">
+                      {match.companyName}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-center lg:min-w-[520px]">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                        Match
+                      </p>
+
+                      <p className="mt-1 text-2xl font-black text-white">
+                        {match.result.matchScore}%
+                      </p>
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-semibold text-gray-100">
+                        {match.result.verdict}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        {formatAnalyzedAt(match.analyzedAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 sm:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => onView(match)}
+                        className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                      >
+                        View
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onDelete(match.id)}
+                        className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-red-500/60 hover:text-red-200"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mt-5 rounded-lg border border-gray-800 bg-black/30 p-4 text-sm text-gray-500">
+          Saved JD analyses will appear here after you run a match.
+        </p>
       )}
     </section>
   );
@@ -691,25 +945,136 @@ function getImpactClassName(
   return `${baseClassName} border-gray-700 bg-black/20`;
 }
 
-function persistMatchResult(
-  jobDescription: string,
-  result: JobDescriptionMatchResult,
-  improvementPlan: ResumeImprovementPlan,
-  rewritePlan: ResumeRewritePlan,
-) {
+function readLatestJobMatch(): ActiveJobMatch | null {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return null;
+  }
+
   try {
-    localStorage.setItem(
+    const storedValue = storage.getItem(JD_MATCH_STORAGE_KEY);
+
+    if (!storedValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(storedValue);
+
+    if (
+      !isRecord(parsedValue) ||
+      !isJobDescriptionMatchResult(parsedValue.result)
+    ) {
+      return null;
+    }
+
+    return {
+      id: isString(parsedValue.id) ? parsedValue.id : undefined,
+      jobTitle: getFallbackText(
+        isString(parsedValue.jobTitle) ? parsedValue.jobTitle : "",
+        "Untitled Role",
+      ),
+      companyName: getFallbackText(
+        isString(parsedValue.companyName) ? parsedValue.companyName : "",
+        "Unknown Company",
+      ),
+      jobDescription: isString(parsedValue.jobDescription)
+        ? parsedValue.jobDescription
+        : "",
+      result: parsedValue.result,
+      improvementPlan: isResumeImprovementPlan(parsedValue.improvementPlan)
+        ? parsedValue.improvementPlan
+        : null,
+      rewritePlan: isResumeRewritePlan(parsedValue.rewritePlan)
+        ? parsedValue.rewritePlan
+        : null,
+      analyzedAt: isString(parsedValue.analyzedAt)
+        ? parsedValue.analyzedAt
+        : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function persistLatestJobMatch(match: ActiveJobMatch) {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(
       JD_MATCH_STORAGE_KEY,
       JSON.stringify({
-        jobDescription,
-        result,
-        improvementPlan,
-        rewritePlan,
-        analyzedAt: new Date().toISOString(),
+        id: match.id,
+        jobTitle: match.jobTitle,
+        companyName: match.companyName,
+        jobDescription: match.jobDescription,
+        result: match.result,
+        improvementPlan: match.improvementPlan,
+        rewritePlan: match.rewritePlan,
+        analyzedAt: match.analyzedAt,
       }),
     );
   } catch {
     // Local storage failures should not block the user from seeing the result.
+  }
+}
+
+function clearLatestJobMatch() {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.removeItem(JD_MATCH_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function createSavedJobMatchId(analyzedAt: string): string {
+  const analyzedAtTime = Date.parse(analyzedAt);
+  const timestamp = Number.isFinite(analyzedAtTime)
+    ? analyzedAtTime
+    : Date.now();
+  const suffix = Math.random().toString(36).slice(2, 8);
+
+  return `${timestamp}-${suffix}`;
+}
+
+function getFallbackText(value: string, fallback: string): string {
+  const trimmedValue = value.trim();
+
+  return trimmedValue || fallback;
+}
+
+function formatAnalyzedAt(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function getBrowserStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
   }
 }
 
@@ -753,6 +1118,98 @@ function getStoredUserProfile(
   }
 }
 
+function isJobDescriptionMatchResult(
+  value: unknown,
+): value is JobDescriptionMatchResult {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isNumber(value.matchScore) &&
+    isString(value.verdict) &&
+    isString(value.brutalReality) &&
+    isStringArray(value.matchedSkills) &&
+    isStringArray(value.missingSkills) &&
+    isStringArray(value.missingKeywords) &&
+    isStringArray(value.strengths) &&
+    isStringArray(value.weaknesses) &&
+    isStringArray(value.recommendations)
+  );
+}
+
+function isResumeImprovementPlan(
+  value: unknown,
+): value is ResumeImprovementPlan {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.readiness) &&
+    isString(value.summary) &&
+    Array.isArray(value.priorityFixes) &&
+    value.priorityFixes.every(isResumeImprovementItem) &&
+    isStringArray(value.keywordAdditions) &&
+    isStringArray(value.projectSuggestions) &&
+    isStringArray(value.proofGaps) &&
+    isStringArray(value.sectionFixes) &&
+    isStringArray(value.beforeApplyChecklist)
+  );
+}
+
+function isResumeImprovementItem(
+  value: unknown,
+): value is ResumeImprovementPlan["priorityFixes"][number] {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.title) &&
+    isString(value.reason) &&
+    isString(value.action) &&
+    isString(value.priority) &&
+    isString(value.impact) &&
+    isString(value.category)
+  );
+}
+
+function isResumeRewritePlan(value: unknown): value is ResumeRewritePlan {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.headline) &&
+    isResumeRewriteSuggestion(value.summaryRewrite) &&
+    isResumeRewriteSuggestion(value.skillsRewrite) &&
+    Array.isArray(value.projectRewrites) &&
+    value.projectRewrites.every(isResumeRewriteSuggestion) &&
+    Array.isArray(value.experienceRewrites) &&
+    value.experienceRewrites.every(isResumeRewriteSuggestion) &&
+    isStringArray(value.finalWarnings)
+  );
+}
+
+function isResumeRewriteSuggestion(
+  value: unknown,
+): value is ResumeRewriteSuggestion {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.section) &&
+    isString(value.title) &&
+    isString(value.weakExample) &&
+    isString(value.improvedExample) &&
+    isString(value.whyBetter) &&
+    isStringArray(value.evidenceNeeded) &&
+    isString(value.caution)
+  );
+}
+
 function isUserProfile(value: unknown): value is UserProfile {
   if (!isRecord(value)) {
     return false;
@@ -785,6 +1242,10 @@ function isNumber(value: unknown): value is number {
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) &&
     value.every((item) => typeof item === "string");
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
