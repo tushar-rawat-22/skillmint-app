@@ -1,23 +1,23 @@
 const features = [
   {
-    title: "Career IQ",
+    title: "Direction before scores",
     description:
-      "Measure your complete employability with transparent AI.",
+      "Start by choosing a target role, level, goal, and weekly pace.",
   },
   {
-    title: "ATS Optimization",
+    title: "Resume intelligence",
     description:
-      "Know exactly why your resume gets rejected.",
+      "Upload once to see extracted skills, projects, gaps, and readiness signals.",
   },
   {
-    title: "Recruiter Confidence",
+    title: "JD matching",
     description:
-      "See your profile exactly like recruiters do.",
+      "Paste real job descriptions and compare where your resume is competitive.",
   },
   {
-    title: "Career Roadmaps",
+    title: "Roadmaps that stay practical",
     description:
-      "Receive missions that maximize long-term growth.",
+      "Turn the latest resume and JD match into focused 30/60/90-day actions.",
   },
 ];
 
@@ -31,13 +31,13 @@ export default function Features() {
 
         <h2 className="text-5xl font-black">
 
-          Everything your career needs.
+          Why SkillMint.
 
         </h2>
 
-        <p className="mt-6 text-lg text-gray-600">
+        <p className="mt-6 text-lg text-gray-400">
 
-          Built around intelligence instead of guesswork.
+          A simple operating system for students who need the next honest step.
 
         </p>
 
@@ -52,7 +52,7 @@ export default function Features() {
             className="rounded-3xl border border-gray-200 bg-white p-10 shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl"
           >
 
-            <h3 className="text-3xl font-bold">
+            <h3 className="text-3xl font-bold text-gray-950">
 
               {feature.title}
 

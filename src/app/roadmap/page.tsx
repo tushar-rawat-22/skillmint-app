@@ -147,8 +147,8 @@ export default function RoadmapPage() {
       <DashboardLayout>
         <EmptyState
           eyebrow="Career Roadmap"
-          title="Upload and analyze your resume first."
-          body="SkillMint needs your latest resume intelligence before it can create a practical 30/60/90-day roadmap."
+          title="Set direction and analyze your resume first."
+          body="Start with career setup if you are unsure where to aim, then upload your resume. Add an ATS match later for a more targeted roadmap."
           href="/upload"
           action="Upload Resume"
         />

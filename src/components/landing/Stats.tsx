@@ -6,30 +6,30 @@ export default function Stats() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
 
           <div>
-            <h2 className="text-4xl font-bold text-white">92%</h2>
+            <h2 className="text-4xl font-bold text-white">Local</h2>
             <p className="mt-2 text-gray-400">
-              ATS Compatibility
+              First by default
             </p>
           </div>
 
           <div>
-            <h2 className="text-4xl font-bold text-white">78</h2>
+            <h2 className="text-4xl font-bold text-white">6</h2>
             <p className="mt-2 text-gray-400">
-              Career IQ Score
+              Connected career steps
             </p>
           </div>
 
           <div>
-            <h2 className="text-4xl font-bold text-white">14</h2>
+            <h2 className="text-4xl font-bold text-white">90</h2>
             <p className="mt-2 text-gray-400">
-              AI Missions
+              Day roadmap
             </p>
           </div>
 
           <div>
-            <h2 className="text-4xl font-bold text-white">3x</h2>
+            <h2 className="text-4xl font-bold text-white">Sync</h2>
             <p className="mt-2 text-gray-400">
-              Recruiter Confidence
+              When signed in
             </p>
           </div>
 

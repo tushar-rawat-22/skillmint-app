@@ -191,15 +191,25 @@ export default function ATSMatcherPage() {
 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-400">
             SkillMint needs your latest resume intelligence before it can
-            compare you against a specific job description.
+            compare you against a specific job description. If you are still
+            choosing a direction, set that up first.
           </p>
 
-          <Link
-            href="/upload"
-            className="mt-8 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
-          >
-            Upload Resume
-          </Link>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/setup"
+              className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            >
+              Career Setup
+            </Link>
+
+            <Link
+              href="/upload"
+              className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
+            >
+              Upload Resume
+            </Link>
+          </div>
         </section>
       </DashboardLayout>
     );

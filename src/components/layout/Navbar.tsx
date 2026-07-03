@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ROUTES } from "@/constants/routes";
+
 export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur">
@@ -15,14 +17,21 @@ export default function Navbar() {
         <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
 
           <Link
-            href="/dashboard"
+            href={ROUTES.DASHBOARD}
             className="text-gray-300 transition hover:text-green-400"
           >
             Dashboard
           </Link>
 
           <Link
-            href="/upload"
+            href={ROUTES.SETUP}
+            className="text-gray-300 transition hover:text-green-400"
+          >
+            Setup
+          </Link>
+
+          <Link
+            href={ROUTES.UPLOAD}
             className="text-gray-300 transition hover:text-green-400"
           >
             Upload Resume
@@ -35,20 +44,20 @@ export default function Navbar() {
             Career OS
           </a>
 
-          <a
-            href="#pricing"
+          <Link
+            href={ROUTES.LOGIN}
             className="text-gray-300 transition hover:text-green-400"
           >
-            Pricing
-          </a>
+            Log in
+          </Link>
 
         </nav>
 
         <Link
-          href="/upload"
+          href={ROUTES.SETUP}
           className="hidden rounded-xl bg-green-600 px-5 py-2 font-semibold text-white transition hover:bg-green-500 md:block"
         >
-          Analyze Resume
+          Start Setup
         </Link>
 
       </div>

@@ -389,6 +389,8 @@ Sprint 7.1 Onboarding Foundation and First-Run Experience: Completed
 
 Sprint 7.2 Guided Target Role Setup: Completed
 
+Sprint 7.3 Beta Landing/App Entry Polish: Completed
+
 Next:
 
-Sprint 7.3 Beta Landing/App Entry Polish
+Sprint 7.4 Real Supabase Setup + Live Account Testing

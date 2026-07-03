@@ -13,6 +13,8 @@ export const ROUTES = {
 
   RESUME: "/resume",
 
+  UPLOAD: "/upload",
+
   ATS: "/ats",
 
   ROADMAP: "/roadmap",

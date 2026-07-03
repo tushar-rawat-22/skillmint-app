@@ -1,15 +1,15 @@
 const faqs = [
   {
     q: "What is Career IQ?",
-    a: "Career IQ measures your employability using explainable AI."
+    a: "Career IQ is SkillMint's career-readiness report built from your resume signals."
   },
   {
-    q: "Is SkillMint free?",
-    a: "Yes. A generous free tier will always be available."
+    q: "Why upload a resume first?",
+    a: "Your resume gives SkillMint real evidence before it suggests ATS matches, gaps, or roadmap actions."
   },
   {
-    q: "Does SkillMint replace LinkedIn?",
-    a: "No. SkillMint improves your profile before you apply anywhere."
+    q: "Do I need an account?",
+    a: "No. SkillMint works locally first. Sign in later if you want to sync your analyses and roadmap."
   }
 ];
 

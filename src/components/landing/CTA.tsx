@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+import { ROUTES } from "@/constants/routes";
+
 export default function CTA() {
   return (
     <section
@@ -5,20 +9,31 @@ export default function CTA() {
       className="mx-auto max-w-5xl px-6 py-28 text-center"
     >
       <h2 className="text-5xl font-black">
-        Your career deserves
+        Start with direction.
         <br />
-        better decisions.
+        Then upload your resume.
       </h2>
 
-      <p className="mt-6 text-lg text-gray-600">
-        Upload your resume.
-        Discover your Career IQ.
-        Know your next move.
+      <p className="mt-6 text-lg text-gray-400">
+        SkillMint works locally first. Sign in later to sync your resume
+        analyses, job matches, and roadmap.
       </p>
 
-      <button className="mt-10 rounded-xl bg-green-600 px-10 py-4 text-white transition hover:bg-green-700">
-        Start Free
-      </button>
+      <div className="mt-10 flex flex-wrap justify-center gap-3">
+        <Link
+          href={ROUTES.SETUP}
+          className="rounded-xl bg-green-600 px-8 py-4 font-semibold text-white transition hover:bg-green-700"
+        >
+          Start Career Setup
+        </Link>
+
+        <Link
+          href={ROUTES.UPLOAD}
+          className="rounded-xl border border-gray-700 px-8 py-4 font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+        >
+          Upload Resume
+        </Link>
+      </div>
     </section>
   );
 }
