@@ -9,3 +9,4 @@ export * from "./coding";
 export * from "./roleMatch";
 export * from "./jobDescriptionMatch";
 export * from "./resumeImprovement";
+export * from "./resumeRewrite";
