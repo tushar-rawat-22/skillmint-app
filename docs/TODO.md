@@ -373,6 +373,10 @@ Sprint 6 — Authentication, Database, Persistent Profiles
 
 Sprint 6.1 Supabase Foundation: Completed
 
+Sprint 6.2 Auth Screens + Session Flow: Completed
+
+Sprint 6.3 Profile Persistence Foundation: Completed
+
 Next:
 
-Auth screens and session flow
+Sprint 6.4 Save resume analysis to database

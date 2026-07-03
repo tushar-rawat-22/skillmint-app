@@ -1,8 +1,10 @@
 # Supabase Setup
 
-**Status:** Sprint 6.1 foundation
+**Status:** Sprint 6.3 foundation
 
-Sprint 6.1 adds Supabase dependencies, client utilities, environment placeholders, and schema documentation. It does not migrate SkillMint data yet.
+Sprint 6.1 added Supabase dependencies, client utilities, environment placeholders, and schema documentation. Sprint 6.3 adds the SQL schema file and basic profile persistence only.
+
+Resume analysis, JD match history, ATS history, and roadmap persistence still come later. LocalStorage remains active until those migration units ship.
 
 ---
 
@@ -72,14 +74,37 @@ Verify the existing local flows still work:
 
 ---
 
-## Sprint 6.1 Behavior
+## Run the Schema SQL
+
+The schema file is:
+
+```text
+supabase/schema_v1.sql
+```
+
+To install it:
+
+1. Open your Supabase project.
+2. Go to the SQL editor.
+3. Create a new query.
+4. Paste the full contents of `supabase/schema_v1.sql`.
+5. Run the query.
+6. Confirm the `profiles`, `resume_analyses`, `job_matches`, and `career_snapshots` tables exist.
+7. Confirm Row Level Security is enabled on all four tables.
+
+If the SQL has not been run yet, SkillMint should still load. The profile page will show a helpful table/schema error instead of crashing.
+
+---
+
+## Sprint 6.3 Behavior
 
 - Supabase packages are installed.
 - Browser and server client utilities exist.
 - Proxy session refresh is wired defensively.
 - The app continues to work if Supabase env vars are empty.
 - LocalStorage remains active for resume analysis, JD matches, history, and roadmap inputs.
-- No application data is written to Supabase yet.
+- Signed-in users can save and load a basic profile row when the schema exists.
+- Resume analysis, JD matches, history, and roadmap data are not written to Supabase yet.
 
 ---
 
@@ -87,9 +112,6 @@ Verify the existing local flows still work:
 
 Next units should add:
 
-- Auth screens.
-- Session-aware navigation.
-- User profile creation.
 - Database writes for resume analyses.
 - Database writes for JD matches.
 - Migration from localStorage history to persistent user records.

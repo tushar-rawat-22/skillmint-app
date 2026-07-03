@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
+import PersistentProfileForm from "@/modules/profile/components/PersistentProfileForm";
 
 export default function ProfilePage() {
   return (
@@ -17,6 +18,10 @@ export default function ProfilePage() {
           <AuthStatusCard />
         </div>
 
+        <div className="mt-8">
+          <PersistentProfileForm />
+        </div>
+
         <article className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <h2 className="text-xl font-bold">
             Candidate Profile coming soon
@@ -28,7 +33,7 @@ export default function ProfilePage() {
           </p>
 
           <p className="mt-3 text-sm leading-6 text-gray-400">
-            Persistent profile sync is coming in Sprint 6.3/6.4.
+            Resume, ATS, and roadmap sync will come in later Sprint 6 units.
           </p>
         </article>
       </section>
