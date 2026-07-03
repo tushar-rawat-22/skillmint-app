@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
 
 export default function ProfilePage() {
   return (
@@ -12,6 +13,10 @@ export default function ProfilePage() {
           Your career profile will be generated from resume intelligence.
         </p>
 
+        <div className="mt-8">
+          <AuthStatusCard />
+        </div>
+
         <article className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <h2 className="text-xl font-bold">
             Candidate Profile coming soon
@@ -20,6 +25,10 @@ export default function ProfilePage() {
           <p className="mt-3 text-sm leading-6 text-gray-400">
             SkillMint will turn your resume intelligence into a clearer
             candidate profile in an upcoming sprint.
+          </p>
+
+          <p className="mt-3 text-sm leading-6 text-gray-400">
+            Persistent profile sync is coming in Sprint 6.3/6.4.
           </p>
         </article>
       </section>
