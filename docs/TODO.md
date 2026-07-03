@@ -387,6 +387,8 @@ Sprint 6 Account Persistence: Complete
 
 Sprint 7.1 Onboarding Foundation and First-Run Experience: Completed
 
+Sprint 7.2 Guided Target Role Setup: Completed
+
 Next:
 
-Sprint 7.2 Guided Target Role Setup
+Sprint 7.3 Beta Landing/App Entry Polish

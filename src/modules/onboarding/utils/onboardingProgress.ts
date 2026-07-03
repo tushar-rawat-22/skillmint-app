@@ -8,6 +8,15 @@ export function buildOnboardingSteps(
 ): OnboardingStep[] {
   return [
     {
+      id: "set-career-direction",
+      title: "Set career direction",
+      description:
+        "Choose a target role, goal, and weekly pace so SkillMint can guide the next steps.",
+      href: "/setup",
+      status: progress.hasTargetRoleSetup ? "complete" : "active",
+      cta: progress.hasTargetRoleSetup ? "Update setup" : "Open setup",
+    },
+    {
       id: "upload-resume",
       title: "Upload your resume",
       description:

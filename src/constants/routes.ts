@@ -7,6 +7,8 @@ export const ROUTES = {
 
   DASHBOARD: "/dashboard",
 
+  SETUP: "/setup",
+
   PROFILE: "/profile",
 
   RESUME: "/resume",

@@ -121,8 +121,8 @@ export default function PersistentProfileForm() {
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-gray-400">
-          Basic profile persistence starts here. Resume, ATS, and roadmap sync
-          will come in later Sprint 6 units.
+          Basic profile persistence starts here. Career setup can also sync
+          target role and career goal when you are signed in.
         </p>
 
         <div className="mt-5 flex flex-wrap gap-3">
@@ -159,8 +159,8 @@ export default function PersistentProfileForm() {
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-gray-400">
-          Save your core profile direction to Supabase. Resume, ATS, and
-          roadmap sync will come in later Sprint 6 units.
+          Save your core profile direction to Supabase. Career setup can update
+          target role and career goal without changing resume intelligence.
         </p>
       </div>
 

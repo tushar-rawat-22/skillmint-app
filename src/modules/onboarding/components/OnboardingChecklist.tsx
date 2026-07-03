@@ -13,6 +13,9 @@ import {
   getOnboardingDismissed,
   setOnboardingDismissed,
 } from "@/modules/onboarding/storage/onboardingStorage";
+import {
+  TARGET_ROLE_SETUP_STORAGE_KEY,
+} from "@/modules/onboarding/storage/targetRoleSetupStorage";
 import { buildOnboardingSteps } from "@/modules/onboarding/utils/onboardingProgress";
 import type {
   OnboardingProgress,
@@ -31,6 +34,11 @@ export default function OnboardingChecklist() {
   const storedJobMatch = useSyncExternalStore(
     subscribeToStoredData,
     readStoredJobMatch,
+    getServerSnapshot,
+  );
+  const storedTargetRoleSetup = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredTargetRoleSetup,
     getServerSnapshot,
   );
   const {
@@ -55,13 +63,20 @@ export default function OnboardingChecklist() {
     const parsedJobMatch = parseStoredJobMatch(storedJobMatch);
 
     return {
+      hasTargetRoleSetup: hasValidTargetRoleSetup(storedTargetRoleSetup),
       hasResumeAnalysis,
       hasJobMatch: Boolean(parsedJobMatch),
       hasRoadmap: hasStoredRoadmap(parsedJobMatch),
       isSignedIn: Boolean(user),
       isSupabaseConfigured: isConfigured,
     };
-  }, [isConfigured, storedJobMatch, storedResumeAnalysis, user]);
+  }, [
+    isConfigured,
+    storedJobMatch,
+    storedResumeAnalysis,
+    storedTargetRoleSetup,
+    user,
+  ]);
   const steps = useMemo(() => buildOnboardingSteps(progress), [progress]);
   const activeStep = steps.find((step) => step.status === "active");
   const completedCount = steps.filter((step) => step.status === "complete")
@@ -115,7 +130,7 @@ export default function OnboardingChecklist() {
         </button>
       </div>
 
-      <div className="mt-6 grid gap-3 lg:grid-cols-5">
+      <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {steps.map((step, index) => (
           <OnboardingStepCard
             key={step.id}
@@ -253,6 +268,11 @@ function readStoredJobMatch(): string | null {
   return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
 }
 
+function readStoredTargetRoleSetup(): string | null {
+  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ??
+    null;
+}
+
 function getServerSnapshot(): null {
   return null;
 }
@@ -284,6 +304,29 @@ function hasValidResumeAnalysis(storedValue: string | null): boolean {
     return isRecord(parsedValue.userProfile) ||
       isRecord(parsedValue.parsedProfile) ||
       typeof parsedValue.extractedText === "string";
+  } catch {
+    return false;
+  }
+}
+
+function hasValidTargetRoleSetup(storedValue: string | null): boolean {
+  if (!storedValue) {
+    return false;
+  }
+
+  try {
+    const parsedValue = JSON.parse(storedValue);
+
+    if (!isRecord(parsedValue)) {
+      return false;
+    }
+
+    return typeof parsedValue.targetRole === "string" &&
+      parsedValue.targetRole.trim().length > 0 &&
+      typeof parsedValue.experienceLevel === "string" &&
+      typeof parsedValue.primaryGoal === "string" &&
+      typeof parsedValue.preferredJobType === "string" &&
+      typeof parsedValue.weeklyTimeCommitment === "string";
   } catch {
     return false;
   }

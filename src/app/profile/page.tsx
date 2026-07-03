@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
 import PersistentProfileForm from "@/modules/profile/components/PersistentProfileForm";
@@ -17,6 +19,25 @@ export default function ProfilePage() {
         <div className="mt-8">
           <AuthStatusCard />
         </div>
+
+        <article className="mt-8 rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+          <h2 className="text-xl font-bold">
+            Career setup feeds this profile
+          </h2>
+
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-green-50/80">
+            Use guided setup to choose a target role, experience level, and
+            primary goal. When signed in, SkillMint can sync that direction to
+            your persistent profile.
+          </p>
+
+          <Link
+            href="/setup"
+            className="mt-5 inline-flex rounded-lg border border-green-500/30 px-4 py-2 text-sm font-semibold text-green-100 transition hover:border-green-300 hover:text-white"
+          >
+            Open career setup
+          </Link>
+        </article>
 
         <div className="mt-8">
           <PersistentProfileForm />

@@ -17,6 +17,13 @@ export default function Sidebar() {
         </Link>
 
         <Link
+          href="/setup"
+          className="block rounded-lg px-3 py-2 hover:bg-neutral-800"
+        >
+          Setup
+        </Link>
+
+        <Link
           href="/resume"
           className="block rounded-lg px-3 py-2 hover:bg-neutral-800"
         >
