@@ -51,11 +51,23 @@ function subscribeToStoredAnalysis(
 }
 
 function readStoredAnalysis(): string | null {
-  return localStorage.getItem(RESUME_ANALYSIS_STORAGE_KEY);
+  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
 }
 
 function getServerSnapshot(): null {
   return null;
+}
+
+function getBrowserStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 function getStoredUserProfile(

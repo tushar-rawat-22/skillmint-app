@@ -1089,7 +1089,7 @@ function subscribeToStoredAnalysis(
 }
 
 function readStoredAnalysis(): string | null {
-  return localStorage.getItem(RESUME_ANALYSIS_STORAGE_KEY);
+  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
 }
 
 function getServerSnapshot(): null {
