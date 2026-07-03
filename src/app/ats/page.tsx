@@ -8,6 +8,10 @@ import {
   analyzeJobDescriptionMatch,
   type JobDescriptionMatchResult,
 } from "@/intelligence/core/jobDescriptionMatch";
+import {
+  generateResumeImprovementPlan,
+  type ResumeImprovementPlan,
+} from "@/intelligence/core/resumeImprovement";
 import type { UserProfile } from "@/intelligence/types/profile";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
@@ -28,6 +32,8 @@ export default function ATSMatcherPage() {
   const [error, setError] = useState("");
   const [matchResult, setMatchResult] =
     useState<JobDescriptionMatchResult | null>(null);
+  const [improvementPlan, setImprovementPlan] =
+    useState<ResumeImprovementPlan | null>(null);
 
   if (!userProfile) {
     return (
@@ -61,6 +67,7 @@ export default function ATSMatcherPage() {
     if (!userProfile) {
       setError("Upload and analyze your resume before matching a JD.");
       setMatchResult(null);
+      setImprovementPlan(null);
       return;
     }
 
@@ -71,6 +78,7 @@ export default function ATSMatcherPage() {
         "Paste a fuller job description with responsibilities and required skills.",
       );
       setMatchResult(null);
+      setImprovementPlan(null);
       return;
     }
 
@@ -80,9 +88,15 @@ export default function ATSMatcherPage() {
       userProfile,
       trimmedJobDescription,
     );
+    const plan = generateResumeImprovementPlan(
+      userProfile,
+      result,
+      trimmedJobDescription,
+    );
 
     setMatchResult(result);
-    persistMatchResult(trimmedJobDescription, result);
+    setImprovementPlan(plan);
+    persistMatchResult(trimmedJobDescription, result, plan);
   }
 
   return (
@@ -156,7 +170,10 @@ export default function ATSMatcherPage() {
         </section>
 
         {matchResult ? (
-          <MatchResultPanel result={matchResult} />
+          <MatchResultPanel
+            result={matchResult}
+            improvementPlan={improvementPlan}
+          />
         ) : (
           <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-bold">
@@ -175,9 +192,13 @@ export default function ATSMatcherPage() {
 
 type MatchResultPanelProps = {
   result: JobDescriptionMatchResult;
+  improvementPlan: ResumeImprovementPlan | null;
 };
 
-function MatchResultPanel({ result }: MatchResultPanelProps) {
+function MatchResultPanel({
+  result,
+  improvementPlan,
+}: MatchResultPanelProps) {
   return (
     <section className="mt-6 space-y-6">
       <article className="rounded-lg border border-green-500/30 bg-green-500/10 p-6">
@@ -227,6 +248,114 @@ function MatchResultPanel({ result }: MatchResultPanelProps) {
         <ListCard title="Weaknesses" items={result.weaknesses} />
         <ListCard title="Recommendations" items={result.recommendations} />
       </section>
+
+      {improvementPlan && (
+        <ImprovementPlanPanel plan={improvementPlan} />
+      )}
+    </section>
+  );
+}
+
+type ImprovementPlanPanelProps = {
+  plan: ResumeImprovementPlan;
+};
+
+function ImprovementPlanPanel({ plan }: ImprovementPlanPanelProps) {
+  return (
+    <section className="space-y-4">
+      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
+          Resume Improvement Plan
+        </p>
+
+        <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold text-white">
+              {plan.readiness}
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+              {plan.summary}
+            </p>
+          </div>
+
+          <span className={getReadinessClassName(plan.readiness)}>
+            {plan.readiness}
+          </span>
+        </div>
+      </article>
+
+      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+          Priority Fixes
+        </h3>
+
+        {plan.priorityFixes.length ? (
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {plan.priorityFixes.map((fix) => (
+              <article
+                key={`${fix.category}-${fix.title}`}
+                className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-5"
+              >
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-300">
+                    {fix.category}
+                  </span>
+
+                  <span className={getPriorityClassName(fix.priority)}>
+                    {fix.priority} priority
+                  </span>
+
+                  <span className={getImpactClassName(fix.impact)}>
+                    {fix.impact} impact
+                  </span>
+                </div>
+
+                <h4 className="mt-4 text-lg font-bold text-white">
+                  {fix.title}
+                </h4>
+
+                <p className="mt-3 text-sm leading-6 text-gray-400">
+                  {fix.reason}
+                </p>
+
+                <p className="mt-3 text-sm leading-6 text-gray-200">
+                  {fix.action}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptySignal />
+        )}
+      </article>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <ListCard
+          title="Missing Keywords to Add Truthfully"
+          items={plan.keywordAdditions}
+        />
+
+        <ListCard
+          title="Project Suggestions"
+          items={plan.projectSuggestions}
+        />
+
+        <ListCard
+          title="Proof Gaps"
+          items={plan.proofGaps}
+        />
+
+        <ListCard
+          title="Section Fixes"
+          items={plan.sectionFixes}
+        />
+      </section>
+
+      <ListCard
+        title="Before Apply Checklist"
+        items={plan.beforeApplyChecklist}
+      />
     </section>
   );
 }
@@ -310,9 +439,61 @@ function EmptySignal() {
   );
 }
 
+function getReadinessClassName(
+  readiness: ResumeImprovementPlan["readiness"],
+): string {
+  const baseClassName =
+    "w-fit rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]";
+
+  if (readiness === "Apply now") {
+    return `${baseClassName} border-green-500/30 bg-green-500/10 text-green-200`;
+  }
+
+  if (readiness === "Tailor before applying") {
+    return `${baseClassName} border-yellow-500/30 bg-yellow-500/10 text-yellow-100`;
+  }
+
+  return `${baseClassName} border-red-500/30 bg-red-500/10 text-red-100`;
+}
+
+function getPriorityClassName(
+  priority: ResumeImprovementPlan["priorityFixes"][number]["priority"],
+): string {
+  const baseClassName =
+    "rounded-full border px-3 py-1 text-xs font-semibold";
+
+  if (priority === "High") {
+    return `${baseClassName} border-red-500/30 bg-red-500/10 text-red-100`;
+  }
+
+  if (priority === "Medium") {
+    return `${baseClassName} border-yellow-500/30 bg-yellow-500/10 text-yellow-100`;
+  }
+
+  return `${baseClassName} border-green-500/30 bg-green-500/10 text-green-200`;
+}
+
+function getImpactClassName(
+  impact: ResumeImprovementPlan["priorityFixes"][number]["impact"],
+): string {
+  const baseClassName =
+    "rounded-full border px-3 py-1 text-xs font-semibold text-gray-200";
+
+  if (impact === "High") {
+    return `${baseClassName} border-green-500/30 bg-green-500/10`;
+  }
+
+  if (impact === "Medium") {
+    return `${baseClassName} border-blue-500/30 bg-blue-500/10`;
+  }
+
+  return `${baseClassName} border-gray-700 bg-black/20`;
+}
+
 function persistMatchResult(
   jobDescription: string,
   result: JobDescriptionMatchResult,
+  improvementPlan: ResumeImprovementPlan,
 ) {
   try {
     localStorage.setItem(
@@ -320,6 +501,7 @@ function persistMatchResult(
       JSON.stringify({
         jobDescription,
         result,
+        improvementPlan,
         analyzedAt: new Date().toISOString(),
       }),
     );
