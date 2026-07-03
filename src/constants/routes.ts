@@ -11,6 +11,8 @@ export const ROUTES = {
 
   RESUME: "/resume",
 
+  ATS: "/ats",
+
   SETTINGS: "/settings",
 
   ONBOARDING: "/onboarding",

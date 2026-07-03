@@ -7,3 +7,4 @@ export * from "./recommendations";
 export * from "./certifications";
 export * from "./coding";
 export * from "./roleMatch";
+export * from "./jobDescriptionMatch";

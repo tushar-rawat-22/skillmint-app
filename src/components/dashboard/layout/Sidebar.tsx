@@ -24,6 +24,13 @@ export default function Sidebar() {
         </Link>
 
         <Link
+          href="/ats"
+          className="block rounded-lg px-3 py-2 hover:bg-neutral-800"
+        >
+          ATS Match
+        </Link>
+
+        <Link
           href="/profile"
           className="block rounded-lg px-3 py-2 hover:bg-neutral-800"
         >
