@@ -365,8 +365,14 @@ Target:
 
 # Sprint Status Update
 
-Sprint 5 Resume Intelligence: ✅ Complete
+Sprint 5 Resume Intelligence: Frozen
 
 Next major focus:
 
 Sprint 6 — Authentication, Database, Persistent Profiles
+
+Sprint 6.1 Supabase Foundation: Completed
+
+Next:
+
+Auth screens and session flow
