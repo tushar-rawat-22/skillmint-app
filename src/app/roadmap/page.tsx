@@ -84,6 +84,7 @@ export default function RoadmapPage() {
     const generatedRoadmap = roadmap;
     let isActive = true;
     const timeoutId = window.setTimeout(() => {
+      persistLatestJobMatchRoadmap(generatedRoadmap);
       void syncRoadmapToDatabase();
     }, 0);
 

@@ -10,6 +10,7 @@ import ShareableCareerCard from "@/components/dashboard/ShareableCareerCard";
 
 import { AccountOverviewCard } from "@/modules/account";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
+import { OnboardingChecklist } from "@/modules/onboarding";
 
 export default function DashboardPage() {
   const data = useCareerData();
@@ -27,6 +28,8 @@ export default function DashboardPage() {
           bestMatch={bestMatch}
           salary={data.salary}
         />
+
+        <OnboardingChecklist />
 
         <MetricStrip
           ats={data.ats}

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden">
@@ -31,11 +33,14 @@ export default function Hero() {
 
         <div className="mt-14 flex flex-wrap justify-center gap-5">
 
-          <button className="rounded-xl bg-black px-10 py-5 text-white transition hover:scale-105">
+          <Link
+            href="/upload"
+            className="rounded-xl bg-black px-10 py-5 text-white transition hover:scale-105"
+          >
 
-            Upload Resume
+            Start with resume upload
 
-          </button>
+          </Link>
 
           <button className="rounded-xl border border-gray-300 px-10 py-5 transition hover:bg-gray-100">
 

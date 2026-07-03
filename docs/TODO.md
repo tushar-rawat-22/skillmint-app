@@ -385,6 +385,8 @@ Sprint 6.6 User Account Dashboard + Sprint 6 QA Freeze: Completed
 
 Sprint 6 Account Persistence: Complete
 
+Sprint 7.1 Onboarding Foundation and First-Run Experience: Completed
+
 Next:
 
-Sprint 7 Onboarding + Beta UX + Launch Readiness
+Sprint 7.2 Guided Target Role Setup
