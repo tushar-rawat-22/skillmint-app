@@ -13,6 +13,8 @@ export const ROUTES = {
 
   ATS: "/ats",
 
+  ROADMAP: "/roadmap",
+
   SETTINGS: "/settings",
 
   ONBOARDING: "/onboarding",

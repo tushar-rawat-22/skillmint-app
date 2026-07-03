@@ -10,3 +10,4 @@ export * from "./roleMatch";
 export * from "./jobDescriptionMatch";
 export * from "./resumeImprovement";
 export * from "./resumeRewrite";
+export * from "./careerRoadmap";

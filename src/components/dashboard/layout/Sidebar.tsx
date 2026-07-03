@@ -31,6 +31,13 @@ export default function Sidebar() {
         </Link>
 
         <Link
+          href="/roadmap"
+          className="block rounded-lg px-3 py-2 hover:bg-neutral-800"
+        >
+          Roadmap
+        </Link>
+
+        <Link
           href="/profile"
           className="block rounded-lg px-3 py-2 hover:bg-neutral-800"
         >
