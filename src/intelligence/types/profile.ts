@@ -43,6 +43,14 @@ export interface LinkedinProfile {
   hasFeatured: boolean;
 }
 
+export interface ProfileAnalysisFlags {
+  hasMeasurableImpact: boolean;
+  hasSectionClarity: boolean;
+  hasProofLink: boolean;
+  hasGenericProjects: boolean;
+  isPlaceholderText: boolean;
+}
+
 export interface UserProfile {
   resumeScore: number;
   skillsScore: number;
@@ -71,4 +79,5 @@ export interface UserProfile {
   leadershipScore?: number;
   achievementScore?: number;
   researchScore?: number;
+  analysisFlags?: ProfileAnalysisFlags;
 }

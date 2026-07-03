@@ -3,9 +3,19 @@
 import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
 
+import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
+import type { UserProfile } from "@/intelligence/types/profile";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
+
+type ResumeAnalysisView = Omit<
+  ResumeAnalysisResult,
+  "parsedProfile" | "userProfile"
+> & {
+  parsedProfile: ResumeAnalysisResult["parsedProfile"];
+  userProfile?: UserProfile;
+};
 
 const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
   skills: [],
@@ -43,7 +53,7 @@ export default function ResumePage() {
 
   if (!analysis) {
     return (
-      <main className="min-h-screen bg-neutral-950 px-6 py-16 text-white">
+      <DashboardLayout>
         <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
             Resume Intelligence
@@ -65,7 +75,7 @@ export default function ResumePage() {
             Upload Resume
           </Link>
         </section>
-      </main>
+      </DashboardLayout>
     );
   }
 
@@ -74,7 +84,7 @@ export default function ResumePage() {
   );
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-6 py-12 text-white">
+    <DashboardLayout>
       <section className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -123,6 +133,12 @@ export default function ResumePage() {
 
         <ParsedResumeSections profile={analysis.parsedProfile} />
 
+        {analysis.userProfile && (
+          <CareerIntelligenceReady
+            profile={analysis.userProfile}
+          />
+        )}
+
         <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -145,7 +161,78 @@ export default function ResumePage() {
           </pre>
         </section>
       </section>
-    </main>
+    </DashboardLayout>
+  );
+}
+
+type CareerIntelligenceReadyProps = {
+  profile: UserProfile;
+};
+
+function CareerIntelligenceReady({
+  profile,
+}: CareerIntelligenceReadyProps) {
+  const scores = [
+    {
+      label: "Resume Score",
+      value: `${profile.resumeScore}/20`,
+    },
+    {
+      label: "Skills Score",
+      value: `${profile.skillsScore}/15`,
+    },
+    {
+      label: "Projects Score",
+      value: `${profile.projectsScore}/15`,
+    },
+    {
+      label: "Experience Score",
+      value: `${profile.experienceScore}/12`,
+    },
+    {
+      label: "Education Score",
+      value: `${profile.educationScore}/10`,
+    },
+    {
+      label: "ATS Base Score",
+      value: `${profile.atsScore}/5`,
+    },
+    {
+      label: "Recruiter Base Score",
+      value: `${profile.recruiterScore}/5`,
+    },
+  ];
+
+  return (
+    <section className="mt-6 rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+      <div>
+        <h2 className="text-xl font-bold">
+          Career Intelligence Ready
+        </h2>
+
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-green-100/80">
+          This is a rule-based first pass. Full AI explanation and
+          job-description ATS matching will come later.
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {scores.map((score) => (
+          <article
+            key={score.label}
+            className="rounded-lg border border-green-500/20 bg-black/25 p-4"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-200/60">
+              {score.label}
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-white">
+              {score.value}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -342,7 +429,7 @@ function formatStatus(status: string): string {
 
 function isResumeAnalysisResult(
   value: unknown,
-): value is ResumeAnalysisResult {
+): value is ResumeAnalysisView {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -355,6 +442,7 @@ function isResumeAnalysisResult(
     typeof analysis.fileSize === "number" &&
     typeof analysis.extractedText === "string" &&
     isParsedResumeProfile(analysis.parsedProfile) &&
+    isUserProfile(analysis.userProfile) &&
     typeof analysis.analyzedAt === "string" &&
     typeof analysis.status === "string"
   );
@@ -362,7 +450,12 @@ function isResumeAnalysisResult(
 
 function isLegacyResumeAnalysisResult(
   value: unknown,
-): value is Omit<ResumeAnalysisResult, "parsedProfile"> {
+): value is Omit<
+  ResumeAnalysisView,
+  "parsedProfile" | "userProfile"
+> & {
+  parsedProfile?: ResumeAnalysisResult["parsedProfile"];
+} {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -399,6 +492,37 @@ function isParsedResumeProfile(
   );
 }
 
+function isUserProfile(value: unknown): value is UserProfile {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const profile = value as Record<string, unknown>;
+
+  return (
+    isNumber(profile.resumeScore) &&
+    isNumber(profile.skillsScore) &&
+    isNumber(profile.projectsScore) &&
+    isNumber(profile.experienceScore) &&
+    isNumber(profile.educationScore) &&
+    isNumber(profile.githubScore) &&
+    isNumber(profile.linkedinScore) &&
+    isNumber(profile.atsScore) &&
+    isNumber(profile.recruiterScore) &&
+    isNumber(profile.activityScore) &&
+    isStringArray(profile.skills) &&
+    isStringArray(profile.projects) &&
+    isStringArray(profile.experience) &&
+    typeof profile.education === "string" &&
+    Array.isArray(profile.certifications) &&
+    Array.isArray(profile.codingProfiles)
+  );
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) &&
     value.every((item) => typeof item === "string");
@@ -429,7 +553,7 @@ function getServerSnapshot(): null {
 
 function parseStoredAnalysis(
   storedAnalysis: string | null,
-): ResumeAnalysisResult | null {
+): ResumeAnalysisView | null {
   if (!storedAnalysis) {
     return null;
   }
@@ -444,7 +568,11 @@ function parseStoredAnalysis(
     if (isLegacyResumeAnalysisResult(parsedAnalysis)) {
       return {
         ...parsedAnalysis,
-        parsedProfile: EMPTY_PARSED_PROFILE,
+        parsedProfile: isParsedResumeProfile(
+          parsedAnalysis.parsedProfile,
+        )
+          ? parsedAnalysis.parsedProfile
+          : EMPTY_PARSED_PROFILE,
       };
     }
 

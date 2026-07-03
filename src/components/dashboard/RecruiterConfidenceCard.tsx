@@ -3,8 +3,10 @@ type Props = {
 };
 
 export default function RecruiterConfidenceCard({ score }: Props) {
+  const roundedScore = Math.round(score);
+
   return (
-    <div className="rounded-3xl bg-neutral-900 p-6 text-white">
+    <div className="min-w-0 rounded-3xl bg-neutral-900 p-6 text-white">
 
       <p className="text-neutral-400">
 
@@ -12,9 +14,9 @@ export default function RecruiterConfidenceCard({ score }: Props) {
 
       </p>
 
-      <h2 className="mt-3 text-5xl font-bold">
+      <h2 className="mt-3 max-w-full truncate text-4xl font-bold leading-none tabular-nums md:text-5xl">
 
-        {score}%
+        {roundedScore}%
 
       </h2>
 

@@ -1,3 +1,5 @@
+"use client";
+
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import CareerIQCard from "@/components/dashboard/CareerIQCard";

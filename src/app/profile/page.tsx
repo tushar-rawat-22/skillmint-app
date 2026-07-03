@@ -1,20 +1,28 @@
+import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+
 export default function ProfilePage() {
   return (
-    <main className="min-h-screen bg-neutral-950 px-6 py-16 text-white">
-      <section className="mx-auto max-w-4xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+    <DashboardLayout>
+      <section className="max-w-4xl">
+        <h1 className="text-4xl font-black">
           Profile
-        </p>
-
-        <h1 className="mt-4 text-4xl font-black">
-          Career Profile
         </h1>
 
         <p className="mt-4 max-w-2xl text-gray-400">
-          Your SkillMint profile workspace is ready for upcoming career
-          signals.
+          Your career profile will be generated from resume intelligence.
         </p>
+
+        <article className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+          <h2 className="text-xl font-bold">
+            Candidate Profile coming soon
+          </h2>
+
+          <p className="mt-3 text-sm leading-6 text-gray-400">
+            SkillMint will turn your resume intelligence into a clearer
+            candidate profile in an upcoming sprint.
+          </p>
+        </article>
       </section>
-    </main>
+    </DashboardLayout>
   );
 }

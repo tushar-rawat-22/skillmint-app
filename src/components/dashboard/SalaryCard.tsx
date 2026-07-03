@@ -11,14 +11,16 @@ function formatINR(value: number) {
 }
 
 export default function SalaryCard({ salary }: Props) {
+  const roundedSalary = Math.round(salary);
+
   return (
-    <div className="rounded-3xl bg-neutral-900 p-6 text-white">
+    <div className="min-w-0 rounded-3xl bg-neutral-900 p-6 text-white">
       <p className="text-neutral-400">
         Estimated Salary
       </p>
 
       <h2 className="mt-3 text-3xl font-bold">
-        {formatINR(salary)}
+        {formatINR(roundedSalary)}
       </h2>
     </div>
   );

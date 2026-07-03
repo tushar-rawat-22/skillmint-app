@@ -3,6 +3,8 @@ import {
   parseResumeText,
   type ParsedResumeProfile,
 } from "@/lib/parser/profileBuilder";
+import { buildUserProfileFromParsedResume } from "@/lib/resume/buildUserProfileFromParsedResume";
+import type { UserProfile } from "@/intelligence/types/profile";
 
 export type ResumeAnalysisStatus = "completed";
 
@@ -12,6 +14,7 @@ export type ResumeAnalysisResult = {
   fileSize: number;
   extractedText: string;
   parsedProfile: ParsedResumeProfile;
+  userProfile: UserProfile;
   analyzedAt: string;
   status: ResumeAnalysisStatus;
 };
@@ -21,6 +24,10 @@ export async function analyzeResume(
 ): Promise<ResumeAnalysisResult> {
   const extractedText = await extractTextFromResume(file);
   const parsedProfile = parseResumeText(extractedText);
+  const userProfile = buildUserProfileFromParsedResume(
+    parsedProfile,
+    extractedText,
+  );
 
   return {
     fileName: file.name,
@@ -28,6 +35,7 @@ export async function analyzeResume(
     fileSize: file.size,
     extractedText,
     parsedProfile,
+    userProfile,
     analyzedAt: new Date().toISOString(),
     status: "completed",
   };
