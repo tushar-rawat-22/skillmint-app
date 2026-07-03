@@ -8,8 +8,11 @@ export interface SavedJobMatch {
   companyName: string;
   jobDescription: string;
   result: JobDescriptionMatchResult;
-  improvementPlan: ResumeImprovementPlan;
-  rewritePlan: ResumeRewritePlan;
+  improvementPlan: ResumeImprovementPlan | null;
+  rewritePlan: ResumeRewritePlan | null;
+  roadmap?: unknown;
+  databaseId?: string;
+  syncStatus?: "synced" | "local-only";
   analyzedAt: string;
 }
 
@@ -40,7 +43,10 @@ export function getSavedJobMatches(): SavedJobMatch[] {
       return [];
     }
 
-    return sortNewestFirst(parsedValue).slice(0, MAX_SAVED_MATCHES);
+    return sortNewestFirst(parsedValue.map(normalizeSavedJobMatch)).slice(
+      0,
+      MAX_SAVED_MATCHES,
+    );
   } catch {
     return [];
   }
@@ -64,6 +70,28 @@ export function saveJobMatch(match: SavedJobMatch): SavedJobMatch[] {
     );
   } catch {
     // Storage failures should not block the active analysis from rendering.
+  }
+
+  return nextMatches;
+}
+
+export function replaceSavedJobMatches(
+  matches: SavedJobMatch[],
+): SavedJobMatch[] {
+  const storage = getBrowserStorage();
+  const nextMatches = sortNewestFirst(matches).slice(0, MAX_SAVED_MATCHES);
+
+  if (!storage) {
+    return nextMatches;
+  }
+
+  try {
+    storage.setItem(
+      JD_MATCH_HISTORY_STORAGE_KEY,
+      JSON.stringify(nextMatches),
+    );
+  } catch {
+    // Storage failures should not block restored matches from rendering.
   }
 
   return nextMatches;
@@ -118,6 +146,14 @@ function sortNewestFirst(matches: SavedJobMatch[]): SavedJobMatch[] {
   });
 }
 
+function normalizeSavedJobMatch(match: SavedJobMatch): SavedJobMatch {
+  return {
+    ...match,
+    improvementPlan: match.improvementPlan ?? null,
+    rewritePlan: match.rewritePlan ?? null,
+  };
+}
+
 function getSortableTime(time: number): number {
   return Number.isFinite(time) ? time : 0;
 }
@@ -145,8 +181,10 @@ function isSavedJobMatch(value: unknown): value is SavedJobMatch {
     isString(value.companyName) &&
     isString(value.jobDescription) &&
     isJobDescriptionMatchResult(value.result) &&
-    isResumeImprovementPlan(value.improvementPlan) &&
-    isResumeRewritePlan(value.rewritePlan) &&
+    isNullableResumeImprovementPlan(value.improvementPlan) &&
+    isNullableResumeRewritePlan(value.rewritePlan) &&
+    isOptionalString(value.databaseId) &&
+    isOptionalSyncStatus(value.syncStatus) &&
     isString(value.analyzedAt)
   );
 }
@@ -191,6 +229,14 @@ function isResumeImprovementPlan(
   );
 }
 
+function isNullableResumeImprovementPlan(
+  value: unknown,
+): value is ResumeImprovementPlan | null {
+  return value === null ||
+    value === undefined ||
+    isResumeImprovementPlan(value);
+}
+
 function isResumeImprovementItem(
   value: unknown,
 ): value is ResumeImprovementPlan["priorityFixes"][number] {
@@ -225,6 +271,14 @@ function isResumeRewritePlan(value: unknown): value is ResumeRewritePlan {
   );
 }
 
+function isNullableResumeRewritePlan(
+  value: unknown,
+): value is ResumeRewritePlan | null {
+  return value === null ||
+    value === undefined ||
+    isResumeRewritePlan(value);
+}
+
 function isResumeRewriteSuggestion(
   value: unknown,
 ): value is ResumeRewritePlan["summaryRewrite"] {
@@ -249,6 +303,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isString(value: unknown): value is string {
   return typeof value === "string";
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === "string";
+}
+
+function isOptionalSyncStatus(
+  value: unknown,
+): value is SavedJobMatch["syncStatus"] {
+  return value === undefined ||
+    value === "synced" ||
+    value === "local-only";
 }
 
 function isStringArray(value: unknown): value is string[] {

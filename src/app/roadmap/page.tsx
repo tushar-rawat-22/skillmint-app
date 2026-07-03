@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import {
@@ -17,14 +22,23 @@ import type {
   ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
+import { updateCurrentUserJobMatchRoadmap } from "@/modules/jobMatch";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 
 type LatestJobMatch = {
+  id?: string;
+  databaseId?: string;
   result: JobDescriptionMatchResult;
   improvementPlan: ResumeImprovementPlan | null;
   rewritePlan: ResumeRewritePlan | null;
+  roadmap?: unknown;
+};
+
+type RoadmapSyncState = {
+  status: "synced" | "local-only";
+  message: string;
 };
 
 export default function RoadmapPage() {
@@ -46,6 +60,8 @@ export default function RoadmapPage() {
     () => parseLatestJobMatch(storedJobMatch),
     [storedJobMatch],
   );
+  const [roadmapSyncState, setRoadmapSyncState] =
+    useState<RoadmapSyncState | null>(null);
   const roadmap = useMemo(() => {
     if (!userProfile) {
       return null;
@@ -58,6 +74,72 @@ export default function RoadmapPage() {
       latestJobMatch?.rewritePlan ?? null,
     );
   }, [latestJobMatch, userProfile]);
+  const latestDatabaseMatchId = latestJobMatch?.databaseId ?? null;
+
+  useEffect(() => {
+    if (!roadmap) {
+      return;
+    }
+
+    const generatedRoadmap = roadmap;
+    let isActive = true;
+    const timeoutId = window.setTimeout(() => {
+      void syncRoadmapToDatabase();
+    }, 0);
+
+    async function syncRoadmapToDatabase() {
+      if (!latestDatabaseMatchId) {
+        if (isActive) {
+          setRoadmapSyncState({
+            status: "local-only",
+            message:
+              "Roadmap generated locally. Account sync will retry after your latest match is saved.",
+          });
+        }
+        return;
+      }
+
+      try {
+        const result = await updateCurrentUserJobMatchRoadmap({
+          id: latestDatabaseMatchId,
+          roadmap: generatedRoadmap,
+        });
+
+        if (!isActive) {
+          return;
+        }
+
+        if (!result.ok) {
+          setRoadmapSyncState({
+            status: "local-only",
+            message: getRoadmapLocalOnlyMessage(result.error),
+          });
+          return;
+        }
+
+        persistLatestJobMatchRoadmap(generatedRoadmap);
+        setRoadmapSyncState({
+          status: "synced",
+          message: "Roadmap synced to your account.",
+        });
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setRoadmapSyncState({
+          status: "local-only",
+          message:
+            "Roadmap generated locally. Account sync did not finish right now.",
+        });
+      }
+    }
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [latestDatabaseMatchId, roadmap]);
 
   if (!userProfile || !roadmap) {
     return (
@@ -125,6 +207,10 @@ export default function RoadmapPage() {
           latestJobMatch={latestJobMatch}
         />
 
+        {roadmapSyncState && (
+          <RoadmapSyncStatusCard state={roadmapSyncState} />
+        )}
+
         <section className="mt-6 grid gap-4 lg:grid-cols-3">
           <PhaseSection phase={roadmap.thirtyDayPlan} />
           <PhaseSection phase={roadmap.sixtyDayPlan} />
@@ -190,6 +276,40 @@ function EmptyState({
       >
         {action}
       </Link>
+    </section>
+  );
+}
+
+type RoadmapSyncStatusCardProps = {
+  state: RoadmapSyncState;
+};
+
+function RoadmapSyncStatusCard({ state }: RoadmapSyncStatusCardProps) {
+  const isSynced = state.status === "synced";
+
+  return (
+    <section
+      className={`mt-4 rounded-lg border p-4 ${
+        isSynced
+          ? "border-green-500/30 bg-green-500/10"
+          : "border-yellow-500/30 bg-yellow-500/10"
+      }`}
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {isSynced ? "Roadmap synced" : "Roadmap local"}
+          </p>
+
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-gray-300">
+            {state.message}
+          </p>
+        </div>
+
+        <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-200">
+          {isSynced ? "Synced" : "Local"}
+        </span>
+      </div>
     </section>
   );
 }
@@ -506,6 +626,10 @@ function parseLatestJobMatch(
     }
 
     return {
+      id: isString(parsedJobMatch.id) ? parsedJobMatch.id : undefined,
+      databaseId: isString(parsedJobMatch.databaseId)
+        ? parsedJobMatch.databaseId
+        : getDatabaseIdFromLegacyId(parsedJobMatch.id),
       result: parsedJobMatch.result,
       improvementPlan: isResumeImprovementPlan(
         parsedJobMatch.improvementPlan,
@@ -515,10 +639,64 @@ function parseLatestJobMatch(
       rewritePlan: isResumeRewritePlan(parsedJobMatch.rewritePlan)
         ? parsedJobMatch.rewritePlan
         : null,
+      roadmap: parsedJobMatch.roadmap,
     };
   } catch {
     return null;
   }
+}
+
+function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    const storedJobMatch = storage.getItem(JD_MATCH_STORAGE_KEY);
+
+    if (!storedJobMatch) {
+      return;
+    }
+
+    const parsedJobMatch = JSON.parse(storedJobMatch);
+
+    if (!isRecord(parsedJobMatch)) {
+      return;
+    }
+
+    storage.setItem(
+      JD_MATCH_STORAGE_KEY,
+      JSON.stringify({
+        ...parsedJobMatch,
+        roadmap,
+      }),
+    );
+  } catch {
+    return;
+  }
+}
+
+function getRoadmapLocalOnlyMessage(error: string): string {
+  if (error.includes("Supabase is not configured")) {
+    return "Roadmap generated locally. Add Supabase credentials to enable account sync.";
+  }
+
+  if (error.includes("Sign in")) {
+    return "Roadmap generated locally. Sign in to save roadmaps to your account.";
+  }
+
+  return error || "Roadmap generated locally. Account sync did not finish.";
+}
+
+function getDatabaseIdFromLegacyId(value: unknown): string | undefined {
+  return isString(value) && isUuid(value) ? value : undefined;
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(value);
 }
 
 function isJobDescriptionMatchResult(

@@ -1,10 +1,10 @@
 # Supabase Setup
 
-**Status:** Sprint 6.4 resume persistence foundation
+**Status:** Sprint 6.5 job intelligence persistence
 
-Sprint 6.1 added Supabase dependencies, client utilities, environment placeholders, and schema documentation. Sprint 6.3 added the SQL schema file and basic profile persistence. Sprint 6.4 saves resume analyses for signed-in users.
+Sprint 6.1 added Supabase dependencies, client utilities, environment placeholders, and schema documentation. Sprint 6.3 added the SQL schema file and basic profile persistence. Sprint 6.4 saves resume analyses for signed-in users. Sprint 6.5 saves job match intelligence for signed-in users.
 
-JD match history, ATS history, and roadmap persistence still come later. LocalStorage remains active until those migration units ship.
+LocalStorage remains active as the fallback for resume analysis, JD matches, ATS history, and roadmap inputs.
 
 ---
 
@@ -96,7 +96,7 @@ If the SQL has not been run yet, SkillMint should still load. The profile and re
 
 ---
 
-## Sprint 6.4 Behavior
+## Sprint 6.5 Behavior
 
 - Supabase packages are installed.
 - Browser and server client utilities exist.
@@ -107,7 +107,10 @@ If the SQL has not been run yet, SkillMint should still load. The profile and re
 - Signed-in users now attempt to save resume analyses to the `resume_analyses` table.
 - Uploads still save to `skillmint:resume-analysis` first and redirect normally if database sync is unavailable.
 - The resume page can restore the latest saved database resume analysis when localStorage is empty.
-- JD matches, history, and roadmap data are not written to Supabase yet.
+- Signed-in users now attempt to save JD match results, improvement plans, and rewrite plans to the `job_matches` table.
+- The ATS page can restore recent `job_matches` into local history when browser history is empty.
+- Roadmap sync stores generated roadmap JSON in `job_matches.roadmap` when the latest JD match has a database id.
+- LocalStorage remains the first write and fallback if env vars, auth, schema, or RLS are not ready.
 
 ---
 
@@ -115,5 +118,5 @@ If the SQL has not been run yet, SkillMint should still load. The profile and re
 
 Next units should add:
 
-- Database writes for JD matches.
-- Migration from localStorage history to persistent user records.
+- Sprint 6.6 user account dashboard.
+- Sprint 6 QA freeze.

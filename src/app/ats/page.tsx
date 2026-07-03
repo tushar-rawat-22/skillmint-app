@@ -23,23 +23,42 @@ import {
   deleteSavedJobMatch,
   getLatestJobMatch,
   getSavedJobMatches,
+  replaceSavedJobMatches,
   saveJobMatch,
   type SavedJobMatch,
 } from "@/lib/storage/jdMatchHistory";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import {
+  deleteCurrentUserJobMatch,
+  listCurrentUserJobMatches,
+  saveCurrentUserJobMatch,
+  type PersistentJobMatch,
+} from "@/modules/jobMatch";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
+const JD_MATCH_SYNC_STATUS_STORAGE_KEY = "skillmint:jd-match-sync-status";
 const MIN_JOB_DESCRIPTION_LENGTH = 80;
 
 type ActiveJobMatch = {
   id?: string;
+  databaseId?: string;
+  syncStatus?: "synced" | "local-only";
   jobTitle: string;
   companyName: string;
   jobDescription: string;
   result: JobDescriptionMatchResult;
   improvementPlan: ResumeImprovementPlan | null;
   rewritePlan: ResumeRewritePlan | null;
+  roadmap?: unknown;
   analyzedAt: string;
+};
+
+type JobMatchSyncStatus = {
+  status: "synced" | "local-only";
+  message: string;
+  syncedAt?: string;
+  databaseId?: string;
 };
 
 export default function ATSMatcherPage() {
@@ -52,12 +71,24 @@ export default function ATSMatcherPage() {
     () => getStoredUserProfile(storedAnalysis),
     [storedAnalysis],
   );
+  const {
+    user,
+    isConfigured,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const userId = user?.id ?? null;
   const [jobDescription, setJobDescription] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [error, setError] = useState("");
   const [savedJobMatches, setSavedJobMatches] = useState<SavedJobMatch[]>([]);
   const [activeMatch, setActiveMatch] = useState<ActiveJobMatch | null>(null);
+  const [syncStatus, setSyncStatus] = useState<JobMatchSyncStatus | null>(
+    null,
+  );
+  const [historySyncMessage, setHistorySyncMessage] = useState("");
+  const [deleteSyncMessage, setDeleteSyncMessage] = useState("");
+  const [hasLoadedLocalHistory, setHasLoadedLocalHistory] = useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -65,10 +96,86 @@ export default function ATSMatcherPage() {
 
       setSavedJobMatches(savedMatches);
       setActiveMatch(readLatestJobMatch() ?? getLatestJobMatch());
+      setSyncStatus(readJobMatchSyncStatus());
+      setHasLoadedLocalHistory(true);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    if (
+      !hasLoadedLocalHistory ||
+      savedJobMatches.length > 0 ||
+      !isConfigured ||
+      isAuthLoading ||
+      !userId
+    ) {
+      return;
+    }
+
+    let isActive = true;
+    const timeoutId = window.setTimeout(() => {
+      void restoreJobMatchHistoryFromDatabase();
+    }, 0);
+
+    async function restoreJobMatchHistoryFromDatabase() {
+      setHistorySyncMessage("");
+
+      try {
+        const result = await listCurrentUserJobMatches(20);
+
+        if (!isActive) {
+          return;
+        }
+
+        if (!result.ok) {
+          setHistorySyncMessage(result.error);
+          return;
+        }
+
+        const restoredMatches = result.data.flatMap((match) => {
+          const savedMatch = mapPersistentJobMatchToSavedMatch(match);
+
+          return savedMatch ? [savedMatch] : [];
+        });
+
+        if (!restoredMatches.length) {
+          return;
+        }
+
+        const nextMatches = replaceSavedJobMatches(restoredMatches);
+        const nextActiveMatch = readLatestJobMatch() ?? nextMatches[0] ??
+          null;
+
+        setSavedJobMatches(nextMatches);
+        setActiveMatch(nextActiveMatch);
+        if (nextActiveMatch) {
+          persistLatestJobMatch(nextActiveMatch);
+        }
+        setHistorySyncMessage("Loaded recent job matches from your account.");
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setHistorySyncMessage(
+          "Could not load saved job matches from your account right now.",
+        );
+      }
+    }
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    hasLoadedLocalHistory,
+    isAuthLoading,
+    isConfigured,
+    savedJobMatches.length,
+    userId,
+  ]);
 
   if (!userProfile) {
     return (
@@ -116,6 +223,8 @@ export default function ATSMatcherPage() {
     }
 
     setError("");
+    setDeleteSyncMessage("");
+    setHistorySyncMessage("");
 
     const result = analyzeJobDescriptionMatch(
       userProfile,
@@ -147,20 +256,25 @@ export default function ATSMatcherPage() {
     setActiveMatch(savedMatch);
     setSavedJobMatches(saveJobMatch(savedMatch));
     persistLatestJobMatch(savedMatch);
+    void persistJobMatchToDatabase(savedMatch);
   }
 
   function handleViewSavedMatch(match: SavedJobMatch) {
     setError("");
+    setDeleteSyncMessage("");
     setActiveMatch(match);
     persistLatestJobMatch(match);
   }
 
   function handleDeleteSavedMatch(id: string) {
+    const matchToDelete = savedJobMatches.find((match) => match.id === id);
     const nextMatches = deleteSavedJobMatch(id);
 
     setSavedJobMatches(nextMatches);
+    setDeleteSyncMessage("");
 
     if (activeMatch?.id !== id) {
+      void deletePersistedJobMatch(matchToDelete);
       return;
     }
 
@@ -173,6 +287,8 @@ export default function ATSMatcherPage() {
     } else {
       clearLatestJobMatch();
     }
+
+    void deletePersistedJobMatch(matchToDelete);
   }
 
   function handleClearHistory() {
@@ -185,6 +301,102 @@ export default function ATSMatcherPage() {
 
     if (activeMatch) {
       persistLatestJobMatch(activeMatch);
+    }
+  }
+
+  async function persistJobMatchToDatabase(match: SavedJobMatch) {
+    try {
+      const saveResult = await saveCurrentUserJobMatch({
+        jobTitle: match.jobTitle,
+        companyName: match.companyName,
+        jobDescription: match.jobDescription,
+        matchResult: match.result,
+        improvementPlan: match.improvementPlan,
+        rewritePlan: match.rewritePlan,
+        roadmap: match.roadmap,
+      });
+
+      if (saveResult.ok) {
+        const nextMatch: SavedJobMatch = {
+          ...match,
+          databaseId: saveResult.data.id,
+          syncStatus: "synced",
+        };
+        const nextStatus: JobMatchSyncStatus = {
+          status: "synced",
+          message: "Job match saved to your SkillMint account.",
+          syncedAt: new Date().toISOString(),
+          databaseId: saveResult.data.id,
+        };
+
+        setSavedJobMatches(saveJobMatch(nextMatch));
+        setActiveMatch((currentMatch) => {
+          if (currentMatch?.id !== match.id) {
+            return currentMatch;
+          }
+
+          return nextMatch;
+        });
+        persistLatestJobMatch(nextMatch);
+        writeJobMatchSyncStatus(nextStatus);
+        setSyncStatus(nextStatus);
+        return;
+      }
+
+      markJobMatchLocalOnly(match, saveResult.error);
+    } catch {
+      markJobMatchLocalOnly(
+        match,
+        "Job match saved locally. Database sync did not finish.",
+      );
+    }
+  }
+
+  function markJobMatchLocalOnly(match: SavedJobMatch, message: string) {
+    const nextMatch: SavedJobMatch = {
+      ...match,
+      syncStatus: "local-only",
+    };
+    const nextStatus: JobMatchSyncStatus = {
+      status: "local-only",
+      message: getLocalOnlySyncMessage(message),
+    };
+
+    setSavedJobMatches(saveJobMatch(nextMatch));
+    setActiveMatch((currentMatch) => {
+      if (currentMatch?.id !== match.id) {
+        return currentMatch;
+      }
+
+      return nextMatch;
+    });
+    persistLatestJobMatch(nextMatch);
+    writeJobMatchSyncStatus(nextStatus);
+    setSyncStatus(nextStatus);
+  }
+
+  async function deletePersistedJobMatch(
+    match: SavedJobMatch | undefined,
+  ) {
+    const databaseId = getPersistedJobMatchId(match);
+
+    if (!databaseId) {
+      return;
+    }
+
+    try {
+      const deleteResult = await deleteCurrentUserJobMatch(databaseId);
+
+      if (!deleteResult.ok) {
+        setDeleteSyncMessage(deleteResult.error);
+        return;
+      }
+
+      setDeleteSyncMessage("Deleted synced job match from your account.");
+    } catch {
+      setDeleteSyncMessage(
+        "Deleted locally. Account delete did not finish right now.",
+      );
     }
   }
 
@@ -295,9 +507,19 @@ export default function ATSMatcherPage() {
         </section>
 
         {activeMatch ? (
-          <MatchResultPanel
-            match={activeMatch}
-          />
+          <>
+            <MatchResultPanel
+              match={activeMatch}
+            />
+
+            <JobMatchSyncStatusCard
+              match={activeMatch}
+              syncStatus={syncStatus}
+              isConfigured={isConfigured}
+              isAuthLoading={isAuthLoading}
+              isSignedIn={Boolean(userId)}
+            />
+          </>
         ) : (
           <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-bold">
@@ -313,6 +535,7 @@ export default function ATSMatcherPage() {
         <JobMatchHistoryPanel
           matches={savedJobMatches}
           activeMatchId={activeMatch?.id ?? null}
+          syncMessage={historySyncMessage || deleteSyncMessage}
           onView={handleViewSavedMatch}
           onDelete={handleDeleteSavedMatch}
           onClear={handleClearHistory}
@@ -408,9 +631,56 @@ function MatchResultPanel({ match }: MatchResultPanelProps) {
   );
 }
 
+type JobMatchSyncStatusCardProps = {
+  match: ActiveJobMatch;
+  syncStatus: JobMatchSyncStatus | null;
+  isConfigured: boolean;
+  isAuthLoading: boolean;
+  isSignedIn: boolean;
+};
+
+function JobMatchSyncStatusCard({
+  match,
+  syncStatus,
+  isConfigured,
+  isAuthLoading,
+  isSignedIn,
+}: JobMatchSyncStatusCardProps) {
+  const presentation = getJobMatchSyncPresentation(
+    match,
+    syncStatus,
+    isConfigured,
+    isAuthLoading,
+    isSignedIn,
+  );
+
+  return (
+    <section
+      className={`mt-4 rounded-lg border p-4 ${presentation.className}`}
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {presentation.title}
+          </p>
+
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-gray-300">
+            {presentation.message}
+          </p>
+        </div>
+
+        <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-200">
+          {presentation.badge}
+        </span>
+      </div>
+    </section>
+  );
+}
+
 type JobMatchHistoryPanelProps = {
   matches: SavedJobMatch[];
   activeMatchId: string | null;
+  syncMessage: string;
   onView: (match: SavedJobMatch) => void;
   onDelete: (id: string) => void;
   onClear: () => void;
@@ -419,6 +689,7 @@ type JobMatchHistoryPanelProps = {
 function JobMatchHistoryPanel({
   matches,
   activeMatchId,
+  syncMessage,
   onView,
   onDelete,
   onClear,
@@ -432,8 +703,8 @@ function JobMatchHistoryPanel({
           </h2>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-            History is stored locally in your browser for now. Database sync
-            will come later.
+            History is stored locally first. Signed-in users can also sync
+            job matches to their account.
           </p>
         </div>
 
@@ -447,6 +718,12 @@ function JobMatchHistoryPanel({
           </button>
         )}
       </div>
+
+      {syncMessage && (
+        <p className="mt-4 rounded-lg border border-gray-800 bg-black/30 p-3 text-sm leading-6 text-gray-300">
+          {syncMessage}
+        </p>
+      )}
 
       {matches.length ? (
         <div className="mt-5 grid gap-3">
@@ -473,6 +750,19 @@ function JobMatchHistoryPanel({
                           Viewing
                         </span>
                       )}
+
+                      {match.databaseId && (
+                        <span className="rounded-full border border-blue-500/30 px-2.5 py-1 text-xs font-semibold text-blue-100">
+                          Synced
+                        </span>
+                      )}
+
+                      {!match.databaseId &&
+                        match.syncStatus === "local-only" && (
+                          <span className="rounded-full border border-yellow-500/30 px-2.5 py-1 text-xs font-semibold text-yellow-100">
+                            Local
+                          </span>
+                        )}
                     </div>
 
                     <p className="mt-1 break-words text-sm text-gray-400">
@@ -945,6 +1235,80 @@ function getImpactClassName(
   return `${baseClassName} border-gray-700 bg-black/20`;
 }
 
+function getJobMatchSyncPresentation(
+  match: ActiveJobMatch,
+  syncStatus: JobMatchSyncStatus | null,
+  isConfigured: boolean,
+  isAuthLoading: boolean,
+  isSignedIn: boolean,
+): {
+  title: string;
+  message: string;
+  badge: string;
+  className: string;
+} {
+  const statusMatchesActive = !syncStatus?.databaseId ||
+    syncStatus.databaseId === match.databaseId;
+
+  if (match.databaseId && syncStatus?.status === "synced" && statusMatchesActive) {
+    return {
+      title: "Synced to account",
+      message: syncStatus.syncedAt
+        ? `${syncStatus.message} Last sync: ${formatAnalyzedAt(
+          syncStatus.syncedAt,
+        )}.`
+        : syncStatus.message,
+      badge: "Synced",
+      className: "border-green-500/30 bg-green-500/10",
+    };
+  }
+
+  if (match.databaseId) {
+    return {
+      title: "Synced to account",
+      message: "This job match is saved to your SkillMint account.",
+      badge: "Synced",
+      className: "border-green-500/30 bg-green-500/10",
+    };
+  }
+
+  if (syncStatus?.status === "local-only" && statusMatchesActive) {
+    return {
+      title: "Local only",
+      message: syncStatus.message,
+      badge: "Local",
+      className: "border-yellow-500/30 bg-yellow-500/10",
+    };
+  }
+
+  if (!isConfigured) {
+    return {
+      title: "Supabase not configured",
+      message:
+        "Job match saved locally. Add Supabase credentials to enable account sync.",
+      badge: "Local",
+      className: "border-yellow-500/30 bg-yellow-500/10",
+    };
+  }
+
+  if (!isAuthLoading && !isSignedIn) {
+    return {
+      title: "Not signed in",
+      message: "Job match saved locally. Sign in to save matches to your account.",
+      badge: "Local",
+      className: "border-yellow-500/30 bg-yellow-500/10",
+    };
+  }
+
+  return {
+    title: "Account sync",
+    message:
+      "Job match saved locally. Account sync will appear here when the save finishes.",
+    badge: "Local",
+    className: "border-gray-800 bg-neutral-900",
+  };
+}
+
 function readLatestJobMatch(): ActiveJobMatch | null {
   const storage = getBrowserStorage();
 
@@ -970,6 +1334,12 @@ function readLatestJobMatch(): ActiveJobMatch | null {
 
     return {
       id: isString(parsedValue.id) ? parsedValue.id : undefined,
+      databaseId: isString(parsedValue.databaseId)
+        ? parsedValue.databaseId
+        : undefined,
+      syncStatus: isJobMatchSyncState(parsedValue.syncStatus)
+        ? parsedValue.syncStatus
+        : undefined,
       jobTitle: getFallbackText(
         isString(parsedValue.jobTitle) ? parsedValue.jobTitle : "",
         "Untitled Role",
@@ -988,6 +1358,7 @@ function readLatestJobMatch(): ActiveJobMatch | null {
       rewritePlan: isResumeRewritePlan(parsedValue.rewritePlan)
         ? parsedValue.rewritePlan
         : null,
+      roadmap: parsedValue.roadmap,
       analyzedAt: isString(parsedValue.analyzedAt)
         ? parsedValue.analyzedAt
         : "",
@@ -1015,6 +1386,9 @@ function persistLatestJobMatch(match: ActiveJobMatch) {
         result: match.result,
         improvementPlan: match.improvementPlan,
         rewritePlan: match.rewritePlan,
+        roadmap: match.roadmap,
+        databaseId: match.databaseId,
+        syncStatus: match.syncStatus,
         analyzedAt: match.analyzedAt,
       }),
     );
@@ -1035,6 +1409,105 @@ function clearLatestJobMatch() {
   } catch {
     // Ignore storage failures.
   }
+}
+
+function readJobMatchSyncStatus(): JobMatchSyncStatus | null {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return null;
+  }
+
+  try {
+    const storedValue = storage.getItem(JD_MATCH_SYNC_STATUS_STORAGE_KEY);
+
+    if (!storedValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(storedValue);
+
+    return isJobMatchSyncStatus(parsedValue) ? parsedValue : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJobMatchSyncStatus(status: JobMatchSyncStatus): void {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(
+      JD_MATCH_SYNC_STATUS_STORAGE_KEY,
+      JSON.stringify(status),
+    );
+  } catch {
+    // Sync status is noncritical; the job match is already saved locally.
+  }
+}
+
+function mapPersistentJobMatchToSavedMatch(
+  jobMatch: PersistentJobMatch,
+): SavedJobMatch | null {
+  if (!isJobDescriptionMatchResult(jobMatch.matchResult)) {
+    return null;
+  }
+
+  return {
+    id: jobMatch.id,
+    jobTitle: getFallbackText(jobMatch.jobTitle ?? "", "Untitled Role"),
+    companyName: getFallbackText(
+      jobMatch.companyName ?? "",
+      "Unknown Company",
+    ),
+    jobDescription: jobMatch.jobDescription,
+    result: jobMatch.matchResult,
+    improvementPlan: isResumeImprovementPlan(jobMatch.improvementPlan)
+      ? jobMatch.improvementPlan
+      : null,
+    rewritePlan: isResumeRewritePlan(jobMatch.rewritePlan)
+      ? jobMatch.rewritePlan
+      : null,
+    roadmap: jobMatch.roadmap,
+    databaseId: jobMatch.id,
+    syncStatus: "synced",
+    analyzedAt: jobMatch.createdAt || new Date().toISOString(),
+  };
+}
+
+function getPersistedJobMatchId(
+  match: SavedJobMatch | undefined,
+): string | null {
+  if (!match) {
+    return null;
+  }
+
+  if (match.databaseId) {
+    return match.databaseId;
+  }
+
+  return isUuid(match.id) ? match.id : null;
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(value);
+}
+
+function getLocalOnlySyncMessage(error: string): string {
+  if (error.includes("Supabase is not configured")) {
+    return "Job match saved locally. Add Supabase credentials to enable account sync.";
+  }
+
+  if (error.includes("Sign in")) {
+    return "Job match saved locally. Sign in to save matches to your account.";
+  }
+
+  return error || "Job match saved locally. Database sync did not finish.";
 }
 
 function createSavedJobMatchId(analyzedAt: string): string {
@@ -1208,6 +1681,27 @@ function isResumeRewriteSuggestion(
     isStringArray(value.evidenceNeeded) &&
     isString(value.caution)
   );
+}
+
+function isJobMatchSyncStatus(
+  value: unknown,
+): value is JobMatchSyncStatus {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isJobMatchSyncState(value.status) &&
+    isString(value.message) &&
+    (value.syncedAt === undefined || isString(value.syncedAt)) &&
+    (value.databaseId === undefined || isString(value.databaseId))
+  );
+}
+
+function isJobMatchSyncState(
+  value: unknown,
+): value is JobMatchSyncStatus["status"] {
+  return value === "synced" || value === "local-only";
 }
 
 function isUserProfile(value: unknown): value is UserProfile {

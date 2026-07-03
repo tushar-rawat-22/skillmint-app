@@ -379,6 +379,8 @@ Sprint 6.3 Profile Persistence Foundation: Completed
 
 Sprint 6.4 Save Resume Analysis to Database: Completed
 
+Sprint 6.5 Persist ATS Matches, Rewrite Plans, and Roadmaps: Completed
+
 Next:
 
-Sprint 6.5 Save ATS/JD match history to database
+Sprint 6.6 User Account Dashboard + Sprint 6 QA Freeze
