@@ -1,43 +1,73 @@
 "use client";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import CareerIQCard from "@/components/dashboard/CareerIQCard";
-import ATSCard from "@/components/dashboard/ATSCard";
-import RecruiterConfidenceCard from "@/components/dashboard/RecruiterConfidenceCard";
-import SalaryCard from "@/components/dashboard/SalaryCard";
-import MissionCard from "@/components/dashboard/MissionCard";
-import QuickActions from "@/components/dashboard/QuickActions";
+import CareerReportHero from "@/components/dashboard/CareerReportHero";
+import MetricStrip from "@/components/dashboard/MetricStrip";
+import RealityCheckCard from "@/components/dashboard/RealityCheckCard";
 import CareerMatchCard from "@/components/dashboard/CareerMatchCard";
+import NextMissionsCard from "@/components/dashboard/NextMissionsCard";
+import ShareableCareerCard from "@/components/dashboard/ShareableCareerCard";
 
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 
 export default function DashboardPage() {
   const data = useCareerData();
+  const bestMatch = data.roleMatches[0];
+  const topImprovement = getTopImprovement(
+    data.missions,
+    data.recommendations,
+  );
 
   return (
     <DashboardLayout>
-      <DashboardHeader />
+      <div className="mx-auto max-w-7xl space-y-6">
+        <CareerReportHero
+          careerIQ={data.careerIQ}
+          bestMatch={bestMatch}
+          salary={data.salary}
+        />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <CareerIQCard score={data.careerIQ.score} />
+        <MetricStrip
+          ats={data.ats}
+          recruiter={data.recruiter}
+          bestMatch={bestMatch}
+          salary={data.salary}
+        />
 
-        <ATSCard score={data.ats.score} />
+        <RealityCheckCard
+          careerIQ={data.careerIQ}
+          ats={data.ats}
+          recruiter={data.recruiter}
+          roleMatches={data.roleMatches}
+          missions={data.missions}
+          recommendations={data.recommendations}
+          profile={data.profile}
+        />
 
-        <RecruiterConfidenceCard score={data.recruiter.score} />
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <CareerMatchCard matches={data.roleMatches} />
 
-        <SalaryCard salary={data.salary.salary} />
-      </div>
+          <NextMissionsCard
+            missions={data.missions}
+            recommendations={data.recommendations}
+          />
+        </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-2">
-        <MissionCard missions={data.missions} />
-
-        <QuickActions recommendations={data.recommendations} />
-      </div>
-
-      <div className="mt-8">
-        <CareerMatchCard matches={data.roleMatches} />
+        <ShareableCareerCard
+          careerIQ={data.careerIQ}
+          ats={data.ats}
+          recruiter={data.recruiter}
+          bestMatch={bestMatch}
+          topImprovement={topImprovement}
+        />
       </div>
     </DashboardLayout>
   );
+}
+
+function getTopImprovement(
+  missions: string[],
+  recommendations: string[],
+): string {
+  return [...missions, ...recommendations][0] ?? "Upload a resume";
 }
