@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import { AccountOverviewCard } from "@/modules/account";
 import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
 import SignOutButton from "@/modules/auth/components/SignOutButton";
 
@@ -16,6 +17,8 @@ export default function SettingsPage() {
 
         <section className="mt-8 space-y-4">
           <AuthStatusCard />
+
+          <AccountOverviewCard />
 
           <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
             <h2 className="text-xl font-bold">

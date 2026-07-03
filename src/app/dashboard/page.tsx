@@ -8,6 +8,7 @@ import CareerMatchCard from "@/components/dashboard/CareerMatchCard";
 import NextMissionsCard from "@/components/dashboard/NextMissionsCard";
 import ShareableCareerCard from "@/components/dashboard/ShareableCareerCard";
 
+import { AccountOverviewCard } from "@/modules/account";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 
 export default function DashboardPage() {
@@ -60,6 +61,8 @@ export default function DashboardPage() {
           bestMatch={bestMatch}
           topImprovement={topImprovement}
         />
+
+        <AccountOverviewCard />
       </div>
     </DashboardLayout>
   );
