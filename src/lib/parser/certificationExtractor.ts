@@ -1,9 +1,9 @@
-const EXPERIENCE_HEADINGS = [
-  "experience",
-  "work experience",
-  "internship",
-  "internships",
-  "professional experience",
+const CERTIFICATION_HEADINGS = [
+  "certifications",
+  "certification",
+  "licenses and certifications",
+  "licenses & certifications",
+  "courses",
 ];
 
 const MAJOR_SECTION_HEADINGS = [
@@ -11,31 +11,34 @@ const MAJOR_SECTION_HEADINGS = [
   "academic projects",
   "personal projects",
   "major projects",
+  "experience",
+  "work experience",
+  "internship",
+  "internships",
+  "professional experience",
   "education",
   "skills",
   "technical skills",
-  "certifications",
-  "certification",
   "achievements",
   "leadership",
   "summary",
   "profile",
 ];
 
-const EXPERIENCE_KEYWORD_PATTERN =
-  /\b(?:intern|internship|developer|engineer|freelancer|trainee)\b/i;
+const ISSUER_PATTERN =
+  /\b(?:aws|amazon|google|microsoft|meta|oracle|cisco|ibm|coursera|udemy|edx|nptel|infosys|tcs|salesforce|mongodb|docker|kubernetes|freecodecamp)\b/i;
 
-export function extractExperience(text: string): string[] {
+export function extractCertifications(text: string): string[] {
   if (!text.trim()) {
     return [];
   }
 
-  const sectionEntries = extractSectionEntries(text, EXPERIENCE_HEADINGS);
-  const keywordEntries = getLines(text)
+  const sectionEntries = extractSectionEntries(text, CERTIFICATION_HEADINGS);
+  const issuerEntries = getLines(text)
     .map(cleanEntry)
-    .filter((line) => line && EXPERIENCE_KEYWORD_PATTERN.test(line));
+    .filter((line) => line && ISSUER_PATTERN.test(line));
 
-  return uniqueEntries([...sectionEntries, ...keywordEntries]).slice(0, 8);
+  return uniqueEntries([...sectionEntries, ...issuerEntries]).slice(0, 8);
 }
 
 function extractSectionEntries(

@@ -7,6 +7,29 @@ import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 
+const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
+  skills: [],
+  projects: [],
+  education: [],
+  experience: [],
+  certifications: [],
+  links: {},
+  rawSections: {},
+};
+
+const LINK_LABELS = {
+  github: "GitHub",
+  linkedin: "LinkedIn",
+  portfolio: "Portfolio",
+  leetcode: "LeetCode",
+  codeforces: "Codeforces",
+  email: "Email",
+  phone: "Phone",
+} satisfies Record<
+  keyof ResumeAnalysisResult["parsedProfile"]["links"],
+  string
+>;
+
 export default function ResumePage() {
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredAnalysis,
@@ -98,6 +121,8 @@ export default function ResumePage() {
           />
         </section>
 
+        <ParsedResumeSections profile={analysis.parsedProfile} />
+
         <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -121,6 +146,138 @@ export default function ResumePage() {
         </section>
       </section>
     </main>
+  );
+}
+
+type ParsedResumeSectionsProps = {
+  profile: ResumeAnalysisResult["parsedProfile"];
+};
+
+function ParsedResumeSections({
+  profile,
+}: ParsedResumeSectionsProps) {
+  const links = getVisibleLinks(profile.links);
+
+  return (
+    <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <div>
+        <h2 className="text-xl font-bold">
+          Parsed Resume Sections
+        </h2>
+
+        <p className="mt-1 text-sm text-gray-400">
+          Rule-based signals detected from your extracted resume text.
+        </p>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <SectionPanel title="Skills">
+          {profile.skills.length ? (
+            <div className="flex flex-wrap gap-2">
+              {profile.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-200"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <EmptyDetection />
+          )}
+        </SectionPanel>
+
+        <SectionPanel title="Links">
+          {links.length ? (
+            <div className="flex flex-wrap gap-2">
+              {links.map((link) => (
+                <a
+                  key={`${link.label}-${link.value}`}
+                  href={link.href}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noreferrer" : undefined}
+                  className="rounded-full border border-gray-700 px-3 py-1 text-sm font-semibold text-gray-200 transition hover:border-green-500 hover:text-green-300"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <EmptyDetection />
+          )}
+        </SectionPanel>
+
+        <SectionPanel title="Projects">
+          <ParsedList items={profile.projects} />
+        </SectionPanel>
+
+        <SectionPanel title="Experience">
+          <ParsedList items={profile.experience} />
+        </SectionPanel>
+
+        <SectionPanel title="Education">
+          <ParsedList items={profile.education} />
+        </SectionPanel>
+
+        <SectionPanel title="Certifications">
+          <ParsedList items={profile.certifications} />
+        </SectionPanel>
+      </div>
+    </section>
+  );
+}
+
+type SectionPanelProps = {
+  title: string;
+  children: React.ReactNode;
+};
+
+function SectionPanel({
+  title,
+  children,
+}: SectionPanelProps) {
+  return (
+    <article className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-5">
+      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+        {title}
+      </h3>
+
+      <div className="mt-4">
+        {children}
+      </div>
+    </article>
+  );
+}
+
+type ParsedListProps = {
+  items: string[];
+};
+
+function ParsedList({ items }: ParsedListProps) {
+  if (!items.length) {
+    return <EmptyDetection />;
+  }
+
+  return (
+    <ul className="space-y-3 text-sm leading-6 text-gray-200">
+      {items.map((item) => (
+        <li
+          key={item}
+          className="break-words border-l border-green-500/40 pl-3"
+        >
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function EmptyDetection() {
+  return (
+    <p className="text-sm text-gray-500">
+      Not detected yet
+    </p>
   );
 }
 
@@ -197,9 +354,59 @@ function isResumeAnalysisResult(
     typeof analysis.fileType === "string" &&
     typeof analysis.fileSize === "number" &&
     typeof analysis.extractedText === "string" &&
+    isParsedResumeProfile(analysis.parsedProfile) &&
     typeof analysis.analyzedAt === "string" &&
     typeof analysis.status === "string"
   );
+}
+
+function isLegacyResumeAnalysisResult(
+  value: unknown,
+): value is Omit<ResumeAnalysisResult, "parsedProfile"> {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const analysis = value as Record<string, unknown>;
+
+  return (
+    typeof analysis.fileName === "string" &&
+    typeof analysis.fileType === "string" &&
+    typeof analysis.fileSize === "number" &&
+    typeof analysis.extractedText === "string" &&
+    typeof analysis.analyzedAt === "string" &&
+    typeof analysis.status === "string"
+  );
+}
+
+function isParsedResumeProfile(
+  value: unknown,
+): value is ResumeAnalysisResult["parsedProfile"] {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const profile = value as Record<string, unknown>;
+
+  return (
+    isStringArray(profile.skills) &&
+    isStringArray(profile.projects) &&
+    isStringArray(profile.education) &&
+    isStringArray(profile.experience) &&
+    isStringArray(profile.certifications) &&
+    isRecord(profile.links) &&
+    isRecord(profile.rawSections)
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) &&
+    value.every((item) => typeof item === "string");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" &&
+    !Array.isArray(value);
 }
 
 function subscribeToStoredAnalysis(
@@ -230,10 +437,68 @@ function parseStoredAnalysis(
   try {
     const parsedAnalysis = JSON.parse(storedAnalysis);
 
-    return isResumeAnalysisResult(parsedAnalysis)
-      ? parsedAnalysis
-      : null;
+    if (isResumeAnalysisResult(parsedAnalysis)) {
+      return parsedAnalysis;
+    }
+
+    if (isLegacyResumeAnalysisResult(parsedAnalysis)) {
+      return {
+        ...parsedAnalysis,
+        parsedProfile: EMPTY_PARSED_PROFILE,
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
+}
+
+type VisibleLink = {
+  label: string;
+  value: string;
+  href: string;
+  external: boolean;
+};
+
+function getVisibleLinks(
+  links: ResumeAnalysisResult["parsedProfile"]["links"],
+): VisibleLink[] {
+  return Object.entries(LINK_LABELS).flatMap(([key, label]) => {
+    const linkKey =
+      key as keyof ResumeAnalysisResult["parsedProfile"]["links"];
+    const value = links[linkKey];
+
+    if (!value) {
+      return [];
+    }
+
+    return [
+      {
+        label,
+        value,
+        href: getLinkHref(linkKey, value),
+        external: linkKey !== "email" && linkKey !== "phone",
+      },
+    ];
+  });
+}
+
+function getLinkHref(
+  key: keyof ResumeAnalysisResult["parsedProfile"]["links"],
+  value: string,
+): string {
+  if (key === "email") {
+    return `mailto:${value}`;
+  }
+
+  if (key === "phone") {
+    return `tel:${value.replace(/[^\d+]/g, "")}`;
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return `https://${value}`;
 }
