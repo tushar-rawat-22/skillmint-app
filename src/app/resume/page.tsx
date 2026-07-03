@@ -1,13 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import type { UserProfile } from "@/intelligence/types/profile";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import {
+  getLatestCurrentUserResumeAnalysis,
+  type PersistentResumeAnalysis,
+} from "@/modules/resume";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
+const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
 
 type ResumeAnalysisView = Omit<
   ResumeAnalysisResult,
@@ -15,6 +26,18 @@ type ResumeAnalysisView = Omit<
 > & {
   parsedProfile: ResumeAnalysisResult["parsedProfile"];
   userProfile?: UserProfile;
+};
+
+type ResumeSyncStatus = {
+  status: "synced" | "local-only";
+  message: string;
+  syncedAt?: string;
+  databaseId?: string;
+};
+
+type DatabaseLoadState = {
+  isLoading: boolean;
+  message: string | null;
 };
 
 const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
@@ -46,12 +69,121 @@ export default function ResumePage() {
     readStoredAnalysis,
     getServerSnapshot,
   );
+  const storedSyncStatus = useSyncExternalStore(
+    subscribeToStoredAnalysis,
+    readStoredSyncStatus,
+    getServerSnapshot,
+  );
   const analysis = useMemo(
     () => parseStoredAnalysis(storedAnalysis),
     [storedAnalysis],
   );
+  const syncStatus = useMemo(
+    () => parseStoredSyncStatus(storedSyncStatus),
+    [storedSyncStatus],
+  );
+  const {
+    user,
+    isConfigured,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const userId = user?.id ?? null;
+  const [databaseAnalysis, setDatabaseAnalysis] =
+    useState<ResumeAnalysisView | null>(null);
+  const [databaseLoadState, setDatabaseLoadState] =
+    useState<DatabaseLoadState>({
+      isLoading: false,
+      message: null,
+    });
+  const activeAnalysis = analysis ?? databaseAnalysis;
 
-  if (!analysis) {
+  useEffect(() => {
+    if (analysis || !isConfigured || isAuthLoading || !userId) {
+      return;
+    }
+
+    let isActive = true;
+    const timeoutId = window.setTimeout(() => {
+      void loadLatestResumeAnalysisFromDatabase();
+    }, 0);
+
+    async function loadLatestResumeAnalysisFromDatabase() {
+      if (!isActive) {
+        return;
+      }
+
+      setDatabaseLoadState({
+        isLoading: true,
+        message: null,
+      });
+
+      try {
+        const result = await getLatestCurrentUserResumeAnalysis();
+
+        if (!isActive) {
+          return;
+        }
+
+        if (!result.ok) {
+          setDatabaseLoadState({
+            isLoading: false,
+            message: result.error,
+          });
+          return;
+        }
+
+        if (!result.data) {
+          setDatabaseLoadState({
+            isLoading: false,
+            message: "No saved resume analysis found in your account yet.",
+          });
+          return;
+        }
+
+        const restoredAnalysis = mapPersistentResumeAnalysisToView(
+          result.data,
+        );
+
+        if (!restoredAnalysis) {
+          setDatabaseLoadState({
+            isLoading: false,
+            message:
+              "A saved resume analysis exists, but it is missing data needed for this report.",
+          });
+          return;
+        }
+
+        setDatabaseAnalysis(restoredAnalysis);
+        persistRestoredAnalysis(restoredAnalysis);
+        writeResumeSyncStatus({
+          status: "synced",
+          message: "Loaded latest resume analysis from your account.",
+          syncedAt: new Date().toISOString(),
+          databaseId: result.data.id,
+        });
+        setDatabaseLoadState({
+          isLoading: false,
+          message: "Loaded latest resume analysis from your account.",
+        });
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setDatabaseLoadState({
+          isLoading: false,
+          message: "Could not load the saved resume analysis right now.",
+        });
+      }
+    }
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [analysis, isAuthLoading, isConfigured, userId]);
+
+  if (!activeAnalysis) {
     return (
       <DashboardLayout>
         <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
@@ -68,6 +200,10 @@ export default function ResumePage() {
             snapshot.
           </p>
 
+          {(databaseLoadState.isLoading || databaseLoadState.message) && (
+            <ResumeDatabaseLoadNotice state={databaseLoadState} />
+          )}
+
           <Link
             href="/upload"
             className="mt-8 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
@@ -80,7 +216,7 @@ export default function ResumePage() {
   }
 
   const extractedTextPreview = getExtractedTextPreview(
-    analysis.extractedText,
+    activeAnalysis.extractedText,
   );
 
   return (
@@ -112,30 +248,36 @@ export default function ResumePage() {
         <section className="mt-10 grid gap-4 md:grid-cols-4">
           <SummaryItem
             label="File"
-            value={analysis.fileName}
+            value={activeAnalysis.fileName}
           />
 
           <SummaryItem
             label="Size"
-            value={formatFileSize(analysis.fileSize)}
+            value={formatFileSize(activeAnalysis.fileSize)}
           />
 
           <SummaryItem
             label="Analyzed"
-            value={formatAnalyzedDate(analysis.analyzedAt)}
+            value={formatAnalyzedDate(activeAnalysis.analyzedAt)}
           />
 
           <SummaryItem
             label="Status"
-            value={formatStatus(analysis.status)}
+            value={formatStatus(activeAnalysis.status)}
           />
         </section>
 
-        <ParsedResumeSections profile={analysis.parsedProfile} />
+        <ResumeSyncStatusCard
+          syncStatus={syncStatus}
+          databaseLoadState={databaseLoadState}
+          hasLocalAnalysis={Boolean(analysis)}
+        />
 
-        {analysis.userProfile && (
+        <ParsedResumeSections profile={activeAnalysis.parsedProfile} />
+
+        {activeAnalysis.userProfile && (
           <CareerIntelligenceReady
-            profile={analysis.userProfile}
+            profile={activeAnalysis.userProfile}
           />
         )}
 
@@ -147,12 +289,12 @@ export default function ResumePage() {
               </h2>
 
               <p className="mt-1 text-sm text-gray-400">
-                {analysis.fileType}
+                {activeAnalysis.fileType}
               </p>
             </div>
 
             <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">
-              {formatStatus(analysis.status)}
+              {formatStatus(activeAnalysis.status)}
             </span>
           </div>
 
@@ -162,6 +304,70 @@ export default function ResumePage() {
         </section>
       </section>
     </DashboardLayout>
+  );
+}
+
+type ResumeDatabaseLoadNoticeProps = {
+  state: DatabaseLoadState;
+};
+
+function ResumeDatabaseLoadNotice({
+  state,
+}: ResumeDatabaseLoadNoticeProps) {
+  return (
+    <div className="mt-6 w-full rounded-lg border border-gray-800 bg-neutral-900 p-4 text-left">
+      <p className="text-sm font-semibold text-gray-100">
+        Account resume backup
+      </p>
+
+      <p className="mt-2 text-sm leading-6 text-gray-400">
+        {state.isLoading
+          ? "Checking your account for the latest saved resume analysis."
+          : state.message}
+      </p>
+    </div>
+  );
+}
+
+type ResumeSyncStatusCardProps = {
+  syncStatus: ResumeSyncStatus | null;
+  databaseLoadState: DatabaseLoadState;
+  hasLocalAnalysis: boolean;
+};
+
+function ResumeSyncStatusCard({
+  syncStatus,
+  databaseLoadState,
+  hasLocalAnalysis,
+}: ResumeSyncStatusCardProps) {
+  const presentation = getResumeSyncPresentation(
+    syncStatus,
+    databaseLoadState,
+    hasLocalAnalysis,
+  );
+
+  return (
+    <section
+      className={`mt-6 rounded-lg border p-5 ${presentation.className}`}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {presentation.title}
+          </p>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-300">
+            {presentation.message}
+          </p>
+        </div>
+
+        {presentation.badge && (
+          <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-200">
+            {presentation.badge}
+          </span>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -390,6 +596,70 @@ function SummaryItem({
   );
 }
 
+function getResumeSyncPresentation(
+  syncStatus: ResumeSyncStatus | null,
+  databaseLoadState: DatabaseLoadState,
+  hasLocalAnalysis: boolean,
+): {
+  title: string;
+  message: string;
+  badge: string | null;
+  className: string;
+} {
+  if (databaseLoadState.isLoading) {
+    return {
+      title: "Account sync",
+      message: "Checking account resume backup...",
+      badge: "Checking",
+      className: "border-gray-800 bg-neutral-900",
+    };
+  }
+
+  if (databaseLoadState.message && !hasLocalAnalysis) {
+    const restored =
+      databaseLoadState.message.includes("Loaded latest resume analysis");
+
+    return {
+      title: "Account sync",
+      message: databaseLoadState.message,
+      badge: restored ? "Synced" : "Notice",
+      className: restored
+        ? "border-green-500/30 bg-green-500/10"
+        : "border-yellow-500/30 bg-yellow-500/10",
+    };
+  }
+
+  if (syncStatus?.status === "synced") {
+    return {
+      title: "Synced to account",
+      message: syncStatus.syncedAt
+        ? `${syncStatus.message} Last sync: ${formatAnalyzedDate(
+          syncStatus.syncedAt,
+        )}.`
+        : syncStatus.message,
+      badge: "Synced",
+      className: "border-green-500/30 bg-green-500/10",
+    };
+  }
+
+  if (syncStatus?.status === "local-only") {
+    return {
+      title: "Local only",
+      message: syncStatus.message,
+      badge: "Local",
+      className: "border-yellow-500/30 bg-yellow-500/10",
+    };
+  }
+
+  return {
+    title: "Resume storage",
+    message:
+      "Latest resume is saved locally. Signed-in users are saved to their account after analysis.",
+    badge: null,
+    className: "border-gray-800 bg-neutral-900",
+  };
+}
+
 function getExtractedTextPreview(extractedText: string): string {
   const normalizedText = extractedText.trim();
 
@@ -405,6 +675,10 @@ function getExtractedTextPreview(extractedText: string): string {
 }
 
 function formatFileSize(fileSize: number): string {
+  if (!Number.isFinite(fileSize) || fileSize <= 0) {
+    return "Unknown";
+  }
+
   return `${(fileSize / 1024 / 1024).toFixed(2)} MB`;
 }
 
@@ -547,6 +821,11 @@ function readStoredAnalysis(): string | null {
   return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
 }
 
+function readStoredSyncStatus(): string | null {
+  return getBrowserStorage()?.getItem(RESUME_SYNC_STATUS_STORAGE_KEY) ??
+    null;
+}
+
 function getServerSnapshot(): null {
   return null;
 }
@@ -591,6 +870,101 @@ function parseStoredAnalysis(
     return null;
   } catch {
     return null;
+  }
+}
+
+function parseStoredSyncStatus(
+  storedSyncStatus: string | null,
+): ResumeSyncStatus | null {
+  if (!storedSyncStatus) {
+    return null;
+  }
+
+  try {
+    const parsedStatus = JSON.parse(storedSyncStatus);
+
+    return isResumeSyncStatus(parsedStatus) ? parsedStatus : null;
+  } catch {
+    return null;
+  }
+}
+
+function isResumeSyncStatus(
+  value: unknown,
+): value is ResumeSyncStatus {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const status = value as Record<string, unknown>;
+
+  return (
+    (status.status === "synced" || status.status === "local-only") &&
+    typeof status.message === "string" &&
+    (
+      status.syncedAt === undefined ||
+      typeof status.syncedAt === "string"
+    ) &&
+    (
+      status.databaseId === undefined ||
+      typeof status.databaseId === "string"
+    )
+  );
+}
+
+function mapPersistentResumeAnalysisToView(
+  resumeAnalysis: PersistentResumeAnalysis,
+): ResumeAnalysisView | null {
+  if (!resumeAnalysis.fileName || !resumeAnalysis.fileType) {
+    return null;
+  }
+
+  const userProfile = isUserProfile(resumeAnalysis.userProfile)
+    ? resumeAnalysis.userProfile
+    : undefined;
+
+  return {
+    fileName: resumeAnalysis.fileName,
+    fileType: resumeAnalysis.fileType,
+    fileSize: 0,
+    extractedText: resumeAnalysis.extractedText ?? "",
+    parsedProfile: isParsedResumeProfile(resumeAnalysis.parsedProfile)
+      ? resumeAnalysis.parsedProfile
+      : EMPTY_PARSED_PROFILE,
+    ...(userProfile ? { userProfile } : {}),
+    analyzedAt: resumeAnalysis.createdAt,
+    status: "completed",
+  };
+}
+
+function persistRestoredAnalysis(analysis: ResumeAnalysisView): void {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(RESUME_ANALYSIS_STORAGE_KEY, JSON.stringify(analysis));
+  } catch {
+    return;
+  }
+}
+
+function writeResumeSyncStatus(status: ResumeSyncStatus): void {
+  const storage = getBrowserStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(
+      RESUME_SYNC_STATUS_STORAGE_KEY,
+      JSON.stringify(status),
+    );
+  } catch {
+    return;
   }
 }
 

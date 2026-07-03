@@ -7,9 +7,21 @@ import UploadHero from "@/components/upload/UploadHero";
 import DropZone from "@/components/upload/DropZone";
 import FileCard from "@/components/upload/FileCard";
 import AnalysisProgress from "@/components/upload/AnalysisProgress";
-import { analyzeResume as runResumeAnalysis } from "@/lib/resume/analyzeResume";
+import {
+  analyzeResume as runResumeAnalysis,
+  type ResumeAnalysisResult,
+} from "@/lib/resume/analyzeResume";
+import { saveCurrentUserResumeAnalysis } from "@/modules/resume";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
+const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
+
+type ResumeSyncStatus = {
+  status: "synced" | "local-only";
+  message: string;
+  syncedAt?: string;
+  databaseId?: string;
+};
 
 export default function UploadPage() {
   const router = useRouter();
@@ -41,6 +53,8 @@ export default function UploadPage() {
         RESUME_ANALYSIS_STORAGE_KEY,
         JSON.stringify(result),
       );
+
+      await persistResumeSyncStatus(result);
 
       router.push("/resume");
     } catch (error) {
@@ -91,4 +105,61 @@ export default function UploadPage() {
       <AnalysisProgress loading={loading} />
     </main>
   );
+}
+
+async function persistResumeSyncStatus(
+  result: ResumeAnalysisResult,
+): Promise<void> {
+  try {
+    const saveResult = await saveCurrentUserResumeAnalysis({
+      fileName: result.fileName,
+      fileType: result.fileType,
+      extractedText: result.extractedText,
+      parsedProfile: result.parsedProfile,
+      userProfile: result.userProfile,
+    });
+
+    if (saveResult.ok) {
+      writeResumeSyncStatus({
+        status: "synced",
+        message: "Resume saved to your SkillMint account.",
+        syncedAt: new Date().toISOString(),
+        databaseId: saveResult.data.id,
+      });
+      return;
+    }
+
+    writeResumeSyncStatus({
+      status: "local-only",
+      message: getLocalOnlySyncMessage(saveResult.error),
+    });
+  } catch {
+    writeResumeSyncStatus({
+      status: "local-only",
+      message: "Resume analyzed locally. Database sync did not finish.",
+    });
+  }
+}
+
+function writeResumeSyncStatus(status: ResumeSyncStatus): void {
+  try {
+    localStorage.setItem(
+      RESUME_SYNC_STATUS_STORAGE_KEY,
+      JSON.stringify(status),
+    );
+  } catch {
+    // Sync status is noncritical; the resume analysis is already saved locally.
+  }
+}
+
+function getLocalOnlySyncMessage(error: string): string {
+  if (error.includes("Supabase is not configured")) {
+    return "Resume analyzed locally. Add Supabase credentials to enable account sync.";
+  }
+
+  if (error.includes("Sign in")) {
+    return "Resume analyzed locally. Sign in to save resume analyses to your account.";
+  }
+
+  return error || "Resume analyzed locally. Database sync did not finish.";
 }

@@ -377,6 +377,8 @@ Sprint 6.2 Auth Screens + Session Flow: Completed
 
 Sprint 6.3 Profile Persistence Foundation: Completed
 
+Sprint 6.4 Save Resume Analysis to Database: Completed
+
 Next:
 
-Sprint 6.4 Save resume analysis to database
+Sprint 6.5 Save ATS/JD match history to database

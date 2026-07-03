@@ -1,10 +1,10 @@
 # Supabase Setup
 
-**Status:** Sprint 6.3 foundation
+**Status:** Sprint 6.4 resume persistence foundation
 
-Sprint 6.1 added Supabase dependencies, client utilities, environment placeholders, and schema documentation. Sprint 6.3 adds the SQL schema file and basic profile persistence only.
+Sprint 6.1 added Supabase dependencies, client utilities, environment placeholders, and schema documentation. Sprint 6.3 added the SQL schema file and basic profile persistence. Sprint 6.4 saves resume analyses for signed-in users.
 
-Resume analysis, JD match history, ATS history, and roadmap persistence still come later. LocalStorage remains active until those migration units ship.
+JD match history, ATS history, and roadmap persistence still come later. LocalStorage remains active until those migration units ship.
 
 ---
 
@@ -92,11 +92,11 @@ To install it:
 6. Confirm the `profiles`, `resume_analyses`, `job_matches`, and `career_snapshots` tables exist.
 7. Confirm Row Level Security is enabled on all four tables.
 
-If the SQL has not been run yet, SkillMint should still load. The profile page will show a helpful table/schema error instead of crashing.
+If the SQL has not been run yet, SkillMint should still load. The profile and resume pages will show helpful table/schema errors instead of crashing.
 
 ---
 
-## Sprint 6.3 Behavior
+## Sprint 6.4 Behavior
 
 - Supabase packages are installed.
 - Browser and server client utilities exist.
@@ -104,7 +104,10 @@ If the SQL has not been run yet, SkillMint should still load. The profile page w
 - The app continues to work if Supabase env vars are empty.
 - LocalStorage remains active for resume analysis, JD matches, history, and roadmap inputs.
 - Signed-in users can save and load a basic profile row when the schema exists.
-- Resume analysis, JD matches, history, and roadmap data are not written to Supabase yet.
+- Signed-in users now attempt to save resume analyses to the `resume_analyses` table.
+- Uploads still save to `skillmint:resume-analysis` first and redirect normally if database sync is unavailable.
+- The resume page can restore the latest saved database resume analysis when localStorage is empty.
+- JD matches, history, and roadmap data are not written to Supabase yet.
 
 ---
 
@@ -112,6 +115,5 @@ If the SQL has not been run yet, SkillMint should still load. The profile page w
 
 Next units should add:
 
-- Database writes for resume analyses.
 - Database writes for JD matches.
 - Migration from localStorage history to persistent user records.
