@@ -30,14 +30,40 @@ export async function extractTextFromResume(
   const fileType = validateResumeFile(file);
 
   if (fileType === "txt") {
-    return file.text();
+    return normalizeExtractedText(await file.text());
   }
 
-  if (fileType === "pdf") {
-    return buildPlaceholderText("PDF", file.name);
+  return extractTextOnServer(file);
+}
+
+async function extractTextOnServer(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch("/api/resume/extract", {
+    method: "POST",
+    body: formData,
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      getErrorMessage(payload) ??
+        "Resume text extraction failed. Please try another file.",
+    );
   }
 
-  return buildPlaceholderText("DOCX", file.name);
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    typeof payload.extractedText !== "string"
+  ) {
+    throw new Error(
+      "Resume text extraction returned an invalid response.",
+    );
+  }
+
+  return payload.extractedText;
 }
 
 function validateResumeFile(file: File): SupportedResumeFileType {
@@ -81,12 +107,23 @@ function getSupportedFileType(
   return null;
 }
 
-function buildPlaceholderText(
-  label: "PDF" | "DOCX",
-  fileName: string,
-): string {
-  return [
-    `Temporary ${label} extraction placeholder for ${fileName}.`,
-    "SkillMint received this resume safely. Full browser-side text extraction for this format will be connected in a future sprint.",
-  ].join("\n\n");
+function normalizeExtractedText(text: string): string {
+  return text
+    .replace(/\r/g, "\n")
+    .replace(/\t/g, " ")
+    .replace(/[ \u00A0]{2,}/g, " ")
+    .replace(/\n[ \u00A0]+/g, "\n")
+    .replace(/[ \u00A0]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function getErrorMessage(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const error = (payload as Record<string, unknown>).error;
+
+  return typeof error === "string" ? error : null;
 }
