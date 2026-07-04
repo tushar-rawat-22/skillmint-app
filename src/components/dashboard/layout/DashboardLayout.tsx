@@ -11,7 +11,7 @@ export default function DashboardLayout({ children }: Props) {
     <div className="flex min-h-screen flex-col bg-neutral-950 text-white md:flex-row">
       <Sidebar />
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <Topbar />
 
         <main className="p-4 sm:p-6 lg:p-8">

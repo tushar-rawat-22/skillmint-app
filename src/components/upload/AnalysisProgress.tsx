@@ -5,37 +5,65 @@ type Props = {
 export default function AnalysisProgress({
   loading,
 }: Props) {
-
   if (!loading) return null;
 
   return (
-
     <section className="mx-auto mt-12 max-w-5xl">
+      <div className="overflow-hidden rounded-2xl border border-cyan-500/30 bg-neutral-950 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-300">
+              Resume Intelligence Builder
+            </p>
 
-      <div className="rounded-3xl border border-green-500 bg-green-500/10 p-10">
+            <h2 className="mt-3 text-2xl font-black">
+              Building your career signal
+            </h2>
 
-        <h2 className="text-2xl font-bold">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
+              SkillMint is extracting structure, reading proof signals, and
+              preparing your career intelligence dashboard. This may take a
+              few seconds.
+            </p>
+          </div>
 
-          Analyzing Resume...
-
-        </h2>
-
-        <div className="mt-8 h-3 overflow-hidden rounded-full bg-neutral-800">
-
-          <div className="h-full w-full animate-pulse bg-green-500" />
-
+          <span className="w-fit rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-100">
+            Processing
+          </span>
         </div>
 
-        <p className="mt-6 text-gray-300">
+        <div className="relative mt-7 overflow-hidden rounded-xl border border-neutral-800 bg-black/40 p-5">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent skillmint-scan-line" />
 
-          Parsing Resume
+          <div className="relative grid gap-3 md:grid-cols-4">
+            {[
+              "Resume received",
+              "Scanning resume structure",
+              "Building career intelligence",
+              "Preparing results",
+            ].map((step, index) => (
+              <div
+                key={step}
+                className="rounded-lg border border-neutral-800 bg-neutral-950/80 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-500/30 bg-cyan-500/10 text-xs font-black text-cyan-100">
+                    {index + 1}
+                  </span>
 
-        </p>
+                  <p className="text-sm font-semibold text-neutral-100">
+                    {step}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
+        <div className="mt-5 h-1 overflow-hidden rounded-full bg-neutral-800">
+          <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 skillmint-indeterminate-bar" />
+        </div>
       </div>
-
     </section>
-
   );
-
 }

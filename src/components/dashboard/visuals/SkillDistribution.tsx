@@ -17,7 +17,7 @@ export default function SkillDistribution({
   items,
 }: SkillDistributionProps) {
   return (
-    <article className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900 text-white">
+    <article className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/95 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
       <div className="border-b border-neutral-800 bg-black/20 p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -63,7 +63,7 @@ function GaugeCard({ item, percentage }: GaugeCardProps) {
   const tone = getGaugeTone(percentage);
 
   return (
-    <div className="min-w-0 bg-neutral-950 p-5">
+    <div className="min-w-0 bg-neutral-950 p-5 transition-colors duration-200 hover:bg-neutral-900/80">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="truncate text-sm font-bold">
@@ -106,6 +106,7 @@ function GaugeCard({ item, percentage }: GaugeCardProps) {
             strokeDasharray={`${percentage} ${100 - percentage}`}
             strokeLinecap="round"
             strokeWidth="14"
+            className="motion-safe:transition-[stroke-dasharray] motion-safe:duration-700 motion-safe:ease-out"
           />
 
           <line
@@ -121,6 +122,7 @@ function GaugeCard({ item, percentage }: GaugeCardProps) {
               transformBox: "fill-box",
               transformOrigin: "50% 100%",
             }}
+            className="motion-safe:transition-transform motion-safe:duration-700 motion-safe:ease-out"
           />
 
           <circle

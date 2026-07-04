@@ -132,7 +132,7 @@ export default function FeedbackWidget() {
           role="dialog"
           aria-modal="false"
           aria-labelledby="beta-feedback-title"
-          className="mb-3 w-[calc(100vw-2rem)] max-w-md rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-white shadow-2xl shadow-black/40"
+          className="skillmint-fade-in mb-3 w-[calc(100vw-2rem)] max-w-md rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-white shadow-2xl shadow-black/40"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -253,7 +253,7 @@ export default function FeedbackWidget() {
       <button
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="rounded-full border border-green-500/40 bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-xl shadow-black/30 transition hover:bg-green-500"
+        className="rounded-full border border-emerald-500/40 bg-neutral-950/95 px-5 py-3 text-sm font-bold text-emerald-100 shadow-xl shadow-black/30 transition-colors duration-200 hover:border-emerald-400 hover:bg-neutral-900 hover:text-white"
       >
         Feedback
       </button>

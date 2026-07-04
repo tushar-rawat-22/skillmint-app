@@ -21,3 +21,71 @@ body {
 button {
   cursor: pointer;
 }
+
+@keyframes skillmint-scan {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(320%);
+    opacity: 0;
+  }
+}
+
+@keyframes skillmint-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(240%);
+  }
+}
+
+@keyframes skillmint-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skillmint-scan-line {
+    animation: skillmint-scan 1.45s ease-in-out infinite;
+  }
+
+  .skillmint-indeterminate-bar {
+    animation: skillmint-indeterminate 1.25s ease-in-out infinite;
+  }
+
+  .skillmint-fade-in {
+    animation: skillmint-fade-in 160ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .skillmint-scan-line,
+  .skillmint-indeterminate-bar,
+  .skillmint-fade-in {
+    animation: none;
+  }
+}

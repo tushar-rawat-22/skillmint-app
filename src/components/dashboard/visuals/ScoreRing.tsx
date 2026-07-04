@@ -19,7 +19,7 @@ export default function ScoreRing({
     CIRCUMFERENCE - (normalizedScore / 100) * CIRCUMFERENCE;
 
   return (
-    <article className="rounded-lg border border-neutral-800 bg-neutral-900 p-6 text-white">
+    <article className="rounded-lg border border-neutral-800 bg-neutral-900/95 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors duration-200 hover:border-neutral-700">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
         <div className="relative h-40 w-40 shrink-0">
           <svg
@@ -46,6 +46,7 @@ export default function ScoreRing({
               strokeWidth="12"
               strokeDasharray={CIRCUMFERENCE}
               strokeDashoffset={strokeOffset}
+              className="motion-safe:transition-[stroke-dashoffset] motion-safe:duration-700 motion-safe:ease-out"
             />
           </svg>
 

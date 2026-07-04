@@ -17,7 +17,7 @@ export default function ScoreBars({
   items,
 }: ScoreBarsProps) {
   return (
-    <article className="rounded-lg border border-neutral-800 bg-neutral-900 p-6 text-white">
+    <article className="rounded-lg border border-neutral-800 bg-neutral-900/95 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors duration-200 hover:border-neutral-700">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
         {title}
       </p>
@@ -52,7 +52,7 @@ export default function ScoreBars({
                 <div
                   className={`h-full rounded-full ${getToneClassName(
                     item.tone,
-                  )}`}
+                  )} motion-safe:transition-[width] motion-safe:duration-700 motion-safe:ease-out`}
                   style={{ width: `${normalizedValue}%` }}
                 />
               </div>

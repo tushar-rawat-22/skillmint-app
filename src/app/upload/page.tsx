@@ -94,9 +94,15 @@ export default function UploadPage() {
             </button>
 
             {error && (
-              <p className="mx-auto mt-4 max-w-xl text-sm text-red-300">
-                {error}
-              </p>
+              <div className="mx-auto mt-5 max-w-xl rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-left">
+                <p className="text-sm font-bold text-red-100">
+                  Analysis failed
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-red-200/80">
+                  {error}
+                </p>
+              </div>
             )}
           </div>
         </>

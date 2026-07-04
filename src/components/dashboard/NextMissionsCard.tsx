@@ -12,7 +12,7 @@ export default function NextMissionsCard({
   const supportingActions = actions.slice(1);
 
   return (
-    <section className="flex h-full flex-col rounded-lg border border-neutral-800 bg-neutral-900 text-white">
+    <section className="flex h-full flex-col rounded-lg border border-neutral-800 bg-neutral-900/95 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
       <div className="border-b border-neutral-800 bg-black/20 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
           Next Missions
@@ -28,10 +28,10 @@ export default function NextMissionsCard({
       </div>
 
       <div className="flex flex-1 flex-col p-6">
-        <article className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-5">
+        <article className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/80">
                 Primary Next Action
               </p>
 
@@ -40,7 +40,7 @@ export default function NextMissionsCard({
               </h3>
             </div>
 
-            <span className="shrink-0 rounded-full border border-emerald-500/30 bg-black/20 px-3 py-1 text-xs font-bold text-emerald-100">
+            <span className="shrink-0 rounded-full border border-violet-500/30 bg-black/20 px-3 py-1 text-xs font-bold text-violet-100">
               High impact
             </span>
           </div>
@@ -127,12 +127,12 @@ type MissionSignalProps = {
 
 function MissionSignal({ label, value }: MissionSignalProps) {
   return (
-    <div className="rounded-lg border border-emerald-500/20 bg-black/20 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300/70">
+    <div className="rounded-lg border border-violet-500/20 bg-black/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-300/70">
         {label}
       </p>
 
-      <p className="mt-2 text-sm leading-6 text-emerald-50/90">
+      <p className="mt-2 text-sm leading-6 text-violet-50/90">
         {value}
       </p>
     </div>

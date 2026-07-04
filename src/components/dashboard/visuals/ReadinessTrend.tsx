@@ -21,7 +21,7 @@ export default function ReadinessTrend({
     .join(" ");
 
   return (
-    <article className="rounded-lg border border-neutral-800 bg-neutral-900 p-6 text-white">
+    <article className="rounded-lg border border-neutral-800 bg-neutral-900/95 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors duration-200 hover:border-neutral-700">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
         Projected Readiness Path
       </p>
@@ -49,10 +49,11 @@ export default function ReadinessTrend({
           <polyline
             points={polylinePoints}
             fill="none"
-            stroke="rgb(52 211 153)"
+            stroke="rgb(167 139 250)"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="4"
+            className="motion-safe:transition-all motion-safe:duration-700 motion-safe:ease-out"
           />
 
           {points.map((point) => (
@@ -61,9 +62,10 @@ export default function ReadinessTrend({
                 cx={point.x}
                 cy={point.y}
                 r="5"
-                fill="rgb(16 185 129)"
+                fill="rgb(139 92 246)"
                 stroke="rgb(10 10 10)"
                 strokeWidth="3"
+                className="motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out"
               />
 
               <text
