@@ -1,13 +1,21 @@
 import type { SupabaseConfigStatus } from "./types";
 
-const SUPABASE_URL_ENV = "NEXT_PUBLIC_SUPABASE_URL";
-const SUPABASE_PUBLISHABLE_KEY_ENV =
-  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
-
 type SupabasePublicConfig = {
   url: string;
   publishableKey: string;
 };
+
+const SUPABASE_URL_ENV = "NEXT_PUBLIC_SUPABASE_URL";
+const SUPABASE_PUBLISHABLE_KEY_ENV =
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
+
+function getSupabaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
+}
+
+function getSupabasePublishableKey(): string {
+  return (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
+}
 
 export function getSupabaseConfigStatus(): SupabaseConfigStatus {
   const missingEnvVars = getMissingSupabaseEnvVars();
@@ -29,8 +37,8 @@ export function getSupabaseConfigStatus(): SupabaseConfigStatus {
 }
 
 export function getSupabasePublicConfig(): SupabasePublicConfig | null {
-  const url = getEnvValue(SUPABASE_URL_ENV);
-  const publishableKey = getEnvValue(SUPABASE_PUBLISHABLE_KEY_ENV);
+  const url = getSupabaseUrl();
+  const publishableKey = getSupabasePublishableKey();
 
   if (!url || !publishableKey) {
     return null;
@@ -48,14 +56,7 @@ export function isSupabaseConfigured(): boolean {
 
 function getMissingSupabaseEnvVars(): string[] {
   return [
-    [SUPABASE_URL_ENV, getEnvValue(SUPABASE_URL_ENV)],
-    [
-      SUPABASE_PUBLISHABLE_KEY_ENV,
-      getEnvValue(SUPABASE_PUBLISHABLE_KEY_ENV),
-    ],
+    [SUPABASE_URL_ENV, getSupabaseUrl()],
+    [SUPABASE_PUBLISHABLE_KEY_ENV, getSupabasePublishableKey()],
   ].flatMap(([envVarName, value]) => value ? [] : [envVarName]);
-}
-
-function getEnvValue(envVarName: string): string {
-  return (process.env[envVarName] ?? "").trim();
 }

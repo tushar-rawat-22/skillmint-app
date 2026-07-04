@@ -40,6 +40,14 @@ type DatabaseLoadState = {
   message: string | null;
 };
 
+type ExtractedTextPreview = {
+  text: string;
+  isTruncated: boolean;
+  fullLength: number;
+};
+
+const EXTRACTED_TEXT_PREVIEW_LIMIT = 900;
+
 const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
   skills: [],
   projects: [],
@@ -95,6 +103,8 @@ export default function ResumePage() {
       isLoading: false,
       message: null,
     });
+  const [showFullExtractedText, setShowFullExtractedText] =
+    useState(false);
   const activeAnalysis = analysis ?? databaseAnalysis;
 
   useEffect(() => {
@@ -228,6 +238,10 @@ export default function ResumePage() {
   const extractedTextPreview = getExtractedTextPreview(
     activeAnalysis.extractedText,
   );
+  const visibleExtractedText = showFullExtractedText
+    ? activeAnalysis.extractedText.trim() ||
+      "No extracted text was returned for this resume."
+    : extractedTextPreview.text;
 
   return (
     <DashboardLayout>
@@ -303,13 +317,42 @@ export default function ResumePage() {
               </p>
             </div>
 
-            <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">
-              {formatStatus(activeAnalysis.status)}
-            </span>
+            <div className="flex flex-wrap items-center gap-3">
+              {extractedTextPreview.isTruncated && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFullExtractedText((currentValue) =>
+                      !currentValue,
+                    );
+                  }}
+                  className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                >
+                  {showFullExtractedText ? "Show less" : "Show more"}
+                </button>
+              )}
+
+              <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">
+                {formatStatus(activeAnalysis.status)}
+              </span>
+            </div>
           </div>
 
+          <p className="mt-4 text-sm leading-6 text-gray-400">
+            {extractedTextPreview.isTruncated
+              ? "Showing preview only. Full extracted text is used for analysis."
+              : "Full extracted text is shown here and used for analysis."}
+          </p>
+
+          {extractedTextPreview.isTruncated && (
+            <p className="mt-2 text-xs text-gray-500">
+              Preview limited to {EXTRACTED_TEXT_PREVIEW_LIMIT.toLocaleString()}{" "}
+              of {extractedTextPreview.fullLength.toLocaleString()} characters.
+            </p>
+          )}
+
           <pre className="mt-6 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/40 p-5 text-sm leading-7 text-gray-200">
-            {extractedTextPreview}
+            {visibleExtractedText}
           </pre>
         </section>
       </section>
@@ -670,18 +713,32 @@ function getResumeSyncPresentation(
   };
 }
 
-function getExtractedTextPreview(extractedText: string): string {
+function getExtractedTextPreview(
+  extractedText: string,
+): ExtractedTextPreview {
   const normalizedText = extractedText.trim();
 
   if (!normalizedText) {
-    return "No extracted text was returned for this resume.";
+    return {
+      text: "No extracted text was returned for this resume.",
+      isTruncated: false,
+      fullLength: 0,
+    };
   }
 
-  if (normalizedText.length <= 900) {
-    return normalizedText;
+  if (normalizedText.length <= EXTRACTED_TEXT_PREVIEW_LIMIT) {
+    return {
+      text: normalizedText,
+      isTruncated: false,
+      fullLength: normalizedText.length,
+    };
   }
 
-  return `${normalizedText.slice(0, 900)}...`;
+  return {
+    text: `${normalizedText.slice(0, EXTRACTED_TEXT_PREVIEW_LIMIT)}...`,
+    isTruncated: true,
+    fullLength: normalizedText.length,
+  };
 }
 
 function formatFileSize(fileSize: number): string {
