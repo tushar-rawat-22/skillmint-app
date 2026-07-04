@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import {
@@ -39,6 +45,8 @@ const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 const JD_MATCH_SYNC_STATUS_STORAGE_KEY = "skillmint:jd-match-sync-status";
 const MIN_JOB_DESCRIPTION_LENGTH = 80;
+const JOB_DESCRIPTION_MIN_HEIGHT = 140;
+const JOB_DESCRIPTION_MAX_HEIGHT = 420;
 
 type ActiveJobMatch = {
   id?: string;
@@ -89,6 +97,7 @@ export default function ATSMatcherPage() {
   const [historySyncMessage, setHistorySyncMessage] = useState("");
   const [deleteSyncMessage, setDeleteSyncMessage] = useState("");
   const [hasLoadedLocalHistory, setHasLoadedLocalHistory] = useState(false);
+  const jobDescriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -102,6 +111,24 @@ export default function ATSMatcherPage() {
 
     return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    const textarea = jobDescriptionTextareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = `${JOB_DESCRIPTION_MIN_HEIGHT}px`;
+    const nextHeight = Math.min(
+      JOB_DESCRIPTION_MAX_HEIGHT,
+      Math.max(JOB_DESCRIPTION_MIN_HEIGHT, textarea.scrollHeight),
+    );
+
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > JOB_DESCRIPTION_MAX_HEIGHT ? "auto" : "hidden";
+  }, [jobDescription]);
 
   useEffect(() => {
     if (
@@ -493,12 +520,13 @@ export default function ATSMatcherPage() {
           </div>
 
           <textarea
+            ref={jobDescriptionTextareaRef}
             id="job-description"
             value={jobDescription}
             onChange={(event) => setJobDescription(event.target.value)}
-            rows={12}
+            rows={5}
             placeholder="Paste the full job description here..."
-            className="mt-5 min-h-72 w-full resize-y rounded-lg border border-gray-800 bg-black/40 p-4 text-sm leading-7 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+            className="mt-5 max-h-[420px] min-h-[140px] w-full resize-none rounded-lg border border-gray-800 bg-black/40 p-4 text-sm leading-7 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
           />
 
           {error && (

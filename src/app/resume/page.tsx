@@ -103,6 +103,7 @@ export default function ResumePage() {
       isLoading: false,
       message: null,
     });
+  const [showExtractedText, setShowExtractedText] = useState(false);
   const [showFullExtractedText, setShowFullExtractedText] =
     useState(false);
   const activeAnalysis = analysis ?? databaseAnalysis;
@@ -306,31 +307,31 @@ export default function ResumePage() {
         )}
 
         <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="text-xl font-bold">
-                Extracted Text Preview
+                Resume processed
               </h2>
 
-              <p className="mt-1 text-sm text-gray-400">
-                {activeAnalysis.fileType}
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+                Extraction details are summarized here. Raw extracted text is
+                hidden by default because the full text is already used for
+                parsing and scoring.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {extractedTextPreview.isTruncated && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowFullExtractedText((currentValue) =>
-                      !currentValue,
-                    );
-                  }}
-                  className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
-                >
-                  {showFullExtractedText ? "Show less" : "Show more"}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowExtractedText((currentValue) => !currentValue);
+                }}
+                className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+              >
+                {showExtractedText
+                  ? "Hide extracted text"
+                  : "Show extracted text"}
+              </button>
 
               <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">
                 {formatStatus(activeAnalysis.status)}
@@ -338,22 +339,68 @@ export default function ResumePage() {
             </div>
           </div>
 
-          <p className="mt-4 text-sm leading-6 text-gray-400">
-            {extractedTextPreview.isTruncated
-              ? "Showing preview only. Full extracted text is used for analysis."
-              : "Full extracted text is shown here and used for analysis."}
-          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <ExtractionDetail
+              label="File type"
+              value={activeAnalysis.fileType}
+            />
 
-          {extractedTextPreview.isTruncated && (
-            <p className="mt-2 text-xs text-gray-500">
-              Preview limited to {EXTRACTED_TEXT_PREVIEW_LIMIT.toLocaleString()}{" "}
-              of {extractedTextPreview.fullLength.toLocaleString()} characters.
-            </p>
+            <ExtractionDetail
+              label="Extraction status"
+              value={formatStatus(activeAnalysis.status)}
+            />
+
+            <ExtractionDetail
+              label="Text length"
+              value={formatCharacterCount(extractedTextPreview.fullLength)}
+            />
+
+            <ExtractionDetail
+              label="Analysis input"
+              value="Full text used"
+            />
+          </div>
+
+          {showExtractedText && (
+            <>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-gray-400">
+                  {extractedTextPreview.isTruncated &&
+                    !showFullExtractedText
+                    ? "Showing preview only. Full extracted text is used for analysis."
+                    : "Full extracted text is used for analysis."}
+                </p>
+
+                {extractedTextPreview.isTruncated && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFullExtractedText((currentValue) =>
+                        !currentValue,
+                      );
+                    }}
+                    className="w-fit rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                  >
+                    {showFullExtractedText ? "Show less" : "Show more"}
+                  </button>
+                )}
+              </div>
+
+              {extractedTextPreview.isTruncated &&
+                !showFullExtractedText && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Preview limited to{" "}
+                    {EXTRACTED_TEXT_PREVIEW_LIMIT.toLocaleString()} of{" "}
+                    {extractedTextPreview.fullLength.toLocaleString()}{" "}
+                    characters.
+                  </p>
+                )}
+
+              <pre className="mt-5 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/40 p-5 text-sm leading-7 text-gray-200">
+                {visibleExtractedText}
+              </pre>
+            </>
           )}
-
-          <pre className="mt-6 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/40 p-5 text-sm leading-7 text-gray-200">
-            {visibleExtractedText}
-          </pre>
         </section>
       </section>
     </DashboardLayout>
@@ -363,6 +410,25 @@ export default function ResumePage() {
 type ResumeDatabaseLoadNoticeProps = {
   state: DatabaseLoadState;
 };
+
+type ExtractionDetailProps = {
+  label: string;
+  value: string;
+};
+
+function ExtractionDetail({ label, value }: ExtractionDetailProps) {
+  return (
+    <div className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+        {label}
+      </p>
+
+      <p className="mt-2 truncate text-sm font-bold text-gray-100">
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function ResumeDatabaseLoadNotice({
   state,
@@ -766,6 +832,14 @@ function formatStatus(status: string): string {
   return status
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatCharacterCount(characterCount: number): string {
+  if (!Number.isFinite(characterCount) || characterCount <= 0) {
+    return "No text";
+  }
+
+  return `${characterCount.toLocaleString()} chars`;
 }
 
 function isResumeAnalysisResult(
