@@ -6,6 +6,35 @@ SkillMint is an AI-powered Career Operating System that helps students and profe
 
 Unlike traditional resume analyzers, SkillMint is designed as a continuous career intelligence platform. A resume is only the starting point—not the product.
 
+## Beta Quickstart
+
+SkillMint is a Next.js career cockpit for resume intelligence, JD matching, roadmaps, account persistence, and beta feedback.
+
+Local setup:
+
+```bash
+npm install
+npm run dev
+```
+
+Required environment variables:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Deployment and beta QA notes:
+
+- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Beta QA Checklist](docs/BETA_QA_CHECKLIST.md)
+
 ---
 
 # Vision
