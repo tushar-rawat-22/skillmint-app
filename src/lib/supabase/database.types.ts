@@ -111,6 +111,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      beta_feedback: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          feedback_type:
+            | "bug"
+            | "confusion"
+            | "ui"
+            | "idea"
+            | "other";
+          sentiment: "negative" | "neutral" | "positive";
+          message: string;
+          page_path: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          feedback_type:
+            | "bug"
+            | "confusion"
+            | "ui"
+            | "idea"
+            | "other";
+          sentiment: "negative" | "neutral" | "positive";
+          message: string;
+          page_path?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          feedback_type?:
+            | "bug"
+            | "confusion"
+            | "ui"
+            | "idea"
+            | "other";
+          sentiment?: "negative" | "neutral" | "positive";
+          message?: string;
+          page_path?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       career_snapshots: {
         Row: {
           id: string;

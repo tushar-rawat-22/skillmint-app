@@ -1,5 +1,6 @@
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { FeedbackWidget } from "@/modules/feedback";
 
 type Props = {
   children: React.ReactNode;
@@ -16,6 +17,8 @@ export default function DashboardLayout({ children }: Props) {
         <main className="p-4 sm:p-6 lg:p-8">
           {children}
         </main>
+
+        <FeedbackWidget />
       </div>
     </div>
   );
