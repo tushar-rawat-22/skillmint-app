@@ -46,7 +46,7 @@ export function saveFeedbackLocally(
   if (!storage) {
     return {
       ok: false,
-      error: "Feedback could not be saved locally in this browser.",
+      error: "Feedback could not be saved in this browser.",
     };
   }
 
@@ -79,7 +79,7 @@ export function saveFeedbackLocally(
   } catch {
     return {
       ok: false,
-      error: "Feedback could not be saved locally in this browser.",
+      error: "Feedback could not be saved in this browser.",
     };
   }
 }

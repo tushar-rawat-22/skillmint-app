@@ -13,8 +13,8 @@ export default function SettingsPage() {
           </h1>
 
           <p className="mt-4 max-w-2xl text-gray-400">
-            Check account sync, local fallback, and session status before beta
-            testing.
+            Manage account status, sign-out, and how SkillMint saves your
+            progress.
           </p>
         </div>
 
@@ -28,8 +28,8 @@ export default function SettingsPage() {
               </h2>
 
               <p className="mt-3 text-sm leading-6 text-gray-400">
-                Sign out here when testing account flows. Local resume and JD
-                workflows remain available after sign-out.
+                Sign out here when you are done. Resume, job match, and
+                roadmap flows still work in this browser after sign-out.
               </p>
 
               <div className="mt-5">
@@ -43,13 +43,13 @@ export default function SettingsPage() {
 
             <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
               <h2 className="text-xl font-bold">
-                Local-first safety
+                Works in this browser
               </h2>
 
               <p className="mt-3 text-sm leading-6 text-gray-400">
-                If account sync is unavailable, SkillMint keeps resume
-                analyses, job matches, roadmap data, and feedback in this
-                browser where supported.
+                If account sync is unavailable, SkillMint can still keep your
+                resume analyses, job matches, roadmap, and feedback in this
+                browser.
               </p>
             </article>
           </div>

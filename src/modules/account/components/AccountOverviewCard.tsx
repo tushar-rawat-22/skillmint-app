@@ -79,11 +79,11 @@ export default function AccountOverviewCard() {
     return (
       <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
-          Account Overview
+          Account Status
         </p>
 
         <h2 className="mt-4 text-xl font-bold text-white">
-          Checking account sync...
+          Checking account status...
         </h2>
       </article>
     );
@@ -93,7 +93,7 @@ export default function AccountOverviewCard() {
     return (
       <article className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-yellow-200/80">
-          Account Overview
+          Account Status
         </p>
 
         <h2 className="mt-4 text-xl font-bold text-yellow-50">
@@ -113,13 +113,13 @@ export default function AccountOverviewCard() {
     return (
       <article className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
         <AccountOverviewHeader
-          eyebrow="Account Overview"
+          eyebrow="Account Status"
           title="Account sync is unavailable"
           body={overview.message}
         />
 
         <p className="mt-4 text-sm leading-6 text-yellow-50/80">
-          Local resume, ATS, and roadmap workflows still work in this browser.
+          Resume, job match, and roadmap flows still work in this browser.
         </p>
       </article>
     );
@@ -129,7 +129,7 @@ export default function AccountOverviewCard() {
     return (
       <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
         <AccountOverviewHeader
-          eyebrow="Account Overview"
+          eyebrow="Account Status"
           title="Sign in to sync your account."
           body={overview.message}
         />
@@ -157,8 +157,8 @@ export default function AccountOverviewCard() {
     <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <AccountOverviewHeader
-          eyebrow="Account Overview"
-          title="Persistent account data"
+          eyebrow="Account Status"
+          title="Saved progress"
           body={overview.message}
         />
 

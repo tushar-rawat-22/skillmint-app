@@ -126,21 +126,21 @@ export default function TargetRoleSetupForm() {
     if (!isConfigured) {
       return {
         tone: "muted",
-        message: "Saved locally. Supabase environment variables are missing.",
+        message: "Saved in this browser. Sign in later after account sync is available.",
       };
     }
 
     if (isLoading) {
       return {
         tone: "muted",
-        message: "Saved locally. Account check is still loading.",
+        message: "Saved in this browser. Account check is still loading.",
       };
     }
 
     if (!user) {
       return {
         tone: "muted",
-        message: "Saved locally. Sign in to sync your account.",
+        message: "Saved in this browser. Sign in to save your progress.",
       };
     }
 
@@ -150,7 +150,7 @@ export default function TargetRoleSetupForm() {
       if (!profileResult.ok) {
         return {
           tone: "warning",
-          message: `Saved locally. Profile sync did not finish: ${profileResult.error}`,
+          message: `Saved in this browser. Profile sync did not finish: ${profileResult.error}`,
         };
       }
 
@@ -163,18 +163,18 @@ export default function TargetRoleSetupForm() {
       if (!syncResult.ok) {
         return {
           tone: "warning",
-          message: `Saved locally. Profile sync did not finish: ${syncResult.error}`,
+          message: `Saved in this browser. Profile sync did not finish: ${syncResult.error}`,
         };
       }
 
       return {
         tone: "success",
-        message: "Synced to profile.",
+        message: "Saved to your career profile.",
       };
     } catch {
       return {
         tone: "warning",
-        message: "Saved locally. Profile sync did not finish right now.",
+        message: "Saved in this browser. Profile sync did not finish right now.",
       };
     }
   }
@@ -191,35 +191,38 @@ export default function TargetRoleSetupForm() {
       >
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
-            Guided Setup
+            Your Career Direction
           </p>
 
           <h2 className="mt-4 text-2xl font-bold text-white">
-            Choose your direction
+            Tell SkillMint where you are aiming.
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
-            Choose the role and goal you are aiming for. This becomes your
-            career direction; it does not change scoring formulas.
+            Start with the role you want. The rest helps SkillMint pace your
+            next steps without changing your resume score.
           </p>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="mt-6">
           <TextField
             id="target-role"
-            label="Target role"
+            label="Your career direction"
             value={form.targetRole}
-            placeholder="Frontend Intern"
+            placeholder="Frontend Intern, Data Analyst, Backend Developer"
+            isPrimary
             onChange={(value) =>
               setForm({
                 ...form,
                 targetRole: value,
               })}
           />
+        </div>
 
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
           <SelectField
             id="experience-level"
-            label="Experience level"
+            label="Your level"
             value={form.experienceLevel}
             options={EXPERIENCE_LEVEL_OPTIONS}
             onChange={(value) =>
@@ -231,7 +234,7 @@ export default function TargetRoleSetupForm() {
 
           <SelectField
             id="primary-goal"
-            label="Primary goal"
+            label="Your goal"
             value={form.primaryGoal}
             options={PRIMARY_GOAL_OPTIONS}
             onChange={(value) =>
@@ -243,7 +246,7 @@ export default function TargetRoleSetupForm() {
 
           <SelectField
             id="preferred-job-type"
-            label="Preferred job type"
+            label="Role type"
             value={form.preferredJobType}
             options={PREFERRED_JOB_TYPE_OPTIONS}
             onChange={(value) =>
@@ -255,7 +258,7 @@ export default function TargetRoleSetupForm() {
 
           <SelectField
             id="weekly-time"
-            label="Weekly time commitment"
+            label="Your weekly pace"
             value={form.weeklyTimeCommitment}
             options={WEEKLY_TIME_OPTIONS}
             onChange={(value) =>
@@ -283,7 +286,7 @@ export default function TargetRoleSetupForm() {
           disabled={isSaving}
           className="mt-6 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-gray-300"
         >
-          {isSaving ? "Saving..." : "Save career setup"}
+          {isSaving ? "Saving..." : "Save direction"}
         </button>
       </form>
 
@@ -303,6 +306,7 @@ type TextFieldProps = {
   label: string;
   value: string;
   placeholder: string;
+  isPrimary?: boolean;
   onChange: (value: string) => void;
 };
 
@@ -311,6 +315,7 @@ function TextField({
   label,
   value,
   placeholder,
+  isPrimary = false,
   onChange,
 }: TextFieldProps) {
   return (
@@ -327,7 +332,9 @@ function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+        className={`mt-2 w-full rounded-lg border border-gray-800 bg-black/40 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500 ${
+          isPrimary ? "px-5 py-4 text-base" : "px-4 py-3 text-sm"
+        }`}
       />
     </div>
   );

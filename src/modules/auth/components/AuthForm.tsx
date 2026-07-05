@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
+import { clearSkillMintWorkspace } from "@/lib/storage/clearSkillMintWorkspace";
 
 type AuthFormProps = {
   mode: "login" | "signup";
@@ -74,15 +75,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
       return;
     }
 
+    clearSkillMintWorkspace();
+
     if (data.session) {
-      router.push("/dashboard");
+      router.push("/setup");
       router.refresh();
       return;
     }
 
-    setMessage(
-      "Account created. Check your email if confirmation is enabled, then log in.",
-    );
+    setMessage("Account created. Start by choosing your career direction.");
   }
 
   if (!configStatus.isConfigured) {

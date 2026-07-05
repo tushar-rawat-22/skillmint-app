@@ -53,7 +53,7 @@ export async function submitBetaFeedback(
   } catch {
     return {
       ok: false,
-      error: "Feedback saved locally. Account sync did not finish.",
+      error: "Feedback saved in this browser. Account save did not finish.",
     };
   }
 }
@@ -131,15 +131,15 @@ function getDatabaseErrorMessage(message: string): string {
       normalizedMessage.includes("schema cache")
     )
   ) {
-    return "Feedback saved locally. Run supabase/schema_v2_feedback.sql to enable account sync.";
+    return "Feedback saved in this browser. Run supabase/schema_v2_feedback.sql to enable account sync.";
   }
 
   if (
     normalizedMessage.includes("row-level security") ||
     normalizedMessage.includes("permission denied")
   ) {
-    return "Feedback saved locally. Supabase blocked feedback sync; check beta_feedback RLS policies.";
+    return "Feedback saved in this browser. Supabase blocked feedback sync; check beta_feedback RLS policies.";
   }
 
-  return message || "Feedback saved locally. Account sync did not finish.";
+  return message || "Feedback saved in this browser. Account save did not finish.";
 }

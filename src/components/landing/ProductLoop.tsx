@@ -4,34 +4,24 @@ import { ROUTES } from "@/constants/routes";
 
 const productLoopSteps = [
   {
-    title: "Set career direction",
+    title: "Setup",
     description:
       "Choose your target role, goal, experience level, and weekly pace.",
   },
   {
-    title: "Upload resume",
+    title: "Resume",
     description:
-      "SkillMint extracts your resume signals before showing scores.",
+      "Upload your resume so SkillMint can read the proof you already have.",
   },
   {
-    title: "Get career intelligence",
+    title: "Job Match",
     description:
-      "Review Career IQ, ATS readiness, recruiter confidence, and gaps.",
+      "Paste one job description to compare your resume against that role.",
   },
   {
-    title: "Match job descriptions",
+    title: "Roadmap",
     description:
-      "Paste one JD at a time to compare your resume against a specific role.",
-  },
-  {
-    title: "Generate roadmap",
-    description:
-      "Turn your profile and latest match into a practical 30/60/90-day plan.",
-  },
-  {
-    title: "Sync progress",
-    description:
-      "Create an account when you are ready to save analyses across sessions.",
+      "Build a focused 30/60/90-day plan from your direction, proof, and match.",
   },
 ];
 
@@ -53,7 +43,7 @@ export default function ProductLoop() {
 
           <p className="mt-5 text-base leading-7 text-gray-400">
             SkillMint starts with where you want to go, then uses your resume
-            and job descriptions to show the most useful next move.
+            and one job description at a time to show the most useful next move.
           </p>
         </div>
 
@@ -80,18 +70,18 @@ export default function ProductLoop() {
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href={ROUTES.SETUP}
+            href={ROUTES.SIGNUP}
             className="rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-500"
           >
-            Start Career Setup
+            Start Free
           </Link>
 
-          <Link
-            href={ROUTES.UPLOAD}
+          <a
+            href="#preview"
             className="rounded-xl border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
           >
-            Upload Resume
-          </Link>
+            See Preview
+          </a>
         </div>
       </div>
     </section>

@@ -209,7 +209,7 @@ export default function ATSMatcherPage() {
       <DashboardLayout>
         <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
-            JD Match
+            Match One Job
           </p>
 
           <h1 className="mt-5 text-4xl font-black md:text-5xl">
@@ -219,7 +219,7 @@ export default function ATSMatcherPage() {
           <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-400">
             SkillMint needs your latest resume intelligence before it can
             compare you against one specific job description. Setup is for
-            your overall career direction; ATS Match is for one pasted role.
+            your career direction; this page is for one pasted role.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -244,7 +244,7 @@ export default function ATSMatcherPage() {
 
   function handleAnalyzeMatch() {
     if (!userProfile) {
-      setError("Upload and analyze your resume before matching a JD.");
+      setError("Upload and analyze your resume before matching a job description.");
       setActiveMatch(null);
       return;
     }
@@ -384,7 +384,7 @@ export default function ATSMatcherPage() {
     } catch {
       markJobMatchLocalOnly(
         match,
-        "Job match saved locally. Database sync did not finish.",
+        "Job match saved in this browser. Account save did not finish.",
       );
     }
   }
@@ -432,7 +432,7 @@ export default function ATSMatcherPage() {
       setDeleteSyncMessage("Deleted synced job match from your account.");
     } catch {
       setDeleteSyncMessage(
-        "Deleted locally. Account delete did not finish right now.",
+        "Deleted in this browser. Account delete did not finish right now.",
       );
     }
   }
@@ -451,8 +451,8 @@ export default function ATSMatcherPage() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-gray-400">
-              Paste a single JD to compare your current resume against that
-              specific role. Use Setup for your broader career direction.
+              Paste one job description to compare your current resume against
+              that specific role. Use Setup for your broader career direction.
             </p>
           </div>
 
@@ -482,8 +482,8 @@ export default function ATSMatcherPage() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-gray-400">
-              Use the full JD: responsibilities, requirements, tools, and
-              qualifications.
+              Use the full job description: responsibilities, requirements,
+              tools, and qualifications.
             </p>
           </article>
 
@@ -493,8 +493,8 @@ export default function ATSMatcherPage() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-violet-50/80">
-              SkillMint saves the match locally, builds fixes, and can feed a
-              more job-specific roadmap.
+              SkillMint saves the match in this browser, builds fixes, and can
+              feed a more job-specific roadmap.
             </p>
           </article>
         </section>
@@ -510,7 +510,7 @@ export default function ATSMatcherPage() {
               </label>
 
               <p className="mt-1 text-sm text-gray-400">
-                Use the complete JD. Short snippets make the match less useful.
+                Use the complete job description. Short snippets make the match less useful.
               </p>
             </div>
 
@@ -777,7 +777,7 @@ function JobMatchHistoryPanel({
           </h2>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-            History is stored locally first. Signed-in users can also sync
+            History works in this browser first. Signed-in users can also save
             job matches to their account.
           </p>
         </div>
@@ -890,7 +890,7 @@ function JobMatchHistoryPanel({
         </div>
       ) : (
         <p className="mt-5 rounded-lg border border-gray-800 bg-black/30 p-4 text-sm text-gray-500">
-          Saved JD analyses will appear here after you run a match.
+          Saved job analyses will appear here after you run a match.
         </p>
       )}
     </section>
@@ -1348,9 +1348,9 @@ function getJobMatchSyncPresentation(
 
   if (syncStatus?.status === "local-only" && statusMatchesActive) {
     return {
-      title: "Local only",
+      title: "Saved in this browser",
       message: syncStatus.message,
-      badge: "Local",
+      badge: "Browser",
       className: "border-yellow-500/30 bg-yellow-500/10",
     };
   }
@@ -1359,8 +1359,8 @@ function getJobMatchSyncPresentation(
     return {
       title: "Account sync unavailable",
       message:
-        "Job match saved locally. Supabase environment variables are missing.",
-      badge: "Local",
+        "Job match saved in this browser. Account saving is unavailable.",
+      badge: "Browser",
       className: "border-yellow-500/30 bg-yellow-500/10",
     };
   }
@@ -1368,8 +1368,8 @@ function getJobMatchSyncPresentation(
   if (!isAuthLoading && !isSignedIn) {
     return {
       title: "Sign in to sync your account.",
-      message: "Job match saved locally. Sign in to sync matches to your account.",
-      badge: "Local",
+      message: "Job match saved in this browser. Sign in to save matches to your account.",
+      badge: "Browser",
       className: "border-yellow-500/30 bg-yellow-500/10",
     };
   }
@@ -1377,8 +1377,8 @@ function getJobMatchSyncPresentation(
   return {
     title: "Account sync",
     message:
-      "Job match saved locally. Account sync will appear here when the save finishes.",
-    badge: "Local",
+      "Job match saved in this browser. Account status will appear here when the save finishes.",
+    badge: "Browser",
     className: "border-gray-800 bg-neutral-900",
   };
 }
@@ -1520,7 +1520,7 @@ function writeJobMatchSyncStatus(status: JobMatchSyncStatus): void {
       JSON.stringify(status),
     );
   } catch {
-    // Sync status is noncritical; the job match is already saved locally.
+    // Sync status is noncritical; the job match is already saved in this browser.
   }
 }
 
@@ -1574,14 +1574,14 @@ function isUuid(value: string): boolean {
 
 function getLocalOnlySyncMessage(error: string): string {
   if (isMissingSupabaseConfigError(error)) {
-    return "Job match saved locally. Supabase environment variables are missing.";
+    return "Job match saved in this browser. Account saving is unavailable.";
   }
 
   if (error.includes("Sign in")) {
-    return "Job match saved locally. Sign in to sync your account.";
+    return "Job match saved in this browser. Sign in to save your progress.";
   }
 
-  return error || "Job match saved locally. Database sync did not finish.";
+  return error || "Job match saved in this browser. Account save did not finish.";
 }
 
 function isMissingSupabaseConfigError(error: string): boolean {

@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: "Do I need an account?",
-    a: "No. SkillMint works locally first. Sign in later if you want to sync your analyses and roadmap."
+    a: "No. SkillMint works in this browser first. Sign in when you want to save your analyses and roadmap."
   }
 ];
 

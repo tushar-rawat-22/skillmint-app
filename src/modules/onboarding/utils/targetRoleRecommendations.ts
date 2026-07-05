@@ -32,7 +32,7 @@ export function getTargetRoleRecommendation(
       nextActions: [
         "Upload your resume so SkillMint can find missing proof and keywords.",
         "Build one full-stack project with auth, database, REST APIs, and deployment.",
-        "Run ATS Match against one real internship or fresher JD before applying.",
+        "Run ATS Match against one real internship or fresher job description before applying.",
       ],
     };
   }

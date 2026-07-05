@@ -68,7 +68,7 @@ export default function AuthStatusCard() {
       </h2>
 
       <p className="mt-3 text-sm leading-6 text-gray-400">
-        SkillMint still works locally in this browser. Sign in when you want
+        SkillMint still works in this browser. Sign in when you want
         your profile, resume analyses, job matches, and roadmap to sync.
       </p>
 

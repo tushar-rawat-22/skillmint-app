@@ -1,23 +1,23 @@
 const features = [
   {
-    title: "Direction before scores",
+    title: "Clarity before scores",
     description:
-      "Choose your target role, experience level, goal, and weekly pace first.",
+      "Start with the role, level, goal, and weekly pace you are aiming for.",
   },
   {
-    title: "Resume intelligence",
+    title: "Resume proof gaps",
     description:
-      "Upload once to see extracted skills, projects, gaps, and readiness signals.",
+      "See where your projects, skills, links, and outcomes need stronger proof.",
   },
   {
-    title: "JD matching",
+    title: "One-job matching",
     description:
-      "Paste one real job description and see where your resume is competitive.",
+      "Paste one real job description and learn where your resume is competitive.",
   },
   {
-    title: "Roadmaps that stay practical",
+    title: "A practical roadmap",
     description:
-      "Turn the latest resume and JD match into focused 30/60/90-day actions.",
+      "Turn your direction, resume proof, and latest match into 30/60/90-day actions.",
   },
 ];
 
@@ -25,40 +25,39 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="mx-auto max-w-7xl px-6 py-28"
+      className="mx-auto max-w-7xl px-6 py-24"
     >
       <div className="mb-16 text-center">
 
-        <h2 className="text-5xl font-black">
-
-          Why SkillMint.
+        <h2 className="text-4xl font-black md:text-5xl">
+          What you get.
 
         </h2>
 
         <p className="mt-6 text-lg text-gray-400">
 
-          A simple operating system for students who need the next honest step.
+          Fewer vague suggestions. More clear proof, match, and action.
 
         </p>
 
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
 
         {features.map((feature) => (
 
           <div
             key={feature.title}
-            className="rounded-3xl border border-gray-200 bg-white p-10 shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl"
+            className="rounded-lg border border-gray-800 bg-neutral-900 p-6 transition duration-300 hover:border-green-500/40"
           >
 
-            <h3 className="text-3xl font-bold text-gray-950">
+            <h3 className="text-2xl font-bold text-white">
 
               {feature.title}
 
             </h3>
 
-            <p className="mt-6 text-lg leading-8 text-gray-600">
+            <p className="mt-4 text-sm leading-6 text-gray-400">
 
               {feature.description}
 

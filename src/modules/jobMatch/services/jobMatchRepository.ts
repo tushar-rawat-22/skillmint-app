@@ -271,15 +271,15 @@ function getDatabaseErrorMessage(message: string): string {
       normalizedMessage.includes("schema cache")
     )
   ) {
-    return "Job match saved locally. Database sync will work after Supabase schema is installed.";
+    return "Job match saved in this browser. Account save will work after Supabase schema is installed.";
   }
 
   if (
     normalizedMessage.includes("row-level security") ||
     normalizedMessage.includes("permission denied")
   ) {
-    return "Job match saved locally. Supabase blocked database sync; check the job_matches RLS policies.";
+    return "Job match saved in this browser. Supabase blocked database sync; check the job_matches RLS policies.";
   }
 
-  return message || "Job match saved locally. Database sync did not finish.";
+  return message || "Job match saved in this browser. Account save did not finish.";
 }

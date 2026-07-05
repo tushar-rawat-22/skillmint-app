@@ -111,7 +111,7 @@ export default function RoadmapPage() {
           setRoadmapSyncState({
             status: "local-only",
             message:
-              "Roadmap generated locally. Account sync will retry after your latest match is saved.",
+              "Roadmap built in this browser. Account save will retry after your latest match is saved.",
           });
         }
         return;
@@ -148,7 +148,7 @@ export default function RoadmapPage() {
         setRoadmapSyncState({
           status: "local-only",
           message:
-            "Roadmap generated locally. Account sync did not finish right now.",
+            "Roadmap built in this browser. Account save did not finish right now.",
         });
       }
     }
@@ -173,8 +173,8 @@ export default function RoadmapPage() {
             </h1>
 
             <p className="mt-4 text-gray-400">
-              Your roadmap is built from resume intelligence, career setup,
-              and latest job match when available.
+              Your roadmap is built from resume proof, career direction, and
+              your latest job match when available.
             </p>
           </div>
 
@@ -210,8 +210,8 @@ export default function RoadmapPage() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-gray-400">
-              Your 30/60/90-day plan built from your resume intelligence,
-              career direction, and latest job match when available.
+              Your 30/60/90-day plan built from resume proof, career direction,
+              and your latest job match when available.
             </p>
           </div>
 
@@ -232,7 +232,7 @@ export default function RoadmapPage() {
         {!latestJobMatch && (
           <section className="mt-8 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-5">
             <h2 className="text-lg font-bold text-yellow-100">
-              Paste a JD in ATS Match for a more targeted roadmap.
+              Add a job description for a more targeted roadmap.
             </h2>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-yellow-50/80">
@@ -352,12 +352,12 @@ function RoadmapSourceCard({
           </p>
 
           <h2 className="mt-3 text-xl font-bold text-white">
-            What this plan is based on
+            Your source signals
           </h2>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-            Your roadmap is built from your resume intelligence, career setup,
-            and latest job match when available.
+            SkillMint builds this plan from resume proof, career direction, and
+            the latest job match when available.
           </p>
         </div>
 
@@ -373,7 +373,7 @@ function RoadmapSourceCard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <SourceSignal
-          label="Resume intelligence"
+          label="Resume proof"
           value={hasResume ? "Available" : "Missing"}
           tone={hasResume ? "success" : "warning"}
         />
@@ -385,7 +385,7 @@ function RoadmapSourceCard({
         />
 
         <SourceSignal
-          label="Latest job match"
+          label="Job match"
           value={formatLatestJobMatchSource(latestJobMatch)}
           tone={latestJobMatch ? "success" : "warning"}
         />
@@ -872,14 +872,14 @@ function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
 
 function getRoadmapLocalOnlyMessage(error: string): string {
   if (isMissingSupabaseConfigError(error)) {
-    return "Roadmap generated locally. Supabase environment variables are missing.";
+    return "Roadmap built in this browser. Account saving is unavailable.";
   }
 
   if (error.includes("Sign in")) {
-    return "Roadmap generated locally. Sign in to sync your account.";
+    return "Roadmap built in this browser. Sign in to save your progress.";
   }
 
-  return error || "Roadmap generated locally. Account sync did not finish.";
+  return error || "Roadmap built in this browser. Account save did not finish.";
 }
 
 function isMissingSupabaseConfigError(error: string): boolean {

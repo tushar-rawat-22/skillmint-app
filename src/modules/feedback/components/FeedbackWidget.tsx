@@ -115,7 +115,7 @@ export default function FeedbackWidget() {
 
     if (localResult.ok) {
       setStatusTone("warning");
-      setStatusMessage("Saved locally. Sync will be added later.");
+      setStatusMessage("Saved in this browser. Account save will be added later.");
       setMessage("");
     } else {
       setStatusTone("error");

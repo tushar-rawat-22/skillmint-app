@@ -14,12 +14,12 @@ export default function SetupPage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-black md:text-5xl">
-              Set your career direction
+              Choose your career direction
             </h1>
 
             <p className="mt-4 max-w-2xl text-gray-400">
-              Choose your target role, experience level, and career goal. This
-              becomes the direction SkillMint uses to guide your next steps.
+              Pick the role, level, and goal you are aiming for. SkillMint uses
+              this as your direction before analyzing your resume.
             </p>
           </div>
 
@@ -40,39 +40,24 @@ export default function SetupPage() {
           </div>
         </div>
 
-        <section className="mt-8 grid gap-4 lg:grid-cols-3">
-          <article className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-green-100">
-              Setup is direction
-            </h2>
+        <section className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+          <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-green-400">
+            What this does
+          </h2>
 
-            <p className="mt-2 text-sm leading-6 text-green-50/80">
-              Define what you are aiming for before SkillMint suggests the
-              next best move.
+          <div className="mt-4 grid gap-3 text-sm leading-6 text-gray-300 md:grid-cols-3">
+            <p className="rounded-lg border border-gray-800 bg-black/30 p-4">
+              Sets your target role.
             </p>
-          </article>
 
-          <article className="rounded-lg border border-gray-800 bg-neutral-900 p-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-gray-400">
-              Resume is evidence
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-gray-400">
-              Upload your resume next so SkillMint can compare your direction
-              against real proof.
+            <p className="rounded-lg border border-gray-800 bg-black/30 p-4">
+              Personalizes your next steps.
             </p>
-          </article>
 
-          <article className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-blue-100">
-              ATS is job-specific
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-blue-50/80">
-              Paste one JD in ATS Match when you want to compare against a
-              specific opening.
+            <p className="rounded-lg border border-gray-800 bg-black/30 p-4">
+              Does not change your resume score.
             </p>
-          </article>
+          </div>
         </section>
 
         <div className="mt-8">

@@ -115,7 +115,7 @@ async function getCurrentAuthUser(): Promise<
   if (error || !data.user) {
     return {
       ok: false,
-      error: "Sign in to save your persistent SkillMint profile.",
+      error: "Sign in to save your SkillMint career profile.",
     };
   }
 

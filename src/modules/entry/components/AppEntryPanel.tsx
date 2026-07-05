@@ -62,7 +62,7 @@ export default function AppEntryPanel() {
           </p>
 
           <p className="mt-3 max-w-3xl text-xs leading-5 text-gray-500">
-            SkillMint works locally first. Sign in later to sync your resume
+            SkillMint works in this browser first. Sign in later to sync your resume
             analyses, job matches, and roadmap.
           </p>
         </div>
@@ -112,7 +112,7 @@ function getEntrySuggestion(state: EntryState): EntrySuggestion {
     return {
       href: ROUTES.ATS,
       label: "Match a Job Description",
-      title: "You have resume intelligence. Match a real JD next.",
+      title: "You have resume intelligence. Match a real job next.",
       body:
         "Paste a job description to see where you are competitive and what proof is still missing.",
     };
@@ -123,7 +123,7 @@ function getEntrySuggestion(state: EntryState): EntrySuggestion {
     label: "Open Roadmap",
     title: "Your job match is ready. Build the roadmap.",
     body:
-      "Turn your resume and latest JD match into a practical 30/60/90-day plan.",
+      "Turn your resume and latest job match into a practical 30/60/90-day plan.",
   };
 }
 

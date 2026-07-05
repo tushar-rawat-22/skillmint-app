@@ -209,15 +209,15 @@ function getDatabaseErrorMessage(message: string): string {
       normalizedMessage.includes("schema cache")
     )
   ) {
-    return "Resume analyzed locally. Database sync will work after Supabase schema is installed.";
+    return "Resume analyzed in this browser. Account save will work after Supabase schema is installed.";
   }
 
   if (
     normalizedMessage.includes("row-level security") ||
     normalizedMessage.includes("permission denied")
   ) {
-    return "Resume analyzed locally. Supabase blocked database sync; check the resume_analyses RLS policies.";
+    return "Resume analyzed in this browser. Supabase blocked database sync; check the resume_analyses RLS policies.";
   }
 
-  return message || "Resume analyzed locally. Database sync did not finish.";
+  return message || "Resume analyzed in this browser. Account save did not finish.";
 }

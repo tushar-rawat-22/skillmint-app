@@ -142,7 +142,7 @@ async function persistResumeSyncStatus(
   } catch {
     writeResumeSyncStatus({
       status: "local-only",
-      message: "Resume analyzed locally. Database sync did not finish.",
+      message: "Resume analyzed in this browser. Account save did not finish.",
     });
   }
 }
@@ -154,20 +154,20 @@ function writeResumeSyncStatus(status: ResumeSyncStatus): void {
       JSON.stringify(status),
     );
   } catch {
-    // Sync status is noncritical; the resume analysis is already saved locally.
+    // Sync status is noncritical; the resume analysis is already saved in this browser.
   }
 }
 
 function getLocalOnlySyncMessage(error: string): string {
   if (isMissingSupabaseConfigError(error)) {
-    return "Resume analyzed locally. Supabase environment variables are missing.";
+    return "Resume analyzed in this browser. Account saving is unavailable.";
   }
 
   if (error.includes("Sign in")) {
-    return "Resume analyzed locally. Sign in to sync your account.";
+    return "Resume analyzed in this browser. Sign in to save your progress.";
   }
 
-  return error || "Resume analyzed locally. Database sync did not finish.";
+  return error || "Resume analyzed in this browser. Account save did not finish.";
 }
 
 function isMissingSupabaseConfigError(error: string): boolean {

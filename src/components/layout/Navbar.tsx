@@ -16,32 +16,25 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
 
-          <Link
-            href={ROUTES.DASHBOARD}
+          <a
+            href="#preview"
             className="text-gray-300 transition hover:text-green-400"
           >
-            Dashboard Preview
-          </Link>
-
-          <Link
-            href={ROUTES.SETUP}
-            className="text-gray-300 transition hover:text-green-400"
-          >
-            Setup
-          </Link>
-
-          <Link
-            href={ROUTES.UPLOAD}
-            className="text-gray-300 transition hover:text-green-400"
-          >
-            Upload Resume
-          </Link>
+            Product Preview
+          </a>
 
           <a
-            href="#career-os"
+            href="#how-it-works"
             className="text-gray-300 transition hover:text-green-400"
           >
-            Career OS
+            How it works
+          </a>
+
+          <a
+            href="#features"
+            className="text-gray-300 transition hover:text-green-400"
+          >
+            What you get
           </a>
 
           <Link
@@ -54,10 +47,10 @@ export default function Navbar() {
         </nav>
 
         <Link
-          href={ROUTES.SETUP}
+          href={ROUTES.SIGNUP}
           className="hidden rounded-xl bg-green-600 px-5 py-2 font-semibold text-white transition hover:bg-green-500 md:block"
         >
-          Start Setup
+          Start Free
         </Link>
 
       </div>

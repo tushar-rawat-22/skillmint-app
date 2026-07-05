@@ -42,20 +42,20 @@ export function buildOnboardingSteps(
       id: "match-job-description",
       title: "Match a job description",
       description:
-        "Paste a real JD to learn where you are competitive and where proof is missing.",
+        "Paste a real job description to learn where you are competitive and where proof is missing.",
       href: "/ats",
       status: progress.hasJobMatch
         ? "complete"
         : progress.hasResumeAnalysis
           ? "active"
           : "locked",
-      cta: progress.hasJobMatch ? "Match another JD" : "Open ATS match",
+      cta: progress.hasJobMatch ? "Match another job" : "Open ATS match",
     },
     {
       id: "generate-roadmap",
       title: "Generate your roadmap",
       description:
-        "Turn your resume and latest JD match into a practical 30/60/90-day plan.",
+        "Turn your resume and latest job match into a practical 30/60/90-day plan.",
       href: "/roadmap",
       status: progress.hasRoadmap
         ? "complete"

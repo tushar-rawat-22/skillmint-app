@@ -99,7 +99,7 @@ export default function PersistentProfileForm() {
     return (
       <ProfileInfoCard
         title="Account sync is unavailable"
-        body="Supabase environment variables are missing. Local resume, ATS, and roadmap workflows still work in this browser."
+        body="Account saving is not available right now. Resume, job match, and roadmap flows still work in this browser."
       />
     );
   }
@@ -108,7 +108,7 @@ export default function PersistentProfileForm() {
     return (
       <ProfileInfoCard
         title="Checking account"
-        body="SkillMint is checking your current Supabase session."
+        body="SkillMint is checking whether your progress can be saved to your account."
       />
     );
   }
@@ -121,7 +121,7 @@ export default function PersistentProfileForm() {
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-gray-400">
-          SkillMint works locally without an account. Sign in to sync your
+          SkillMint works in this browser without an account. Sign in to sync your
           saved profile direction, resume analyses, job matches, and roadmap.
         </p>
 
@@ -151,16 +151,16 @@ export default function PersistentProfileForm() {
     >
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
-          Persistent Profile
+          Saved Career Profile
         </p>
 
         <h2 className="mt-4 text-xl font-bold">
-          Basic account profile
+          Save your direction
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-gray-400">
-          Save your core profile direction to Supabase. Career setup can update
-          target role and career goal without changing resume intelligence.
+          Keep your target role and career goal attached to your account.
+          Career setup can update these without changing resume intelligence.
         </p>
       </div>
 

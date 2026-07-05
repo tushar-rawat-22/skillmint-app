@@ -763,9 +763,9 @@ function getResumeSyncPresentation(
 
   if (syncStatus?.status === "local-only") {
     return {
-      title: "Local only",
+      title: "Saved in this browser",
       message: syncStatus.message,
-      badge: "Local",
+      badge: "Browser",
       className: "border-yellow-500/30 bg-yellow-500/10",
     };
   }
@@ -773,7 +773,7 @@ function getResumeSyncPresentation(
   return {
     title: "Resume storage",
     message:
-      "Latest resume is saved locally. Signed-in users are saved to their account after analysis.",
+      "Latest resume is saved in this browser. Signed-in users can save it to their account after analysis.",
     badge: null,
     className: "border-gray-800 bg-neutral-900",
   };
