@@ -1,3 +1,5 @@
+import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+
 const SKILLMINT_WORKSPACE_KEYS = [
   "skillmint:resume-analysis",
   "skillmint:resume-sync-status",
@@ -17,12 +19,19 @@ export function clearSkillMintWorkspace(): void {
     return;
   }
 
+  let didClearWorkspaceKey = false;
+
   for (const key of SKILLMINT_WORKSPACE_KEYS) {
     try {
       storage.removeItem(key);
+      didClearWorkspaceKey = true;
     } catch {
       continue;
     }
+  }
+
+  if (didClearWorkspaceKey) {
+    notifySkillMintWorkspaceUpdated();
   }
 }
 

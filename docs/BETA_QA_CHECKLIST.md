@@ -12,6 +12,7 @@ Use this checklist before inviting beta testers and after each production deploy
 ## 2. Auth Flow
 
 - Signup creates an account.
+- Signup clears old anonymous SkillMint workflow data from the same browser.
 - Email confirmation behavior matches Supabase Auth settings.
 - Login works after signup/confirmation.
 - Signed-out users can still access local-first flows where expected.
@@ -94,6 +95,7 @@ Use this checklist before inviting beta testers and after each production deploy
 ## 12. Activation And Paid Interest
 
 - Major app pages show a compact next best action.
+- Next best action refreshes in the same tab after setup, resume, job match, and roadmap updates.
 - Upgrade-interest buttons save local interest without opening payment.
 - Free beta language does not imply a hard paywall.
 - No paid entitlements or payment provider code is present.

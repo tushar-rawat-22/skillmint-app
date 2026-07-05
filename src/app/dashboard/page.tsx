@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useSyncExternalStore } from "react";
+
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import CareerReportHero from "@/components/dashboard/CareerReportHero";
 import MetricStrip from "@/components/dashboard/MetricStrip";
@@ -23,9 +25,27 @@ import {
 } from "@/modules/activation";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import { OnboardingChecklist } from "@/modules/onboarding";
+import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
+
+const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
+const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 
 export default function DashboardPage() {
+  const storedResume = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredResume,
+    getServerSnapshot,
+  );
+  const storedJobMatch = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredJobMatch,
+    getServerSnapshot,
+  );
   const data = useCareerData();
+  const hasUserProgress = useMemo(
+    () => hasValidResume(storedResume) || hasValidJobMatch(storedJobMatch),
+    [storedJobMatch, storedResume],
+  );
   const bestMatch = data.roleMatches[0];
   const topImprovement = getTopImprovement(
     data.missions,
@@ -118,17 +138,89 @@ export default function DashboardPage() {
           topImprovement={topImprovement}
         />
 
-        <UpgradeInterestCard
-          source="dashboard"
-          title="Want a deeper career plan?"
-          body="SkillMint is free during beta. Join paid-beta interest if you would pay for advanced proof reviews and stronger 30-day guidance."
-          cta="Join paid beta interest"
-        />
+        {hasUserProgress && (
+          <UpgradeInterestCard
+            source="dashboard"
+            title="Want a deeper career plan?"
+            body="SkillMint is free during beta. Join paid-beta interest if you would pay for advanced proof reviews and stronger 30-day guidance."
+            cta="Join paid beta interest"
+          />
+        )}
 
         <AccountOverviewCard />
       </div>
     </DashboardLayout>
   );
+}
+
+function subscribeToStoredData(onStoreChange: () => void): () => void {
+  return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
+}
+
+function readStoredResume(): string | null {
+  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+}
+
+function readStoredJobMatch(): string | null {
+  return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
+}
+
+function getServerSnapshot(): null {
+  return null;
+}
+
+function getBrowserStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function hasValidResume(storedValue: string | null): boolean {
+  const parsedValue = parseRecord(storedValue);
+
+  return Boolean(
+    parsedValue &&
+      (
+        typeof parsedValue.extractedText === "string" ||
+        isRecord(parsedValue.userProfile) ||
+        isRecord(parsedValue.parsedProfile)
+      ),
+  );
+}
+
+function hasValidJobMatch(storedValue: string | null): boolean {
+  const parsedValue = parseRecord(storedValue);
+
+  return Boolean(
+    parsedValue &&
+      isRecord(parsedValue.result) &&
+      typeof parsedValue.result.matchScore === "number",
+  );
+}
+
+function parseRecord(storedValue: string | null): Record<string, unknown> | null {
+  if (!storedValue) {
+    return null;
+  }
+
+  try {
+    const parsedValue = JSON.parse(storedValue);
+
+    return isRecord(parsedValue) ? parsedValue : null;
+  } catch {
+    return null;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" &&
+    !Array.isArray(value);
 }
 
 function getTopImprovement(

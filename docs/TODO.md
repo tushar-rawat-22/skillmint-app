@@ -409,6 +409,8 @@ Sprint 7.7 Beta UX Simplification + Landing Flow: Completed
 
 Sprint 7.8 Activation Funnel + Upgrade Interest + Documentation: Completed
 
+Sprint 7.9 Beta Freeze QA + UX Regression Fixes: Completed
+
 Next:
 
 Beta freeze QA, then beta freeze tag
