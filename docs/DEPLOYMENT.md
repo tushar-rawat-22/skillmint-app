@@ -42,6 +42,7 @@ Do not commit real values. Do not add service-role keys to the app or deployment
 
 - Run `npm run smoke:production` after deployment.
 - To test another deployment, run `SMOKE_BASE_URL=https://example.com npm run smoke:production`.
+- The smoke script checks `/api/health/config` for safe Supabase environment validation without exposing env values.
 - Landing page loads.
 - Signup works.
 - Login works.

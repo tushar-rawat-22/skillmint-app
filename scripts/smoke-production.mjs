@@ -17,23 +17,11 @@ const routes = [
   "/settings",
 ];
 
-const accountRoutes = new Set([
-  "/login",
-  "/signup",
-  "/profile",
-  "/settings",
-]);
-
-const forbiddenAccountCopy = [
-  "Supabase is not configured",
-  "Supabase environment variables are missing",
-  "Account sync is unavailable",
-  "Persistent profile storage is not configured",
-];
-
 let failures = 0;
 
 console.log(`Production smoke test: ${baseUrl}`);
+
+await checkHealthConfig();
 
 for (const route of routes) {
   const url = `${baseUrl}${route}`;
@@ -66,16 +54,59 @@ for (const route of routes) {
       continue;
     }
 
-    const forbiddenCopy = forbiddenAccountCopy.find((phrase) =>
-      html.includes(phrase),
+    console.log(`PASS ${route}`);
+  } catch (error) {
+    failures += 1;
+    console.error(
+      `FAIL ${route}: ${error instanceof Error ? error.message : "unknown error"}`,
     );
+  }
+}
 
-    if (accountRoutes.has(route) && forbiddenCopy) {
+async function checkHealthConfig() {
+  const route = "/api/health/config";
+  const url = `${baseUrl}${route}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/json",
+      },
+    });
+    const contentType = response.headers.get("content-type") ?? "";
+
+    if (response.status < 200 || response.status >= 300) {
+      failures += 1;
+      console.error(`FAIL ${route}: expected 2xx, received ${response.status}`);
+      return;
+    }
+
+    if (!contentType.includes("application/json")) {
       failures += 1;
       console.error(
-        `FAIL ${route}: account configuration warning found: "${forbiddenCopy}"`,
+        `FAIL ${route}: expected JSON, received ${contentType || "unknown"}`,
       );
-      continue;
+      return;
+    }
+
+    const payload = await response.json();
+
+    if (!isHealthConfigPayload(payload)) {
+      failures += 1;
+      console.error(`FAIL ${route}: response JSON has an unexpected shape`);
+      return;
+    }
+
+    if (!payload.supabaseConfigured) {
+      failures += 1;
+      const missingEnvVars = payload.missingEnvVars.length
+        ? payload.missingEnvVars.join(", ")
+        : "unknown";
+
+      console.error(
+        `FAIL ${route}: Supabase env is not configured. Missing: ${missingEnvVars}`,
+      );
+      return;
     }
 
     console.log(`PASS ${route}`);
@@ -85,6 +116,14 @@ for (const route of routes) {
       `FAIL ${route}: ${error instanceof Error ? error.message : "unknown error"}`,
     );
   }
+}
+
+function isHealthConfigPayload(value) {
+  return Boolean(value) &&
+    typeof value === "object" &&
+    typeof value.supabaseConfigured === "boolean" &&
+    Array.isArray(value.missingEnvVars) &&
+    value.missingEnvVars.every((item) => typeof item === "string");
 }
 
 if (failures > 0) {
