@@ -7,6 +7,7 @@ const SKILLMINT_WORKSPACE_KEYS = [
   "skillmint:target-role-setup",
   "skillmint:onboarding-dismissed",
   "skillmint:beta-feedback",
+  "skillmint:upgrade-interest",
 ] as const;
 
 export function clearSkillMintWorkspace(): void {

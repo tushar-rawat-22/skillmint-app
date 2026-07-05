@@ -10,6 +10,10 @@ const faqs = [
   {
     q: "Do I need an account?",
     a: "No. SkillMint works in this browser first. Sign in when you want to save your analyses and roadmap."
+  },
+  {
+    q: "Is SkillMint paid?",
+    a: "SkillMint is free during beta. Paid beta interest is only a signal for future deeper guidance, not a payment or paywall."
   }
 ];
 

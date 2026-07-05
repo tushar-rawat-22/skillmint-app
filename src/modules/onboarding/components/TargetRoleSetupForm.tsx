@@ -15,7 +15,9 @@ import {
   upsertCurrentUserProfile,
 } from "@/modules/profile/services/profileRepository";
 
-type TargetRoleSetupFormState = Omit<TargetRoleSetup, "updatedAt">;
+type TargetRoleSetupFormState = Omit<TargetRoleSetup, "updatedAt"> & {
+  careerField: NonNullable<TargetRoleSetup["careerField"]>;
+};
 
 type SyncStatus = {
   tone: "success" | "warning" | "muted";
@@ -24,11 +26,25 @@ type SyncStatus = {
 
 const DEFAULT_FORM: TargetRoleSetupFormState = {
   targetRole: "",
+  careerField: "tech_software",
   experienceLevel: "student",
   primaryGoal: "get_internship",
   preferredJobType: "not_sure",
   weeklyTimeCommitment: "medium",
 };
+
+const CAREER_FIELD_OPTIONS = [
+  ["tech_software", "Tech / Software"],
+  ["data_analytics", "Data / Analytics"],
+  ["sales_business_development", "Sales / Business Development"],
+  ["marketing_content", "Marketing / Content"],
+  ["finance_operations", "Finance / Operations"],
+  ["design_product", "Design / Product"],
+  ["other", "Other"],
+] satisfies Array<[
+  NonNullable<TargetRoleSetup["careerField"]>,
+  string,
+]>;
 
 const EXPERIENCE_LEVEL_OPTIONS = [
   ["student", "Student"],
@@ -81,6 +97,7 @@ export default function TargetRoleSetupForm() {
 
       setForm({
         targetRole: setup.targetRole,
+        careerField: setup.careerField ?? DEFAULT_FORM.careerField,
         experienceLevel: setup.experienceLevel,
         primaryGoal: setup.primaryGoal,
         preferredJobType: setup.preferredJobType,
@@ -220,6 +237,18 @@ export default function TargetRoleSetupForm() {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <SelectField
+            id="career-field"
+            label="Career field"
+            value={form.careerField}
+            options={CAREER_FIELD_OPTIONS}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                careerField: value,
+              })}
+          />
+
           <SelectField
             id="experience-level"
             label="Your level"
@@ -440,6 +469,7 @@ function getSyncStatusClassName(tone: SyncStatus["tone"]): string {
 function getReadableCareerGoal(setup: TargetRoleSetup): string {
   return [
     `Target role: ${setup.targetRole}`,
+    `Career field: ${formatOptionLabel(setup.careerField ?? "other")}`,
     `Experience level: ${formatOptionLabel(setup.experienceLevel)}`,
     `Primary goal: ${formatOptionLabel(setup.primaryGoal)}`,
     `Preferred job type: ${formatOptionLabel(setup.preferredJobType)}`,

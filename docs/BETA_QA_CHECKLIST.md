@@ -21,6 +21,7 @@ Use this checklist before inviting beta testers and after each production deploy
 
 - `/setup` loads.
 - Target role setup saves locally.
+- Career field saves locally without changing scoring.
 - Signed-in target role setup syncs to profile.
 - Failed profile sync does not block local save.
 
@@ -89,3 +90,10 @@ Use this checklist before inviting beta testers and after each production deploy
 - Roadmap explains whether it is using setup, resume intelligence, and the latest job match.
 - Landing dashboard visuals are labeled as product preview, not the user's real dashboard.
 - `npm run smoke:production` passes after redeploy.
+
+## 12. Activation And Paid Interest
+
+- Major app pages show a compact next best action.
+- Upgrade-interest buttons save local interest without opening payment.
+- Free beta language does not imply a hard paywall.
+- No paid entitlements or payment provider code is present.

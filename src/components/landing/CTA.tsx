@@ -19,6 +19,10 @@ export default function CTA() {
         matches, and roadmap as beta testing continues.
       </p>
 
+      <p className="mt-3 text-sm text-gray-500">
+        Free beta for now. Upgrade interest only helps shape future Pro guidance.
+      </p>
+
       <div className="mt-10 flex flex-wrap justify-center gap-3">
         <Link
           href={ROUTES.SIGNUP}

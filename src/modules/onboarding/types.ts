@@ -18,6 +18,14 @@ export interface OnboardingStep {
 
 export interface TargetRoleSetup {
   targetRole: string;
+  careerField?:
+    | "tech_software"
+    | "data_analytics"
+    | "sales_business_development"
+    | "marketing_content"
+    | "finance_operations"
+    | "design_product"
+    | "other";
   experienceLevel: "student" | "fresher" | "intern" | "junior" | "switcher";
   primaryGoal:
     | "get_internship"

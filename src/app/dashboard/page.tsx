@@ -17,6 +17,10 @@ import {
 } from "@/components/dashboard/visuals";
 
 import { AccountOverviewCard } from "@/modules/account";
+import {
+  NextBestActionPanel,
+  UpgradeInterestCard,
+} from "@/modules/activation";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import { OnboardingChecklist } from "@/modules/onboarding";
 
@@ -49,6 +53,8 @@ export default function DashboardPage() {
         />
 
         <OnboardingChecklist />
+
+        <NextBestActionPanel />
 
         <MetricStrip
           ats={data.ats}
@@ -110,6 +116,13 @@ export default function DashboardPage() {
           recruiter={data.recruiter}
           bestMatch={bestMatch}
           topImprovement={topImprovement}
+        />
+
+        <UpgradeInterestCard
+          source="dashboard"
+          title="Want a deeper career plan?"
+          body="SkillMint is free during beta. Join paid-beta interest if you would pay for advanced proof reviews and stronger 30-day guidance."
+          cta="Join paid beta interest"
         />
 
         <AccountOverviewCard />

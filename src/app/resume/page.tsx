@@ -11,6 +11,10 @@ import {
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import type { UserProfile } from "@/intelligence/types/profile";
+import {
+  NextBestActionPanel,
+  UpgradeInterestCard,
+} from "@/modules/activation";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   getLatestCurrentUserResumeAnalysis,
@@ -216,6 +220,8 @@ export default function ResumePage() {
             <ResumeDatabaseLoadNotice state={databaseLoadState} />
           )}
 
+          <NextBestActionPanel className="mt-8 text-left" />
+
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/setup"
@@ -270,6 +276,8 @@ export default function ResumePage() {
           </Link>
         </div>
 
+        <NextBestActionPanel className="mt-8" />
+
         <section className="mt-10 grid gap-4 md:grid-cols-4">
           <SummaryItem
             label="File"
@@ -305,6 +313,15 @@ export default function ResumePage() {
             profile={activeAnalysis.userProfile}
           />
         )}
+
+        <div className="mt-6">
+          <UpgradeInterestCard
+            source="resume"
+            title="Want Pro-level resume fixes?"
+            body="Free beta gives you the core proof report. Paid beta interest helps shape deeper bullet rewrites, proof reviews, and coaching-ready fixes."
+            cta="Unlock Pro fixes interest"
+          />
+        </div>
 
         <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

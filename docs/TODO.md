@@ -4,7 +4,7 @@
 
 **Status:** Active
 
-**Current Phase:** Architecture Freeze → MVP Development
+**Current Phase:** Beta Freeze QA → Closed Beta Preparation
 
 ---
 
@@ -355,11 +355,11 @@ If these outcomes are achieved, SkillMint delivers on its core promise.
 
 Architecture: ✅ Complete
 
-Implementation: ⏳ Ready to Begin
+Implementation: Production beta build active
 
-Target:
+Current target:
 
-**Private Beta → Public Launch**
+**Beta freeze QA → closed beta launch**
 
 ---
 
@@ -405,6 +405,10 @@ Sprint 7.6C Deployment Prep + Production Checklist: Completed
 
 Sprint 7.6E Production QA Fixes + Flow Clarity: Completed
 
+Sprint 7.7 Beta UX Simplification + Landing Flow: Completed
+
+Sprint 7.8 Activation Funnel + Upgrade Interest + Documentation: Completed
+
 Next:
 
-Production smoke test, then beta freeze tag
+Beta freeze QA, then beta freeze tag

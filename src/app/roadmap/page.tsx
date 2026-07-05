@@ -22,6 +22,11 @@ import type {
   ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
+import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import {
+  NextBestActionPanel,
+  UpgradeInterestCard,
+} from "@/modules/activation";
 import { updateCurrentUserJobMatchRoadmap } from "@/modules/jobMatch";
 import { TARGET_ROLE_SETUP_STORAGE_KEY } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 
@@ -184,6 +189,8 @@ export default function RoadmapPage() {
             latestJobMatch={latestJobMatch}
           />
 
+          <NextBestActionPanel className="mt-6" />
+
           <EmptyState
             eyebrow="Next Step"
             title="Analyze your resume to generate the roadmap."
@@ -229,6 +236,8 @@ export default function RoadmapPage() {
           latestJobMatch={latestJobMatch}
         />
 
+        <NextBestActionPanel className="mt-6" />
+
         {!latestJobMatch && (
           <section className="mt-8 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-5">
             <h2 className="text-lg font-bold text-yellow-100">
@@ -258,6 +267,15 @@ export default function RoadmapPage() {
         {roadmapSyncState && (
           <RoadmapSyncStatusCard state={roadmapSyncState} />
         )}
+
+        <div className="mt-6">
+          <UpgradeInterestCard
+            source="roadmap"
+            title="Want a guided 30-day sprint?"
+            body="SkillMint is free during beta. Paid beta interest helps shape deeper weekly missions, accountability, and advanced career plans."
+            cta="Join paid beta"
+          />
+        </div>
 
         <section className="mt-6 grid gap-4 lg:grid-cols-3">
           <PhaseSection phase={roadmap.thirtyDayPlan} />
@@ -865,6 +883,7 @@ function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
         roadmap,
       }),
     );
+    notifySkillMintWorkspaceUpdated();
   } catch {
     return;
   }

@@ -1,4 +1,5 @@
 import type { TargetRoleSetup } from "@/modules/onboarding/types";
+import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
 
 export const TARGET_ROLE_SETUP_STORAGE_KEY = "skillmint:target-role-setup";
 
@@ -33,6 +34,7 @@ export function saveTargetRoleSetup(setup: TargetRoleSetup): void {
 
   try {
     storage.setItem(TARGET_ROLE_SETUP_STORAGE_KEY, JSON.stringify(setup));
+    notifySkillMintWorkspaceUpdated();
   } catch {
     return;
   }
@@ -47,6 +49,7 @@ export function clearTargetRoleSetup(): void {
 
   try {
     storage.removeItem(TARGET_ROLE_SETUP_STORAGE_KEY);
+    notifySkillMintWorkspaceUpdated();
   } catch {
     return;
   }
@@ -59,12 +62,28 @@ function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
 
   return (
     isNonEmptyString(value.targetRole) &&
+    (
+      value.careerField === undefined ||
+      isCareerField(value.careerField)
+    ) &&
     isExperienceLevel(value.experienceLevel) &&
     isPrimaryGoal(value.primaryGoal) &&
     isPreferredJobType(value.preferredJobType) &&
     isWeeklyTimeCommitment(value.weeklyTimeCommitment) &&
     typeof value.updatedAt === "string"
   );
+}
+
+function isCareerField(
+  value: unknown,
+): value is NonNullable<TargetRoleSetup["careerField"]> {
+  return value === "tech_software" ||
+    value === "data_analytics" ||
+    value === "sales_business_development" ||
+    value === "marketing_content" ||
+    value === "finance_operations" ||
+    value === "design_product" ||
+    value === "other";
 }
 
 function isExperienceLevel(

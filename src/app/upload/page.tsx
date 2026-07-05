@@ -7,10 +7,12 @@ import UploadHero from "@/components/upload/UploadHero";
 import DropZone from "@/components/upload/DropZone";
 import FileCard from "@/components/upload/FileCard";
 import AnalysisProgress from "@/components/upload/AnalysisProgress";
+import { NextBestActionPanel } from "@/modules/activation";
 import {
   analyzeResume as runResumeAnalysis,
   type ResumeAnalysisResult,
 } from "@/lib/resume/analyzeResume";
+import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
 import { saveCurrentUserResumeAnalysis } from "@/modules/resume";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
@@ -53,6 +55,7 @@ export default function UploadPage() {
         RESUME_ANALYSIS_STORAGE_KEY,
         JSON.stringify(result),
       );
+      notifySkillMintWorkspaceUpdated();
 
       await persistResumeSyncStatus(result);
 
@@ -71,6 +74,10 @@ export default function UploadPage() {
   return (
     <main className="min-h-screen bg-black pb-24 text-white">
       <UploadHero />
+
+      <div className="mx-auto max-w-5xl px-6">
+        <NextBestActionPanel />
+      </div>
 
       <DropZone
         file={file}
@@ -153,6 +160,7 @@ function writeResumeSyncStatus(status: ResumeSyncStatus): void {
       RESUME_SYNC_STATUS_STORAGE_KEY,
       JSON.stringify(status),
     );
+    notifySkillMintWorkspaceUpdated();
   } catch {
     // Sync status is noncritical; the resume analysis is already saved in this browser.
   }

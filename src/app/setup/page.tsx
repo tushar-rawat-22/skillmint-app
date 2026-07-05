@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import { NextBestActionPanel } from "@/modules/activation";
 import { TargetRoleSetupForm } from "@/modules/onboarding";
 
 export default function SetupPage() {
@@ -55,10 +56,17 @@ export default function SetupPage() {
             </p>
 
             <p className="rounded-lg border border-gray-800 bg-black/30 p-4">
-              Does not change your resume score.
+              Does not change your resume score yet.
             </p>
           </div>
+
+          <p className="mt-4 text-sm leading-6 text-gray-400">
+            Choose your career field so SkillMint can frame your direction
+            better. This does not change your resume score yet.
+          </p>
         </section>
+
+        <NextBestActionPanel className="mt-6" />
 
         <div className="mt-8">
           <TargetRoleSetupForm />

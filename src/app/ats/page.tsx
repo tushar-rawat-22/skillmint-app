@@ -24,6 +24,11 @@ import {
   type ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
+import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import {
+  NextBestActionPanel,
+  UpgradeInterestCard,
+} from "@/modules/activation";
 import {
   clearSavedJobMatches,
   deleteSavedJobMatch,
@@ -237,6 +242,8 @@ export default function ATSMatcherPage() {
               Upload Resume
             </Link>
           </div>
+
+          <NextBestActionPanel className="mt-8 text-left" />
         </section>
       </DashboardLayout>
     );
@@ -464,6 +471,8 @@ export default function ATSMatcherPage() {
           </Link>
         </div>
 
+        <NextBestActionPanel className="mt-8" />
+
         <section className="mt-8 grid gap-4 lg:grid-cols-3">
           <article className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-blue-100">
@@ -592,6 +601,13 @@ export default function ATSMatcherPage() {
               isConfigured={isConfigured}
               isAuthLoading={isAuthLoading}
               isSignedIn={Boolean(userId)}
+            />
+
+            <UpgradeInterestCard
+              source="ats"
+              title="Want deeper job-match guidance?"
+              body="Free beta shows the core match, gaps, fixes, and rewrites. Paid beta interest helps shape deeper role-specific coaching."
+              cta="Get advanced career plan interest"
             />
           </>
         ) : (
@@ -1466,6 +1482,7 @@ function persistLatestJobMatch(match: ActiveJobMatch) {
         analyzedAt: match.analyzedAt,
       }),
     );
+    notifySkillMintWorkspaceUpdated();
   } catch {
     // Local storage failures should not block the user from seeing the result.
   }
@@ -1480,6 +1497,7 @@ function clearLatestJobMatch() {
 
   try {
     storage.removeItem(JD_MATCH_STORAGE_KEY);
+    notifySkillMintWorkspaceUpdated();
   } catch {
     // Ignore storage failures.
   }
@@ -1519,6 +1537,7 @@ function writeJobMatchSyncStatus(status: JobMatchSyncStatus): void {
       JD_MATCH_SYNC_STATUS_STORAGE_KEY,
       JSON.stringify(status),
     );
+    notifySkillMintWorkspaceUpdated();
   } catch {
     // Sync status is noncritical; the job match is already saved in this browser.
   }
