@@ -159,13 +159,23 @@ function writeResumeSyncStatus(status: ResumeSyncStatus): void {
 }
 
 function getLocalOnlySyncMessage(error: string): string {
-  if (error.includes("Supabase is not configured")) {
-    return "Resume analyzed locally. Add Supabase credentials to enable account sync.";
+  if (isMissingSupabaseConfigError(error)) {
+    return "Resume analyzed locally. Supabase environment variables are missing.";
   }
 
   if (error.includes("Sign in")) {
-    return "Resume analyzed locally. Sign in to save resume analyses to your account.";
+    return "Resume analyzed locally. Sign in to sync your account.";
   }
 
   return error || "Resume analyzed locally. Database sync did not finish.";
+}
+
+function isMissingSupabaseConfigError(error: string): boolean {
+  const normalizedError = error.toLowerCase();
+
+  return (
+    normalizedError.includes("supabase") &&
+    normalizedError.includes("environment variables") &&
+    normalizedError.includes("missing")
+  );
 }

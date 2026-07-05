@@ -98,8 +98,8 @@ export default function PersistentProfileForm() {
   if (!isConfigured) {
     return (
       <ProfileInfoCard
-        title="Persistent profile storage is not configured"
-        body="Add Supabase environment variables to enable profile persistence. Local resume, ATS, and roadmap workflows still work in this browser."
+        title="Account sync is unavailable"
+        body="Supabase environment variables are missing. Local resume, ATS, and roadmap workflows still work in this browser."
       />
     );
   }
@@ -117,12 +117,12 @@ export default function PersistentProfileForm() {
     return (
       <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
         <h2 className="text-xl font-bold">
-          Sign in to save your profile
+          Sign in to sync your account.
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-gray-400">
-          Basic profile persistence starts here. Career setup can also sync
-          target role and career goal when you are signed in.
+          SkillMint works locally without an account. Sign in to sync your
+          saved profile direction, resume analyses, job matches, and roadmap.
         </p>
 
         <div className="mt-5 flex flex-wrap gap-3">

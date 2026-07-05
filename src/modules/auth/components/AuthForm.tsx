@@ -89,7 +89,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
     return (
       <section className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
         <h2 className="text-xl font-bold text-yellow-100">
-          Supabase is not configured
+          Account sync is unavailable
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-yellow-50/80">

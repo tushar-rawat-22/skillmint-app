@@ -9,9 +9,9 @@ export default function CTA() {
       className="mx-auto max-w-5xl px-6 py-28 text-center"
     >
       <h2 className="text-5xl font-black">
-        Start with direction.
+        Start your beta career cockpit.
         <br />
-        Then upload your resume.
+        Direction first, resume next.
       </h2>
 
       <p className="mt-6 text-lg text-gray-400">

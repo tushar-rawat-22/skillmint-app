@@ -31,8 +31,7 @@ export function getSupabaseConfigStatus(): SupabaseConfigStatus {
   return {
     isConfigured: false,
     missingEnvVars,
-    message:
-      "Supabase is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to .env.local to enable auth.",
+    message: "Supabase environment variables are missing.",
   };
 }
 

@@ -162,7 +162,7 @@ async function getCurrentAuthUser(): Promise<
         isSignedIn: false,
         email: null,
         profileStatus: "unavailable",
-        message: "Sign in to view synced SkillMint account data.",
+        message: "Sign in to sync your account.",
       }),
     };
   }

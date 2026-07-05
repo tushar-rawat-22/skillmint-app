@@ -40,6 +40,8 @@ Do not commit real values. Do not add service-role keys to the app or deployment
 
 ## 5. Production Smoke Test Checklist
 
+- Run `npm run smoke:production` after deployment.
+- To test another deployment, run `SMOKE_BASE_URL=https://example.com npm run smoke:production`.
 - Landing page loads.
 - Signup works.
 - Login works.

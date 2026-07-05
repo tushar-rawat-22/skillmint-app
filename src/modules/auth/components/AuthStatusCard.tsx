@@ -15,11 +15,11 @@ export default function AuthStatusCard() {
         </p>
 
         <h2 className="mt-4 text-xl font-bold text-yellow-50">
-          Supabase is not configured
+          Account sync is unavailable
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-yellow-50/80">
-          {error}
+          {error ?? "Supabase environment variables are missing."}
         </p>
       </article>
     );
@@ -64,12 +64,12 @@ export default function AuthStatusCard() {
       </p>
 
       <h2 className="mt-4 text-xl font-bold text-white">
-        Not signed in
+        Sign in to sync your account.
       </h2>
 
       <p className="mt-3 text-sm leading-6 text-gray-400">
-        Sign in to prepare for persistent profile sync in upcoming Sprint 6
-        work.
+        SkillMint still works locally in this browser. Sign in when you want
+        your profile, resume analyses, job matches, and roadmap to sync.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-3">

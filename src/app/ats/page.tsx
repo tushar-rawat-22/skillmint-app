@@ -218,8 +218,8 @@ export default function ATSMatcherPage() {
 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-400">
             SkillMint needs your latest resume intelligence before it can
-            compare you against a specific job description. If you are still
-            choosing a direction, set that up first.
+            compare you against one specific job description. Setup is for
+            your overall career direction; ATS Match is for one pasted role.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -447,11 +447,12 @@ export default function ATSMatcherPage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-black md:text-5xl">
-              Job Description ATS Matcher
+              Match one job description against your resume
             </h1>
 
             <p className="mt-4 max-w-2xl text-gray-400">
-              Paste a JD and see whether your resume is actually ready.
+              Paste a single JD to compare your current resume against that
+              specific role. Use Setup for your broader career direction.
             </p>
           </div>
 
@@ -462,6 +463,41 @@ export default function ATSMatcherPage() {
             View Resume Analysis
           </Link>
         </div>
+
+        <section className="mt-8 grid gap-4 lg:grid-cols-3">
+          <article className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+            <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-blue-100">
+              What this does
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-blue-50/80">
+              Compares your resume intelligence with one job description at a
+              time.
+            </p>
+          </article>
+
+          <article className="rounded-lg border border-gray-800 bg-neutral-900 p-4">
+            <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-gray-400">
+              What to paste
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-gray-400">
+              Use the full JD: responsibilities, requirements, tools, and
+              qualifications.
+            </p>
+          </article>
+
+          <article className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-4">
+            <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-violet-100">
+              What comes next
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-violet-50/80">
+              SkillMint saves the match locally, builds fixes, and can feed a
+              more job-specific roadmap.
+            </p>
+          </article>
+        </section>
 
         <section className="mt-10 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1321,9 +1357,9 @@ function getJobMatchSyncPresentation(
 
   if (!isConfigured) {
     return {
-      title: "Supabase not configured",
+      title: "Account sync unavailable",
       message:
-        "Job match saved locally. Add Supabase credentials to enable account sync.",
+        "Job match saved locally. Supabase environment variables are missing.",
       badge: "Local",
       className: "border-yellow-500/30 bg-yellow-500/10",
     };
@@ -1331,8 +1367,8 @@ function getJobMatchSyncPresentation(
 
   if (!isAuthLoading && !isSignedIn) {
     return {
-      title: "Not signed in",
-      message: "Job match saved locally. Sign in to save matches to your account.",
+      title: "Sign in to sync your account.",
+      message: "Job match saved locally. Sign in to sync matches to your account.",
       badge: "Local",
       className: "border-yellow-500/30 bg-yellow-500/10",
     };
@@ -1537,15 +1573,25 @@ function isUuid(value: string): boolean {
 }
 
 function getLocalOnlySyncMessage(error: string): string {
-  if (error.includes("Supabase is not configured")) {
-    return "Job match saved locally. Add Supabase credentials to enable account sync.";
+  if (isMissingSupabaseConfigError(error)) {
+    return "Job match saved locally. Supabase environment variables are missing.";
   }
 
   if (error.includes("Sign in")) {
-    return "Job match saved locally. Sign in to save matches to your account.";
+    return "Job match saved locally. Sign in to sync your account.";
   }
 
   return error || "Job match saved locally. Database sync did not finish.";
+}
+
+function isMissingSupabaseConfigError(error: string): boolean {
+  const normalizedError = error.toLowerCase();
+
+  return (
+    normalizedError.includes("supabase") &&
+    normalizedError.includes("environment variables") &&
+    normalizedError.includes("missing")
+  );
 }
 
 function createSavedJobMatchId(analyzedAt: string): string {

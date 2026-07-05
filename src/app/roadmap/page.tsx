@@ -23,6 +23,7 @@ import type {
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
 import { updateCurrentUserJobMatchRoadmap } from "@/modules/jobMatch";
+import { TARGET_ROLE_SETUP_STORAGE_KEY } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
@@ -30,10 +31,17 @@ const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 type LatestJobMatch = {
   id?: string;
   databaseId?: string;
+  jobTitle?: string;
+  companyName?: string;
+  jobDescription?: string;
   result: JobDescriptionMatchResult;
   improvementPlan: ResumeImprovementPlan | null;
   rewritePlan: ResumeRewritePlan | null;
   roadmap?: unknown;
+};
+
+type RoadmapSetupSource = {
+  targetRole: string;
 };
 
 type RoadmapSyncState = {
@@ -52,6 +60,11 @@ export default function RoadmapPage() {
     readStoredJobMatch,
     getServerSnapshot,
   );
+  const storedSetup = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredSetup,
+    getServerSnapshot,
+  );
   const userProfile = useMemo(
     () => getStoredUserProfile(storedAnalysis),
     [storedAnalysis],
@@ -59,6 +72,10 @@ export default function RoadmapPage() {
   const latestJobMatch = useMemo(
     () => parseLatestJobMatch(storedJobMatch),
     [storedJobMatch],
+  );
+  const setupSource = useMemo(
+    () => parseSetupSource(storedSetup),
+    [storedSetup],
   );
   const [roadmapSyncState, setRoadmapSyncState] =
     useState<RoadmapSyncState | null>(null);
@@ -145,13 +162,36 @@ export default function RoadmapPage() {
   if (!userProfile || !roadmap) {
     return (
       <DashboardLayout>
-        <EmptyState
-          eyebrow="Career Roadmap"
-          title="Set direction and analyze your resume first."
-          body="Start with career setup if you are unsure where to aim, then upload your resume. Add an ATS match later for a more targeted roadmap."
-          href="/upload"
-          action="Upload Resume"
-        />
+        <section className="mx-auto max-w-6xl">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+              Career Roadmap
+            </p>
+
+            <h1 className="mt-4 text-4xl font-black md:text-5xl">
+              Build the missing source first.
+            </h1>
+
+            <p className="mt-4 text-gray-400">
+              Your roadmap is built from resume intelligence, career setup,
+              and latest job match when available.
+            </p>
+          </div>
+
+          <RoadmapSourceCard
+            hasResume={Boolean(userProfile)}
+            setupSource={setupSource}
+            latestJobMatch={latestJobMatch}
+          />
+
+          <EmptyState
+            eyebrow="Next Step"
+            title="Analyze your resume to generate the roadmap."
+            body="Setup gives SkillMint your direction, but resume intelligence is required before a truthful 30/60/90-day roadmap can be generated."
+            href="/upload"
+            action="Upload Resume"
+          />
+        </section>
       </DashboardLayout>
     );
   }
@@ -170,7 +210,8 @@ export default function RoadmapPage() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-gray-400">
-              Your 30/60/90-day plan to become more hire-ready.
+              Your 30/60/90-day plan built from your resume intelligence,
+              career direction, and latest job match when available.
             </p>
           </div>
 
@@ -181,6 +222,12 @@ export default function RoadmapPage() {
             Open ATS Match
           </Link>
         </div>
+
+        <RoadmapSourceCard
+          hasResume={Boolean(userProfile)}
+          setupSource={setupSource}
+          latestJobMatch={latestJobMatch}
+        />
 
         {!latestJobMatch && (
           <section className="mt-8 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-5">
@@ -258,7 +305,7 @@ function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
+    <section className="mx-auto mt-8 flex min-h-[38vh] max-w-3xl flex-col items-center justify-center rounded-lg border border-gray-800 bg-neutral-900 p-8 text-center">
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
         {eyebrow}
       </p>
@@ -284,6 +331,99 @@ function EmptyState({
 type RoadmapSyncStatusCardProps = {
   state: RoadmapSyncState;
 };
+
+type RoadmapSourceCardProps = {
+  hasResume: boolean;
+  setupSource: RoadmapSetupSource | null;
+  latestJobMatch: LatestJobMatch | null;
+};
+
+function RoadmapSourceCard({
+  hasResume,
+  setupSource,
+  latestJobMatch,
+}: RoadmapSourceCardProps) {
+  return (
+    <section className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+            Roadmap Source
+          </p>
+
+          <h2 className="mt-3 text-xl font-bold text-white">
+            What this plan is based on
+          </h2>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+            Your roadmap is built from your resume intelligence, career setup,
+            and latest job match when available.
+          </p>
+        </div>
+
+        {!latestJobMatch && (
+          <Link
+            href="/ats"
+            className="w-fit rounded-lg border border-blue-500/40 px-4 py-2 text-sm font-semibold text-blue-100 transition hover:border-blue-300"
+          >
+            Add job match
+          </Link>
+        )}
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <SourceSignal
+          label="Resume intelligence"
+          value={hasResume ? "Available" : "Missing"}
+          tone={hasResume ? "success" : "warning"}
+        />
+
+        <SourceSignal
+          label="Career direction"
+          value={setupSource?.targetRole ?? "Not set"}
+          tone={setupSource ? "success" : "warning"}
+        />
+
+        <SourceSignal
+          label="Latest job match"
+          value={formatLatestJobMatchSource(latestJobMatch)}
+          tone={latestJobMatch ? "success" : "warning"}
+        />
+      </div>
+
+      {!latestJobMatch && (
+        <p className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm leading-6 text-yellow-50/80">
+          Add a job description in ATS Match to make this roadmap more
+          job-specific.
+        </p>
+      )}
+    </section>
+  );
+}
+
+type SourceSignalProps = {
+  label: string;
+  value: string;
+  tone: "success" | "warning";
+};
+
+function SourceSignal({ label, value, tone }: SourceSignalProps) {
+  const toneClassName = tone === "success"
+    ? "border-green-500/30 bg-green-500/10 text-green-100"
+    : "border-yellow-500/30 bg-yellow-500/10 text-yellow-100";
+
+  return (
+    <div className={`min-w-0 rounded-lg border p-4 ${toneClassName}`}>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
+        {label}
+      </p>
+
+      <p className="mt-2 break-words text-sm font-bold">
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function RoadmapSyncStatusCard({ state }: RoadmapSyncStatusCardProps) {
   const isSynced = state.status === "synced";
@@ -571,6 +711,10 @@ function readStoredJobMatch(): string | null {
   return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
 }
 
+function readStoredSetup(): string | null {
+  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
+}
+
 function getServerSnapshot(): null {
   return null;
 }
@@ -631,6 +775,15 @@ function parseLatestJobMatch(
       databaseId: isString(parsedJobMatch.databaseId)
         ? parsedJobMatch.databaseId
         : getDatabaseIdFromLegacyId(parsedJobMatch.id),
+      jobTitle: isString(parsedJobMatch.jobTitle)
+        ? parsedJobMatch.jobTitle
+        : undefined,
+      companyName: isString(parsedJobMatch.companyName)
+        ? parsedJobMatch.companyName
+        : undefined,
+      jobDescription: isString(parsedJobMatch.jobDescription)
+        ? parsedJobMatch.jobDescription
+        : undefined,
       result: parsedJobMatch.result,
       improvementPlan: isResumeImprovementPlan(
         parsedJobMatch.improvementPlan,
@@ -645,6 +798,44 @@ function parseLatestJobMatch(
   } catch {
     return null;
   }
+}
+
+function parseSetupSource(storedSetup: string | null): RoadmapSetupSource | null {
+  if (!storedSetup) {
+    return null;
+  }
+
+  try {
+    const parsedSetup = JSON.parse(storedSetup);
+
+    if (!isRecord(parsedSetup) || !isString(parsedSetup.targetRole)) {
+      return null;
+    }
+
+    const targetRole = parsedSetup.targetRole.trim();
+
+    return targetRole ? { targetRole } : null;
+  } catch {
+    return null;
+  }
+}
+
+function formatLatestJobMatchSource(
+  latestJobMatch: LatestJobMatch | null,
+): string {
+  if (!latestJobMatch) {
+    return "Not added";
+  }
+
+  if (latestJobMatch.jobTitle && latestJobMatch.companyName) {
+    return `${latestJobMatch.jobTitle} at ${latestJobMatch.companyName}`;
+  }
+
+  if (latestJobMatch.jobTitle) {
+    return latestJobMatch.jobTitle;
+  }
+
+  return `${latestJobMatch.result.matchScore}% match`;
 }
 
 function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
@@ -680,15 +871,25 @@ function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
 }
 
 function getRoadmapLocalOnlyMessage(error: string): string {
-  if (error.includes("Supabase is not configured")) {
-    return "Roadmap generated locally. Add Supabase credentials to enable account sync.";
+  if (isMissingSupabaseConfigError(error)) {
+    return "Roadmap generated locally. Supabase environment variables are missing.";
   }
 
   if (error.includes("Sign in")) {
-    return "Roadmap generated locally. Sign in to save roadmaps to your account.";
+    return "Roadmap generated locally. Sign in to sync your account.";
   }
 
   return error || "Roadmap generated locally. Account sync did not finish.";
+}
+
+function isMissingSupabaseConfigError(error: string): boolean {
+  const normalizedError = error.toLowerCase();
+
+  return (
+    normalizedError.includes("supabase") &&
+    normalizedError.includes("environment variables") &&
+    normalizedError.includes("missing")
+  );
 }
 
 function getDatabaseIdFromLegacyId(value: unknown): string | undefined {

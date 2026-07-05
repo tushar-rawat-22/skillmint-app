@@ -2,7 +2,7 @@ const features = [
   {
     title: "Direction before scores",
     description:
-      "Start by choosing a target role, level, goal, and weekly pace.",
+      "Choose your target role, experience level, goal, and weekly pace first.",
   },
   {
     title: "Resume intelligence",
@@ -12,7 +12,7 @@ const features = [
   {
     title: "JD matching",
     description:
-      "Paste real job descriptions and compare where your resume is competitive.",
+      "Paste one real job description and see where your resume is competitive.",
   },
   {
     title: "Roadmaps that stay practical",

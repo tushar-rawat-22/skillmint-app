@@ -114,7 +114,7 @@ export default function AccountOverviewCard() {
       <article className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
         <AccountOverviewHeader
           eyebrow="Account Overview"
-          title="Supabase is not configured"
+          title="Account sync is unavailable"
           body={overview.message}
         />
 
@@ -130,7 +130,7 @@ export default function AccountOverviewCard() {
       <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
         <AccountOverviewHeader
           eyebrow="Account Overview"
-          title="Not signed in"
+          title="Sign in to sync your account."
           body={overview.message}
         />
 

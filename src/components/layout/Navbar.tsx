@@ -20,7 +20,7 @@ export default function Navbar() {
             href={ROUTES.DASHBOARD}
             className="text-gray-300 transition hover:text-green-400"
           >
-            Dashboard
+            Dashboard Preview
           </Link>
 
           <Link

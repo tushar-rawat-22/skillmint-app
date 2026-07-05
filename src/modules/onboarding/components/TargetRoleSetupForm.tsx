@@ -126,7 +126,7 @@ export default function TargetRoleSetupForm() {
     if (!isConfigured) {
       return {
         tone: "muted",
-        message: "Saved locally. Add Supabase credentials to sync profile.",
+        message: "Saved locally. Supabase environment variables are missing.",
       };
     }
 
@@ -140,7 +140,7 @@ export default function TargetRoleSetupForm() {
     if (!user) {
       return {
         tone: "muted",
-        message: "Saved locally. Sign in to sync profile.",
+        message: "Saved locally. Sign in to sync your account.",
       };
     }
 
@@ -199,8 +199,8 @@ export default function TargetRoleSetupForm() {
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
-            This helps SkillMint guide your checklist, resume focus, and next
-            project choices without changing your scores.
+            Choose the role and goal you are aiming for. This becomes your
+            career direction; it does not change scoring formulas.
           </p>
         </div>
 

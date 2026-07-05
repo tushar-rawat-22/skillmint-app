@@ -80,3 +80,12 @@ Use this checklist before inviting beta testers and after each production deploy
 - No broken navigation links.
 - No private environment values are visible in the browser.
 - No service-role keys are present in client code or docs.
+
+## 11. Production Flow Clarity
+
+- Login, signup, profile, and settings do not show stale Supabase configuration copy when production env vars are configured.
+- Setup clearly explains career direction.
+- ATS Match clearly explains one-job-description comparison.
+- Roadmap explains whether it is using setup, resume intelligence, and the latest job match.
+- Landing dashboard visuals are labeled as product preview, not the user's real dashboard.
+- `npm run smoke:production` passes after redeploy.

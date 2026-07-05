@@ -7,55 +7,66 @@ import PersistentProfileForm from "@/modules/profile/components/PersistentProfil
 export default function ProfilePage() {
   return (
     <DashboardLayout>
-      <section className="max-w-4xl">
-        <h1 className="text-4xl font-black">
-          Profile
-        </h1>
+      <section className="mx-auto max-w-6xl">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-4xl font-black">
+              Profile
+            </h1>
 
-        <p className="mt-4 max-w-2xl text-gray-400">
-          Your career profile will be generated from resume intelligence.
-        </p>
-
-        <div className="mt-8">
-          <AuthStatusCard />
-        </div>
-
-        <article className="mt-8 rounded-lg border border-green-500/30 bg-green-500/10 p-6">
-          <h2 className="text-xl font-bold">
-            Career setup feeds this profile
-          </h2>
-
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-green-50/80">
-            Use guided setup to choose a target role, experience level, and
-            primary goal. When signed in, SkillMint can sync that direction to
-            your persistent profile.
-          </p>
+            <p className="mt-4 max-w-2xl text-gray-400">
+              Your persistent account profile stores the career direction you
+              choose in Setup. Resume intelligence remains the source of your
+              scoring.
+            </p>
+          </div>
 
           <Link
             href="/setup"
-            className="mt-5 inline-flex rounded-lg border border-green-500/30 px-4 py-2 text-sm font-semibold text-green-100 transition hover:border-green-300 hover:text-white"
+            className="w-fit rounded-xl border border-green-500/30 px-5 py-3 text-sm font-semibold text-green-100 transition hover:border-green-300 hover:text-white"
           >
             Open career setup
           </Link>
-        </article>
+        </div>
 
-        <div className="mt-8">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="space-y-6">
+            <AuthStatusCard />
+
+            <article className="rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+              <h2 className="text-xl font-bold">
+                Career setup feeds this profile
+              </h2>
+
+              <p className="mt-3 text-sm leading-6 text-green-50/80">
+                Choose a target role, experience level, and goal in Setup.
+                When signed in, SkillMint syncs that direction here.
+              </p>
+            </article>
+          </div>
+
           <PersistentProfileForm />
         </div>
 
         <article className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-6">
           <h2 className="text-xl font-bold">
-            Candidate Profile coming soon
+            What profile sync does today
           </h2>
 
-          <p className="mt-3 text-sm leading-6 text-gray-400">
-            SkillMint will turn your resume intelligence into a clearer
-            candidate profile in an upcoming sprint.
-          </p>
-
-          <p className="mt-3 text-sm leading-6 text-gray-400">
-            Resume, ATS, and roadmap sync will come in later Sprint 6 units.
-          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              "Stores your basic account direction.",
+              "Keeps resume analysis local-first unless signed in.",
+              "Supports later beta account history and sync QA.",
+            ].map((item) => (
+              <p
+                key={item}
+                className="rounded-lg border border-gray-800 bg-black/30 p-4 text-sm leading-6 text-gray-300"
+              >
+                {item}
+              </p>
+            ))}
+          </div>
         </article>
       </section>
     </DashboardLayout>

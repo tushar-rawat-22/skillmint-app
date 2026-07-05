@@ -21,7 +21,7 @@ const productLoopSteps = [
   {
     title: "Match job descriptions",
     description:
-      "Compare real JDs against your current resume and proof.",
+      "Paste one JD at a time to compare your resume against a specific role.",
   },
   {
     title: "Generate roadmap",
