@@ -35,8 +35,8 @@ export default function UpgradeInterestCard({
   }
 
   return (
-    <article className="rounded-lg border border-green-500/30 bg-gradient-to-br from-green-500/10 to-black/20 p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-300">
+    <article className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.09),rgba(15,23,42,0.78))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
         Free beta
       </p>
 
@@ -46,7 +46,7 @@ export default function UpgradeInterestCard({
             {title}
           </h2>
 
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-green-50/80">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
             {body}
           </p>
 
@@ -60,7 +60,7 @@ export default function UpgradeInterestCard({
         <button
           type="button"
           onClick={handleClick}
-          className="w-fit rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-500"
+          className="w-fit rounded-xl border border-emerald-400/35 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-400/15"
         >
           {cta}
         </button>

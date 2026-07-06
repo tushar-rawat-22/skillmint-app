@@ -10,6 +10,7 @@ import {
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
+import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   NextBestActionPanel,
@@ -201,7 +202,7 @@ export default function ResumePage() {
   if (!activeAnalysis) {
     return (
       <DashboardLayout>
-        <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center text-center">
+        <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/[0.035] p-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
             Resume Intelligence
           </p>
@@ -253,6 +254,7 @@ export default function ResumePage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
+        <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-2xl shadow-black/25 md:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
@@ -274,6 +276,7 @@ export default function ResumePage() {
           >
             Upload Another
           </Link>
+        </div>
         </div>
 
         <NextBestActionPanel className="mt-8" />
@@ -323,7 +326,7 @@ export default function ResumePage() {
           />
         </div>
 
-        <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+        <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="text-xl font-bold">
@@ -413,7 +416,7 @@ export default function ResumePage() {
                   </p>
                 )}
 
-              <pre className="mt-5 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/40 p-5 text-sm leading-7 text-gray-200">
+              <pre className="mt-5 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-black/40 p-5 text-sm leading-7 text-gray-200">
                 {visibleExtractedText}
               </pre>
             </>
@@ -435,7 +438,7 @@ type ExtractionDetailProps = {
 
 function ExtractionDetail({ label, value }: ExtractionDetailProps) {
   return (
-    <div className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-4">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
         {label}
       </p>
@@ -451,7 +454,7 @@ function ResumeDatabaseLoadNotice({
   state,
 }: ResumeDatabaseLoadNoticeProps) {
   return (
-    <div className="mt-6 w-full rounded-lg border border-gray-800 bg-neutral-900 p-4 text-left">
+    <div className="mt-6 w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left">
       <p className="text-sm font-semibold text-gray-100">
         Account resume backup
       </p>
@@ -484,7 +487,7 @@ function ResumeSyncStatusCard({
 
   return (
     <section
-      className={`mt-6 rounded-lg border p-5 ${presentation.className}`}
+      className={`mt-6 rounded-2xl border p-5 ${presentation.className}`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -546,29 +549,34 @@ function CareerIntelligenceReady({
   ];
 
   return (
-    <section className="mt-6 rounded-lg border border-green-500/30 bg-green-500/10 p-6">
-      <div>
-        <h2 className="text-xl font-bold">
-          Career Intelligence Ready
-        </h2>
+    <section className="mt-6 rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.1),rgba(15,23,42,0.7))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+            Resume Proof
+          </p>
 
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-green-100/80">
-          This is a rule-based first pass. Full AI explanation and
-          job-description ATS matching will come later.
+          <h2 className="mt-2 text-xl font-bold">
+            Career Intelligence
+          </h2>
+        </div>
+
+        <p className="max-w-2xl text-sm leading-6 text-green-100/75">
+          These compact signals come from the resume proof SkillMint detected.
         </p>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {scores.map((score) => (
           <article
             key={score.label}
-            className="rounded-lg border border-green-500/20 bg-black/25 p-4"
+            className="rounded-2xl border border-green-500/20 bg-black/25 p-3"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-200/60">
+            <p className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-green-200/60">
               {score.label}
             </p>
 
-            <p className="mt-2 text-2xl font-bold text-white">
+            <p className="mt-2 text-xl font-black text-white">
               {score.value}
             </p>
           </article>
@@ -588,7 +596,7 @@ function ParsedResumeSections({
   const links = getVisibleLinks(profile.links);
 
   return (
-    <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div>
         <h2 className="text-xl font-bold">
           Parsed Resume Sections
@@ -667,7 +675,7 @@ function SectionPanel({
   children,
 }: SectionPanelProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-5">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-5">
       <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
         {title}
       </h3>
@@ -720,7 +728,7 @@ function SummaryItem({
   value,
 }: SummaryItemProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
         {label}
       </p>
@@ -968,11 +976,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function subscribeToStoredAnalysis(
   onStoreChange: () => void,
 ): () => void {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-  };
+  return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
 function readStoredAnalysis(): string | null {

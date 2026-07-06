@@ -50,7 +50,7 @@ export default function MetricStrip({
       {metrics.map((metric) => (
         <article
           key={metric.label}
-          className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-900 p-5 text-white"
+          className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.045] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-white/20 hover:bg-white/[0.06]"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
             {metric.label}

@@ -4,17 +4,18 @@ import { ROUTES } from "@/constants/routes";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-gray-900 bg-black text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.18),transparent_42%)]" />
+    <section className="relative overflow-hidden border-b border-white/10 text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.24),transparent_44%),linear-gradient(180deg,rgba(15,23,42,0.22),rgba(2,6,23,0.92))]" />
+      <div className="absolute left-1/2 top-28 h-72 w-[min(920px,90vw)] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-3xl" />
 
-      <div className="relative mx-auto flex max-w-7xl flex-col items-center px-6 py-28 text-center md:py-32">
-        <div className="rounded-full border border-green-500/30 bg-green-500/10 px-5 py-2 text-sm font-medium text-green-100 shadow-sm">
-          AI-powered Career Operating System for students and freshers
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center md:py-32">
+        <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-2 text-sm font-semibold text-emerald-100 shadow-[0_0_40px_rgba(16,185,129,0.08)]">
+          Career Operating System for students and freshers
         </div>
 
-        <h1 className="mt-10 max-w-5xl text-5xl font-black leading-tight tracking-tight text-white md:text-7xl">
+        <h1 className="mt-10 max-w-5xl text-5xl font-black leading-[0.98] tracking-tight text-white md:text-7xl">
           Turn your resume into
-          <span className="block text-green-600">
+          <span className="block bg-gradient-to-r from-emerald-200 via-emerald-400 to-sky-300 bg-clip-text text-transparent">
             a career action plan.
           </span>
         </h1>
@@ -28,20 +29,20 @@ export default function Hero() {
         <div className="mt-12 flex flex-wrap justify-center gap-4">
           <Link
             href={ROUTES.SIGNUP}
-            className="rounded-xl bg-green-600 px-8 py-4 font-semibold text-white shadow-lg shadow-green-950/40 transition hover:bg-green-500"
+            className="rounded-xl bg-emerald-400 px-8 py-4 font-bold text-slate-950 shadow-2xl shadow-emerald-950/50 transition hover:bg-emerald-300"
           >
             Start Free
           </Link>
 
           <a
             href="#preview"
-            className="rounded-xl border border-gray-700 bg-white/5 px-8 py-4 font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            className="rounded-xl border border-white/15 bg-white/[0.04] px-8 py-4 font-semibold text-gray-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-emerald-400/60 hover:bg-white/[0.07] hover:text-emerald-200"
           >
             See Product Preview
           </a>
         </div>
 
-        <p className="mt-6 text-sm text-gray-500">
+        <p className="mt-6 text-sm text-slate-500">
           No job guarantees. Just clearer proof, gaps, and next actions.
         </p>
       </div>

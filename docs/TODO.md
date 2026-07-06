@@ -411,6 +411,12 @@ Sprint 7.8 Activation Funnel + Upgrade Interest + Documentation: Completed
 
 Sprint 7.9 Beta Freeze QA + UX Regression Fixes: Completed
 
+Sprint 7.10 Premium Visual Redesign + Founder Appeal Pass: Completed
+
+Sprint 7.10B Visual Cohesion + Shareable Trust Fixes: Completed
+
+Sprint 7.10C Password Recovery + Proof Engine Direction: Completed
+
 Next:
 
 Beta freeze QA, then beta freeze tag

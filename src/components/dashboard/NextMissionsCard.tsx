@@ -12,8 +12,8 @@ export default function NextMissionsCard({
   const supportingActions = actions.slice(1);
 
   return (
-    <section className="flex h-full flex-col rounded-lg border border-neutral-800 bg-neutral-900/95 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-      <div className="border-b border-neutral-800 bg-black/20 p-6">
+    <section className="flex h-full flex-col rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(124,58,237,0.12),rgba(15,23,42,0.78))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="border-b border-white/10 bg-black/20 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
           Next Missions
         </p>
@@ -28,7 +28,7 @@ export default function NextMissionsCard({
       </div>
 
       <div className="flex flex-1 flex-col p-6">
-        <article className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-5">
+        <article className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/80">
@@ -63,7 +63,7 @@ export default function NextMissionsCard({
             supportingActions.map((action, index) => (
               <article
                 key={action}
-                className="rounded-lg border border-neutral-800 bg-black/30 p-4"
+                className="rounded-2xl border border-white/10 bg-black/28 p-4"
               >
                 <div className="flex gap-3">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-700 bg-neutral-950 text-xs font-black text-neutral-200">
@@ -92,7 +92,7 @@ export default function NextMissionsCard({
           )}
         </div>
 
-        <div className="mt-5 rounded-lg border border-neutral-800 bg-black/30 p-4">
+        <div className="mt-5 rounded-2xl border border-white/10 bg-black/28 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">

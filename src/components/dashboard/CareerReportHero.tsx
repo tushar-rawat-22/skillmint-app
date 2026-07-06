@@ -20,7 +20,7 @@ export default function CareerReportHero({
   const score = Math.round(careerIQ.score);
 
   return (
-    <section className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900 text-white">
+    <section className="overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))] text-white shadow-2xl shadow-black/30">
       <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="p-6 md:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -36,7 +36,7 @@ export default function CareerReportHero({
 
             <Link
               href="/upload"
-              className="w-fit rounded-lg bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200"
+              className="w-fit rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
             >
               Upload Resume
             </Link>
@@ -47,7 +47,7 @@ export default function CareerReportHero({
           </p>
         </div>
 
-        <div className="border-t border-neutral-800 bg-black/40 p-6 lg:border-l lg:border-t-0 md:p-8">
+        <div className="border-t border-white/10 bg-black/28 p-6 lg:border-l lg:border-t-0 md:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
             Career IQ
           </p>
@@ -86,7 +86,7 @@ type HeroDetailProps = {
 
 function HeroDetail({ label, value }: HeroDetailProps) {
   return (
-    <div className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-4">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
         {label}
       </p>

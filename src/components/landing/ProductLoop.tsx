@@ -29,7 +29,7 @@ export default function ProductLoop() {
   return (
     <section
       id="how-it-works"
-      className="border-y border-gray-800 bg-neutral-950 px-6 py-24"
+      className="border-y border-white/10 bg-slate-950/80 px-6 py-24"
     >
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
@@ -47,13 +47,13 @@ export default function ProductLoop() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid max-w-5xl gap-4 md:grid-cols-2">
           {productLoopSteps.map((step, index) => (
             <article
               key={step.title}
-              className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-5"
+              className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-emerald-400/30 hover:bg-white/[0.055]"
             >
-              <span className="rounded-full border border-green-500/30 px-3 py-1 text-xs font-semibold text-green-300">
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
                 {index + 1}
               </span>
 
@@ -71,14 +71,14 @@ export default function ProductLoop() {
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
             href={ROUTES.SIGNUP}
-            className="rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-500"
+            className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/35 transition hover:bg-emerald-300"
           >
             Start Free
           </Link>
 
           <a
             href="#preview"
-            className="rounded-xl border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-emerald-400/60 hover:text-emerald-200"
           >
             See Preview
           </a>

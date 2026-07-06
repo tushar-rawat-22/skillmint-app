@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
   getOnboardingDismissed,
   setOnboardingDismissed,
@@ -92,7 +93,7 @@ export default function OnboardingChecklist() {
       <button
         type="button"
         onClick={() => updateDismissed(false)}
-        className="w-fit rounded-lg border border-gray-800 bg-neutral-900 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-green-500 hover:text-green-300"
+        className="w-fit rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-emerald-400/50 hover:text-emerald-200"
       >
         Show setup checklist
       </button>
@@ -100,7 +101,7 @@ export default function OnboardingChecklist() {
   }
 
   return (
-    <section className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <section className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
@@ -124,7 +125,7 @@ export default function OnboardingChecklist() {
         <button
           type="button"
           onClick={() => updateDismissed(true)}
-          className="w-fit rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-gray-500 hover:text-white"
+          className="w-fit rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-white/25 hover:text-white"
         >
           Hide for now
         </button>
@@ -212,17 +213,17 @@ function getSetupMessage(
 }
 
 function getStepCardClassName(status: OnboardingStep["status"]): string {
-  const baseClassName = "min-w-0 rounded-lg border p-4";
+  const baseClassName = "min-w-0 rounded-2xl border p-4";
 
   if (status === "complete") {
-    return `${baseClassName} border-green-500/30 bg-green-500/10`;
+    return `${baseClassName} border-emerald-400/30 bg-emerald-400/10`;
   }
 
   if (status === "active") {
-    return `${baseClassName} border-blue-500/30 bg-blue-500/10`;
+    return `${baseClassName} border-sky-400/30 bg-sky-400/10`;
   }
 
-  return `${baseClassName} border-gray-800 bg-black/30`;
+  return `${baseClassName} border-white/10 bg-black/25`;
 }
 
 function getStatusBadgeClassName(status: OnboardingStep["status"]): string {
@@ -253,11 +254,7 @@ function formatStatus(status: OnboardingStep["status"]): string {
 }
 
 function subscribeToStoredData(onStoreChange: () => void): () => void {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-  };
+  return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
 function readStoredResumeAnalysis(): string | null {

@@ -42,10 +42,15 @@ export default function DashboardPage() {
     getServerSnapshot,
   );
   const data = useCareerData();
-  const hasUserProgress = useMemo(
-    () => hasValidResume(storedResume) || hasValidJobMatch(storedJobMatch),
-    [storedJobMatch, storedResume],
+  const hasResumeAnalysis = useMemo(
+    () => hasValidResume(storedResume),
+    [storedResume],
   );
+  const hasJobMatch = useMemo(
+    () => hasValidJobMatch(storedJobMatch),
+    [storedJobMatch],
+  );
+  const hasUserProgress = hasResumeAnalysis || hasJobMatch;
   const bestMatch = data.roleMatches[0];
   const topImprovement = getTopImprovement(
     data.missions,
@@ -65,7 +70,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-7">
         <CareerReportHero
           careerIQ={data.careerIQ}
           bestMatch={bestMatch}
@@ -135,7 +140,11 @@ export default function DashboardPage() {
           ats={data.ats}
           recruiter={data.recruiter}
           bestMatch={bestMatch}
-          topImprovement={topImprovement}
+          isReady={hasResumeAnalysis}
+          nextProofMove={getShareableProofMove(
+            data.missions,
+            data.recommendations,
+          )}
         />
 
         {hasUserProgress && (
@@ -228,6 +237,32 @@ function getTopImprovement(
   recommendations: string[],
 ): string {
   return [...missions, ...recommendations][0] ?? "Upload a resume";
+}
+
+function getShareableProofMove(
+  missions: string[],
+  recommendations: string[],
+): string {
+  const usefulSignal = [...missions, ...recommendations].find(
+    (item) => item && !isOperationalShareTask(item),
+  );
+
+  return usefulSignal ?? "Strengthen one deployed project";
+}
+
+function isOperationalShareTask(value: string): boolean {
+  const normalizedValue = value.toLowerCase();
+
+  return [
+    "upload",
+    "sign in",
+    "signup",
+    "create account",
+    "setup",
+    "choose direction",
+    "open dashboard",
+    "paste a job description",
+  ].some((phrase) => normalizedValue.includes(phrase));
 }
 
 function getReadinessBars(

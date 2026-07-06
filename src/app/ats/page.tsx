@@ -24,7 +24,10 @@ import {
   type ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
-import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import {
+  notifySkillMintWorkspaceUpdated,
+  subscribeToSkillMintWorkspaceUpdates,
+} from "@/lib/storage/skillMintStorageEvents";
 import {
   NextBestActionPanel,
   UpgradeInterestCard,
@@ -447,34 +450,37 @@ export default function ATSMatcherPage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
-              ATS Match
+        <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.14),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-2xl shadow-black/25 md:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+                ATS Match
             </p>
 
-            <h1 className="mt-4 text-4xl font-black md:text-5xl">
-              Match one job description against your resume
-            </h1>
+              <h1 className="mt-4 text-4xl font-black md:text-5xl">
+                Match one real job
+              </h1>
 
-            <p className="mt-4 max-w-2xl text-gray-400">
-              Paste one job description to compare your current resume against
-              that specific role. Use Setup for your broader career direction.
-            </p>
+              <p className="mt-4 max-w-2xl text-gray-400">
+                See where your resume can compete, then fix the proof gaps
+                before applying. Setup is your direction; ATS Match is one
+                specific job description.
+              </p>
+            </div>
+
+            <Link
+              href="/resume"
+              className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            >
+              View Resume Analysis
+            </Link>
           </div>
-
-          <Link
-            href="/resume"
-            className="rounded-xl border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
-          >
-            View Resume Analysis
-          </Link>
         </div>
 
         <NextBestActionPanel className="mt-8" />
 
         <section className="mt-8 grid gap-4 lg:grid-cols-3">
-          <article className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+          <article className="rounded-2xl border border-blue-400/30 bg-blue-400/10 p-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-blue-100">
               What this does
             </h2>
@@ -485,7 +491,7 @@ export default function ATSMatcherPage() {
             </p>
           </article>
 
-          <article className="rounded-lg border border-gray-800 bg-neutral-900 p-4">
+          <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-gray-400">
               What to paste
             </h2>
@@ -496,7 +502,7 @@ export default function ATSMatcherPage() {
             </p>
           </article>
 
-          <article className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-4">
+          <article className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-violet-100">
               What comes next
             </h2>
@@ -508,14 +514,14 @@ export default function ATSMatcherPage() {
           </article>
         </section>
 
-        <section className="mt-10 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+        <section className="mt-10 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.1),transparent_36%),linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <label
                 htmlFor="job-description"
                 className="text-xl font-bold"
               >
-                Job description
+                Job description to match
               </label>
 
               <p className="mt-1 text-sm text-gray-400">
@@ -542,7 +548,7 @@ export default function ATSMatcherPage() {
                 value={jobTitle}
                 onChange={(event) => setJobTitle(event.target.value)}
                 placeholder="Frontend Intern"
-                className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
               />
             </div>
 
@@ -559,7 +565,7 @@ export default function ATSMatcherPage() {
                 value={companyName}
                 onChange={(event) => setCompanyName(event.target.value)}
                 placeholder="Acme"
-                className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
               />
             </div>
           </div>
@@ -571,7 +577,7 @@ export default function ATSMatcherPage() {
             onChange={(event) => setJobDescription(event.target.value)}
             rows={5}
             placeholder="Paste the full job description here..."
-            className="mt-5 max-h-[420px] min-h-[140px] w-full resize-none rounded-lg border border-gray-800 bg-black/40 p-4 text-sm leading-7 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+            className="mt-5 max-h-[420px] min-h-[140px] w-full resize-none rounded-2xl border border-white/10 bg-black/35 p-4 text-sm leading-7 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
           />
 
           {error && (
@@ -583,7 +589,7 @@ export default function ATSMatcherPage() {
           <button
             type="button"
             onClick={handleAnalyzeMatch}
-            className="mt-5 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-500"
+            className="mt-5 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
           >
             Analyze Match
           </button>
@@ -611,13 +617,13 @@ export default function ATSMatcherPage() {
             />
           </>
         ) : (
-          <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+          <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
             <h2 className="text-xl font-bold">
               Match result
             </h2>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-              Your strict ATS match report will appear here after analysis.
+              Your one-job match report will appear here after analysis.
             </p>
           </section>
         )}
@@ -644,7 +650,7 @@ function MatchResultPanel({ match }: MatchResultPanelProps) {
 
   return (
     <section className="mt-6 space-y-6">
-      <article className="rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+      <article className="rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(15,23,42,0.72))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-300/80">
@@ -785,17 +791,17 @@ function JobMatchHistoryPanel({
   onClear,
 }: JobMatchHistoryPanelProps) {
   return (
-    <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">
             Job Match History
           </h2>
 
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-            History works in this browser first. Signed-in users can also save
-            job matches to their account.
-          </p>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+          History works in this browser first. Signed-in users can also save
+          job matches to their account.
+        </p>
         </div>
 
         {matches.length > 0 && (
@@ -920,7 +926,7 @@ type ImprovementPlanPanelProps = {
 function ImprovementPlanPanel({ plan }: ImprovementPlanPanelProps) {
   return (
     <section className="space-y-4">
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
           Resume Improvement Plan
         </p>
@@ -942,7 +948,7 @@ function ImprovementPlanPanel({ plan }: ImprovementPlanPanelProps) {
         </div>
       </article>
 
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
           Priority Fixes
         </h3>
@@ -1024,7 +1030,7 @@ type RewritePlanPanelProps = {
 function RewritePlanPanel({ plan }: RewritePlanPanelProps) {
   return (
     <section className="space-y-4">
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
           Resume Rewrite Suggestions
         </p>
@@ -1079,7 +1085,7 @@ function RewriteSuggestionGroup({
   suggestions,
 }: RewriteSuggestionGroupProps) {
   return (
-    <section className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <section className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
         {title}
       </h3>
@@ -1110,7 +1116,7 @@ function RewriteSuggestionCard({
   suggestion,
 }: RewriteSuggestionCardProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-5">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-5">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-300">
           {suggestion.section}
@@ -1213,7 +1219,7 @@ function DetailCard({
   }[variant];
 
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
         {title}
       </h3>
@@ -1243,7 +1249,7 @@ type ListCardProps = {
 
 function ListCard({ title, items }: ListCardProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
         {title}
       </h3>
@@ -1657,11 +1663,7 @@ function getBrowserStorage(): Storage | null {
 function subscribeToStoredAnalysis(
   onStoreChange: () => void,
 ): () => void {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-  };
+  return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
 function readStoredAnalysis(): string | null {

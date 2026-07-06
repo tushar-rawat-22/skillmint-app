@@ -204,7 +204,7 @@ export default function TargetRoleSetupForm() {
     <div className="space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="rounded-lg border border-gray-800 bg-neutral-900 p-6"
+        className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
       >
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
@@ -361,7 +361,7 @@ function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`mt-2 w-full rounded-lg border border-gray-800 bg-black/40 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500 ${
+        className={`mt-2 w-full rounded-xl border border-white/10 bg-black/35 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45 ${
           isPrimary ? "px-5 py-4 text-base" : "px-4 py-3 text-sm"
         }`}
       />
@@ -397,7 +397,7 @@ function SelectField<T extends string>({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value as T)}
-        className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-green-500"
+        className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-emerald-400 focus:bg-black/45"
       >
         {options.map(([optionValue, optionLabel]) => (
           <option
@@ -425,7 +425,7 @@ function RecommendationCard({
   nextActions,
 }: RecommendationCardProps) {
   return (
-    <section className="rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+    <section className="rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(15,23,42,0.68))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-300/80">
         Recommended Focus
       </p>
@@ -442,7 +442,7 @@ function RecommendationCard({
         {nextActions.map((action) => (
           <li
             key={action}
-            className="rounded-lg border border-green-500/20 bg-black/20 p-4"
+            className="rounded-2xl border border-emerald-400/20 bg-black/25 p-4"
           >
             {action}
           </li>

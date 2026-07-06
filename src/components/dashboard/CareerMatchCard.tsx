@@ -29,7 +29,7 @@ export default function CareerMatchCard({ matches }: Props) {
         {topMatches.map((match) => (
           <div
             key={match.role}
-            className="rounded-lg border border-neutral-800 bg-neutral-900 p-5"
+            className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -53,7 +53,7 @@ export default function CareerMatchCard({ matches }: Props) {
               </div>
             </div>
 
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-800">
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-emerald-400"
                 style={{ width: `${match.matchScore}%` }}

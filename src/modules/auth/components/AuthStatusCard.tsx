@@ -9,7 +9,7 @@ export default function AuthStatusCard() {
 
   if (!isConfigured) {
     return (
-      <article className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
+      <article className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-yellow-200/80">
           Account
         </p>
@@ -27,7 +27,7 @@ export default function AuthStatusCard() {
 
   if (isLoading) {
     return (
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
           Account
         </p>
@@ -41,7 +41,7 @@ export default function AuthStatusCard() {
 
   if (user) {
     return (
-      <article className="rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+      <article className="rounded-2xl border border-green-500/30 bg-green-500/10 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-300/80">
           Account
         </p>
@@ -58,7 +58,7 @@ export default function AuthStatusCard() {
   }
 
   return (
-    <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
         Account
       </p>

@@ -9,7 +9,7 @@ export default function AnalysisProgress({
 
   return (
     <section className="mx-auto mt-12 max-w-5xl">
-      <div className="overflow-hidden rounded-2xl border border-cyan-500/30 bg-neutral-950 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-8">
+      <div className="overflow-hidden rounded-3xl border border-cyan-400/25 bg-[linear-gradient(145deg,rgba(8,145,178,0.13),rgba(15,23,42,0.86))] p-6 text-white shadow-2xl shadow-cyan-950/15 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-300">
@@ -32,7 +32,7 @@ export default function AnalysisProgress({
           </span>
         </div>
 
-        <div className="relative mt-7 overflow-hidden rounded-xl border border-neutral-800 bg-black/40 p-5">
+        <div className="relative mt-7 overflow-hidden rounded-2xl border border-white/10 bg-black/35 p-5">
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent skillmint-scan-line" />
 
           <div className="relative grid gap-3 md:grid-cols-4">

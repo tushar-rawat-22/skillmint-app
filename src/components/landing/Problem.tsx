@@ -18,7 +18,7 @@ const problems = [
 
 export default function Problem() {
   return (
-    <section className="border-b border-gray-900 bg-neutral-950 px-6 py-20">
+    <section className="border-b border-white/10 bg-slate-950/70 px-6 py-20">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-green-400">
@@ -39,7 +39,7 @@ export default function Problem() {
           {problems.map((problem) => (
             <article
               key={problem.title}
-              className="rounded-lg border border-gray-800 bg-black/40 p-5"
+              className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-emerald-400/30 hover:bg-white/[0.055]"
             >
               <h3 className="text-lg font-bold text-white">
                 {problem.title}

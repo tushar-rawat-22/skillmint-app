@@ -77,7 +77,7 @@ export default function AccountOverviewCard() {
 
   if (state.status === "loading") {
     return (
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
           Account Status
         </p>
@@ -91,7 +91,7 @@ export default function AccountOverviewCard() {
 
   if (state.status === "error") {
     return (
-      <article className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
+      <article className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-yellow-200/80">
           Account Status
         </p>
@@ -111,7 +111,7 @@ export default function AccountOverviewCard() {
 
   if (!overview.isConfigured) {
     return (
-      <article className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
+      <article className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
         <AccountOverviewHeader
           eyebrow="Account Status"
           title="Account sync is unavailable"
@@ -127,7 +127,7 @@ export default function AccountOverviewCard() {
 
   if (!overview.isSignedIn) {
     return (
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <AccountOverviewHeader
           eyebrow="Account Status"
           title="Sign in to sync your account."
@@ -154,7 +154,7 @@ export default function AccountOverviewCard() {
   }
 
   return (
-    <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <AccountOverviewHeader
           eyebrow="Account Status"
@@ -239,7 +239,7 @@ function OverviewMetric({
   detail,
 }: OverviewMetricProps) {
   return (
-    <div className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-4">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
         {label}
       </p>

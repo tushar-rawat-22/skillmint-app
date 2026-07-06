@@ -115,7 +115,7 @@ export default function PersistentProfileForm() {
 
   if (!user) {
     return (
-      <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <h2 className="text-xl font-bold">
           Sign in to sync your account.
         </h2>
@@ -128,7 +128,7 @@ export default function PersistentProfileForm() {
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
             href="/login"
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500"
+            className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
           >
             Log in
           </Link>
@@ -147,7 +147,7 @@ export default function PersistentProfileForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-gray-800 bg-neutral-900 p-6"
+      className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
     >
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
@@ -197,7 +197,7 @@ export default function PersistentProfileForm() {
             setForm({ ...form, careerGoal: event.target.value })}
           rows={4}
           placeholder="What are you trying to become more hire-ready for?"
-          className="mt-2 w-full resize-y rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm leading-6 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+          className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm leading-6 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
         />
       </div>
 
@@ -222,7 +222,7 @@ export default function PersistentProfileForm() {
       <button
         type="submit"
         disabled={isSaving || isLoadingProfile}
-        className="mt-5 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-gray-300"
+        className="mt-5 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900 disabled:text-gray-300"
       >
         {isSaving ? "Saving..." : "Save profile"}
       </button>
@@ -259,7 +259,7 @@ function ProfileField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+        className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
       />
     </div>
   );
@@ -275,7 +275,7 @@ function ProfileInfoCard({
   body,
 }: ProfileInfoCardProps) {
   return (
-    <article className="rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <h2 className="text-xl font-bold">
         {title}
       </h2>

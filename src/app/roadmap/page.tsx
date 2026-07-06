@@ -22,7 +22,10 @@ import type {
   ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
-import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import {
+  notifySkillMintWorkspaceUpdated,
+  subscribeToSkillMintWorkspaceUpdates,
+} from "@/lib/storage/skillMintStorageEvents";
 import {
   NextBestActionPanel,
   UpgradeInterestCard,
@@ -206,28 +209,30 @@ export default function RoadmapPage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
-              Career Roadmap
-            </p>
+        <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.14),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-2xl shadow-black/25 md:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+                Career Roadmap
+              </p>
 
-            <h1 className="mt-4 text-4xl font-black md:text-5xl">
-              Career Roadmap
-            </h1>
+              <h1 className="mt-4 text-4xl font-black md:text-5xl">
+                Career Roadmap
+              </h1>
 
-            <p className="mt-4 max-w-2xl text-gray-400">
-              Your 30/60/90-day plan built from resume proof, career direction,
-              and your latest job match when available.
-            </p>
+              <p className="mt-4 max-w-2xl text-gray-400">
+                Your 30/60/90-day plan built from resume proof, career direction,
+                and your latest job match when available.
+              </p>
+            </div>
+
+            <Link
+              href="/ats"
+              className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            >
+              Open ATS Match
+            </Link>
           </div>
-
-          <Link
-            href="/ats"
-            className="rounded-xl border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
-          >
-            Open ATS Match
-          </Link>
         </div>
 
         <RoadmapSourceCard
@@ -239,7 +244,7 @@ export default function RoadmapPage() {
         <NextBestActionPanel className="mt-6" />
 
         {!latestJobMatch && (
-          <section className="mt-8 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-5">
+          <section className="mt-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5">
             <h2 className="text-lg font-bold text-yellow-100">
               Add a job description for a more targeted roadmap.
             </h2>
@@ -323,7 +328,7 @@ function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <section className="mx-auto mt-8 flex min-h-[38vh] max-w-3xl flex-col items-center justify-center rounded-lg border border-gray-800 bg-neutral-900 p-8 text-center">
+    <section className="mx-auto mt-8 flex min-h-[38vh] max-w-3xl flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
         {eyebrow}
       </p>
@@ -362,7 +367,7 @@ function RoadmapSourceCard({
   latestJobMatch,
 }: RoadmapSourceCardProps) {
   return (
-    <section className="mt-8 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+    <section className="mt-8 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
@@ -483,7 +488,7 @@ function ReadinessCard({
   latestJobMatch,
 }: ReadinessCardProps) {
   return (
-    <section className="mt-8 rounded-lg border border-green-500/30 bg-green-500/10 p-6">
+    <section className="mt-8 rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.13),rgba(15,23,42,0.72))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-300/80">
@@ -512,7 +517,7 @@ function ReadinessCard({
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-green-500/20 bg-black/20 p-5">
+      <div className="mt-6 rounded-2xl border border-green-500/20 bg-black/22 p-5">
         <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-green-200/70">
           Current Blockers
         </h3>
@@ -538,7 +543,7 @@ type PhaseSectionProps = {
 
 function PhaseSection({ phase }: PhaseSectionProps) {
   return (
-    <section className="min-w-0 rounded-lg border border-gray-800 bg-neutral-900 p-5">
+    <section className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <h2 className="text-xl font-bold text-white">
         {phase.title}
       </h2>
@@ -571,7 +576,7 @@ function TaskSection({
   tasks,
 }: TaskSectionProps) {
   return (
-    <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div>
         <h2 className="text-xl font-bold text-white">
           {title}
@@ -600,7 +605,7 @@ type TaskCardProps = {
 
 function TaskCard({ task }: TaskCardProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-5">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-5">
       <TaskMeta task={task} />
 
       <h3 className="mt-4 break-words text-lg font-bold text-white">
@@ -620,7 +625,7 @@ function TaskCard({ task }: TaskCardProps) {
 
 function CompactTaskCard({ task }: TaskCardProps) {
   return (
-    <article className="min-w-0 rounded-lg border border-gray-800 bg-black/30 p-4">
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-4">
       <TaskMeta task={task} />
 
       <h3 className="mt-3 break-words text-base font-bold text-white">
@@ -658,7 +663,7 @@ type ApplicationStrategyProps = {
 
 function ApplicationStrategy({ items }: ApplicationStrategyProps) {
   return (
-    <section className="mt-6 rounded-lg border border-gray-800 bg-neutral-900 p-6">
+    <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <h2 className="text-xl font-bold text-white">
         Application Strategy
       </h2>
@@ -667,7 +672,7 @@ function ApplicationStrategy({ items }: ApplicationStrategyProps) {
         {items.map((item) => (
           <li
             key={item}
-            className="break-words rounded-lg border border-gray-800 bg-black/30 p-4"
+            className="break-words rounded-2xl border border-white/10 bg-black/28 p-4"
           >
             {item}
           </li>
@@ -714,11 +719,7 @@ function getPriorityClassName(priority: RoadmapTask["priority"]): string {
 }
 
 function subscribeToStoredData(onStoreChange: () => void): () => void {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-  };
+  return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
 function readStoredAnalysis(): string | null {

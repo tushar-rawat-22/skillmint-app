@@ -11,7 +11,7 @@ export default function DashboardPreview() {
       id="preview"
       className="mx-auto max-w-7xl px-6 py-24"
     >
-      <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+      <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-green-400">
             Product Preview
@@ -27,7 +27,9 @@ export default function DashboardPreview() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-gray-800 bg-[linear-gradient(145deg,rgba(20,83,45,0.32),rgba(10,10,10,0.92)_42%,rgba(15,23,42,0.88))] p-5 shadow-2xl shadow-green-950/20">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(15,118,110,0.18),rgba(15,23,42,0.94)_38%,rgba(2,6,23,0.98))] p-5 shadow-2xl shadow-emerald-950/25">
+          <div className="pointer-events-none absolute inset-x-12 top-0 h-28 rounded-full bg-emerald-400/10 blur-3xl" />
+
           <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-green-300">
@@ -44,8 +46,8 @@ export default function DashboardPreview() {
             </span>
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <article className="rounded-2xl border border-white/10 bg-black/35 p-5">
+          <div className="relative mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <article className="rounded-2xl border border-emerald-400/20 bg-black/35 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <p className="text-sm font-semibold text-gray-400">
                 Career IQ
               </p>
@@ -69,7 +71,7 @@ export default function DashboardPreview() {
             </article>
 
             <div className="grid gap-4">
-              <article className="rounded-2xl border border-white/10 bg-black/35 p-5">
+              <article className="rounded-2xl border border-white/10 bg-black/35 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-gray-300">
                     Resume proof strength
@@ -90,7 +92,7 @@ export default function DashboardPreview() {
 
                       <div className="mt-2 h-2 rounded-full bg-white/10">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-300"
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-sky-300"
                           style={{ width: `${value}%` }}
                         />
                       </div>
@@ -121,20 +123,41 @@ export default function DashboardPreview() {
             </div>
           </div>
 
-          <article className="mt-4 rounded-2xl border border-green-500/30 bg-green-500/10 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-300">
-              Next best action
-            </p>
+          <div className="relative mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+            <article className="rounded-2xl border border-violet-400/20 bg-violet-400/10 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-200">
+                Roadmap progress
+              </p>
 
-            <h4 className="mt-3 text-lg font-bold text-white">
-              Add stronger project proof before applying.
-            </h4>
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-3xl font-black text-white">30d</p>
+                  <p className="mt-1 text-xs text-violet-100/70">
+                    Proof sprint
+                  </p>
+                </div>
 
-            <p className="mt-2 text-sm leading-6 text-green-50/80">
-              Strengthen one role-aligned project with a README, screenshots,
-              deployment link, and measurable outcome.
-            </p>
-          </article>
+                <div className="h-2 w-32 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-violet-400 to-emerald-300" />
+                </div>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                Next best action
+              </p>
+
+              <h4 className="mt-3 text-lg font-bold text-white">
+                Add stronger project proof before applying.
+              </h4>
+
+              <p className="mt-2 text-sm leading-6 text-emerald-50/80">
+                Strengthen one role-aligned project with a README, screenshots,
+                deployment link, and measurable outcome.
+              </p>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -149,7 +172,7 @@ type PreviewMetricProps = {
 
 function PreviewMetric({ label, value, detail }: PreviewMetricProps) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-black/35 p-4">
+    <article className="rounded-2xl border border-white/10 bg-black/35 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="text-xs leading-5 text-gray-500">
         {label}
       </p>

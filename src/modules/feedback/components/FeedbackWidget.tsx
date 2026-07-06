@@ -132,7 +132,7 @@ export default function FeedbackWidget() {
           role="dialog"
           aria-modal="false"
           aria-labelledby="beta-feedback-title"
-          className="skillmint-fade-in mb-3 w-[calc(100vw-2rem)] max-w-md rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-white shadow-2xl shadow-black/40"
+          className="skillmint-fade-in mb-3 w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-white/10 bg-slate-950/96 p-4 text-white shadow-2xl shadow-black/45 backdrop-blur-xl"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -151,7 +151,7 @@ export default function FeedbackWidget() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-lg border border-neutral-800 px-2 py-1 text-xs font-semibold text-neutral-300 transition hover:border-neutral-600 hover:text-white"
+              className="rounded-lg border border-white/10 px-2 py-1 text-xs font-semibold text-neutral-300 transition hover:border-white/25 hover:text-white"
             >
               Close
             </button>
@@ -172,7 +172,7 @@ export default function FeedbackWidget() {
                   onChange={(event) =>
                     setFeedbackType(event.target.value as FeedbackType)
                   }
-                  className="mt-2 w-full rounded-lg border border-neutral-800 bg-black px-3 py-2 text-sm text-white outline-none transition focus:border-green-500"
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-sm text-white outline-none transition focus:border-emerald-400"
                 >
                   {feedbackTypeOptions.map((option) => (
                     <option
@@ -195,7 +195,7 @@ export default function FeedbackWidget() {
                   onChange={(event) =>
                     setSentiment(event.target.value as FeedbackSentiment)
                   }
-                  className="mt-2 w-full rounded-lg border border-neutral-800 bg-black px-3 py-2 text-sm text-white outline-none transition focus:border-green-500"
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-sm text-white outline-none transition focus:border-emerald-400"
                 >
                   {sentimentOptions.map((option) => (
                     <option
@@ -220,7 +220,7 @@ export default function FeedbackWidget() {
                 maxLength={MAX_FEEDBACK_LENGTH}
                 rows={5}
                 placeholder="What felt broken, confusing, or useful?"
-                className="mt-2 w-full resize-none rounded-lg border border-neutral-800 bg-black px-3 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-neutral-600 focus:border-green-500"
+                className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-black/50 px-3 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-neutral-600 focus:border-emerald-400"
               />
             </label>
 
@@ -232,7 +232,7 @@ export default function FeedbackWidget() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-neutral-300"
+                className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900 disabled:text-neutral-300"
               >
                 {isSubmitting ? "Sending..." : "Send feedback"}
               </button>

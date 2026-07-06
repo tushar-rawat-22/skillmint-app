@@ -65,7 +65,7 @@ export default function RealityCheckCard({
         {insights.map((insight) => (
           <article
             key={insight.label}
-            className={`rounded-lg border p-5 ${insight.tone}`}
+            className={`rounded-2xl border p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${insight.tone}`}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
               {insight.label}

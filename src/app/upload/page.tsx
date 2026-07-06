@@ -72,7 +72,7 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black pb-24 text-white">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_32%),#020617] pb-24 text-white">
       <UploadHero />
 
       <div className="mx-auto max-w-5xl px-6">

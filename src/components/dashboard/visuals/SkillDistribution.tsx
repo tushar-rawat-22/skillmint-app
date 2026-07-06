@@ -17,8 +17,8 @@ export default function SkillDistribution({
   items,
 }: SkillDistributionProps) {
   return (
-    <article className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/95 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-      <div className="border-b border-neutral-800 bg-black/20 p-6">
+    <article className="overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="border-b border-white/10 bg-black/20 p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
@@ -36,7 +36,7 @@ export default function SkillDistribution({
         </div>
       </div>
 
-      <div className="grid gap-px bg-neutral-800 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-px bg-white/10 md:grid-cols-2 xl:grid-cols-5">
         {items.map((item) => {
           const percentage = getPercentage(item.value, item.max);
 
@@ -63,7 +63,7 @@ function GaugeCard({ item, percentage }: GaugeCardProps) {
   const tone = getGaugeTone(percentage);
 
   return (
-    <div className="min-w-0 bg-neutral-950 p-5 transition-colors duration-200 hover:bg-neutral-900/80">
+    <div className="min-w-0 bg-slate-950/70 p-5 transition-colors duration-200 hover:bg-slate-900/70">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="truncate text-sm font-bold">
@@ -80,7 +80,7 @@ function GaugeCard({ item, percentage }: GaugeCardProps) {
         </p>
       </div>
 
-      <div className="mt-5 rounded-lg border border-neutral-800 bg-black/40 p-4">
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
         <svg
           viewBox="0 0 180 112"
           className="h-28 w-full"

@@ -88,7 +88,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
   if (!configStatus.isConfigured) {
     return (
-      <section className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
+      <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
         <h2 className="text-xl font-bold text-yellow-100">
           Account sync is unavailable
         </h2>
@@ -97,7 +97,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           {configStatus.message}
         </p>
 
-        <div className="mt-4 rounded-lg border border-yellow-400/20 bg-black/20 p-4 text-sm text-yellow-50/80">
+        <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-black/20 p-4 text-sm text-yellow-50/80">
           <p className="font-semibold text-yellow-100">
             Missing environment values
           </p>
@@ -117,7 +117,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-gray-800 bg-neutral-900 p-6"
+      className="rounded-2xl border border-white/10 bg-black/28 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
     >
       <div>
         <label
@@ -133,7 +133,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+          className="mt-2 w-full rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400"
           placeholder="you@example.com"
         />
       </div>
@@ -152,7 +152,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           autoComplete={mode === "login" ? "current-password" : "new-password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-gray-800 bg-black/40 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-green-500"
+          className="mt-2 w-full rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400"
           placeholder="Enter your password"
         />
       </div>
@@ -172,7 +172,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-5 w-full rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-gray-300"
+        className="mt-5 w-full rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900 disabled:text-gray-300"
       >
         {isSubmitting ? "Please wait..." : getSubmitLabel(mode)}
       </button>

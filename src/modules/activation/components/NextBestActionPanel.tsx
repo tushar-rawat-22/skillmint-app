@@ -61,7 +61,7 @@ export default function NextBestActionPanel({
   const isCurrentPage = pathname === action.href;
 
   return (
-    <article className={`rounded-lg border border-gray-800 bg-neutral-900 p-5 ${className}`}>
+    <article className={`rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.11),rgba(15,23,42,0.74))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${className}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-400">
@@ -84,7 +84,7 @@ export default function NextBestActionPanel({
         ) : (
           <Link
             href={action.href}
-            className="w-fit rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-500"
+            className="w-fit rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
           >
             {action.cta}
           </Link>

@@ -21,7 +21,7 @@ export default function ReadinessTrend({
     .join(" ");
 
   return (
-    <article className="rounded-lg border border-neutral-800 bg-neutral-900/95 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors duration-200 hover:border-neutral-700">
+    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-violet-400/30">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
         Projected Readiness Path
       </p>
@@ -30,7 +30,7 @@ export default function ReadinessTrend({
         Projection only, based on completing the next visible mission.
       </p>
 
-      <div className="mt-5 rounded-lg border border-neutral-800 bg-black/30 p-4">
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/28 p-4">
         <svg
           viewBox="0 0 220 120"
           className="h-36 w-full"

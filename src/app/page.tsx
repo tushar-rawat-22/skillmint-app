@@ -14,7 +14,7 @@ export default function HomePage() {
     <>
       <Navbar />
 
-      <main className="bg-black text-white overflow-x-hidden">
+      <main className="overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),#020617] text-white">
         <Hero />
 
         <Problem />
