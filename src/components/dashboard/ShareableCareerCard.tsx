@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
   CareerIQResult,
@@ -17,6 +18,7 @@ type Props = {
   bestMatch?: RoleMatchResult;
   isReady: boolean;
   nextProofMove: string;
+  proof?: ProofScoreResult;
 };
 
 export default function ShareableCareerCard({
@@ -26,6 +28,7 @@ export default function ShareableCareerCard({
   bestMatch,
   isReady,
   nextProofMove,
+  proof,
 }: Props) {
   const [shareMessage, setShareMessage] = useState("");
   const safeProofMove = getSafeProofMove(nextProofMove);
@@ -139,6 +142,15 @@ export default function ShareableCareerCard({
           value={`${Math.round(recruiter.score)}%`}
         />
 
+        {proof && (
+          <SnapshotRow
+            label="Proof Confidence"
+            value={`${Math.round(proof.proofConfidenceScore)}% · ${
+              proof.proofCoverageLabel
+            }`}
+          />
+        )}
+
         <SnapshotRow
           label="Next Proof Move"
           value={safeProofMove}
@@ -159,10 +171,16 @@ function buildShareSummary({
   ats,
   recruiter,
   bestMatch,
+  proof,
   nextProofMove,
 }: Pick<
   Props,
-  "careerIQ" | "ats" | "recruiter" | "bestMatch" | "nextProofMove"
+  | "careerIQ"
+  | "ats"
+  | "recruiter"
+  | "bestMatch"
+  | "nextProofMove"
+  | "proof"
 >): string {
   return [
     "SkillMint Career Snapshot",
@@ -170,8 +188,11 @@ function buildShareSummary({
     `Best role: ${bestMatch?.role ?? "Not enough data"}`,
     `ATS readiness: ${Math.round(ats.score)}%`,
     `Recruiter confidence: ${Math.round(recruiter.score)}%`,
+    proof
+      ? `Proof confidence: ${Math.round(proof.proofConfidenceScore)}% (${proof.proofCoverageLabel})`
+      : null,
     `Next proof move: ${nextProofMove}`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function getSafeProofMove(value: string): string {

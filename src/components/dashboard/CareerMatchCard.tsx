@@ -16,12 +16,13 @@ export default function CareerMatchCard({ matches }: Props) {
           </p>
 
           <h2 className="mt-2 text-2xl font-black">
-            Top career matches
+            Profile-fit roles
           </h2>
         </div>
 
         <p className="max-w-xl text-sm leading-6 text-neutral-400">
-          Role fit is capped when proof is thin, even if skills match.
+          These are general profile-fit roles, separate from your latest JD
+          match.
         </p>
       </div>
 

@@ -6,7 +6,88 @@ SkillMint should not only score what a resume claims. It should verify claims ag
 
 The future Proof Engine should help users understand which skills, projects, and achievements are supported by evidence, which are weakly supported, and which need better proof before being used confidently in applications.
 
-This document is direction only. Sprint 7.10C does not implement GitHub scanning, LeetCode scanning, new scoring formulas, parser changes, or ATS changes.
+Sprint 7.10C documented the long-term direction. Sprint 7.11 implements the first Proof-Aware Scoring MVP without external source scanning, parser changes, ATS changes, roadmap changes, or Supabase schema changes.
+
+## Sprint 7.11 MVP
+
+The MVP uses only data SkillMint already has:
+
+- Resume text extracted from the uploaded file
+- Parsed skills, projects, experience, certifications, and links
+- Existing UserProfile proof signals
+- Career field from Setup when available
+
+The MVP does not:
+
+- Call GitHub APIs
+- Scrape LeetCode
+- Validate external links
+- Add profile-link database schema
+- Change ATS matching logic
+- Change roadmap generation logic
+
+Sprint 7.11 adds Proof Confidence as a separate signal from Career IQ. Career IQ becomes proof-aware in the user-facing dashboard blend, but Proof Confidence remains visible as its own explanation layer so users can see whether claims are backed, weakly supported, or unverified.
+
+MVP outputs include:
+
+- Proof Confidence Score
+- Proof Coverage Label
+- Extracted proof links
+- Link type counts
+- Evidence-backed skills
+- Weakly supported skills
+- Claimed but unverified skills
+- Strongest evidence
+- Weakest evidence
+- Next proof move
+- Scoring reasons
+
+Full source validation remains future work.
+
+## Proof Engine Role In Product Hierarchy
+
+Proof Confidence is the trust layer in SkillMint's product hierarchy.
+
+It should:
+
+- Influence Career IQ.
+- Explain how much claimed resume evidence is supported.
+- Keep claimed skills, weakly supported skills, and evidence-backed skills separate.
+- Treat extracted links as evidence candidates, not verified sources.
+- Make clear that missing proof means unverified, not false.
+
+It should not:
+
+- Replace Profile-fit Roles.
+- Replace Latest JD Match.
+- Externally verify GitHub, LinkedIn, LeetCode, or portfolio sources in the MVP.
+- Present generic links as proof for every skill.
+- Allow Career IQ to appear highly trustworthy when Proof Confidence is weak.
+
+Proof Confidence answers: "How trustworthy are the claims behind this profile?"
+
+Profile-fit Roles answer: "Which roles does this resume naturally fit?"
+
+Latest JD Match answers: "Can this user compete for this exact job description?"
+
+## Sprint 7.11A Calibration Patch
+
+Sprint 7.11A tightens MVP skill proof classification.
+
+Generic proof links must not support every claimed skill. LinkedIn, GitHub profile, LeetCode, blog, and certification links are evidence candidates, but they only help a specific skill when the skill appears in relevant project, work, certification, or proof context.
+
+Calibration rules:
+
+- GitHub repo, live project, portfolio, Kaggle, dashboard, and Hugging Face links are project proof signals only when the skill appears in project context.
+- GitHub profile alone is a general evidence candidate, not proof for every listed skill.
+- LinkedIn supports identity and experience context, but does not verify technical depth by itself.
+- LeetCode can weakly support DSA, algorithms, problem solving, or programming-language claims only when those terms also appear in resume context.
+- Certification links support specific skills only when those skills appear near certification/course context.
+- Medium, Hashnode, and Dev.to links support a skill only when the skill appears in project, blog, or proof context.
+- Good projects without links can still weakly support related skills through project context.
+- Project links do not automatically make a skill evidence-backed if the skill only appears in the skills list.
+
+This calibration preserves the MVP promise: Proof Confidence should be useful and conservative, not inflated by generic links.
 
 ## Core Idea
 

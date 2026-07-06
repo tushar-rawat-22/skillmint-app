@@ -74,7 +74,7 @@ export default function DashboardPreview() {
               <article className="rounded-2xl border border-white/10 bg-black/35 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-gray-300">
-                    Resume proof strength
+                    Proof Confidence
                   </p>
 
                   <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-100">
@@ -110,8 +110,8 @@ export default function DashboardPreview() {
 
                 <PreviewMetric
                   label="Recruiter Confidence"
-                  value="B"
-                  detail="Proof score"
+                  value="72%"
+                  detail="Proof-aware"
                 />
 
                 <PreviewMetric

@@ -1,24 +1,35 @@
+import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
   RecruiterResult,
   RoleMatchResult,
-  SalaryResult,
 } from "@/intelligence/types/results";
 
 type Props = {
+  proof: ProofScoreResult;
   ats: ATSResult;
   recruiter: RecruiterResult;
   bestMatch?: RoleMatchResult;
-  salary: SalaryResult;
+  latestJobMatch?: {
+    title: string;
+    matchScore: number;
+  } | null;
 };
 
 export default function MetricStrip({
+  proof,
   ats,
   recruiter,
   bestMatch,
-  salary,
+  latestJobMatch,
 }: Props) {
   const metrics = [
+    {
+      label: "Proof Confidence",
+      value: `${Math.round(proof.proofConfidenceScore)}%`,
+      detail: proof.proofCoverageLabel,
+      tone: "text-emerald-300",
+    },
     {
       label: "ATS Readiness",
       value: `${Math.round(ats.score)}%`,
@@ -32,15 +43,13 @@ export default function MetricStrip({
       tone: "text-amber-300",
     },
     {
-      label: "Role Match",
-      value: bestMatch ? `${Math.round(bestMatch.matchScore)}%` : "--",
-      detail: bestMatch?.role ?? "Upload resume",
-      tone: "text-emerald-300",
-    },
-    {
-      label: "Salary Signal",
-      value: formatSalaryShort(salary.salary),
-      detail: "Annual fresher estimate",
+      label: latestJobMatch ? "Latest JD Match" : "Profile-fit role",
+      value: latestJobMatch
+        ? `${Math.round(latestJobMatch.matchScore)}%`
+        : bestMatch
+          ? `${Math.round(bestMatch.matchScore)}%`
+          : "--",
+      detail: latestJobMatch?.title ?? bestMatch?.role ?? "Upload resume",
       tone: "text-violet-300",
     },
   ];
@@ -67,11 +76,4 @@ export default function MetricStrip({
       ))}
     </section>
   );
-}
-
-function formatSalaryShort(salary: number): string {
-  const lpa = salary / 100000;
-  const formattedLpa = Number.isInteger(lpa) ? `${lpa}` : lpa.toFixed(1);
-
-  return `₹${formattedLpa}L`;
 }

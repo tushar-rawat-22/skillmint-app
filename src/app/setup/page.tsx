@@ -58,13 +58,13 @@ export default function SetupPage() {
             </p>
 
             <p className="rounded-xl border border-white/10 bg-black/25 p-4">
-              Does not change your resume score yet.
+              Frames your guidance without editing your resume.
             </p>
           </div>
 
           <p className="mt-4 text-sm leading-6 text-gray-400">
             Choose your career field so SkillMint can frame your direction
-            better. This does not change your resume score yet.
+            better without rewriting your resume analysis.
           </p>
         </section>
 

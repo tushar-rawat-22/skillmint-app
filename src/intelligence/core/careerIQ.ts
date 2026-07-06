@@ -79,7 +79,7 @@ export function calculateCareerIQ(
 
   if (score >= 90) {
     grade = "A+";
-    summary = "Exceptional, rare profile with strong proof.";
+    summary = "Exceptional, rare profile with standout evidence.";
   } else if (score >= 80) {
     grade = "A";
     summary = "Strong profile, competitive for good roles.";

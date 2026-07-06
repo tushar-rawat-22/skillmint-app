@@ -11,6 +11,11 @@ import {
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
+import {
+  generateProofScore,
+  type ProofCoverageLabel,
+  type ProofScoreResult,
+} from "@/intelligence/proof";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   NextBestActionPanel,
@@ -246,6 +251,7 @@ export default function ResumePage() {
   const extractedTextPreview = getExtractedTextPreview(
     activeAnalysis.extractedText,
   );
+  const proofAnalysis = getProofAnalysis(activeAnalysis);
   const visibleExtractedText = showFullExtractedText
     ? activeAnalysis.extractedText.trim() ||
       "No extracted text was returned for this resume."
@@ -311,9 +317,14 @@ export default function ResumePage() {
 
         <ParsedResumeSections profile={activeAnalysis.parsedProfile} />
 
+        {proofAnalysis && (
+          <ProofCoveragePanel proof={proofAnalysis} />
+        )}
+
         {activeAnalysis.userProfile && (
           <CareerIntelligenceReady
             profile={activeAnalysis.userProfile}
+            proof={proofAnalysis}
           />
         )}
 
@@ -512,77 +523,253 @@ function ResumeSyncStatusCard({
 
 type CareerIntelligenceReadyProps = {
   profile: UserProfile;
+  proof: ProofScoreResult | null;
 };
 
 function CareerIntelligenceReady({
   profile,
+  proof,
 }: CareerIntelligenceReadyProps) {
   const scores = [
     {
-      label: "Resume Score",
-      value: `${profile.resumeScore}/20`,
+      label: "Structure Signal",
+      value: scaleSignal(profile.resumeScore, 20),
+      detail: "Resume sections, clarity, and parseable structure.",
     },
     {
-      label: "Skills Score",
-      value: `${profile.skillsScore}/15`,
+      label: "Skills Detection",
+      value: scaleSignal(profile.skillsScore, 15),
+      detail: "Skills detected in the resume text.",
     },
     {
-      label: "Projects Score",
-      value: `${profile.projectsScore}/15`,
+      label: "Project Detection",
+      value: scaleSignal(profile.projectsScore, 15),
+      detail: "Project entries and implementation detail detected.",
     },
     {
-      label: "Experience Score",
-      value: `${profile.experienceScore}/12`,
+      label: "Experience Signal",
+      value: scaleSignal(profile.experienceScore, 12),
+      detail: "Internship, work, freelance, or role context.",
     },
     {
-      label: "Education Score",
-      value: `${profile.educationScore}/10`,
+      label: "Education Signal",
+      value: scaleSignal(profile.educationScore, 10),
+      detail: "Education section clarity and relevance.",
     },
     {
-      label: "ATS Base Score",
-      value: `${profile.atsScore}/5`,
+      label: "ATS Base Signal",
+      value: scaleSignal(profile.atsScore, 5),
+      detail: "Resume structure before job-specific matching.",
     },
     {
-      label: "Recruiter Base Score",
-      value: `${profile.recruiterScore}/5`,
+      label: "Recruiter Base Signal",
+      value: scaleSignal(profile.recruiterScore, 5),
+      detail: "Initial shortlisting signal before proof verification.",
+    },
+    ...(proof
+      ? [
+          {
+            label: "Proof Confidence",
+            value: proof.proofConfidenceScore,
+            detail: "Claims supported by evidence candidates.",
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(148,163,184,0.08),rgba(15,23,42,0.72))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-400">
+            Resume Detection
+          </p>
+
+          <h2 className="mt-2 text-xl font-bold">
+            Base Resume Signals
+          </h2>
+        </div>
+
+        <p className="max-w-2xl text-sm leading-6 text-gray-400">
+          Base signals show what SkillMint detected in the resume. Proof
+          Confidence shows what is supported by evidence candidates.
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {scores.map((score) => (
+          <BaseSignalCard
+            key={score.label}
+            label={score.label}
+            value={score.value}
+            detail={score.detail}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type BaseSignalCardProps = {
+  label: string;
+  value: number;
+  detail: string;
+};
+
+function BaseSignalCard({
+  label,
+  value,
+  detail,
+}: BaseSignalCardProps) {
+  const normalizedValue = Math.max(0, Math.min(100, Math.round(value)));
+
+  return (
+    <article className="rounded-2xl border border-white/10 bg-black/25 p-4">
+      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-gray-500">
+        {label}
+      </p>
+
+      <p className="mt-2 text-2xl font-black text-white">
+        {normalizedValue} <span className="text-sm text-gray-500">/100</span>
+      </p>
+
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-slate-300"
+          style={{ width: `${normalizedValue}%` }}
+        />
+      </div>
+
+      <p className="mt-3 text-xs leading-5 text-gray-500">
+        {detail}
+      </p>
+    </article>
+  );
+}
+
+function scaleSignal(value: number, max: number): number {
+  if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round((value / max) * 100)));
+}
+
+type ProofCoveragePanelProps = {
+  proof: ProofScoreResult;
+};
+
+function ProofCoveragePanel({ proof }: ProofCoveragePanelProps) {
+  const proofStats = [
+    {
+      label: "Evidence-backed",
+      value: proof.evidenceBackedSkills.length,
+      detail: "skills",
+    },
+    {
+      label: "Weakly supported",
+      value: proof.weaklySupportedSkills.length,
+      detail: "skills",
+    },
+    {
+      label: "Unverified",
+      value: proof.unverifiedSkills.length,
+      detail: "claims",
+    },
+    {
+      label: "Proof links",
+      value: proof.extractedProofLinks.length,
+      detail: "candidates",
     },
   ];
 
   return (
-    <section className="mt-6 rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.1),rgba(15,23,42,0.7))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
-            Resume Proof
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-300/80">
+            Proof Confidence
           </p>
 
-          <h2 className="mt-2 text-xl font-bold">
-            Career Intelligence
+          <h2 className="mt-2 text-2xl font-black">
+            {proof.proofConfidenceScore}% · {proof.proofCoverageLabel}
           </h2>
+
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+            {proof.proofSummary} Missing proof means unverified, not false.
+          </p>
         </div>
 
-        <p className="max-w-2xl text-sm leading-6 text-green-100/75">
-          These compact signals come from the resume proof SkillMint detected.
-        </p>
+        <span className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${
+          getProofBadgeClassName(proof.proofCoverageLabel)
+        }`}
+        >
+          Evidence candidates, not verified sources
+        </span>
       </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {scores.map((score) => (
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {proofStats.map((stat) => (
           <article
-            key={score.label}
-            className="rounded-2xl border border-green-500/20 bg-black/25 p-3"
+            key={stat.label}
+            className="rounded-2xl border border-white/10 bg-black/28 p-4"
           >
-            <p className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-green-200/60">
-              {score.label}
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+              {stat.label}
             </p>
 
-            <p className="mt-2 text-xl font-black text-white">
-              {score.value}
+            <p className="mt-2 text-2xl font-black text-white">
+              {stat.value}
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              {stat.detail}
             </p>
           </article>
         ))}
       </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        <ProofInsight
+          label="Strongest evidence"
+          value={proof.strongestEvidence}
+        />
+
+        <ProofInsight
+          label="Weakest evidence"
+          value={proof.weakestEvidence}
+        />
+
+        <ProofInsight
+          label="Next proof move"
+          value={proof.nextProofMove}
+        />
+      </div>
+
+      <p className="mt-5 text-sm leading-6 text-gray-500">
+        Based on resume structure, parsed projects, claimed skills, and links
+        extracted from the resume. SkillMint does not scan external sources yet.
+      </p>
     </section>
+  );
+}
+
+type ProofInsightProps = {
+  label: string;
+  value: string;
+};
+
+function ProofInsight({ label, value }: ProofInsightProps) {
+  return (
+    <article className="rounded-2xl border border-white/10 bg-black/25 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+        {label}
+      </p>
+
+      <p className="mt-2 text-sm leading-6 text-gray-200">
+        {value}
+      </p>
+    </article>
   );
 }
 
@@ -859,6 +1046,40 @@ function formatStatus(status: string): string {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function getProofAnalysis(
+  analysis: ResumeAnalysisView,
+): ProofScoreResult | null {
+  if (isProofScoreResult(analysis.proofAnalysis)) {
+    return analysis.proofAnalysis;
+  }
+
+  if (!analysis.userProfile) {
+    return null;
+  }
+
+  return generateProofScore({
+    profile: analysis.userProfile,
+    parsedProfile: analysis.parsedProfile,
+    resumeText: analysis.extractedText,
+  });
+}
+
+function getProofBadgeClassName(label: ProofCoverageLabel): string {
+  if (label === "Strong") {
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-100";
+  }
+
+  if (label === "Moderate") {
+    return "border-sky-500/30 bg-sky-500/10 text-sky-100";
+  }
+
+  if (label === "Weak") {
+    return "border-amber-500/30 bg-amber-500/10 text-amber-100";
+  }
+
+  return "border-rose-500/30 bg-rose-500/10 text-rose-100";
+}
+
 function formatCharacterCount(characterCount: number): string {
   if (!Number.isFinite(characterCount) || characterCount <= 0) {
     return "No text";
@@ -1072,6 +1293,35 @@ function isResumeSyncStatus(
       typeof status.databaseId === "string"
     )
   );
+}
+
+function isProofScoreResult(value: unknown): value is ProofScoreResult {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isNumber(value.proofConfidenceScore) &&
+    isProofCoverageLabel(value.proofCoverageLabel) &&
+    typeof value.proofSummary === "string" &&
+    Array.isArray(value.extractedProofLinks) &&
+    isRecord(value.linkTypeCounts) &&
+    isStringArray(value.evidenceBackedSkills) &&
+    isStringArray(value.weaklySupportedSkills) &&
+    isStringArray(value.unverifiedSkills) &&
+    Array.isArray(value.skillClassifications) &&
+    typeof value.strongestEvidence === "string" &&
+    typeof value.weakestEvidence === "string" &&
+    typeof value.nextProofMove === "string" &&
+    isStringArray(value.scoringReasons)
+  );
+}
+
+function isProofCoverageLabel(value: unknown): value is ProofCoverageLabel {
+  return value === "Strong" ||
+    value === "Moderate" ||
+    value === "Weak" ||
+    value === "Missing";
 }
 
 function mapPersistentResumeAnalysisToView(

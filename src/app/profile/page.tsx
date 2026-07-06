@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
+import CareerDirectionSummaryCard from "@/modules/profile/components/CareerDirectionSummaryCard";
+import ProofLinksPlaceholderCard from "@/modules/profile/components/ProofLinksPlaceholderCard";
 import ProfileIdentityCard from "@/modules/profile/components/ProfileIdentityCard";
-import PersistentProfileForm from "@/modules/profile/components/PersistentProfileForm";
 
 export default function ProfilePage() {
   return (
@@ -13,12 +14,12 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-4xl font-black">
-                Career Profile
+                Profile
               </h1>
 
               <p className="mt-4 max-w-2xl text-gray-400">
-                Save your career direction so SkillMint can keep your next steps
-                focused without changing your resume score.
+                See your identity, saved direction, and account status in one
+                calm place.
               </p>
             </div>
 
@@ -31,25 +32,18 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-6">
             <ProfileIdentityCard />
 
             <AuthStatusCard />
-
-            <article className="rounded-2xl border border-green-500/30 bg-green-500/10 p-6">
-              <h2 className="text-xl font-bold">
-                Your direction starts in Setup
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-green-50/80">
-                Choose a target role, level, and goal. When signed in,
-                SkillMint saves that direction here.
-              </p>
-            </article>
           </div>
 
-          <PersistentProfileForm />
+          <div className="space-y-6">
+            <CareerDirectionSummaryCard />
+
+            <ProofLinksPlaceholderCard />
+          </div>
         </div>
 
         <article className="mt-8 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">

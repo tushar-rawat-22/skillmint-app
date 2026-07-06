@@ -363,6 +363,25 @@ Current target:
 
 ---
 
+# Locked SkillMint Beta Hierarchy
+
+```text
+Resume Reality
+-> Profile-fit Roles
+-> Active Target
+-> Proof Confidence
+-> Career IQ
+-> Latest JD Match
+-> Roadmap / Missions
+-> Re-score Loop
+```
+
+Future work must not confuse Profile-fit Roles with Latest JD Match.
+
+Profile-fit Roles are general role suggestions from the resume. Latest JD Match is the user's fit against one specific pasted job description. Active Target should prefer the latest JD when present.
+
+---
+
 # Sprint Status Update
 
 Sprint 5 Resume Intelligence: Frozen
@@ -416,6 +435,10 @@ Sprint 7.10 Premium Visual Redesign + Founder Appeal Pass: Completed
 Sprint 7.10B Visual Cohesion + Shareable Trust Fixes: Completed
 
 Sprint 7.10C Password Recovery + Proof Engine Direction: Completed
+
+Sprint 7.11 Proof-Aware Scoring MVP + Conversion UX Cleanup: Completed
+
+Sprint 7.11F SkillMint Doctrine + Hierarchy Lock: Completed
 
 Next:
 

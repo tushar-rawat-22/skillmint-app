@@ -1,21 +1,28 @@
 import Link from "next/link";
 
-import type {
-  CareerIQResult,
-  RoleMatchResult,
-  SalaryResult,
-} from "@/intelligence/types/results";
+import type { ProofScoreResult } from "@/intelligence/proof";
+import type { CareerIQResult } from "@/intelligence/types/results";
 
 type Props = {
   careerIQ: CareerIQResult;
-  bestMatch?: RoleMatchResult;
-  salary: SalaryResult;
+  proof: ProofScoreResult;
+  cta: {
+    label: string;
+    href: string;
+  };
+  activeRole: {
+    label: string;
+    value: string;
+    metricLabel: string;
+    metricValue: string;
+  };
 };
 
 export default function CareerReportHero({
   careerIQ,
-  bestMatch,
-  salary,
+  proof,
+  cta,
+  activeRole,
 }: Props) {
   const score = Math.round(careerIQ.score);
 
@@ -35,15 +42,19 @@ export default function CareerReportHero({
             </div>
 
             <Link
-              href="/upload"
+              href={cta.href}
               className="w-fit rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
             >
-              Upload Resume
+              {cta.label}
             </Link>
           </div>
 
           <p className="mt-6 max-w-3xl text-base leading-7 text-neutral-300">
             {careerIQ.summary}
+          </p>
+
+          <p className="mt-3 max-w-3xl text-sm font-semibold text-emerald-200/80">
+            Career IQ is trust-adjusted by Proof Confidence.
           </p>
         </div>
 
@@ -64,13 +75,22 @@ export default function CareerReportHero({
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <HeroDetail
-              label="Best Match"
-              value={bestMatch?.role ?? "Not enough data"}
+              label={activeRole.label}
+              value={activeRole.value}
             />
 
             <HeroDetail
-              label="Estimated Salary"
-              value={formatSalaryBand(salary.salary)}
+              label={activeRole.metricLabel}
+              value={activeRole.metricValue}
+            />
+          </div>
+
+          <div className="mt-4">
+            <HeroDetail
+              label="Proof Confidence"
+              value={`${Math.round(proof.proofConfidenceScore)}% · ${
+                proof.proofCoverageLabel
+              }`}
             />
           </div>
         </div>
@@ -96,16 +116,4 @@ function HeroDetail({ label, value }: HeroDetailProps) {
       </p>
     </div>
   );
-}
-
-function formatSalaryBand(salary: number): string {
-  const lpa = salary / 100000;
-  const lower = Math.max(3, Math.floor((lpa - 0.75) * 2) / 2);
-  const upper = Math.max(lower + 0.5, Math.ceil((lpa + 0.75) * 2) / 2);
-
-  return `₹${formatLpa(lower)}-${formatLpa(upper)} LPA`;
-}
-
-function formatLpa(value: number): string {
-  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
 }

@@ -1,6 +1,7 @@
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import type { ResumeImprovementPlan } from "@/intelligence/core/resumeImprovement";
 import type { UserProfile } from "@/intelligence/types/profile";
+import { calculateRoleMatches } from "@/intelligence/core/roleMatch";
 
 export interface ResumeRewriteSuggestion {
   section:
@@ -59,14 +60,25 @@ const SKILL_GROUP_PATTERNS: Record<SkillGroup, RegExp> = {
   Tools: /\b(?:git|github|testing|agile|system design|communication|problem solving)\b/i,
 };
 
+const LEADING_ACTION_VERB_PATTERN =
+  /^(?:built|used|developed|created|designed|implemented|led|improved|deployed|integrated|automated|optimized|presented)\b\s*/i;
+
+export interface ResumeRewriteContext {
+  jobTitle?: string | null;
+  companyName?: string | null;
+  setupTargetRole?: string | null;
+  profileFitRole?: string | null;
+}
+
 export function generateResumeRewritePlan(
   profile: UserProfile,
   matchResult: JobDescriptionMatchResult,
   improvementPlan: ResumeImprovementPlan,
   jobDescription: string,
+  context: ResumeRewriteContext = {},
 ): ResumeRewritePlan {
   const domains = detectJobDomains(jobDescription);
-  const roleLabel = getRoleLabel(domains);
+  const roleLabel = getRoleLabel(profile, context);
   const presentSkills = uniqueValues([
     ...matchResult.matchedSkills,
     ...profile.skills,
@@ -119,8 +131,8 @@ function getSummaryRewrite(
     ? `with hands-on work using ${skillsText}`
     : "building practical technical proof through projects";
   const directionPhrase = weakReadiness
-    ? `building toward ${roleLabel} roles`
-    : `focused on ${roleLabel} roles`;
+    ? `building toward ${roleLabel}`
+    : `focused on ${roleLabel}`;
 
   return {
     section: "Summary",
@@ -207,16 +219,17 @@ function getProjectRewrites(
 
   return profile.projects.slice(0, 3).map((project, index) => {
     const projectName = cleanProjectName(project, index);
+    const projectSubject = cleanProjectSubject(projectName);
     const stack = formatInlineList(presentSkills.slice(0, 5)) ||
       "[truthful tech stack]";
 
     return {
       section: "Projects",
       title: `Rewrite project bullet: ${projectName}`,
-      weakExample: `${projectName}: Built a project using ${presentSkills[0] ?? "technology"}.`,
+      weakExample: `${projectName}: Project using ${presentSkills[0] ?? "technology"}.`,
       improvedExample:
-        `Built ${projectName} using ${stack}, including [feature you actually implemented], ` +
-        "[database/API/auth/deployment detail if true], and improved [workflow/performance/usability] for [target users].",
+        `Improved ${projectSubject} using ${stack} by implementing [feature you actually implemented], ` +
+        "[technical detail if true], and [measurable outcome], with proof via [GitHub/demo/README].",
       whyBetter:
         "It turns a project name into proof: stack, feature, implementation detail, user value, and measurable placeholder.",
       evidenceNeeded: [
@@ -395,15 +408,67 @@ function detectJobDomains(jobDescription: string): JobDomain[] {
   return uniqueValues(domains);
 }
 
-function getRoleLabel(domains: JobDomain[]): string {
-  if (domains.includes("fullStack")) return "full-stack development";
-  if (domains.includes("frontend")) return "frontend development";
-  if (domains.includes("backend")) return "backend development";
-  if (domains.includes("ai")) return "AI/ML engineering";
-  if (domains.includes("devops")) return "cloud or DevOps";
-  if (domains.includes("data")) return "data roles";
+function getRoleLabel(
+  profile: UserProfile,
+  context: ResumeRewriteContext,
+): string {
+  const jobTitle = getUsableLabel(context.jobTitle, ["untitled role"]);
+  const companyName = getUsableLabel(context.companyName, ["unknown company"]);
 
-  return "this target role";
+  if (jobTitle && companyName) {
+    return `${formatRoleLabel(jobTitle)} at ${formatRoleLabel(companyName)}`;
+  }
+
+  if (jobTitle) {
+    return formatRoleLabel(jobTitle);
+  }
+
+  const setupTargetRole = getUsableLabel(context.setupTargetRole);
+
+  if (setupTargetRole) {
+    return formatRoleLabel(setupTargetRole);
+  }
+
+  const profileFitRole = getUsableLabel(context.profileFitRole) ??
+    calculateRoleMatches(profile)[0]?.role;
+
+  if (profileFitRole) {
+    return formatRoleLabel(profileFitRole);
+  }
+
+  return "target role";
+}
+
+function getUsableLabel(
+  value: string | null | undefined,
+  blockedLabels: string[] = [],
+): string | null {
+  const normalizedValue = value?.trim().replace(/\s+/g, " ") ?? "";
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const lowerValue = normalizedValue.toLowerCase();
+
+  if (blockedLabels.includes(lowerValue)) {
+    return null;
+  }
+
+  return normalizedValue;
+}
+
+function formatRoleLabel(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\b(ai|ml|sql|llm|jd|api|ui|ux|dsa)\b/gi, (match) =>
+      match.toUpperCase()
+    )
+    .replace(/\b\w/g, (character) => character.toUpperCase())
+    .replace(/\b(At|For|Of|And|Or|In|To|With)\b/g, (match) =>
+      match.toLowerCase()
+    );
 }
 
 function getProjectType(domains: JobDomain[]): string {
@@ -432,6 +497,22 @@ function cleanProjectName(project: string, index: number): string {
   }
 
   return `${cleanedProject.slice(0, 61).trim()}...`;
+}
+
+function cleanProjectSubject(projectName: string): string {
+  const withoutLeadingVerb = projectName
+    .replace(LEADING_ACTION_VERB_PATTERN, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const withoutArticle = withoutLeadingVerb
+    .replace(/^(?:a|an|the)\s+/i, "")
+    .trim();
+
+  if (!withoutArticle) {
+    return "the project";
+  }
+
+  return `the ${withoutArticle}`;
 }
 
 function cleanExperienceName(experience: string, index: number): string {

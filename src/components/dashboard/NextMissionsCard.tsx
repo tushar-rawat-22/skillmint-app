@@ -1,13 +1,25 @@
 type Props = {
   missions: string[];
   recommendations: string[];
+  proofNextMove?: string;
+  atsMissingSkills?: string[];
+  hasResumeAnalysis?: boolean;
 };
 
 export default function NextMissionsCard({
   missions,
   recommendations,
+  proofNextMove,
+  atsMissingSkills = [],
+  hasResumeAnalysis = false,
 }: Props) {
-  const actions = getActions(missions, recommendations);
+  const actions = getActions({
+    missions,
+    recommendations,
+    proofNextMove,
+    atsMissingSkills,
+    hasResumeAnalysis,
+  });
   const primaryAction = actions[0];
   const supportingActions = actions.slice(1);
 
@@ -139,14 +151,44 @@ function MissionSignal({ label, value }: MissionSignalProps) {
   );
 }
 
-function getActions(
-  missions: string[],
-  recommendations: string[],
-): string[] {
-  const uniqueActions = new Set([...missions, ...recommendations]);
+function getActions({
+  missions,
+  recommendations,
+  proofNextMove,
+  atsMissingSkills,
+  hasResumeAnalysis,
+}: {
+  missions: string[];
+  recommendations: string[];
+  proofNextMove?: string;
+  atsMissingSkills: string[];
+  hasResumeAnalysis: boolean;
+}): string[] {
+  const prioritizedActions = [
+    proofNextMove,
+    atsMissingSkills.length
+      ? `Close latest JD gap truthfully: ${atsMissingSkills[0]}`
+      : undefined,
+    hasResumeAnalysis ? "Improve GitHub/project proof" : undefined,
+    ...missions,
+    ...recommendations,
+  ].filter((action): action is string => {
+    if (!action?.trim()) {
+      return false;
+    }
+
+    return !hasResumeAnalysis || !isUploadResumeAction(action);
+  });
+  const uniqueActions = new Set(prioritizedActions);
   const actions = Array.from(uniqueActions).slice(0, 3);
 
-  return actions.length ? actions : ["Upload a resume to generate missions"];
+  if (actions.length) {
+    return actions;
+  }
+
+  return hasResumeAnalysis
+    ? ["Strengthen one project with clearer proof links and outcomes"]
+    : ["Upload a resume to generate missions"];
 }
 
 function getImpactPreview(action: string): string {
@@ -163,7 +205,8 @@ function getImpactPreview(action: string): string {
   if (
     normalizedAction.includes("resume") ||
     normalizedAction.includes("ats") ||
-    normalizedAction.includes("keyword")
+    normalizedAction.includes("keyword") ||
+    normalizedAction.includes("jd gap")
   ) {
     return "Improves screening clarity before a recruiter reads the full profile.";
   }
@@ -197,9 +240,17 @@ function getMissionReason(action: string): string {
     return "ATS clarity helps the right experience and skills survive the first screen.";
   }
 
+  if (normalizedAction.includes("jd gap")) {
+    return "Latest JD gaps should be learned or proved truthfully before they appear on the resume.";
+  }
+
   if (normalizedAction.includes("linkedin")) {
     return "LinkedIn fills the trust gap between your resume and public identity.";
   }
 
   return "This is the next practical move from your current readiness signals.";
+}
+
+function isUploadResumeAction(action: string): boolean {
+  return action.toLowerCase().includes("upload a resume");
 }

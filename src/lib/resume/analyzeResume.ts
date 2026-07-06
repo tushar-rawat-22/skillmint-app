@@ -5,6 +5,10 @@ import {
 } from "@/lib/parser/profileBuilder";
 import { buildUserProfileFromParsedResume } from "@/lib/resume/buildUserProfileFromParsedResume";
 import type { UserProfile } from "@/intelligence/types/profile";
+import {
+  generateProofScore,
+  type ProofScoreResult,
+} from "@/intelligence/proof";
 
 export type ResumeAnalysisStatus = "completed";
 
@@ -15,6 +19,7 @@ export type ResumeAnalysisResult = {
   extractedText: string;
   parsedProfile: ParsedResumeProfile;
   userProfile: UserProfile;
+  proofAnalysis?: ProofScoreResult;
   analyzedAt: string;
   status: ResumeAnalysisStatus;
 };
@@ -28,6 +33,11 @@ export async function analyzeResume(
     parsedProfile,
     extractedText,
   );
+  const proofAnalysis = generateProofScore({
+    profile: userProfile,
+    parsedProfile,
+    resumeText: extractedText,
+  });
 
   return {
     fileName: file.name,
@@ -36,6 +46,7 @@ export async function analyzeResume(
     extractedText,
     parsedProfile,
     userProfile,
+    proofAnalysis,
     analyzedAt: new Date().toISOString(),
     status: "completed",
   };

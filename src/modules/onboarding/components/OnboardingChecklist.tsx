@@ -48,6 +48,8 @@ export default function OnboardingChecklist() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const [isDismissed, setIsDismissed] = useState(false);
+  const [hasOpenedCompletedChecklist, setHasOpenedCompletedChecklist] =
+    useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -82,17 +84,27 @@ export default function OnboardingChecklist() {
   const activeStep = steps.find((step) => step.status === "active");
   const completedCount = steps.filter((step) => step.status === "complete")
     .length;
+  const isCoreLoopComplete =
+    progress.hasTargetRoleSetup &&
+    progress.hasResumeAnalysis &&
+    progress.hasJobMatch &&
+    progress.hasRoadmap;
+  const shouldAutoHideCompletedChecklist =
+    isCoreLoopComplete && !hasOpenedCompletedChecklist;
 
   function updateDismissed(value: boolean) {
     setOnboardingDismissed(value);
     setIsDismissed(value);
   }
 
-  if (isDismissed) {
+  if (isDismissed || shouldAutoHideCompletedChecklist) {
     return (
       <button
         type="button"
-        onClick={() => updateDismissed(false)}
+        onClick={() => {
+          setHasOpenedCompletedChecklist(true);
+          updateDismissed(false);
+        }}
         className="w-fit rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-emerald-400/50 hover:text-emerald-200"
       >
         Show setup checklist
@@ -124,7 +136,10 @@ export default function OnboardingChecklist() {
 
         <button
           type="button"
-          onClick={() => updateDismissed(true)}
+          onClick={() => {
+            setHasOpenedCompletedChecklist(false);
+            updateDismissed(true);
+          }}
           className="w-fit rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-white/25 hover:text-white"
         >
           Hide for now

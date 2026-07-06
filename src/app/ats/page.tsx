@@ -18,6 +18,7 @@ import {
   generateResumeImprovementPlan,
   type ResumeImprovementPlan,
 } from "@/intelligence/core/resumeImprovement";
+import { calculateRoleMatches } from "@/intelligence/core/roleMatch";
 import {
   generateResumeRewritePlan,
   type ResumeRewritePlan,
@@ -48,6 +49,7 @@ import {
   saveCurrentUserJobMatch,
   type PersistentJobMatch,
 } from "@/modules/jobMatch";
+import { getTargetRoleSetup } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
@@ -287,6 +289,12 @@ export default function ATSMatcherPage() {
       result,
       plan,
       trimmedJobDescription,
+      {
+        jobTitle,
+        companyName,
+        setupTargetRole: getTargetRoleSetup()?.targetRole,
+        profileFitRole: calculateRoleMatches(userProfile)[0]?.role,
+      },
     );
     const analyzedAt = new Date().toISOString();
     const savedMatch: SavedJobMatch = {

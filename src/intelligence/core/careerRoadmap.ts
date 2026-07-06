@@ -44,6 +44,12 @@ export interface CareerRoadmap {
   applicationStrategy: string[];
 }
 
+export interface CareerRoadmapContext {
+  targetRole?: string;
+  setupTargetRole?: string;
+  jobDescription?: string;
+}
+
 type RoadmapDomain =
   | "fullStack"
   | "frontend"
@@ -58,10 +64,21 @@ export function generateCareerRoadmap(
   matchResult: JobDescriptionMatchResult | null,
   improvementPlan: ResumeImprovementPlan | null,
   rewritePlan: ResumeRewritePlan | null,
+  context: CareerRoadmapContext = {},
 ): CareerRoadmap {
   const readiness = getReadiness(matchResult);
-  const domain = detectRoadmapDomain(profile, matchResult, rewritePlan);
-  const targetRole = getTargetRole(domain, matchResult, rewritePlan);
+  const domain = detectRoadmapDomain(
+    profile,
+    matchResult,
+    rewritePlan,
+    context,
+  );
+  const targetRole = getTargetRole(
+    domain,
+    matchResult,
+    rewritePlan,
+    context,
+  );
   const missingTerms = getMissingTerms(matchResult, improvementPlan);
   const currentBlockers = getCurrentBlockers(
     profile,
@@ -616,7 +633,38 @@ function detectRoadmapDomain(
   profile: UserProfile,
   matchResult: JobDescriptionMatchResult | null,
   rewritePlan: ResumeRewritePlan | null,
+  context: CareerRoadmapContext,
 ): RoadmapDomain {
+  const explicitRoleText = [
+    context.targetRole ?? "",
+    context.setupTargetRole ?? "",
+    context.jobDescription ?? "",
+  ].join(" ").toLowerCase();
+
+  if (/\b(ai|ml|machine learning|deep learning|llm|rag|langchain|tensorflow|pytorch|model|data science)\b/i.test(explicitRoleText)) {
+    return "ai";
+  }
+
+  if (/\b(data analyst|data analytics|data engineer|etl|pipeline|sql|dashboard|warehouse|power bi|tableau)\b/i.test(explicitRoleText)) {
+    return "data";
+  }
+
+  if (/\b(devops|cloud|aws|azure|gcp|docker|kubernetes|ci\/cd|terraform|jenkins|deployment)\b/i.test(explicitRoleText)) {
+    return "devops";
+  }
+
+  if (/\b(frontend|front-end|ui engineer|react|next\.?js|vue|angular)\b/i.test(explicitRoleText)) {
+    return "frontend";
+  }
+
+  if (/\b(backend|back-end|api engineer|node\.?js|django|flask|spring)\b/i.test(explicitRoleText)) {
+    return "backend";
+  }
+
+  if (/\b(full stack|full-stack|fullstack)\b/i.test(explicitRoleText)) {
+    return "fullStack";
+  }
+
   const evidenceText = [
     rewritePlan?.headline ?? "",
     matchResult?.matchedSkills.join(" ") ?? "",
@@ -657,7 +705,16 @@ function getTargetRole(
   domain: RoadmapDomain,
   matchResult: JobDescriptionMatchResult | null,
   rewritePlan: ResumeRewritePlan | null,
+  context: CareerRoadmapContext,
 ): string {
+  if (context.targetRole?.trim()) {
+    return formatRoadmapTargetRole(context.targetRole);
+  }
+
+  if (context.setupTargetRole?.trim()) {
+    return formatRoadmapTargetRole(context.setupTargetRole);
+  }
+
   const headline = rewritePlan?.headline.toLowerCase() ?? "";
 
   if (headline.includes("this target role")) {
@@ -677,6 +734,17 @@ function getTargetRole(
   };
 
   return roleByDomain[domain];
+}
+
+function formatRoadmapTargetRole(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\b(ai|ml|sql|llm|jd)\b/gi, (match) => match.toUpperCase())
+    .replace(/\b\w/g, (character) => character.toUpperCase())
+    .replace(/\b(At|For|Of|And|Or|In)\b/g, (match) =>
+      match.toLowerCase()
+    );
 }
 
 function getMissingTerms(

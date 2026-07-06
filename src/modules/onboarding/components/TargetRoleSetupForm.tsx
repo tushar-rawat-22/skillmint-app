@@ -217,7 +217,7 @@ export default function TargetRoleSetupForm() {
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
             Start with the role you want. The rest helps SkillMint pace your
-            next steps without changing your resume score.
+            next steps without editing your resume analysis.
           </p>
         </div>
 

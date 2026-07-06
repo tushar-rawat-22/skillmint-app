@@ -1,8 +1,9 @@
 export type SkillDistributionItem = {
   label: string;
-  value: number;
-  max: number;
+  value: string;
   detail: string;
+  meta?: string;
+  tone: "emerald" | "sky" | "amber" | "rose" | "violet" | "neutral";
 };
 
 type SkillDistributionProps = {
@@ -26,7 +27,7 @@ export default function SkillDistribution({
             </p>
 
             <h2 className="mt-2 text-2xl font-black">
-              Proof signal distribution
+              Proof evidence breakdown
             </h2>
           </div>
 
@@ -37,183 +38,85 @@ export default function SkillDistribution({
       </div>
 
       <div className="grid gap-px bg-white/10 md:grid-cols-2 xl:grid-cols-5">
-        {items.map((item) => {
-          const percentage = getPercentage(item.value, item.max);
-
-          return (
-            <GaugeCard
-              key={item.label}
-              item={item}
-              percentage={percentage}
-            />
-          );
-        })}
+        {items.map((item) => (
+          <EvidenceCard key={item.label} item={item} />
+        ))}
       </div>
     </article>
   );
 }
 
-type GaugeCardProps = {
+type EvidenceCardProps = {
   item: SkillDistributionItem;
-  percentage: number;
 };
 
-function GaugeCard({ item, percentage }: GaugeCardProps) {
-  const needleRotation = -90 + percentage * 1.8;
-  const tone = getGaugeTone(percentage);
+function EvidenceCard({ item }: EvidenceCardProps) {
+  const tone = getToneClassName(item.tone);
 
   return (
     <div className="min-w-0 bg-slate-950/70 p-5 transition-colors duration-200 hover:bg-slate-900/70">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="truncate text-sm font-bold">
-            {item.label}
-          </p>
-
-          <p className="mt-1 truncate text-xs text-neutral-500">
-            {item.detail}
-          </p>
-        </div>
-
-        <p className={`text-lg font-black tabular-nums ${tone.text}`}>
-          {Math.round(percentage)}%
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-bold text-white">
+          {item.label}
         </p>
-      </div>
 
-      <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
-        <svg
-          viewBox="0 0 180 112"
-          className="h-28 w-full"
-          role="img"
-          aria-label={`${item.label} proof signal ${Math.round(
-            percentage,
-          )}%`}
-        >
-          <path
-            d="M25 88 A65 65 0 0 1 155 88"
-            fill="none"
-            pathLength="100"
-            stroke="rgb(38 38 38)"
-            strokeLinecap="round"
-            strokeWidth="14"
-          />
-
-          <path
-            d="M25 88 A65 65 0 0 1 155 88"
-            fill="none"
-            pathLength="100"
-            stroke={tone.stroke}
-            strokeDasharray={`${percentage} ${100 - percentage}`}
-            strokeLinecap="round"
-            strokeWidth="14"
-            className="motion-safe:transition-[stroke-dasharray] motion-safe:duration-700 motion-safe:ease-out"
-          />
-
-          <line
-            x1="90"
-            y1="88"
-            x2="90"
-            y2="34"
-            stroke="rgb(245 245 245)"
-            strokeLinecap="round"
-            strokeWidth="3"
-            style={{
-              transform: `rotate(${needleRotation}deg)`,
-              transformBox: "fill-box",
-              transformOrigin: "50% 100%",
-            }}
-            className="motion-safe:transition-transform motion-safe:duration-700 motion-safe:ease-out"
-          />
-
-          <circle
-            cx="90"
-            cy="88"
-            r="6"
-            fill="rgb(245 245 245)"
-          />
-
-          <text
-            x="25"
-            y="107"
-            fill="rgb(115 115 115)"
-            fontSize="10"
-            fontWeight="700"
-          >
-            LOW
-          </text>
-
-          <text
-            x="132"
-            y="107"
-            fill="rgb(115 115 115)"
-            fontSize="10"
-            fontWeight="700"
-          >
-            STRONG
-          </text>
-        </svg>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3 text-xs">
-        <span className="rounded-full border border-neutral-800 px-2.5 py-1 font-semibold text-neutral-400">
-          {item.value}/{item.max}
-        </span>
-
-        <span className={`rounded-full border px-2.5 py-1 font-semibold ${
-          tone.badge
-        }`}
-        >
-          {getGaugeLabel(percentage)}
+        <span className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${tone.badge}`}>
+          {item.meta ?? "Found"}
         </span>
       </div>
+
+      <p className={`mt-5 break-words text-2xl font-black leading-tight ${tone.text}`}>
+        {item.value}
+      </p>
+
+      <p className="mt-3 text-sm leading-6 text-neutral-400">
+        {item.detail}
+      </p>
     </div>
   );
 }
 
-function getPercentage(value: number, max: number): number {
-  if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
-    return 0;
-  }
-
-  return Math.max(0, Math.min(100, (value / max) * 100));
-}
-
-function getGaugeTone(percentage: number): {
-  stroke: string;
+function getToneClassName(tone: SkillDistributionItem["tone"]): {
   text: string;
   badge: string;
 } {
-  if (percentage >= 75) {
+  if (tone === "emerald") {
     return {
-      stroke: "rgb(52 211 153)",
       text: "text-emerald-300",
-      badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+      badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
     };
   }
 
-  if (percentage >= 50) {
+  if (tone === "sky") {
     return {
-      stroke: "rgb(251 191 36)",
+      text: "text-sky-300",
+      badge: "border-sky-500/30 bg-sky-500/10 text-sky-100",
+    };
+  }
+
+  if (tone === "amber") {
+    return {
       text: "text-amber-300",
       badge: "border-amber-500/30 bg-amber-500/10 text-amber-100",
     };
   }
 
+  if (tone === "rose") {
+    return {
+      text: "text-rose-300",
+      badge: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+    };
+  }
+
+  if (tone === "violet") {
+    return {
+      text: "text-violet-300",
+      badge: "border-violet-500/30 bg-violet-500/10 text-violet-100",
+    };
+  }
+
   return {
-    stroke: "rgb(248 113 113)",
-    text: "text-red-300",
-    badge: "border-red-500/30 bg-red-500/10 text-red-100",
+    text: "text-neutral-200",
+    badge: "border-neutral-700 bg-neutral-900 text-neutral-300",
   };
-}
-
-function getGaugeLabel(percentage: number): string {
-  if (percentage >= 75) {
-    return "Strong";
-  }
-
-  if (percentage >= 50) {
-    return "Building";
-  }
-
-  return "Thin";
 }

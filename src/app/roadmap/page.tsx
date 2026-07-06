@@ -85,6 +85,10 @@ export default function RoadmapPage() {
     () => parseSetupSource(storedSetup),
     [storedSetup],
   );
+  const roadmapRoleContext = useMemo(
+    () => getRoadmapRoleContext(latestJobMatch, setupSource),
+    [latestJobMatch, setupSource],
+  );
   const [roadmapSyncState, setRoadmapSyncState] =
     useState<RoadmapSyncState | null>(null);
   const roadmap = useMemo(() => {
@@ -97,8 +101,13 @@ export default function RoadmapPage() {
       latestJobMatch?.result ?? null,
       latestJobMatch?.improvementPlan ?? null,
       latestJobMatch?.rewritePlan ?? null,
+      {
+        targetRole: roadmapRoleContext,
+        setupTargetRole: setupSource?.targetRole,
+        jobDescription: latestJobMatch?.jobDescription,
+      },
     );
-  }, [latestJobMatch, userProfile]);
+  }, [latestJobMatch, roadmapRoleContext, setupSource, userProfile]);
   const latestDatabaseMatchId = latestJobMatch?.databaseId ?? null;
 
   useEffect(() => {
@@ -855,6 +864,21 @@ function formatLatestJobMatchSource(
   }
 
   return `${latestJobMatch.result.matchScore}% match`;
+}
+
+function getRoadmapRoleContext(
+  latestJobMatch: LatestJobMatch | null,
+  setupSource: RoadmapSetupSource | null,
+): string | undefined {
+  if (latestJobMatch?.jobTitle && latestJobMatch.companyName) {
+    return `${latestJobMatch.jobTitle} at ${latestJobMatch.companyName}`;
+  }
+
+  if (latestJobMatch?.jobTitle) {
+    return latestJobMatch.jobTitle;
+  }
+
+  return setupSource?.targetRole;
 }
 
 function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {

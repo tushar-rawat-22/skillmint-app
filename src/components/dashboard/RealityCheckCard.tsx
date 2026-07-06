@@ -14,6 +14,7 @@ type Props = {
   missions: string[];
   recommendations: string[];
   profile: UserProfile;
+  hasLatestJobMatch?: boolean;
 };
 
 export default function RealityCheckCard({
@@ -24,11 +25,12 @@ export default function RealityCheckCard({
   missions,
   recommendations,
   profile,
+  hasLatestJobMatch = false,
 }: Props) {
   const insights = [
     {
       label: "What is strong",
-      text: getStrongSignal(profile, roleMatches),
+      text: getStrongSignal(profile, roleMatches, hasLatestJobMatch),
       tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
     },
     {
@@ -84,10 +86,15 @@ export default function RealityCheckCard({
 function getStrongSignal(
   profile: UserProfile,
   roleMatches: RoleMatchResult[],
+  hasLatestJobMatch: boolean,
 ): string {
   const bestMatch = roleMatches[0];
 
   if (bestMatch && bestMatch.matchScore >= 65) {
+    if (hasLatestJobMatch) {
+      return `${bestMatch.role} is your strongest profile-fit direction, separate from your latest JD. The match still depends on visible project proof.`;
+    }
+
     return `${bestMatch.role} is your strongest current direction, but the match still depends on visible project proof.`;
   }
 
