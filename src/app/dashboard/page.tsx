@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import Link from "next/link";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import CareerReportHero from "@/components/dashboard/CareerReportHero";
@@ -26,9 +32,11 @@ import {
 } from "@/modules/activation";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import { OnboardingChecklist } from "@/modules/onboarding";
+import { getLatestCurrentUserResumeAnalysis } from "@/modules/resume";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
+const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
 const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 
 type LatestJobMatchSummary = {
@@ -37,10 +45,17 @@ type LatestJobMatchSummary = {
   missingSkills: string[];
 };
 
+type SavedResumeLookupState = "checking" | "found" | "missing";
+
 export default function DashboardPage() {
   const storedResume = useSyncExternalStore(
     subscribeToStoredData,
     readStoredResume,
+    getServerSnapshot,
+  );
+  const storedResumeSyncStatus = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredResumeSyncStatus,
     getServerSnapshot,
   );
   const storedJobMatch = useSyncExternalStore(
@@ -57,10 +72,54 @@ export default function DashboardPage() {
     () => hasValidJobMatch(storedJobMatch),
     [storedJobMatch],
   );
+  const hasSavedResumeSyncSignal = useMemo(
+    () => hasSavedResumeAnalysisSignal(storedResumeSyncStatus),
+    [storedResumeSyncStatus],
+  );
+  const [savedResumeLookupState, setSavedResumeLookupState] =
+    useState<SavedResumeLookupState>("checking");
   const latestJobMatch = useMemo(
     () => getLatestJobMatchSummary(storedJobMatch),
     [storedJobMatch],
   );
+
+  useEffect(() => {
+    if (hasResumeAnalysis || hasSavedResumeSyncSignal) {
+      return;
+    }
+
+    let isActive = true;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!isActive) {
+        return;
+      }
+
+      setSavedResumeLookupState("checking");
+
+      void getLatestCurrentUserResumeAnalysis()
+        .then((result) => {
+          if (!isActive) {
+            return;
+          }
+
+          setSavedResumeLookupState(
+            result.ok && result.data ? "found" : "missing",
+          );
+        })
+        .catch(() => {
+          if (isActive) {
+            setSavedResumeLookupState("missing");
+          }
+        });
+    }, 0);
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [hasResumeAnalysis, hasSavedResumeSyncSignal]);
+
   const atsMissingSkills = latestJobMatch?.missingSkills ?? [];
   const hasUserProgress = hasResumeAnalysis || hasJobMatch;
   const bestMatch = data.roleMatches[0];
@@ -86,6 +145,68 @@ export default function DashboardPage() {
     data.recruiter.confidence,
   );
   const proofDistribution = getProofDistribution(data.profile, data.proof);
+  const hasSavedResumeWithoutActive =
+    !hasResumeAnalysis &&
+    (hasSavedResumeSyncSignal || savedResumeLookupState === "found");
+
+  if (!hasResumeAnalysis) {
+    return (
+      <DashboardLayout>
+        <div className="mx-auto max-w-6xl space-y-6">
+          <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(2,6,23,0.96))] p-6 text-white shadow-2xl shadow-black/25 md:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+              Dashboard
+            </p>
+
+            <h1 className="mt-4 max-w-3xl text-4xl font-black md:text-5xl">
+              {hasSavedResumeWithoutActive
+                ? "No active resume report selected."
+                : "Upload your resume to build your career report."}
+            </h1>
+
+            <p className="mt-4 max-w-3xl text-base leading-7 text-gray-400">
+              {hasSavedResumeWithoutActive
+                ? "Saved analyses may exist in your account, but none is loaded as this dashboard's active report in this browser."
+                : "SkillMint needs Resume Reality before showing Career IQ, Proof Confidence, Profile-fit roles, Latest JD Match context, and next missions."}
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/upload"
+                className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
+              >
+                Upload resume
+              </Link>
+
+              {hasSavedResumeWithoutActive && (
+                <Link
+                  href="/resume"
+                  className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                >
+                  Go to Resume
+                </Link>
+              )}
+
+              <Link
+                href="/setup"
+                className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+              >
+                Career setup
+              </Link>
+            </div>
+          </section>
+
+          <EmptyDashboardPreview />
+
+          <OnboardingChecklist />
+
+          <NextBestActionPanel />
+
+          <AccountOverviewCard hasActiveResumeReport={false} />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -193,9 +314,72 @@ export default function DashboardPage() {
           />
         )}
 
-        <AccountOverviewCard />
+        <AccountOverviewCard hasActiveResumeReport />
       </div>
     </DashboardLayout>
+  );
+}
+
+function EmptyDashboardPreview() {
+  const previewItems = [
+    {
+      title: "Career IQ",
+      body: "A trust-adjusted readiness signal after SkillMint reads your resume.",
+    },
+    {
+      title: "Proof Confidence",
+      body: "A clear view of which claims have evidence candidates and which need proof.",
+    },
+    {
+      title: "Profile-fit roles",
+      body: "General role directions based on your Resume Reality, kept separate from job matches.",
+    },
+    {
+      title: "Latest JD Match",
+      body: "A one-job comparison once you paste a real job description.",
+    },
+    {
+      title: "Roadmap / next missions",
+      body: "The next practical steps to close gaps and build stronger proof.",
+    },
+  ];
+
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
+            After upload
+          </p>
+
+          <h2 className="mt-2 text-2xl font-black">
+            What SkillMint will build
+          </h2>
+        </div>
+
+        <p className="max-w-xl text-sm leading-6 text-gray-400">
+          These sections stay hidden until there is an active resume report, so
+          the dashboard never shows stale or demo metrics.
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {previewItems.map((item) => (
+          <article
+            key={item.title}
+            className="rounded-2xl border border-white/10 bg-black/24 p-4"
+          >
+            <h3 className="text-sm font-bold text-white">
+              {item.title}
+            </h3>
+
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              {item.body}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -275,6 +459,10 @@ function readStoredResume(): string | null {
   return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
 }
 
+function readStoredResumeSyncStatus(): string | null {
+  return getBrowserStorage()?.getItem(RESUME_SYNC_STATUS_STORAGE_KEY) ?? null;
+}
+
 function readStoredJobMatch(): string | null {
   return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
 }
@@ -315,6 +503,18 @@ function hasValidJobMatch(storedValue: string | null): boolean {
     parsedValue &&
       isRecord(parsedValue.result) &&
       typeof parsedValue.result.matchScore === "number",
+  );
+}
+
+function hasSavedResumeAnalysisSignal(storedValue: string | null): boolean {
+  const parsedValue = parseRecord(storedValue);
+
+  return Boolean(
+    parsedValue &&
+      (
+        parsedValue.status === "synced" ||
+        typeof parsedValue.databaseId === "string"
+      ),
   );
 }
 

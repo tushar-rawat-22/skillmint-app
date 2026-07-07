@@ -45,18 +45,18 @@ export default function CareerMatchCard({
               key={match.role}
               className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <h3 className="text-lg font-bold">
                     {match.role}
                   </h3>
 
-                  <p className="mt-1 truncate text-sm text-neutral-400">
+                  <p className="mt-1 break-words text-sm leading-6 text-neutral-400">
                     {match.category} | {match.salaryRange} | {match.difficulty}
                   </p>
                 </div>
 
-                <div className="shrink-0 text-right">
+                <div className="shrink-0 text-left sm:text-right">
                   <p className="text-2xl font-black tabular-nums text-emerald-300">
                     {Math.round(match.matchScore)}%
                   </p>
@@ -140,7 +140,7 @@ function RoleReasonBlock({
           items.map((item) => (
             <span
               key={item}
-              className={`rounded-full px-3 py-1 text-xs ${getReasonPillClassName(tone)}`}
+              className={`max-w-full break-words rounded-full px-3 py-1 text-xs leading-5 ${getReasonPillClassName(tone)}`}
             >
               {item}
             </span>

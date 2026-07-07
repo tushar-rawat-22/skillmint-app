@@ -18,7 +18,7 @@ export default function DashboardPreview() {
           </p>
 
           <h2 className="mt-4 text-4xl font-black text-white md:text-5xl">
-            A career cockpit, not another resume score.
+            A career cockpit, not another resume checker.
           </h2>
 
           <p className="mt-5 text-base leading-7 text-gray-400">

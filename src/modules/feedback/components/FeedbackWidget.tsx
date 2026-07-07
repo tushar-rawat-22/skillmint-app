@@ -126,13 +126,13 @@ export default function FeedbackWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-3 right-3 z-50 sm:bottom-4 sm:right-4">
       {isOpen && (
         <div
           role="dialog"
           aria-modal="false"
           aria-labelledby="beta-feedback-title"
-          className="skillmint-fade-in mb-3 w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-white/10 bg-slate-950/96 p-4 text-white shadow-2xl shadow-black/45 backdrop-blur-xl"
+          className="skillmint-fade-in mb-3 max-h-[calc(100vh-6rem)] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-slate-950/96 p-4 text-white shadow-2xl shadow-black/45 backdrop-blur-xl sm:w-[calc(100vw-2rem)]"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -253,7 +253,7 @@ export default function FeedbackWidget() {
       <button
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="rounded-full border border-emerald-500/40 bg-neutral-950/95 px-5 py-3 text-sm font-bold text-emerald-100 shadow-xl shadow-black/30 transition-colors duration-200 hover:border-emerald-400 hover:bg-neutral-900 hover:text-white"
+        className="rounded-full border border-emerald-500/40 bg-neutral-950/95 px-3.5 py-2.5 text-xs font-bold text-emerald-100 shadow-xl shadow-black/30 transition-colors duration-200 hover:border-emerald-400 hover:bg-neutral-900 hover:text-white sm:px-5 sm:py-3 sm:text-sm"
       >
         Feedback
       </button>

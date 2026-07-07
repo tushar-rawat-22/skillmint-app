@@ -23,7 +23,13 @@ type AccountOverviewState =
       error: string;
     };
 
-export default function AccountOverviewCard() {
+type AccountOverviewCardProps = {
+  hasActiveResumeReport?: boolean;
+};
+
+export default function AccountOverviewCard({
+  hasActiveResumeReport,
+}: AccountOverviewCardProps) {
   const [state, setState] = useState<AccountOverviewState>({
     status: "loading",
     overview: null,
@@ -108,6 +114,8 @@ export default function AccountOverviewCard() {
   }
 
   const { overview } = state;
+  const hasSyncedResumeWithoutActiveReport =
+    hasActiveResumeReport === false && overview.resumeAnalysisCount > 0;
 
   if (!overview.isConfigured) {
     return (
@@ -158,8 +166,12 @@ export default function AccountOverviewCard() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <AccountOverviewHeader
           eyebrow="Account Status"
-          title="Saved progress"
-          body={overview.message}
+          title={hasSyncedResumeWithoutActiveReport
+            ? "Saved analyses found"
+            : "Saved progress"}
+          body={hasSyncedResumeWithoutActiveReport
+            ? "Saved analyses may exist in your account, but none is currently loaded as this dashboard's active report."
+            : overview.message}
         />
 
         <span className="w-fit rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-200">

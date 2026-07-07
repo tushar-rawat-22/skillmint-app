@@ -42,7 +42,7 @@ export default function NextMissionsCard({
 
       <div className="flex flex-1 flex-col p-6">
         <article className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/80">
                 Primary Next Action
@@ -53,7 +53,7 @@ export default function NextMissionsCard({
               </h3>
             </div>
 
-            <div className="flex shrink-0 flex-col items-end gap-2">
+            <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-end">
               <MissionBadge label={`Priority: ${primaryMeta.priority}`} />
               <MissionBadge label={`Impact: ${primaryMeta.impact}`} />
             </div>
@@ -188,7 +188,7 @@ type MissionBadgeProps = {
 
 function MissionBadge({ label }: MissionBadgeProps) {
   return (
-    <span className="w-fit rounded-full border border-violet-500/30 bg-black/20 px-3 py-1 text-xs font-bold text-violet-100">
+    <span className="max-w-full break-words rounded-full border border-violet-500/30 bg-black/20 px-3 py-1 text-left text-xs font-bold leading-5 text-violet-100">
       {label}
     </span>
   );

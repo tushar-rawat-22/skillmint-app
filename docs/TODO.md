@@ -456,6 +456,19 @@ RC-1B — Role Reasoning + Roadmap Actionability: Completed
 - Dashboard mission clarity
 - Latest JD vs Profile-fit role clarity
 
+RC-1C/D — Workspace State + Mobile/Empty QA: Completed
+
+- Active workspace state handling
+- Clear active workspace control
+- No stale dashboard metrics after local data is cleared
+- Saved-analysis empty state clarity
+- Mobile responsiveness
+- Empty states
+- Dashboard readability
+- Roadmap readability
+- Copy consistency
+- Feedback button check
+
 Next:
 
 Beta freeze QA, then beta freeze tag

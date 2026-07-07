@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import ClearWorkspaceCard from "@/components/settings/ClearWorkspaceCard";
 import { AccountOverviewCard } from "@/modules/account";
 import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
 import SignOutButton from "@/modules/auth/components/SignOutButton";
@@ -54,6 +55,8 @@ export default function SettingsPage() {
                 browser.
               </p>
             </article>
+
+            <ClearWorkspaceCard />
           </div>
         </section>
       </section>
