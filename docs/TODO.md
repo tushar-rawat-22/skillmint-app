@@ -469,6 +469,16 @@ RC-1C/D — Workspace State + Mobile/Empty QA: Completed
 - Copy consistency
 - Feedback button check
 
+RC-1E — Final Beta Closeout: Completed
+
+- Future work: real user feedback
+- Future work: analytics/events
+- Future work: resume history restore/select
+- Future work: stronger onboarding
+- Future work: portfolio/GitHub proof integrations
+- Future work: payments/pricing later
+- Future work: advanced AI roadmap later
+
 Next:
 
 Beta freeze QA, then beta freeze tag
