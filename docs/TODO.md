@@ -449,6 +449,13 @@ RC-1A — Explainability + First-Time Clarity: Completed
 - Score guide
 - Upload processing feedback
 
+RC-1B — Role Reasoning + Roadmap Actionability: Completed
+
+- Profile-fit role reasoning
+- Roadmap priority / effort / impact labels
+- Dashboard mission clarity
+- Latest JD vs Profile-fit role clarity
+
 Next:
 
 Beta freeze QA, then beta freeze tag

@@ -389,7 +389,9 @@ function RoadmapSourceCard({
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
             SkillMint builds this plan from resume proof, career direction, and
-            the latest job match when available.
+            the latest job match when available. Active Target uses the latest
+            job match first; Profile-fit roles are separate general role
+            suggestions.
           </p>
         </div>
 
@@ -649,14 +651,21 @@ function CompactTaskCard({ task }: TaskCardProps) {
 }
 
 function TaskMeta({ task }: TaskCardProps) {
+  const effort = getTaskEffort(task);
+  const impact = getTaskImpact(task);
+
   return (
     <div className="flex flex-wrap gap-2">
-      <span className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-300">
-        {task.category}
+      <span className={getPriorityClassName(task.priority)}>
+        Priority: {task.priority}
       </span>
 
-      <span className={getPriorityClassName(task.priority)}>
-        {task.priority}
+      <span className={getEffortClassName(effort)}>
+        Effort: {effort}
+      </span>
+
+      <span className={getImpactClassName(impact)}>
+        Impact: {impact}
       </span>
 
       <span className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-400">
@@ -664,6 +673,98 @@ function TaskMeta({ task }: TaskCardProps) {
       </span>
     </div>
   );
+}
+
+type RoadmapEffort = "Low" | "Medium" | "High";
+type RoadmapImpact =
+  | "Proof"
+  | "ATS"
+  | "Recruiter Trust"
+  | "Portfolio"
+  | "Interview"
+  | "Skill Gap";
+
+function getTaskEffort(task: RoadmapTask): RoadmapEffort {
+  const taskText = `${task.title} ${task.action} ${task.estimatedTime}`
+    .toLowerCase();
+
+  if (/\b(15|20|30|45)\s*(min|mins|minutes)\b/.test(taskText)) {
+    return "Low";
+  }
+
+  if (
+    taskText.includes("deploy") ||
+    taskText.includes("build") ||
+    taskText.includes("project") ||
+    taskText.includes("portfolio") ||
+    taskText.includes("case study")
+  ) {
+    return "High";
+  }
+
+  if (
+    taskText.includes("rewrite") ||
+    taskText.includes("readme") ||
+    taskText.includes("screenshots") ||
+    taskText.includes("practice") ||
+    taskText.includes("tracker")
+  ) {
+    return "Medium";
+  }
+
+  if (
+    taskText.includes("add") ||
+    taskText.includes("list") ||
+    taskText.includes("review")
+  ) {
+    return "Low";
+  }
+
+  if (task.priority === "High") {
+    return "Medium";
+  }
+
+  return "Low";
+}
+
+function getTaskImpact(task: RoadmapTask): RoadmapImpact {
+  const taskText = `${task.title} ${task.reason} ${task.action}`.toLowerCase();
+
+  if (task.category === "ATS" || taskText.includes("keyword")) {
+    return "ATS";
+  }
+
+  if (task.category === "Interview" || taskText.includes("interview")) {
+    return "Interview";
+  }
+
+  if (
+    task.category === "Skills" ||
+    taskText.includes("missing skill") ||
+    taskText.includes("learn")
+  ) {
+    return "Skill Gap";
+  }
+
+  if (
+    task.category === "GitHub" ||
+    task.category === "Portfolio" ||
+    taskText.includes("github") ||
+    taskText.includes("portfolio") ||
+    taskText.includes("demo")
+  ) {
+    return "Portfolio";
+  }
+
+  if (
+    task.category === "Applications" ||
+    taskText.includes("recruiter") ||
+    taskText.includes("linkedin")
+  ) {
+    return "Recruiter Trust";
+  }
+
+  return "Proof";
 }
 
 type ApplicationStrategyProps = {
@@ -725,6 +826,48 @@ function getPriorityClassName(priority: RoadmapTask["priority"]): string {
   }
 
   return `${baseClassName} border-green-500/30 bg-green-500/10 text-green-200`;
+}
+
+function getEffortClassName(effort: RoadmapEffort): string {
+  const baseClassName =
+    "rounded-full border px-3 py-1 text-xs font-semibold";
+
+  if (effort === "High") {
+    return `${baseClassName} border-violet-500/30 bg-violet-500/10 text-violet-100`;
+  }
+
+  if (effort === "Medium") {
+    return `${baseClassName} border-blue-500/30 bg-blue-500/10 text-blue-100`;
+  }
+
+  return `${baseClassName} border-gray-700 bg-black/20 text-gray-300`;
+}
+
+function getImpactClassName(impact: RoadmapImpact): string {
+  const baseClassName =
+    "rounded-full border px-3 py-1 text-xs font-semibold";
+
+  if (impact === "Proof") {
+    return `${baseClassName} border-emerald-500/30 bg-emerald-500/10 text-emerald-100`;
+  }
+
+  if (impact === "ATS") {
+    return `${baseClassName} border-sky-500/30 bg-sky-500/10 text-sky-100`;
+  }
+
+  if (impact === "Recruiter Trust") {
+    return `${baseClassName} border-amber-500/30 bg-amber-500/10 text-amber-100`;
+  }
+
+  if (impact === "Portfolio") {
+    return `${baseClassName} border-violet-500/30 bg-violet-500/10 text-violet-100`;
+  }
+
+  if (impact === "Interview") {
+    return `${baseClassName} border-rose-500/30 bg-rose-500/10 text-rose-100`;
+  }
+
+  return `${baseClassName} border-blue-500/30 bg-blue-500/10 text-blue-100`;
 }
 
 function subscribeToStoredData(onStoreChange: () => void): () => void {

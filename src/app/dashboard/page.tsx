@@ -159,7 +159,11 @@ export default function DashboardPage() {
         />
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <CareerMatchCard matches={data.roleMatches} />
+          <CareerMatchCard
+            matches={data.roleMatches}
+            profile={data.profile}
+            proof={data.proof}
+          />
 
           <NextMissionsCard
             missions={data.missions}
@@ -206,6 +210,10 @@ function ReportReadingGuide() {
       description: "How much evidence supports your resume claims.",
     },
     {
+      label: "Active Target",
+      description: "The role or job SkillMint is currently guiding you toward.",
+    },
+    {
       label: "Latest JD Match",
       description: "Fit against one specific pasted job description.",
     },
@@ -239,7 +247,7 @@ function ReportReadingGuide() {
         </p>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-5">
+      <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         {guideItems.map((item) => (
           <article
             key={item.label}
