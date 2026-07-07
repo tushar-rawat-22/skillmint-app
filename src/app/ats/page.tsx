@@ -620,7 +620,7 @@ export default function ATSMatcherPage() {
             <UpgradeInterestCard
               source="ats"
               title="Want deeper job-match guidance?"
-              body="Free beta shows the core match, gaps, fixes, and rewrites. Paid beta interest helps shape deeper role-specific coaching."
+              body="SkillMint is free during beta. Paid plans are not required for this match report. Paid beta interest only helps shape deeper role-specific coaching."
               cta="Get advanced career plan interest"
             />
           </>

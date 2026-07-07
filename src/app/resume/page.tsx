@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import ProofConfidenceExplainer from "@/components/dashboard/ProofConfidenceExplainer";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
@@ -318,7 +319,17 @@ export default function ResumePage() {
         <ParsedResumeSections profile={activeAnalysis.parsedProfile} />
 
         {proofAnalysis && (
-          <ProofCoveragePanel proof={proofAnalysis} />
+          <>
+            <ProofCoveragePanel proof={proofAnalysis} />
+            <ProofConfidenceExplainer
+              proof={proofAnalysis}
+              projectCount={activeAnalysis.userProfile?.projects.length ?? 0}
+              hasMeasurableImpact={Boolean(
+                activeAnalysis.userProfile?.analysisFlags?.hasMeasurableImpact,
+              )}
+              className="mt-6"
+            />
+          </>
         )}
 
         {activeAnalysis.userProfile && (
@@ -332,8 +343,8 @@ export default function ResumePage() {
           <UpgradeInterestCard
             source="resume"
             title="Want Pro-level resume fixes?"
-            body="Free beta gives you the core proof report. Paid beta interest helps shape deeper bullet rewrites, proof reviews, and coaching-ready fixes."
-            cta="Unlock Pro fixes interest"
+            body="SkillMint is free during beta. Paid plans are not required for this report. Paid beta interest only helps shape deeper bullet rewrites, proof reviews, and coaching-ready fixes."
+            cta="Join Pro fixes interest"
           />
         </div>
 

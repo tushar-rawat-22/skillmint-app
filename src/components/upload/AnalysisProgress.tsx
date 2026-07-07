@@ -21,9 +21,9 @@ export default function AnalysisProgress({
             </h2>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-400">
-              SkillMint is extracting structure, reading proof signals, and
-              preparing your career intelligence dashboard. This may take a
-              few seconds.
+              SkillMint is moving through staged resume processing. These are
+              status labels, not fake percentages, so the report opens as soon
+              as the real analysis finishes.
             </p>
           </div>
 
@@ -35,12 +35,13 @@ export default function AnalysisProgress({
         <div className="relative mt-7 overflow-hidden rounded-2xl border border-white/10 bg-black/35 p-5">
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent skillmint-scan-line" />
 
-          <div className="relative grid gap-3 md:grid-cols-4">
+          <div className="relative grid gap-3 md:grid-cols-5">
             {[
-              "Resume received",
-              "Scanning resume structure",
-              "Building career intelligence",
-              "Preparing results",
+              "Uploading resume",
+              "Extracting text",
+              "Detecting skills and projects",
+              "Building career report",
+              "Saving progress",
             ].map((step, index) => (
               <div
                 key={step}

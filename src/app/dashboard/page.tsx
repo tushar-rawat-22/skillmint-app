@@ -9,6 +9,7 @@ import RealityCheckCard from "@/components/dashboard/RealityCheckCard";
 import CareerMatchCard from "@/components/dashboard/CareerMatchCard";
 import NextMissionsCard from "@/components/dashboard/NextMissionsCard";
 import ShareableCareerCard from "@/components/dashboard/ShareableCareerCard";
+import ProofConfidenceExplainer from "@/components/dashboard/ProofConfidenceExplainer";
 import {
   ReadinessTrend,
   ScoreBars,
@@ -108,6 +109,8 @@ export default function DashboardPage() {
           latestJobMatch={latestJobMatch}
         />
 
+        <ReportReadingGuide />
+
         <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
           <ScoreRing
             score={data.careerIQ.score}
@@ -134,6 +137,14 @@ export default function DashboardPage() {
           title="Proof Evidence"
           subtitle="Evidence candidates, not verified sources. This section shows what is claimed, supported, and still unverified."
           items={proofDistribution}
+        />
+
+        <ProofConfidenceExplainer
+          proof={data.proof}
+          projectCount={data.profile.projects.length}
+          hasMeasurableImpact={Boolean(
+            data.profile.analysisFlags?.hasMeasurableImpact,
+          )}
         />
 
         <RealityCheckCard
@@ -173,7 +184,7 @@ export default function DashboardPage() {
           <UpgradeInterestCard
             source="dashboard"
             title="Want a deeper career plan?"
-            body="SkillMint is free during beta. Join paid-beta interest if you would pay for advanced proof reviews and stronger 30-day guidance."
+            body="SkillMint is free during beta. Paid plans are not required for this report. Join paid-beta interest only if you would pay for advanced proof reviews and stronger 30-day guidance."
             cta="Join paid beta interest"
           />
         )}
@@ -181,6 +192,70 @@ export default function DashboardPage() {
         <AccountOverviewCard />
       </div>
     </DashboardLayout>
+  );
+}
+
+function ReportReadingGuide() {
+  const guideItems = [
+    {
+      label: "Career IQ",
+      description: "Final trust-adjusted readiness signal.",
+    },
+    {
+      label: "Proof Confidence",
+      description: "How much evidence supports your resume claims.",
+    },
+    {
+      label: "Latest JD Match",
+      description: "Fit against one specific pasted job description.",
+    },
+    {
+      label: "Profile-fit roles",
+      description: "General role suggestions based on your resume.",
+    },
+    {
+      label: "Base Resume Signals",
+      description: "Structure and detection signals, not final readiness.",
+    },
+  ];
+
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+            How to read this report
+          </p>
+
+          <h2 className="mt-2 text-xl font-black text-white">
+            Read the scores in the right order.
+          </h2>
+        </div>
+
+        <p className="max-w-2xl text-sm leading-6 text-gray-400">
+          SkillMint separates resume reality, proof trust, general role fit,
+          and one-job matching so the dashboard does not collapse everything
+          into one vague score.
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-5">
+        {guideItems.map((item) => (
+          <article
+            key={item.label}
+            className="rounded-2xl border border-white/10 bg-black/25 p-4"
+          >
+            <p className="text-sm font-bold text-white">
+              {item.label}
+            </p>
+
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              {item.description}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 

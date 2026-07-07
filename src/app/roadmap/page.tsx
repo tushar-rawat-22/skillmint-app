@@ -286,7 +286,7 @@ export default function RoadmapPage() {
           <UpgradeInterestCard
             source="roadmap"
             title="Want a guided 30-day sprint?"
-            body="SkillMint is free during beta. Paid beta interest helps shape deeper weekly missions, accountability, and advanced career plans."
+            body="SkillMint is free during beta. Paid plans are not required for this roadmap. Paid beta interest only helps shape deeper weekly missions, accountability, and advanced career plans."
             cta="Join paid beta"
           />
         </div>

@@ -26,6 +26,30 @@ export default function Hero() {
           roadmap.
         </p>
 
+        <div className="mt-6 max-w-3xl rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <p className="text-base leading-7 text-gray-200">
+            Most resume tools rewrite your resume. SkillMint tells you which
+            roles your resume actually fits, what proof is missing, and what
+            to build next.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-gray-300">
+            {[
+              "Profile-fit roles",
+              "Proof Confidence",
+              "Latest JD Match",
+              "30-day next actions",
+            ].map((label) => (
+              <span
+                key={label}
+                className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-emerald-100"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-12 flex flex-wrap justify-center gap-4">
           <Link
             href={ROUTES.SIGNUP}

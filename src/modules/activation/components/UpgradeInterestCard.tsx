@@ -16,7 +16,7 @@ export default function UpgradeInterestCard({
   source,
   title = "Want deeper guidance?",
   body =
-    "SkillMint is free during beta. Paid beta interest helps shape Pro fixes, coaching-ready plans, and deeper proof reviews.",
+    "SkillMint is free during beta. Paid plans are not required for this report. Paid beta interest only helps shape Pro fixes, coaching-ready plans, and deeper proof reviews.",
   cta = "I would pay for deeper guidance",
 }: UpgradeInterestCardProps) {
   const [message, setMessage] = useState("");

@@ -97,7 +97,7 @@ export default function UploadPage() {
               disabled={loading}
               className="rounded-xl bg-green-600 px-10 py-4 font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-gray-300"
             >
-              {loading ? "Analyzing..." : "Analyze Resume"}
+              {loading ? "Building report..." : "Analyze Resume"}
             </button>
 
             {error && (

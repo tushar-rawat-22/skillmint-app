@@ -66,6 +66,12 @@ export default function SetupPage() {
             Choose your career field so SkillMint can frame your direction
             better without rewriting your resume analysis.
           </p>
+
+          <p className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-400/10 p-4 text-sm leading-6 text-emerald-50/90">
+            Setup tells SkillMint what you want. Your resume tells SkillMint
+            what you currently have. SkillMint uses both to frame your guidance
+            without editing your resume analysis.
+          </p>
         </section>
 
         <NextBestActionPanel className="mt-6" />

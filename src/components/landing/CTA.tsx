@@ -21,7 +21,8 @@ export default function CTA() {
         </p>
 
         <p className="mt-3 text-sm text-gray-500">
-          Free beta for now. Upgrade interest only helps shape future Pro guidance.
+          Free beta for now. Paid plans are not required for your report.
+          Upgrade interest only helps shape future Pro guidance.
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-3">

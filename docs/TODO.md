@@ -440,6 +440,15 @@ Sprint 7.11 Proof-Aware Scoring MVP + Conversion UX Cleanup: Completed
 
 Sprint 7.11F SkillMint Doctrine + Hierarchy Lock: Completed
 
+RC-1A — Explainability + First-Time Clarity: Completed
+
+- Landing differentiation
+- Setup guidance
+- Free beta clarity
+- Proof Confidence explanation
+- Score guide
+- Upload processing feedback
+
 Next:
 
 Beta freeze QA, then beta freeze tag
