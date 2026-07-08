@@ -17,6 +17,7 @@ import {
   type ProofCoverageLabel,
   type ProofScoreResult,
 } from "@/intelligence/proof";
+import { calculateRoleMatches } from "@/intelligence/core/roleMatch";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   NextBestActionPanel,
@@ -24,12 +25,13 @@ import {
 } from "@/modules/activation";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
-  getLatestCurrentUserResumeAnalysis,
+  ACTIVE_RESUME_ANALYSIS_STORAGE_KEY,
+  listCurrentUserResumeAnalyses,
   type PersistentResumeAnalysis,
+  RESUME_SYNC_STATUS_STORAGE_KEY,
+  type ResumeSyncStatus,
+  setActiveResumeReportFromSavedAnalysis,
 } from "@/modules/resume";
-
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
 
 type ResumeAnalysisView = Omit<
   ResumeAnalysisResult,
@@ -39,16 +41,22 @@ type ResumeAnalysisView = Omit<
   userProfile?: UserProfile;
 };
 
-type ResumeSyncStatus = {
-  status: "synced" | "local-only";
-  message: string;
-  syncedAt?: string;
-  databaseId?: string;
-};
-
 type DatabaseLoadState = {
   isLoading: boolean;
   message: string | null;
+};
+
+type ResumeHistoryState = {
+  isLoading: boolean;
+  items: PersistentResumeAnalysis[];
+  message: string | null;
+  error: string | null;
+};
+
+type RestoreState = {
+  status: "idle" | "success" | "error";
+  message: string | null;
+  activeId: string | null;
 };
 
 type ExtractedTextPreview = {
@@ -107,94 +115,95 @@ export default function ResumePage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const userId = user?.id ?? null;
-  const [databaseAnalysis, setDatabaseAnalysis] =
-    useState<ResumeAnalysisView | null>(null);
-  const [databaseLoadState, setDatabaseLoadState] =
-    useState<DatabaseLoadState>({
+  const [resumeHistoryState, setResumeHistoryState] =
+    useState<ResumeHistoryState>({
       isLoading: false,
+      items: [],
       message: null,
+      error: null,
     });
+  const [restoreState, setRestoreState] = useState<RestoreState>({
+    status: "idle",
+    message: null,
+    activeId: null,
+  });
   const [showExtractedText, setShowExtractedText] = useState(false);
   const [showFullExtractedText, setShowFullExtractedText] =
     useState(false);
-  const activeAnalysis = analysis ?? databaseAnalysis;
+  const activeAnalysis = analysis;
+  const activeDatabaseId = syncStatus?.databaseId ?? null;
+  const savedResumeAnalyses =
+    isConfigured && userId ? resumeHistoryState.items : [];
+  const databaseLoadState = useMemo<DatabaseLoadState>(() => {
+    return {
+      isLoading: resumeHistoryState.isLoading,
+      message: resumeHistoryState.error ?? resumeHistoryState.message,
+    };
+  }, [
+    resumeHistoryState.error,
+    resumeHistoryState.isLoading,
+    resumeHistoryState.message,
+  ]);
 
   useEffect(() => {
-    if (analysis || !isConfigured || isAuthLoading || !userId) {
+    if (!isConfigured || isAuthLoading || !userId) {
       return;
     }
 
     let isActive = true;
     const timeoutId = window.setTimeout(() => {
-      void loadLatestResumeAnalysisFromDatabase();
+      void loadSavedResumeAnalyses();
     }, 0);
 
-    async function loadLatestResumeAnalysisFromDatabase() {
+    async function loadSavedResumeAnalyses() {
       if (!isActive) {
         return;
       }
 
-      setDatabaseLoadState({
+      setResumeHistoryState((currentState) => ({
+        ...currentState,
         isLoading: true,
         message: null,
-      });
+        error: null,
+      }));
 
       try {
-        const result = await getLatestCurrentUserResumeAnalysis();
+        const result = await listCurrentUserResumeAnalyses(10);
 
         if (!isActive) {
           return;
         }
 
         if (!result.ok) {
-          setDatabaseLoadState({
+          setResumeHistoryState({
             isLoading: false,
-            message: result.error,
+            items: [],
+            message: null,
+            error: result.error,
           });
           return;
         }
 
-        if (!result.data) {
-          setDatabaseLoadState({
-            isLoading: false,
-            message: "No saved resume analysis found in your account yet.",
-          });
-          return;
-        }
-
-        const restoredAnalysis = mapPersistentResumeAnalysisToView(
-          result.data,
-        );
-
-        if (!restoredAnalysis) {
-          setDatabaseLoadState({
-            isLoading: false,
-            message:
-              "A saved resume analysis exists, but it is missing data needed for this report.",
-          });
-          return;
-        }
-
-        setDatabaseAnalysis(restoredAnalysis);
-        persistRestoredAnalysis(restoredAnalysis);
-        writeResumeSyncStatus({
-          status: "synced",
-          message: "Loaded latest resume analysis from your account.",
-          syncedAt: new Date().toISOString(),
-          databaseId: result.data.id,
-        });
-        setDatabaseLoadState({
+        setResumeHistoryState({
           isLoading: false,
-          message: "Loaded latest resume analysis from your account.",
+          items: result.data,
+          message: result.data.length
+            ? `${result.data.length} saved resume analysis${
+              result.data.length === 1 ? "" : "es"
+            } found.`
+            : "No saved resume analyses found in your account yet.",
+          error: null,
         });
       } catch {
         if (!isActive) {
           return;
         }
 
-        setDatabaseLoadState({
+        setResumeHistoryState({
           isLoading: false,
-          message: "Could not load the saved resume analysis right now.",
+          items: [],
+          message: null,
+          error: "Could not load saved resume analyses right now.",
         });
       }
     }
@@ -203,48 +212,93 @@ export default function ResumePage() {
       isActive = false;
       window.clearTimeout(timeoutId);
     };
-  }, [analysis, isAuthLoading, isConfigured, userId]);
+  }, [isAuthLoading, isConfigured, userId]);
+
+  function handleSetActiveReport(resumeAnalysis: PersistentResumeAnalysis) {
+    const result = setActiveResumeReportFromSavedAnalysis(resumeAnalysis);
+
+    if (!result.ok) {
+      setRestoreState({
+        status: "error",
+        message: result.error,
+        activeId: resumeAnalysis.id,
+      });
+      return;
+    }
+
+    setRestoreState({
+      status: "success",
+      message:
+        "Saved resume analysis is now the active dashboard report in this browser.",
+      activeId: resumeAnalysis.id,
+    });
+  }
+
+  function handleRestoreLatestSavedReport() {
+    const latestSavedAnalysis = savedResumeAnalyses[0];
+
+    if (!latestSavedAnalysis) {
+      setRestoreState({
+        status: "error",
+        message: "No saved resume analysis is available to restore.",
+        activeId: null,
+      });
+      return;
+    }
+
+    handleSetActiveReport(latestSavedAnalysis);
+  }
 
   if (!activeAnalysis) {
     return (
       <DashboardLayout>
-        <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/[0.035] p-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
-            Resume Intelligence
-          </p>
+        <div className="mx-auto max-w-6xl space-y-6">
+          <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 text-center shadow-2xl shadow-black/25 md:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+              Resume Intelligence
+            </p>
 
-          <h1 className="mt-5 text-4xl font-black md:text-5xl">
-            No resume analysis yet
-          </h1>
+            <h1 className="mt-5 text-4xl font-black md:text-5xl">
+              No active resume report selected
+            </h1>
 
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-400">
-            Upload a resume to create your latest SkillMint extraction
-            snapshot. If you are not sure what role to aim for yet, start
-            with career setup first.
-          </p>
+            <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-gray-400">
+              Upload a resume or restore a saved analysis to make it the active
+              dashboard report in this browser. Saved analyses are account
+              history; they do not become active until you choose one.
+            </p>
 
-          {(databaseLoadState.isLoading || databaseLoadState.message) && (
-            <ResumeDatabaseLoadNotice state={databaseLoadState} />
-          )}
+            <NextBestActionPanel className="mx-auto mt-8 max-w-3xl text-left" />
 
-          <NextBestActionPanel className="mt-8 text-left" />
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link
+                href="/setup"
+                className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+              >
+                Career Setup
+              </Link>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/setup"
-              className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
-            >
-              Career Setup
-            </Link>
+              <Link
+                href="/upload"
+                className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
+              >
+                Upload Resume
+              </Link>
+            </div>
+          </section>
 
-            <Link
-              href="/upload"
-              className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
-            >
-              Upload Resume
-            </Link>
-          </div>
-        </section>
+          <SavedResumeAnalysesSection
+            activeDatabaseId={activeDatabaseId}
+            historyState={resumeHistoryState}
+            isAuthLoading={isAuthLoading}
+            isConfigured={isConfigured}
+            isSignedIn={Boolean(userId)}
+            onRestoreLatest={handleRestoreLatestSavedReport}
+            onSetActive={handleSetActiveReport}
+            restoreState={restoreState}
+            showRestoreLatestAction
+          />
+        </div>
       </DashboardLayout>
     );
   }
@@ -314,6 +368,17 @@ export default function ResumePage() {
           syncStatus={syncStatus}
           databaseLoadState={databaseLoadState}
           hasLocalAnalysis={Boolean(analysis)}
+        />
+
+        <SavedResumeAnalysesSection
+          activeDatabaseId={activeDatabaseId}
+          historyState={resumeHistoryState}
+          isAuthLoading={isAuthLoading}
+          isConfigured={isConfigured}
+          isSignedIn={Boolean(userId)}
+          onRestoreLatest={handleRestoreLatestSavedReport}
+          onSetActive={handleSetActiveReport}
+          restoreState={restoreState}
         />
 
         <ParsedResumeSections profile={activeAnalysis.parsedProfile} />
@@ -449,10 +514,6 @@ export default function ResumePage() {
   );
 }
 
-type ResumeDatabaseLoadNoticeProps = {
-  state: DatabaseLoadState;
-};
-
 type ExtractionDetailProps = {
   label: string;
   value: string;
@@ -472,29 +533,301 @@ function ExtractionDetail({ label, value }: ExtractionDetailProps) {
   );
 }
 
-function ResumeDatabaseLoadNotice({
-  state,
-}: ResumeDatabaseLoadNoticeProps) {
-  return (
-    <div className="mt-6 w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left">
-      <p className="text-sm font-semibold text-gray-100">
-        Account resume backup
-      </p>
-
-      <p className="mt-2 text-sm leading-6 text-gray-400">
-        {state.isLoading
-          ? "Checking your account for the latest saved resume analysis."
-          : state.message}
-      </p>
-    </div>
-  );
-}
-
 type ResumeSyncStatusCardProps = {
   syncStatus: ResumeSyncStatus | null;
   databaseLoadState: DatabaseLoadState;
   hasLocalAnalysis: boolean;
 };
+
+type SavedResumeAnalysesSectionProps = {
+  activeDatabaseId: string | null;
+  historyState: ResumeHistoryState;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+  isSignedIn: boolean;
+  onRestoreLatest: () => void;
+  onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
+  restoreState: RestoreState;
+  showRestoreLatestAction?: boolean;
+};
+
+function SavedResumeAnalysesSection({
+  activeDatabaseId,
+  historyState,
+  isAuthLoading,
+  isConfigured,
+  isSignedIn,
+  onRestoreLatest,
+  onSetActive,
+  restoreState,
+  showRestoreLatestAction = false,
+}: SavedResumeAnalysesSectionProps) {
+  const historyItems = isConfigured && isSignedIn
+    ? historyState.items
+    : [];
+  const latestSavedAnalysis = historyItems[0] ?? null;
+  const canRestoreLatest =
+    Boolean(latestSavedAnalysis) &&
+    latestSavedAnalysis?.id !== activeDatabaseId;
+
+  return (
+    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+            Resume History
+          </p>
+
+          <h2 className="mt-2 text-2xl font-black">
+            Saved resume analyses
+          </h2>
+
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+            Saved analyses are account history. The dashboard only shows
+            metrics for the active report loaded in this browser.
+          </p>
+        </div>
+
+        {showRestoreLatestAction && canRestoreLatest && (
+          <button
+            type="button"
+            onClick={onRestoreLatest}
+            className="w-fit rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
+          >
+            Restore latest saved report
+          </button>
+        )}
+      </div>
+
+      <ResumeHistoryStatus
+        historyState={historyState}
+        isAuthLoading={isAuthLoading}
+        isConfigured={isConfigured}
+        isSignedIn={isSignedIn}
+      />
+
+      {restoreState.message && (
+        <p
+          className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${
+            restoreState.status === "success"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+              : "border-red-500/30 bg-red-500/10 text-red-100"
+          }`}
+        >
+          {restoreState.message}
+        </p>
+      )}
+
+      {historyItems.length > 0 && (
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          {historyItems.map((resumeAnalysis) => (
+            <SavedResumeAnalysisCard
+              key={resumeAnalysis.id}
+              activeDatabaseId={activeDatabaseId}
+              onSetActive={onSetActive}
+              resumeAnalysis={resumeAnalysis}
+              restoreState={restoreState}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+type ResumeHistoryStatusProps = {
+  historyState: ResumeHistoryState;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+  isSignedIn: boolean;
+};
+
+function ResumeHistoryStatus({
+  historyState,
+  isAuthLoading,
+  isConfigured,
+  isSignedIn,
+}: ResumeHistoryStatusProps) {
+  const presentation = getResumeHistoryPresentation({
+    historyState,
+    isAuthLoading,
+    isConfigured,
+    isSignedIn,
+  });
+
+  if (!presentation) {
+    return null;
+  }
+
+  return (
+    <div className={`mt-5 rounded-2xl border p-4 ${presentation.className}`}>
+      <p className="text-sm font-semibold text-white">
+        {presentation.title}
+      </p>
+
+      <p className="mt-2 text-sm leading-6 text-gray-300">
+        {presentation.message}
+      </p>
+    </div>
+  );
+}
+
+function getResumeHistoryPresentation({
+  historyState,
+  isAuthLoading,
+  isConfigured,
+  isSignedIn,
+}: ResumeHistoryStatusProps): {
+  title: string;
+  message: string;
+  className: string;
+} | null {
+  if (isAuthLoading || historyState.isLoading) {
+    return {
+      title: "Checking saved analyses",
+      message: "Looking for resume analyses saved to your account.",
+      className: "border-white/10 bg-black/24",
+    };
+  }
+
+  if (!isConfigured) {
+    return {
+      title: "Account sync unavailable",
+      message:
+        "Resume history needs account sync. Upload and active reports still work in this browser.",
+      className: "border-yellow-500/30 bg-yellow-500/10",
+    };
+  }
+
+  if (!isSignedIn) {
+    return {
+      title: "Sign in to view saved analyses",
+      message:
+        "Browser reports still work here. Sign in to see resume analyses saved to your account.",
+      className: "border-white/10 bg-black/24",
+    };
+  }
+
+  if (historyState.error) {
+    return {
+      title: "Saved analyses unavailable",
+      message: historyState.error,
+      className: "border-red-500/30 bg-red-500/10",
+    };
+  }
+
+  if (!historyState.items.length) {
+    return {
+      title: "No saved resume analyses yet",
+      message:
+        "Upload a resume while signed in to save analyses to your account history.",
+      className: "border-white/10 bg-black/24",
+    };
+  }
+
+  return null;
+}
+
+type SavedResumeAnalysisCardProps = {
+  activeDatabaseId: string | null;
+  onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
+  resumeAnalysis: PersistentResumeAnalysis;
+  restoreState: RestoreState;
+};
+
+function SavedResumeAnalysisCard({
+  activeDatabaseId,
+  onSetActive,
+  resumeAnalysis,
+  restoreState,
+}: SavedResumeAnalysisCardProps) {
+  const userProfile = isUserProfile(resumeAnalysis.userProfile)
+    ? resumeAnalysis.userProfile
+    : null;
+  const isActive = activeDatabaseId === resumeAnalysis.id;
+  const isCurrentRestoreTarget = restoreState.activeId === resumeAnalysis.id;
+  const topProfileFitRole = userProfile
+    ? calculateRoleMatches(userProfile)[0]?.role ?? "Not enough role signals"
+    : "Missing report data";
+
+  return (
+    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/25 p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="break-words text-lg font-bold text-white">
+            {resumeAnalysis.fileName || "Untitled resume"}
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-gray-400">
+            Analyzed {formatAnalyzedDate(resumeAnalysis.createdAt)}
+          </p>
+        </div>
+
+        <span
+          className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${
+            isActive
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+              : "border-white/10 bg-white/5 text-gray-300"
+          }`}
+        >
+          {isActive ? "Active report" : "Saved"}
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <SavedResumeMeta
+          label="Target role"
+          value="Not saved with this report"
+        />
+
+        <SavedResumeMeta
+          label="Top Profile-fit role"
+          value={topProfileFitRole}
+        />
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onSetActive(resumeAnalysis)}
+          disabled={isActive || !userProfile}
+          className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
+        >
+          {isActive
+            ? "Active report"
+            : userProfile
+              ? "Set as active report"
+              : "Missing report data"}
+        </button>
+
+        {isCurrentRestoreTarget && restoreState.status === "error" && (
+          <span className="text-sm text-red-200">
+            Restore failed
+          </span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+type SavedResumeMetaProps = {
+  label: string;
+  value: string;
+};
+
+function SavedResumeMeta({ label, value }: SavedResumeMetaProps) {
+  return (
+    <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.035] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+        {label}
+      </p>
+
+      <p className="mt-2 break-words text-sm font-semibold text-gray-100">
+        {value}
+      </p>
+    </div>
+  );
+}
 
 function ResumeSyncStatusCard({
   syncStatus,
@@ -1212,7 +1545,9 @@ function subscribeToStoredAnalysis(
 }
 
 function readStoredAnalysis(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+  return getBrowserStorage()?.getItem(
+    ACTIVE_RESUME_ANALYSIS_STORAGE_KEY,
+  ) ?? null;
 }
 
 function readStoredSyncStatus(): string | null {
@@ -1333,62 +1668,6 @@ function isProofCoverageLabel(value: unknown): value is ProofCoverageLabel {
     value === "Moderate" ||
     value === "Weak" ||
     value === "Missing";
-}
-
-function mapPersistentResumeAnalysisToView(
-  resumeAnalysis: PersistentResumeAnalysis,
-): ResumeAnalysisView | null {
-  if (!resumeAnalysis.fileName || !resumeAnalysis.fileType) {
-    return null;
-  }
-
-  const userProfile = isUserProfile(resumeAnalysis.userProfile)
-    ? resumeAnalysis.userProfile
-    : undefined;
-
-  return {
-    fileName: resumeAnalysis.fileName,
-    fileType: resumeAnalysis.fileType,
-    fileSize: 0,
-    extractedText: resumeAnalysis.extractedText ?? "",
-    parsedProfile: isParsedResumeProfile(resumeAnalysis.parsedProfile)
-      ? resumeAnalysis.parsedProfile
-      : EMPTY_PARSED_PROFILE,
-    ...(userProfile ? { userProfile } : {}),
-    analyzedAt: resumeAnalysis.createdAt,
-    status: "completed",
-  };
-}
-
-function persistRestoredAnalysis(analysis: ResumeAnalysisView): void {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(RESUME_ANALYSIS_STORAGE_KEY, JSON.stringify(analysis));
-  } catch {
-    return;
-  }
-}
-
-function writeResumeSyncStatus(status: ResumeSyncStatus): void {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(
-      RESUME_SYNC_STATUS_STORAGE_KEY,
-      JSON.stringify(status),
-    );
-  } catch {
-    return;
-  }
 }
 
 type VisibleLink = {
