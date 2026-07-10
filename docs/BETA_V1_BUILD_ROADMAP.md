@@ -1,6 +1,6 @@
 # SkillMint Beta v1 Build Roadmap
 
-**Status:** Locked roadmap for Beta v1 completion  
+**Status:** Locked roadmap for Beta v1 completion; Block 2 is the current block
 **Timeline:** Realistic 5-6 weeks; conservative 7-8 weeks  
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
 
@@ -38,7 +38,11 @@ Dependencies: Existing dashboard, resume, ATS, roadmap, settings, upload, setup,
 
 ### 2. Scoring Calibration + Truth Engine
 
+Status: Current block.
+
 Purpose: Calibrate Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, Profile-fit roles, Latest JD Match, and trust language against representative resumes.
+
+Block 2 scope: deterministic 0-100 score contract, locked Career IQ formula, signal ledger, claimed-versus-backed skill behavior, explainable caps, role-aware evidence handling, fixture checks, old-report compatibility, and scoring documentation.
 
 Out of scope: UI redesign, mission execution, payments, AI chat, job board, fake proof verification, or launch claims.
 

@@ -25,6 +25,8 @@ Tasks should only be added if they support an approved product objective.
 # Product Trust + Beta Readiness TODOs
 
 - [ ] Build a scoring calibration set for Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, role match, and JD Match.
+- [ ] Recalibrate `career-iq-v2-beta` after beta feedback and reviewer-labeled resumes.
+- [ ] Plan an optional scoring-version migration path if future persisted reports need versioned score history.
 - [ ] Add account-level delete saved resume analysis when repository support exists.
 - [ ] When real delete support exists, use this confirmation: "Delete saved analysis? This removes this resume analysis from your saved account history. It does not delete your account."
 - [ ] Add a privacy/account deletion flow later; do not confuse it with browser-only clear workspace.
@@ -35,6 +37,7 @@ Tasks should only be added if they support an approved product objective.
 - [ ] Complete a future light-token migration if raw Tailwind class strings become difficult to maintain.
 - [ ] Keep auth recovery edge states aligned with the premium light auth experience as copy and states evolve.
 - [ ] Calibrate salary estimates before exposing them as a core report metric.
+- [ ] Evaluate external proof verification later without calling evidence candidates verified today.
 - [ ] Add stronger proof-source validation in Proof Engine v2.
 - [ ] Add roadmap execution/completion state after scoring trust is validated.
 

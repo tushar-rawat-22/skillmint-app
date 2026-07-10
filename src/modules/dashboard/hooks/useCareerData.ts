@@ -12,14 +12,12 @@ import { generateMissions } from "@/intelligence/core/missions";
 import { generateRecommendations } from "@/intelligence/core/recommendations";
 import { calculateRoleMatches } from "@/intelligence/core/roleMatch";
 import {
-  calculateProofAwareCareerIQ,
   calculateProofAwareRecruiterConfidence,
   createMissingProofScore,
   generateProofScore,
 } from "@/intelligence/proof";
 import type { ParsedProofProfile } from "@/intelligence/proof";
 import type { UserProfile } from "@/intelligence/types/profile";
-import type { CareerIQResult } from "@/intelligence/types/results";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import { TARGET_ROLE_SETUP_STORAGE_KEY } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 
@@ -41,7 +39,8 @@ export function useCareerData() {
     [storedAnalysis],
   );
   const profile = analysisContext?.profile ?? mockProfile;
-  const baseCareerIQ = calculateCareerIQ(profile);
+  const storedCareerField = getStoredCareerField(storedSetup);
+  const storedTargetRole = getStoredTargetRole(storedSetup);
   const ats = calculateATS(profile);
   const baseRecruiter = calculateRecruiterConfidence(profile);
   const proof = analysisContext
@@ -49,11 +48,19 @@ export function useCareerData() {
         profile,
         parsedProfile: analysisContext.parsedProfile,
         resumeText: analysisContext.extractedText,
-        careerField: getStoredCareerField(storedSetup),
+        careerField: storedCareerField,
       })
     : createMissingProofScore();
-  const proofAwareCareerIQ = calculateProofAwareCareerIQ(baseCareerIQ, proof);
-  const careerIQ = applyCareerIQTrustCap(proofAwareCareerIQ, proof);
+  const baseCareerIQ = calculateCareerIQ(profile, {
+    targetRole: storedTargetRole,
+    careerField: storedCareerField,
+  });
+  const careerIQ = calculateCareerIQ(profile, {
+    proofScore: proof,
+    targetRole: storedTargetRole,
+    careerField: storedCareerField,
+  });
+  const proofAwareCareerIQ = careerIQ;
   const recruiter = calculateProofAwareRecruiterConfidence(
     baseRecruiter,
     proof,
@@ -73,47 +80,6 @@ export function useCareerData() {
     recommendations: generateRecommendations(profile),
     roleMatches: calculateRoleMatches(profile),
   };
-}
-
-function applyCareerIQTrustCap(
-  careerIQ: CareerIQResult,
-  proof: ReturnType<typeof generateProofScore>,
-): CareerIQResult {
-  const capCandidates = [
-    getProofCoverageCap(proof.proofCoverageLabel),
-    proof.evidenceBackedSkills.length === 0 ? 64 : 100,
-    proof.proofConfidenceScore < 50 ? 64 : 100,
-  ];
-  const trustCap = Math.min(...capCandidates);
-  const score = Math.min(careerIQ.score, trustCap);
-
-  if (score === careerIQ.score) {
-    return careerIQ;
-  }
-
-  return {
-    score,
-    grade: getCareerIQGrade(score),
-    summary:
-      `${careerIQ.summary} More evidence-backed proof is needed before this score can rise.`,
-  };
-}
-
-function getProofCoverageCap(label: string): number {
-  if (label === "Missing") return 54;
-  if (label === "Weak") return 69;
-  if (label === "Moderate") return 82;
-
-  return 100;
-}
-
-function getCareerIQGrade(score: number): string {
-  if (score >= 90) return "A+";
-  if (score >= 80) return "A";
-  if (score >= 70) return "B+";
-  if (score >= 60) return "B";
-
-  return "C";
 }
 
 function subscribeToStoredAnalysis(
@@ -202,6 +168,26 @@ function getStoredCareerField(storedSetup: string | null): string | null {
 
     return typeof parsedSetup.careerField === "string"
       ? parsedSetup.careerField
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function getStoredTargetRole(storedSetup: string | null): string | null {
+  if (!storedSetup) {
+    return null;
+  }
+
+  try {
+    const parsedSetup = JSON.parse(storedSetup);
+
+    if (!isRecord(parsedSetup)) {
+      return null;
+    }
+
+    return typeof parsedSetup.targetRole === "string"
+      ? parsedSetup.targetRole
       : null;
   } catch {
     return null;

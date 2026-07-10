@@ -1,77 +1,286 @@
-# SkillMint Scoring System Audit
+# SkillMint Scoring System
 
-**Status:** Product Trust + Beta Readiness audit  
-**Scope:** Current deterministic scoring and score display before the 50-user beta
+**Status:** Beta v1 Block 2 - Scoring Calibration + Truth Engine
+**Scoring version:** `career-iq-v2-beta`
+**Principle:** SkillMint does not ask whether a resume looks good. It asks what the resume can prove.
 
-## Summary
+## Score Contract
 
-SkillMint currently shows deterministic, resume-derived signals. The system does not externally verify proof links, job outcomes, GitHub activity, LinkedIn details, LeetCode activity, employment history, or placement probability. Scores should be described as detected, inferred, estimated, proof-candidate-based, or JD-match-based.
+All user-facing SkillMint scores are normalized to 0-100.
 
-Recommended global language:
+This includes:
 
-- "Career IQ is a trust-adjusted readiness signal."
-- "Proof Confidence is based on evidence candidates, not external verification."
-- "Missing proof means unverified, not false."
-- "Profile-fit roles are based on base resume signals."
-- "Latest JD Match is specific to the job description you tested."
-- "Base Resume Signals show what SkillMint detected in the resume, not final employability."
+- Career IQ
+- Proof Confidence
+- Recruiter Confidence
+- ATS Readiness
+- Profile-fit role score
+- Latest JD Match
+- Any displayed category/subscore
 
-Recommended score bands:
+Internal parser inputs can still use smaller scales, but they must be normalized before being shown or used in the final Career IQ formula.
 
-| Band | Range | User-facing meaning |
-| --- | ---: | --- |
-| Critical | 0-39 | Major resume/proof inputs are missing or unusable. |
-| Weak | 40-54 | Some signal exists, but trust and readiness are low. |
-| Developing | 55-69 | A usable base exists, with important gaps. |
-| Competitive | 70-84 | Directionally competitive, but still proof-sensitive. |
-| Strong | 85-100 | High signal density; still not externally verified. |
+## Score Labels
 
-## Displayed Scores
+| Range | Label |
+| ---: | --- |
+| 0-24 | Not enough usable information |
+| 25-39 | Very weak proof |
+| 40-54 | Early foundation |
+| 55-69 | Developing |
+| 70-79 | Promising profile-fit |
+| 80-89 | Strong profile-fit |
+| 90-100 | Exceptional proof-rich profile |
 
-| Score | Where calculated or assembled | Where shown | Meaning | Inputs | Classification | Known limitations | Overclaiming risk | Recommended language |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Career IQ | `src/intelligence/core/careerIQ.ts`, then proof-adjusted in `src/intelligence/proof/proofScoring.ts`, then trust-capped in `src/modules/dashboard/hooks/useCareerData.ts` | `/dashboard`, share snapshot | Overall career readiness signal after base resume scoring and Proof Confidence adjustment. | Resume structure, skills, projects, experience, education, GitHub/LinkedIn signals, ATS/recruiter base scores, certifications, coding profile signals, optional proof signals, Proof Confidence. | Inferred and proof-candidate-based. | Deterministic heuristics; not market-calibrated yet; no external source scans; proof gaps can cap the score; active browser report only. | High if framed as talent, intelligence, placement chance, or verified employability. | "Career IQ: Competitive, but proof is still incomplete." |
-| Proof Confidence | `src/intelligence/proof/proofScoring.ts` | `/dashboard`, `/resume`, share snapshot | Confidence that resume claims are supported by evidence candidates. | Parsed skills, projects, experience, certifications, resume text, extracted links, measurable outcomes, career field context. | Proof-candidate-based. | Link presence is not validation; generic links do not support every skill; missing proof is not disproof. | High if called verified proof or treated as truth. | "Proof Confidence is based on evidence candidates, not external verification." |
-| ATS Readiness | `src/intelligence/core/ats.ts` using base signals from `src/lib/resume/buildUserProfileFromParsedResume.ts` | `/dashboard`, share snapshot | Resume structure and scan-readiness before a specific JD. | Base ATS signal, skills, projects, education, experience, resume structure, certifications, public proof hints, measurable impact. | Detected and inferred. | Not a real ATS parser; not job-specific; keyword coverage for a specific JD lives in JD Match. | Medium if users confuse it with one-company ATS pass probability. | "ATS Readiness checks base resume structure, not a guaranteed ATS outcome." |
-| Recruiter Confidence | `src/intelligence/core/recruiter.ts`, then proof-adjusted in `src/intelligence/proof/proofScoring.ts` | `/dashboard`, share snapshot | Estimated initial recruiter shortlisting confidence from visible profile signals. | Projects, experience, skills, GitHub/LinkedIn, coding profiles, certifications, achievements, measurable impact, Proof Confidence. | Inferred and proof-candidate-based. | No real recruiter review; no company-specific screening model; no external source validation. | High if framed as recruiter approval. | "Recruiter Confidence estimates shortlisting trust from visible resume signals." |
-| Profile-fit role match | `src/intelligence/core/roleMatch.ts` | `/dashboard`, `/resume` history | General role fit based on resume signals and predefined role skill sets. | Detected skills, project score, experience score, GitHub score, coding score, role required/bonus skills. | Inferred from base resume signals. | Limited role catalog; no live job market; not tied to the latest JD; salary ranges are broad static guidance. | Medium if called "best match" or confused with latest JD. | "Top profile-fit role based on your resume signals." |
-| Latest JD Match | `src/intelligence/core/jobDescriptionMatch.ts` | `/ats`, `/dashboard`, job match history, roadmap context | Fit against one pasted job description. | Extracted JD skills/keywords, resume skills, project/experience overlap, public proof signals, certifications, education, strict caps for missing proof. | JD-match-based and inferred. | Only as good as the pasted JD; no employer-specific ATS; no external source verification; generic resumes can score poorly even with strong candidates. | High if treated as a job guarantee. | "Latest JD Match is specific to the job description you tested." |
-| Base Resume Signals | `src/lib/resume/buildUserProfileFromParsedResume.ts`; scaled in `/resume` | `/resume` | Detection strengths for resume structure, skills, projects, experience, education, ATS base, recruiter base, Proof Confidence. | Parsed sections, section clarity, contact/proof links, measurable impact, skills/projects counts and text. | Detected and inferred. | Rule-based parser may miss formatting; base signals are not final career readiness. | Medium if called final resume quality. | "Base Resume Signals show what SkillMint detected, not final employability." |
-| Roadmap readiness | `src/intelligence/core/careerRoadmap.ts` | `/roadmap` | Action-readiness label derived from the latest JD Match. | Latest JD Match score, missing skills/keywords, resume improvement plan, rewrite plan, setup target role/profile-fit context. | JD-match-based and inferred. | Generic without a JD; readiness can change with a new JD; no execution tracking yet. | Medium if treated as readiness for all roles. | "Roadmap readiness follows your latest JD Match; add a JD for a targeted plan." |
-| Missions / next actions | `src/intelligence/core/missions.ts`, `src/intelligence/core/recommendations.ts`, proof next move in `src/intelligence/proof/proofScoring.ts` | `/dashboard`, `/roadmap`, next best action surfaces | Prioritized actions based on low scoring signals. | GitHub, projects, resume structure, LinkedIn, skills, recommendations, proof gaps. | Inferred action priority. | Not a scored task system yet; no completion persistence in this block. | Low unless framed as guaranteed improvement. | "Next action based on the weakest visible signal." |
-| Salary estimate | `src/intelligence/core/salary.ts` | Not currently mounted in the active dashboard, but returned by `useCareerData()` and supported by `SalaryCard` | Conservative fresher-friendly salary estimate. | Career IQ, skills, projects, GitHub, ATS/recruiter base signals, coding profiles, certifications, experience. | Estimated. | No live compensation data; not personalized by location/company; should stay secondary until calibrated. | High if shown without caveats. | "Estimated range from resume signals, not an offer prediction." |
+Avoid unsafe labels such as job ready, guaranteed, perfect, hireable, placement chance, or verified.
 
-## Base Signal Inputs
+## Career IQ Meaning
 
-`buildUserProfileFromParsedResume()` creates the underlying profile scores:
+Career IQ means: how strongly this resume proves the user is ready for realistic profile-fit roles.
 
-- `resumeScore`: section presence, meaningful length, structure, measurable impact, contact/proof links.
-- `skillsScore`: detected skill count with caps for skill-heavy resumes lacking projects.
-- `projectsScore`: project count, implementation/proof keywords, generic-project caps.
-- `experienceScore`: internship/work/freelance/developer signal count.
-- `educationScore`: education presence, degree/domain/GPA signals.
-- `githubScore`: GitHub link plus project count.
-- `linkedinScore`: LinkedIn link plus experience/certification/project context.
-- `atsScore`: base parse/readability signals before JD matching.
-- `recruiterScore`: base human trust signals before Proof Confidence adjustment.
-- `activityScore`: GitHub, LinkedIn, projects, certifications, coding profiles, hackathon/open-source/achievement terms.
+Career IQ is not:
 
-## Trust Controls Already Present
+- a resume score
+- a job guarantee
+- a placement chance
+- an externally verified truth score
+- Latest JD Match
+- ATS Readiness
 
-- Placeholder extraction caps scores aggressively.
-- Career IQ caps high scores when public proof, projects, ATS base, or strong evidence density is missing.
-- Proof-aware Career IQ blends Career IQ with Proof Confidence and applies additional trust caps.
-- Recruiter Confidence is proof-adjusted.
-- JD Match uses strict caps for missing role categories, weak overlap, no projects, no public/coding proof, and missing exceptional evidence.
-- Dashboard hides all report metrics when no active browser report exists.
+## Locked Career IQ Formula
 
-## Calibration TODOs
+Career IQ uses normalized category scores first, then applies explainable caps.
 
-- Build a labeled test set of student/fresher resumes and expected score bands.
-- Add snapshot tests for representative weak, developing, competitive, and strong profiles.
-- Compare Career IQ, Proof Confidence, ATS Readiness, and JD Match outputs against human reviewer expectations.
-- Track beta confusion around Career IQ versus Proof Confidence versus JD Match.
-- Tune score caps only after beta evidence, not from isolated anecdotes.
-- Add confidence intervals or "data strength" labels if users read scores too precisely.
-- Decide whether salary estimates should stay hidden until calibrated with realistic fresher market data.
-- Add account-level history for score changes over time after active/saved report semantics are stable.
+```text
+Career IQ =
+0.10 x Career Direction Score
++ 0.08 x Resume Completeness Score
++ 0.18 x Skill Truth Score
++ 0.20 x Project / Experience Evidence Score
++ 0.10 x Impact & Outcomes Score
++ 0.14 x Profile-Fit Alignment Score
++ 0.08 x Recruiter / ATS Readiness Score
++ 0.08 x Proof Evidence Candidate Score
++ 0.04 x Consistency / Risk Control Score
+```
+
+Final score:
+
+```text
+Career IQ = clamp(round(weightedScoreAfterCaps), 0, 100)
+```
+
+Implementation lives in:
+
+- `src/intelligence/scoring/scoreContract.ts`
+- `src/intelligence/scoring/truthEngine.ts`
+- `src/intelligence/core/careerIQ.ts`
+
+## Weighted Categories
+
+### Career Direction Score - 10%
+
+Checks whether the resume tells a believable role story. It considers target role setup when available, strongest profile-fit role, applied evidence, and scattered positioning.
+
+### Resume Completeness Score - 8%
+
+Checks parseability, section clarity, education/contact signals, and basic formatting. Formatting matters, but it cannot dominate Career IQ.
+
+### Skill Truth Score - 18%
+
+Cross-checks claimed skills against projects, experience, certifications, and education.
+
+Each claimed skill can be:
+
+- `claimed_only`
+- `lightly_supported`
+- `moderately_supported`
+- `strongly_supported`
+
+The UI keeps old safe buckets:
+
+- evidence-backed skills
+- weakly supported skills
+- unverified claimed skills
+
+Five backed skills should beat 25 unsupported keywords.
+
+### Project / Experience Evidence Score - 20%
+
+Checks applied work: projects, internships, freelance/work experience, ownership language, action verbs, project depth, and non-generic descriptions.
+
+### Impact & Outcomes Score - 10%
+
+Checks results: numbers, scale, users, performance, accuracy, rankings, leadership, open source, research, or measurable improvements.
+
+### Profile-Fit Alignment Score - 14%
+
+Scores realistic role alignment from the whole resume. Profile-fit roles are general resume-fit suggestions and must stay separate from Latest JD Match.
+
+### Recruiter / ATS Readiness Score - 8%
+
+Checks parser and recruiter scan clarity while limiting keyword-only inflation. ATS keywords can help ATS Readiness, but Career IQ should stay limited when proof is weak.
+
+### Proof Evidence Candidate Score - 8%
+
+Checks evidence candidates such as GitHub, portfolio, live app, dashboards, reports, certificates, case studies, coding profiles, or research artifacts.
+
+Evidence candidate means inspectable resume evidence. It is not external verification.
+
+### Consistency / Risk Control Score - 4%
+
+Controls for contradictions, scattered direction, unsupported claims, generic filler, and target-role mismatch.
+
+## Signal Ledger
+
+Block 2 adds a deterministic signal ledger with:
+
+- positive, negative, and neutral signals
+- category
+- severity
+- score impact where practical
+- explanation
+- evidence text where available
+
+Important scores can now expose drivers, blockers, signals, and caps without requiring old saved reports to contain those fields.
+
+## Caps
+
+Caps are applied after weighted Career IQ is calculated. Every cap has an id, max score, reason, and optional evidence.
+
+Implemented cap behavior:
+
+- no usable resume text: max 25
+- only education + skills, no project/experience: max 55
+- no projects, no experience, no role-relevant proof: max 45
+- no relevant projects/experience for technical fresher direction: max 58
+- unclear or scattered direction: max 72
+- Proof Confidence below 25: max 68
+- more than 65% claimed skills unsupported: max 62
+- strong ATS/recruiter keywords but weak evidence: max 70
+- major target-role/evidence contradiction: max 65
+- good formatting but weak proof: max 65
+- strong proof but weak formatting is not capped below 78 only because of formatting
+
+Caps are visible internally on Career IQ as `capsApplied`.
+
+## Cross-Checks
+
+The truth engine cross-checks resume-internal signals only:
+
+- skills section against projects
+- skills section against experience
+- skills section against certifications/coursework
+- project stack against project description
+- target role against projects, experience, skills, and profile-fit scores
+- links against proof-candidate presence
+- metrics against action/context
+- claimed skills against applied evidence
+- ATS/recruiter scan strength against proof strength
+
+It does not externally verify:
+
+- GitHub content
+- LinkedIn content
+- certificate validity
+- company employment
+- project live status
+- college status
+
+External verification is future work, not Block 2.
+
+## Role-Aware Evidence
+
+The engine does not hardcode "no GitHub = weak resume" for every role. Evidence is role-aware where deterministic signals allow it.
+
+Examples:
+
+- Frontend/full-stack: GitHub, live links, portfolio, deployed apps, UI scope
+- Data analyst: dashboards, datasets, SQL/Python projects, reports
+- Business analyst: case studies, process docs, Excel/SQL dashboards, internships
+- Product: PRDs, case studies, prototypes, research, metrics
+- Marketing: campaigns, analytics, content, growth metrics
+- Cloud/DevOps: deployments, infra projects, Docker/Kubernetes/Terraform, AWS/GCP/Azure work
+- Cybersecurity: labs, CTFs, reports, tools, audits, writeups
+- ML/Data science: datasets, models, metrics, notebooks, papers/projects
+
+## Score Separation
+
+Keep these concepts separate:
+
+- Career IQ: proof-aware readiness for realistic profile-fit roles
+- Proof Confidence: how much the resume supports its own claims
+- Recruiter Confidence: how quickly a recruiter can understand value and role fit
+- ATS Readiness: parser and base resume keyword readiness
+- Profile-fit role score: 0-100 role-fit score from the whole resume
+- Latest JD Match: 0-100 fit against one pasted JD only
+- Salary estimate: conservative market-position estimate, not an offer prediction
+
+Latest JD Match must not become Profile-fit role score. Profile-fit role score must not be called Best Match.
+
+## Backward Compatibility
+
+New fields are optional:
+
+- `scoringVersion`
+- `label`
+- `drivers`
+- `blockers`
+- `signals`
+- `capsApplied`
+- `categoryScores`
+- `skillTruth`
+
+Old saved reports without these fields still load. Dashboard restore and resume history restore still work because reports can regenerate scoring from existing `userProfile`, parsed resume data, and extracted text.
+
+No database migration is required.
+
+## Fixture Coverage
+
+Deterministic fixture checks live in:
+
+```text
+scripts/scoring-truth-fixtures.mjs
+```
+
+Covered scenarios:
+
+- empty/very weak resume
+- keyword-stuffed resume
+- good student project resume
+- strong fresher resume
+- role-mismatched resume
+- many claims with no proof
+- strong profile with weak pasted JD
+- weak profile with keyword-matching JD
+- good formatting with weak proof
+- poor formatting with strong proof
+- all scores clamped to 0-100
+- no NaN or Infinity scores
+- missing optional fields do not crash
+- old profile-shaped data still scores with safe fallbacks
+
+## What Intentionally Did Not Change
+
+- Auth logic
+- Supabase/database schema
+- Environment variables
+- Package dependencies
+- Payments or checkout
+- Analytics implementation
+- Mission completion
+- Active target workflow
+- Saved JD history workflow
+- External proof verification
+- AI API calls
+- Job board
+- Account deletion backend
+
+## Trust Language To Preserve
+
+- Career IQ is not a resume score.
+- Career IQ is not a job guarantee.
+- Proof Confidence is based on evidence candidates, not external verification.
+- Missing proof means unverified, not false.
+- Evidence candidate is not externally verified proof.
+- Profile-fit roles and Latest JD Match are separate.

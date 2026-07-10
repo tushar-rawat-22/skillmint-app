@@ -1,4 +1,10 @@
 import type { UserProfile } from "@/intelligence/types/profile";
+import type {
+  ScoreCapReason,
+  ScoreSignal,
+  SkillImportance,
+  SkillSupportLevel,
+} from "@/intelligence/scoring";
 
 export type ProofLinkType =
   | "github_profile"
@@ -51,11 +57,20 @@ export interface SkillProofClassification {
   skill: string;
   status: SkillProofStatus;
   reason: string;
+  supportLevel?: SkillSupportLevel;
+  importance?: SkillImportance;
+  evidence?: string;
 }
 
 export interface ProofScoreResult {
   proofConfidenceScore: number;
   proofCoverageLabel: ProofCoverageLabel;
+  scoringVersion?: string;
+  label?: string;
+  drivers?: string[];
+  blockers?: string[];
+  signals?: ScoreSignal[];
+  capsApplied?: ScoreCapReason[];
   proofSummary: string;
   extractedProofLinks: ProofLinkCandidate[];
   linkTypeCounts: Record<ProofLinkType, number>;

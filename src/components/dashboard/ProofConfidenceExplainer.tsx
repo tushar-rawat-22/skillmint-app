@@ -66,7 +66,7 @@ export default function ProofConfidenceExplainer({
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             Proof Confidence checks how much your resume claims are supported
             by evidence candidates like projects, links, measurable outcomes,
-            and public proof.
+            and public evidence candidates.
           </p>
         </div>
 

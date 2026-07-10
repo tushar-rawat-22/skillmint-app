@@ -30,7 +30,38 @@ export default function CareerReportHero({
   activeRole,
 }: Props) {
   const score = Math.round(careerIQ.score);
-  const careerIQBand = getScoreBand(score);
+  const careerIQBand = careerIQ.label ?? getScoreBand(score);
+  const strongestDriver = careerIQ.drivers?.[0];
+  const mainCap = careerIQ.capsApplied?.[0];
+  const heroDetails = [
+    {
+      label: "Score band",
+      value: careerIQBand,
+    },
+    {
+      label: activeRole.label,
+      value: activeRole.value,
+    },
+    {
+      label: "Score basis",
+      value: "Weighted resume evidence categories",
+    },
+    {
+      label: activeRole.metricLabel,
+      value: activeRole.metricValue,
+    },
+    mainCap
+      ? {
+          label: "Score limit",
+          value: `${mainCap.maxScore} cap · ${mainCap.reason}`,
+        }
+      : strongestDriver
+        ? {
+            label: "Top driver",
+            value: strongestDriver,
+          }
+        : undefined,
+  ].filter((detail): detail is HeroDetailProps => Boolean(detail));
 
   return (
     <section className={`${premiumHeroSurface} overflow-hidden p-0`}>
@@ -60,9 +91,9 @@ export default function CareerReportHero({
           </p>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            Career IQ is a trust-adjusted readiness signal from base resume
-            signals and Proof Confidence. It is not a hiring guarantee or
-            external verification.
+            Career IQ is a weighted readiness signal from resume-internal
+            evidence, proof candidates, and explainable caps. It is not a
+            hiring guarantee or external verification.
           </p>
         </div>
 
@@ -82,25 +113,13 @@ export default function CareerReportHero({
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <HeroDetail
-              label="Score band"
-              value={careerIQBand}
-            />
-
-            <HeroDetail
-              label={activeRole.label}
-              value={activeRole.value}
-            />
-
-            <HeroDetail
-              label="Score basis"
-              value="Resume detection + proof candidates"
-            />
-
-            <HeroDetail
-              label={activeRole.metricLabel}
-              value={activeRole.metricValue}
-            />
+            {heroDetails.map((detail) => (
+              <HeroDetail
+                key={detail.label}
+                label={detail.label}
+                value={detail.value}
+              />
+            ))}
           </div>
 
           <div className="mt-4">

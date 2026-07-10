@@ -120,7 +120,7 @@ Professionals transitioning into a different domain.
 ## Frustrations
 
 - Doesn't know where to start
-- Unsure whether they're job ready
+- Unsure whether they're ready for realistic roles
 - High uncertainty
 
 ## Primary Features

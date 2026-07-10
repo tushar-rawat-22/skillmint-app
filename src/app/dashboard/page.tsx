@@ -158,6 +158,7 @@ export default function DashboardPage() {
   const readinessBars = getReadinessBars(
     data.careerIQ.score,
     data.careerIQ.grade,
+    data.careerIQ.label,
     data.proof.proofConfidenceScore,
     data.proof.proofCoverageLabel,
     data.ats.score,
@@ -333,7 +334,7 @@ export default function DashboardPage() {
             score={data.careerIQ.score}
             grade={data.careerIQ.grade}
             label="Career IQ"
-            caption="Career IQ is trust-adjusted by Proof Confidence, so weak evidence caps the displayed readiness signal."
+            caption="Career IQ uses weighted resume-evidence categories, and weak proof can apply explainable caps."
           />
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -766,6 +767,7 @@ function getActiveRole(
 function getReadinessBars(
   careerIQScore: number,
   careerIQGrade: string,
+  careerIQLabel: string | undefined,
   proofScore: number,
   proofLabel: string,
   atsScore: number,
@@ -777,7 +779,7 @@ function getReadinessBars(
     {
       label: "Career IQ",
       value: careerIQScore,
-      detail: `Grade ${careerIQGrade}`,
+      detail: careerIQLabel ?? `Grade ${careerIQGrade}`,
       tone: "emerald",
     },
     {

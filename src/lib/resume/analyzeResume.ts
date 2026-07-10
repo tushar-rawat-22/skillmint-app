@@ -9,6 +9,7 @@ import {
   generateProofScore,
   type ProofScoreResult,
 } from "@/intelligence/proof";
+import { SCORING_VERSION } from "@/intelligence/scoring";
 
 export type ResumeAnalysisStatus = "completed";
 
@@ -20,6 +21,7 @@ export type ResumeAnalysisResult = {
   parsedProfile: ParsedResumeProfile;
   userProfile: UserProfile;
   proofAnalysis?: ProofScoreResult;
+  scoringVersion?: string;
   analyzedAt: string;
   status: ResumeAnalysisStatus;
 };
@@ -47,6 +49,7 @@ export async function analyzeResume(
     parsedProfile,
     userProfile,
     proofAnalysis,
+    scoringVersion: SCORING_VERSION,
     analyzedAt: new Date().toISOString(),
     status: "completed",
   };

@@ -6,6 +6,17 @@ import type {
   SkillProofClassification,
 } from "./types";
 import {
+  buildSignal,
+  labelScore,
+  SCORING_VERSION,
+  summarizeBlockers,
+  summarizeDrivers,
+  type ScoreCapReason,
+  type ScoreSignal,
+  type SkillImportance,
+  type SkillSupportLevel,
+} from "@/intelligence/scoring/scoreContract";
+import {
   countProofLinkTypes,
   createEmptyLinkTypeCounts,
   extractProofLinks,
@@ -86,11 +97,40 @@ export function generateProofScore({
       recencyConsistencyScore * 0.1 +
       careerFieldRelevanceScore * 0.1,
   );
+  const capsApplied: ScoreCapReason[] = [];
 
-  if (!profile.projects.length) score = Math.min(score, 45);
-  if (!extractedProofLinks.length) score = Math.min(score, 68);
-  if (!profile.skills.length && !profile.projects.length) score = Math.min(score, 24);
-  if (profile.analysisFlags?.isPlaceholderText) score = Math.min(score, 20);
+  if (!profile.projects.length) {
+    score = applyProofCap(score, capsApplied, {
+      id: "no-project-evidence",
+      maxScore: 45,
+      reason:
+        "No project evidence was found, so Proof Confidence stays conservative.",
+    });
+  }
+  if (!extractedProofLinks.length) {
+    score = applyProofCap(score, capsApplied, {
+      id: "no-evidence-candidate-links",
+      maxScore: 68,
+      reason:
+        "No proof-candidate links were found in the resume.",
+    });
+  }
+  if (!profile.skills.length && !profile.projects.length) {
+    score = applyProofCap(score, capsApplied, {
+      id: "no-skills-or-projects",
+      maxScore: 24,
+      reason:
+        "SkillMint needs skills or projects before proof confidence can rise.",
+    });
+  }
+  if (profile.analysisFlags?.isPlaceholderText) {
+    score = applyProofCap(score, capsApplied, {
+      id: "placeholder-resume-text",
+      maxScore: 20,
+      reason:
+        "The extracted resume text is not usable enough for proof confidence.",
+    });
+  }
 
   const proofConfidenceScore = clampScore(score);
   const proofCoverageLabel = getCoverageLabel(proofConfidenceScore);
@@ -108,10 +148,27 @@ export function generateProofScore({
     extractedProofLinks,
     unverifiedSkills,
   );
+  const signals = buildProofSignals({
+    profile,
+    skillClassifications,
+    extractedProofLinks,
+    evidenceBackedSkills,
+    weaklySupportedSkills,
+    unverifiedSkills,
+    skillCoverageScore,
+    projectProofDepthScore,
+    proofLinkQualityScore,
+  });
 
   return {
     proofConfidenceScore,
     proofCoverageLabel,
+    scoringVersion: SCORING_VERSION,
+    label: labelScore(proofConfidenceScore),
+    drivers: summarizeDrivers(signals),
+    blockers: summarizeBlockers(signals, capsApplied),
+    signals,
+    capsApplied,
     proofSummary: getProofSummary(proofCoverageLabel),
     extractedProofLinks,
     linkTypeCounts,
@@ -139,6 +196,20 @@ export function createMissingProofScore(
   return {
     proofConfidenceScore: 0,
     proofCoverageLabel: "Missing",
+    scoringVersion: SCORING_VERSION,
+    label: labelScore(0),
+    drivers: [],
+    blockers: [
+      "Proof Confidence needs resume text, parsed skills, projects, and proof links.",
+    ],
+    signals: [],
+    capsApplied: [
+      {
+        id: "missing-resume-proof",
+        maxScore: 0,
+        reason: "No resume proof has been analyzed yet.",
+      },
+    ],
     proofSummary: summary,
     extractedProofLinks: [],
     linkTypeCounts: createEmptyLinkTypeCounts(),
@@ -168,6 +239,15 @@ export function calculateProofAwareCareerIQ(
   return {
     score,
     grade: getCareerIQGrade(score),
+    scoringVersion: SCORING_VERSION,
+    label: labelScore(score),
+    drivers: currentCareerIQ.drivers,
+    blockers: currentCareerIQ.blockers,
+    signals: currentCareerIQ.signals,
+    capsApplied: currentCareerIQ.capsApplied,
+    categoryScores: currentCareerIQ.categoryScores,
+    skillTruth: currentCareerIQ.skillTruth,
+    weightedScoreBeforeCaps: currentCareerIQ.weightedScoreBeforeCaps,
     summary: getCareerIQSummary(score, proofScore),
   };
 }
@@ -230,27 +310,48 @@ function classifySkillProof(
       ),
     );
 
+    const supportLevel = getSkillSupportLevel({
+      appearsInProject,
+      appearsInExperience,
+      appearsInCertificationOrProof,
+      hasRelevantGeneralProof,
+      hasProjectProofLink,
+      hasConcreteExperience,
+      projectCorpus,
+      experienceCorpus,
+    });
+    const importance = getProofSkillImportance(normalizedSkill);
+    const evidence = getSkillEvidenceSummary({
+      appearsInProject,
+      appearsInExperience,
+      appearsInCertificationOrProof,
+      hasRelevantGeneralProof,
+      hasProjectProofLink,
+      hasConcreteExperience,
+    });
+
     if (
-      (appearsInProject && hasProjectProofLink) ||
-      (appearsInExperience && hasConcreteExperience)
+      supportLevel === "strongly_supported" ||
+      supportLevel === "moderately_supported"
     ) {
       return {
         skill,
         status: "Evidence-backed",
+        supportLevel,
+        importance,
+        evidence,
         reason:
           "Connected to project proof or concrete work/internship context.",
       };
     }
 
-    if (
-      appearsInProject ||
-      (appearsInExperience && hasConcreteExperience) ||
-      appearsInCertificationOrProof ||
-      hasRelevantGeneralProof
-    ) {
+    if (supportLevel === "lightly_supported") {
       return {
         skill,
         status: "Weakly supported",
+        supportLevel,
+        importance,
+        evidence,
         reason:
           "Visible in relevant resume context, but proof depth or source validation is still thin.",
       };
@@ -259,6 +360,9 @@ function classifySkillProof(
     return {
       skill,
       status: "Claimed but unverified",
+      supportLevel,
+      importance,
+      evidence,
       reason:
         "Skill is listed, but SkillMint did not find a clear project, work, certification, or relevant proof-link connection.",
     };
@@ -417,6 +521,10 @@ function calculateSkillCoverageScore(
   }
 
   const score = classifications.reduce((total, classification) => {
+    if (classification.supportLevel === "strongly_supported") return total + 1;
+    if (classification.supportLevel === "moderately_supported") return total + 0.72;
+    if (classification.supportLevel === "lightly_supported") return total + 0.4;
+    if (classification.supportLevel === "claimed_only") return total + 0.1;
     if (classification.status === "Evidence-backed") return total + 1;
     if (classification.status === "Weakly supported") return total + 0.45;
 
@@ -424,6 +532,118 @@ function calculateSkillCoverageScore(
   }, 0);
 
   return clampScore((score / classifications.length) * 100);
+}
+
+function getSkillSupportLevel({
+  appearsInProject,
+  appearsInExperience,
+  appearsInCertificationOrProof,
+  hasRelevantGeneralProof,
+  hasProjectProofLink,
+  hasConcreteExperience,
+  projectCorpus,
+  experienceCorpus,
+}: {
+  appearsInProject: boolean;
+  appearsInExperience: boolean;
+  appearsInCertificationOrProof: boolean;
+  hasRelevantGeneralProof: boolean;
+  hasProjectProofLink: boolean;
+  hasConcreteExperience: boolean;
+  projectCorpus: string;
+  experienceCorpus: string;
+}): SkillSupportLevel {
+  const hasActionContext =
+    /\b(?:built|created|developed|implemented|designed|deployed|integrated|optimized|automated|analyzed|used|delivered)\b/i
+      .test(`${projectCorpus} ${experienceCorpus}`);
+  const hasOutcomeContext =
+    /\b(?:\d+(?:\.\d+)?\s?(?:%|x|k|users?|clients?|requests?|ms|seconds?|minutes?|hours?)|improved|reduced|increased|saved|optimized)\b/i
+      .test(`${projectCorpus} ${experienceCorpus}`);
+
+  if (
+    (
+      appearsInProject &&
+      hasProjectProofLink &&
+      (hasActionContext || hasOutcomeContext)
+    ) ||
+    (appearsInExperience && hasConcreteExperience && hasOutcomeContext)
+  ) {
+    return "strongly_supported";
+  }
+
+  if (
+    (appearsInProject && hasActionContext) ||
+    (appearsInExperience && hasConcreteExperience)
+  ) {
+    return "moderately_supported";
+  }
+
+  if (
+    appearsInProject ||
+    appearsInExperience ||
+    appearsInCertificationOrProof ||
+    hasRelevantGeneralProof
+  ) {
+    return "lightly_supported";
+  }
+
+  return "claimed_only";
+}
+
+function getProofSkillImportance(
+  normalizedSkill: string,
+): SkillImportance {
+  if (
+    [
+      "react",
+      "next",
+      "node",
+      "javascript",
+      "typescript",
+      "python",
+      "sql",
+      "database",
+      "aws",
+      "docker",
+      "kubernetes",
+      "machine learning",
+    ].some((keyword) => normalizedSkill.includes(keyword))
+  ) {
+    return "core_target_skill";
+  }
+
+  if (TECH_SKILL_KEYWORDS.some((keyword) => normalizedSkill.includes(keyword))) {
+    return "secondary_skill";
+  }
+
+  return "nice_to_have";
+}
+
+function getSkillEvidenceSummary({
+  appearsInProject,
+  appearsInExperience,
+  appearsInCertificationOrProof,
+  hasRelevantGeneralProof,
+  hasProjectProofLink,
+  hasConcreteExperience,
+}: {
+  appearsInProject: boolean;
+  appearsInExperience: boolean;
+  appearsInCertificationOrProof: boolean;
+  hasRelevantGeneralProof: boolean;
+  hasProjectProofLink: boolean;
+  hasConcreteExperience: boolean;
+}): string | undefined {
+  const evidence = [
+    appearsInProject ? "project context" : undefined,
+    appearsInExperience ? "experience context" : undefined,
+    appearsInCertificationOrProof ? "certification or proof context" : undefined,
+    hasRelevantGeneralProof ? "relevant general proof candidate" : undefined,
+    hasProjectProofLink ? "project proof candidate link" : undefined,
+    hasConcreteExperience ? "concrete work/internship signal" : undefined,
+  ].filter(Boolean);
+
+  return evidence.length ? evidence.join(", ") : undefined;
 }
 
 function calculateProjectProofDepthScore(
@@ -460,6 +680,133 @@ function calculateProjectProofDepthScore(
   }
 
   return clampScore(score);
+}
+
+function buildProofSignals({
+  profile,
+  skillClassifications,
+  extractedProofLinks,
+  evidenceBackedSkills,
+  weaklySupportedSkills,
+  unverifiedSkills,
+  skillCoverageScore,
+  projectProofDepthScore,
+  proofLinkQualityScore,
+}: {
+  profile: ProofScoringInput["profile"];
+  skillClassifications: SkillProofClassification[];
+  extractedProofLinks: ProofLinkCandidate[];
+  evidenceBackedSkills: string[];
+  weaklySupportedSkills: string[];
+  unverifiedSkills: string[];
+  skillCoverageScore: number;
+  projectProofDepthScore: number;
+  proofLinkQualityScore: number;
+}): ScoreSignal[] {
+  const signals: ScoreSignal[] = [];
+
+  if (evidenceBackedSkills.length > 0) {
+    signals.push(buildSignal({
+      id: "evidence-backed-skills",
+      category: "skill_truth",
+      impact: "positive",
+      severity: evidenceBackedSkills.length >= 5 ? "major" : "medium",
+      scoreImpact: Math.round(skillCoverageScore),
+      label: "Some claimed skills are backed by resume evidence",
+      explanation:
+        "SkillMint found claimed skills connected to projects, concrete work, or proof-candidate context.",
+      evidence: evidenceBackedSkills.slice(0, 5).join(", "),
+    }));
+  }
+
+  if (weaklySupportedSkills.length > 0) {
+    signals.push(buildSignal({
+      id: "weakly-supported-skills",
+      category: "skill_truth",
+      impact: "neutral",
+      severity: "small",
+      label: "Some skills have only light support",
+      explanation:
+        "These skills appear in relevant context, but need stronger project, work, or artifact evidence.",
+      evidence: weaklySupportedSkills.slice(0, 5).join(", "),
+    }));
+  }
+
+  if (unverifiedSkills.length > 0) {
+    signals.push(buildSignal({
+      id: "claimed-only-skills",
+      category: "skill_truth",
+      impact: "negative",
+      severity: unverifiedSkills.length >= 5 ? "major" : "medium",
+      label: "Claimed skills still need backing",
+      explanation:
+        "Missing proof means unverified, not false. The resume needs to show where these skills were used.",
+      evidence: unverifiedSkills.slice(0, 5).join(", "),
+    }));
+  }
+
+  if (profile.projects.length > 0) {
+    signals.push(buildSignal({
+      id: "project-proof-depth",
+      category: "project_experience",
+      impact: projectProofDepthScore >= 60 ? "positive" : "neutral",
+      severity: projectProofDepthScore >= 60 ? "medium" : "small",
+      scoreImpact: Math.round(projectProofDepthScore),
+      label: "Project proof depth was evaluated",
+      explanation:
+        "Projects were checked for applied work, outcomes, proof links, and non-generic descriptions.",
+    }));
+  }
+
+  if (extractedProofLinks.length > 0) {
+    signals.push(buildSignal({
+      id: "proof-links-found",
+      category: "proof_evidence",
+      impact: "positive",
+      severity: "medium",
+      scoreImpact: Math.round(proofLinkQualityScore),
+      label: "Evidence candidate links are present",
+      explanation:
+        "Links can support claims as evidence candidates, but SkillMint did not externally verify them.",
+      evidence: `${extractedProofLinks.length} evidence candidate${extractedProofLinks.length === 1 ? "" : "s"}`,
+    }));
+  } else {
+    signals.push(buildSignal({
+      id: "proof-links-missing",
+      category: "proof_evidence",
+      impact: "negative",
+      severity: "major",
+      label: "No proof-candidate links were found",
+      explanation:
+        "The resume needs inspectable artifacts such as GitHub, portfolio, live app, dashboard, report, certificate, or case study links.",
+    }));
+  }
+
+  if (!skillClassifications.length) {
+    signals.push(buildSignal({
+      id: "no-skill-proof-ledger",
+      category: "skill_truth",
+      impact: "negative",
+      severity: "critical",
+      label: "No skill ledger could be built",
+      explanation:
+        "Proof Confidence needs claimed skills before it can cross-check support.",
+    }));
+  }
+
+  return signals;
+}
+
+function applyProofCap(
+  score: number,
+  capsApplied: ScoreCapReason[],
+  cap: ScoreCapReason,
+): number {
+  if (score > cap.maxScore) {
+    capsApplied.push(cap);
+  }
+
+  return Math.min(score, cap.maxScore);
 }
 
 function calculateProofLinkQualityScore(links: ProofLinkCandidate[]): number {
