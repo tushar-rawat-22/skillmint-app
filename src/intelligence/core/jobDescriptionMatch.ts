@@ -686,17 +686,17 @@ function uniqueValues(values: string[]): string[] {
 }
 
 function getVerdict(score: number): string {
-  if (score >= 90) return "Excellent fit";
-  if (score >= 75) return "Strong fit";
-  if (score >= 60) return "Partial fit";
-  if (score >= 40) return "Weak fit";
+  if (score >= 90) return "Very high JD alignment";
+  if (score >= 75) return "Competitive JD alignment";
+  if (score >= 60) return "Partial JD alignment";
+  if (score >= 40) return "Weak JD alignment";
 
   return "Not ready yet";
 }
 
 function getBrutalReality(score: number): string {
   if (score >= 90) {
-    return "You are strongly aligned with this JD, but still tailor keywords before applying.";
+    return "You are highly aligned with this JD, but still tailor keywords before applying.";
   }
 
   if (score >= 75) {

@@ -22,6 +22,21 @@ Tasks should only be added if they support an approved product objective.
 
 ---
 
+# Product Trust + Beta Readiness TODOs
+
+- [ ] Build a scoring calibration set for Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, role match, and JD Match.
+- [ ] Add account-level delete saved resume analysis when repository support exists.
+- [ ] When real delete support exists, use this confirmation: "Delete saved analysis? This removes this resume analysis from your saved account history. It does not delete your account."
+- [ ] Add a privacy/account deletion flow later; do not confuse it with browser-only clear workspace.
+- [ ] Create a founder analytics dashboard for the 50-user beta.
+- [ ] Add score history only after active report and saved analysis semantics are stable.
+- [ ] Plan the future light-first premium report migration.
+- [ ] Calibrate salary estimates before exposing them as a core report metric.
+- [ ] Add stronger proof-source validation in Proof Engine v2.
+- [ ] Add roadmap execution/completion state after scoring trust is validated.
+
+---
+
 # Overall Roadmap
 
 ```text

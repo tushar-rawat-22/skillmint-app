@@ -562,6 +562,7 @@ function SavedResumeAnalysesSection({
   restoreState,
   showRestoreLatestAction = false,
 }: SavedResumeAnalysesSectionProps) {
+  const [showOlderAnalyses, setShowOlderAnalyses] = useState(false);
   const historyItems = isConfigured && isSignedIn
     ? historyState.items
     : [];
@@ -569,9 +570,24 @@ function SavedResumeAnalysesSection({
   const canRestoreLatest =
     Boolean(latestSavedAnalysis) &&
     latestSavedAnalysis?.id !== activeDatabaseId;
+  const activeSavedAnalysis = historyItems.find(
+    (resumeAnalysis) => resumeAnalysis.id === activeDatabaseId,
+  ) ?? null;
+  const nonActiveHistoryItems = historyItems.filter(
+    (resumeAnalysis) => resumeAnalysis.id !== activeDatabaseId,
+  );
+  const visibleNonActiveItems = showOlderAnalyses
+    ? nonActiveHistoryItems
+    : nonActiveHistoryItems.slice(0, 4);
+  const latestNonActiveId = nonActiveHistoryItems[0]?.id ?? null;
+  const hasOlderAnalyses = nonActiveHistoryItems.length > 4;
+  const displayItems = [
+    ...(activeSavedAnalysis ? [activeSavedAnalysis] : []),
+    ...visibleNonActiveItems,
+  ];
 
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
@@ -619,17 +635,41 @@ function SavedResumeAnalysesSection({
       )}
 
       {historyItems.length > 0 && (
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {historyItems.map((resumeAnalysis) => (
-            <SavedResumeAnalysisCard
-              key={resumeAnalysis.id}
-              activeDatabaseId={activeDatabaseId}
-              onSetActive={onSetActive}
-              resumeAnalysis={resumeAnalysis}
-              restoreState={restoreState}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-gray-400">
+              Showing {displayItems.length} of {historyItems.length} saved
+              analyses.
+            </p>
+
+            {hasOlderAnalyses && (
+              <button
+                type="button"
+                onClick={() => setShowOlderAnalyses((current) => !current)}
+                className="w-fit rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-gray-100 transition hover:border-emerald-400/50 hover:text-emerald-200"
+              >
+                {showOlderAnalyses ? "Show fewer" : "Show older analyses"}
+              </button>
+            )}
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {displayItems.map((resumeAnalysis) => (
+              <SavedResumeAnalysisCard
+                key={resumeAnalysis.id}
+                activeDatabaseId={activeDatabaseId}
+                badgeLabel={getSavedAnalysisBadgeLabel({
+                  activeDatabaseId,
+                  latestNonActiveId,
+                  resumeAnalysisId: resumeAnalysis.id,
+                })}
+                onSetActive={onSetActive}
+                resumeAnalysis={resumeAnalysis}
+                restoreState={restoreState}
+              />
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
@@ -730,6 +770,7 @@ function getResumeHistoryPresentation({
 
 type SavedResumeAnalysisCardProps = {
   activeDatabaseId: string | null;
+  badgeLabel: "Current active report" | "Latest saved" | "Saved";
   onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
   resumeAnalysis: PersistentResumeAnalysis;
   restoreState: RestoreState;
@@ -737,6 +778,7 @@ type SavedResumeAnalysisCardProps = {
 
 function SavedResumeAnalysisCard({
   activeDatabaseId,
+  badgeLabel,
   onSetActive,
   resumeAnalysis,
   restoreState,
@@ -770,14 +812,14 @@ function SavedResumeAnalysisCard({
               : "border-white/10 bg-white/5 text-gray-300"
           }`}
         >
-          {isActive ? "Active report" : "Saved"}
+          {badgeLabel}
         </span>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <SavedResumeMeta
           label="Target role"
-          value="Not saved with this report"
+          value="No target stored"
         />
 
         <SavedResumeMeta
@@ -794,11 +836,20 @@ function SavedResumeAnalysisCard({
           className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
         >
           {isActive
-            ? "Active report"
+            ? "Current active report"
             : userProfile
               ? "Set as active report"
               : "Missing report data"}
         </button>
+
+        {isActive && (
+          <Link
+            href="/dashboard"
+            className="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-sm font-bold text-gray-100 transition hover:border-emerald-400/50 hover:text-emerald-200"
+          >
+            View dashboard
+          </Link>
+        )}
 
         {isCurrentRestoreTarget && restoreState.status === "error" && (
           <span className="text-sm text-red-200">
@@ -808,6 +859,26 @@ function SavedResumeAnalysisCard({
       </div>
     </article>
   );
+}
+
+function getSavedAnalysisBadgeLabel({
+  activeDatabaseId,
+  latestNonActiveId,
+  resumeAnalysisId,
+}: {
+  activeDatabaseId: string | null;
+  latestNonActiveId: string | null;
+  resumeAnalysisId: string;
+}): "Current active report" | "Latest saved" | "Saved" {
+  if (activeDatabaseId === resumeAnalysisId) {
+    return "Current active report";
+  }
+
+  if (latestNonActiveId === resumeAnalysisId) {
+    return "Latest saved";
+  }
+
+  return "Saved";
 }
 
 type SavedResumeMetaProps = {

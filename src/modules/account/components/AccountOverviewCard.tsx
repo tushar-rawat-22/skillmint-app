@@ -170,7 +170,7 @@ export default function AccountOverviewCard({
             ? "Saved analyses found"
             : "Saved progress"}
           body={hasSyncedResumeWithoutActiveReport
-            ? "Saved analyses may exist in your account, but none is currently loaded as this dashboard's active report."
+            ? "Saved analyses exist in your account, but none is currently loaded as this browser's active dashboard report."
             : overview.message}
         />
 

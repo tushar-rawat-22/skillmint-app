@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { clearSkillMintWorkspace } from "@/lib/storage/clearSkillMintWorkspace";
 
 const CONFIRM_CLEAR_WORKSPACE_MESSAGE =
-  "This clears the active SkillMint workspace from this browser. Your account is not deleted. Continue?";
+  "This clears the active browser workspace only. Your account and synced history are not deleted. Continue?";
 
 export default function ClearWorkspaceCard() {
   const router = useRouter();
@@ -40,9 +40,9 @@ export default function ClearWorkspaceCard() {
       </h2>
 
       <p className="mt-3 text-sm leading-6 text-gray-400">
-        Clears the active resume analysis, JD matches, roadmap state, beta
-        feedback, and upgrade interest saved in this browser. This does not
-        delete your account or synced history.
+        Clears the active browser workspace: active resume analysis, JD
+        matches, roadmap state, beta feedback, and upgrade interest saved in
+        this browser. This does not delete your account or synced history.
       </p>
 
       <button

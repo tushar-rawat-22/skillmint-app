@@ -19,7 +19,8 @@ Phase 2A validates saved resume history, explicit restore/select, and active das
 - Open `/dashboard`.
 - Dashboard shows no active resume report selected when saved analyses exist.
 - Dashboard does not show Career IQ, Proof Confidence, Profile-fit role metrics, charts, or shareable report.
-- Actions include Upload resume, Go to Resume, and Career setup.
+- Actions include Restore latest saved report, Upload resume, Go to Resume, and Career setup when account history is found.
+- Restore latest saved report does not run automatically on page load.
 
 ### Restore Latest Saved Report
 
@@ -46,6 +47,8 @@ Phase 2A validates saved resume history, explicit restore/select, and active das
 
 - Use Settings -> Clear active workspace.
 - Confirmation states account is not deleted.
+- Copy says it clears the active browser workspace.
+- Copy says it clears active resume analysis, JD matches, roadmap state, beta feedback, and upgrade interest.
 - Browser workflow state clears.
 - Synced account history remains untouched.
 
@@ -58,9 +61,33 @@ Phase 2A validates saved resume history, explicit restore/select, and active das
 ### Resume Page History
 
 - Saved resume analyses section loads.
-- Cards show file name, analyzed date, target role status, top Profile-fit role, and active/restorable state.
+- Current active report appears first as "Current active report".
+- Latest 4 non-active saved analyses are shown by default.
+- Older reports can be expanded with "Show older analyses" and collapsed with "Show fewer".
+- Count text shows how many saved analyses are currently visible.
+- Repeated filenames are distinguishable by analyzed date/time.
+- Newest non-active item uses "Latest saved"; older items use "Saved".
+- Cards show file name, analyzed date, "No target stored", top Profile-fit role, and active/restorable state.
+- Active report has "View dashboard".
 - Empty, loading, and error states are readable.
 - Buttons wrap on mobile.
+
+### Scoring Trust
+
+- Career IQ explanation is visible.
+- Proof Confidence explanation is visible.
+- Score limitation language is visible.
+- harsh truth section is visible.
+- No external verification claims appear in score UI.
+- No guaranteed job claims appear.
+- Profile-fit role and Latest JD Match remain separated.
+
+### Premium UX
+
+- Core report areas feel calmer and less glow-heavy.
+- No readability regression in dashboard score cards.
+- Mobile layout works without horizontal overflow.
+- Score cards remain readable on narrow screens.
 
 ### Account Sync Unavailable
 
@@ -76,5 +103,8 @@ Phase 2A validates saved resume history, explicit restore/select, and active das
 
 ### Production Smoke
 
+- Run `git diff --check`.
+- Run `npm run lint`.
+- Run `npm run build`.
 - Run `npm run smoke:production` after merge and deploy.
 - Confirm `/api/health/config` and app routes pass.

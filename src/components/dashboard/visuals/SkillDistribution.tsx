@@ -18,7 +18,7 @@ export default function SkillDistribution({
   items,
 }: SkillDistributionProps) {
   return (
-    <article className="overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <article className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
       <div className="border-b border-white/10 bg-black/20 p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>

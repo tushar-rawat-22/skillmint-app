@@ -25,9 +25,10 @@ export default function CareerReportHero({
   activeRole,
 }: Props) {
   const score = Math.round(careerIQ.score);
+  const careerIQBand = getScoreBand(score);
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))] text-white shadow-2xl shadow-black/30">
+    <section className="overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))] text-white shadow-xl shadow-black/20">
       <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="p-6 md:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -53,8 +54,10 @@ export default function CareerReportHero({
             {careerIQ.summary}
           </p>
 
-          <p className="mt-3 max-w-3xl text-sm font-semibold text-emerald-200/80">
-            Career IQ is trust-adjusted by Proof Confidence.
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-emerald-100/80">
+            Career IQ is a trust-adjusted readiness signal from base resume
+            signals and Proof Confidence. It is not a hiring guarantee or
+            external verification.
           </p>
         </div>
 
@@ -75,8 +78,18 @@ export default function CareerReportHero({
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <HeroDetail
+              label="Score band"
+              value={careerIQBand}
+            />
+
+            <HeroDetail
               label={activeRole.label}
               value={activeRole.value}
+            />
+
+            <HeroDetail
+              label="Score basis"
+              value="Resume detection + proof candidates"
             />
 
             <HeroDetail
@@ -111,9 +124,18 @@ function HeroDetail({ label, value }: HeroDetailProps) {
         {label}
       </p>
 
-      <p className="mt-2 truncate text-lg font-bold text-white">
+      <p className="mt-2 break-words text-lg font-bold leading-snug text-white">
         {value}
       </p>
     </div>
   );
+}
+
+function getScoreBand(score: number): string {
+  if (score >= 85) return "Strong";
+  if (score >= 70) return "Competitive";
+  if (score >= 55) return "Developing";
+  if (score >= 40) return "Weak";
+
+  return "Critical";
 }

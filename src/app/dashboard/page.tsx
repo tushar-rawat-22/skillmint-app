@@ -32,7 +32,10 @@ import {
 } from "@/modules/activation";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import { OnboardingChecklist } from "@/modules/onboarding";
-import { getLatestCurrentUserResumeAnalysis } from "@/modules/resume";
+import {
+  getLatestCurrentUserResumeAnalysis,
+  setActiveResumeReportFromSavedAnalysis,
+} from "@/modules/resume";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
@@ -46,6 +49,10 @@ type LatestJobMatchSummary = {
 };
 
 type SavedResumeLookupState = "checking" | "found" | "missing";
+type DashboardRestoreState = {
+  status: "idle" | "loading" | "success" | "error";
+  message: string | null;
+};
 
 export default function DashboardPage() {
   const storedResume = useSyncExternalStore(
@@ -78,6 +85,11 @@ export default function DashboardPage() {
   );
   const [savedResumeLookupState, setSavedResumeLookupState] =
     useState<SavedResumeLookupState>("checking");
+  const [dashboardRestoreState, setDashboardRestoreState] =
+    useState<DashboardRestoreState>({
+      status: "idle",
+      message: null,
+    });
   const latestJobMatch = useMemo(
     () => getLatestJobMatchSummary(storedJobMatch),
     [storedJobMatch],
@@ -149,11 +161,61 @@ export default function DashboardPage() {
     !hasResumeAnalysis &&
     (hasSavedResumeSyncSignal || savedResumeLookupState === "found");
 
+  async function handleRestoreLatestSavedReport() {
+    setDashboardRestoreState({
+      status: "loading",
+      message: "Loading the latest saved analysis into this browser.",
+    });
+
+    try {
+      const result = await getLatestCurrentUserResumeAnalysis();
+
+      if (!result.ok) {
+        setDashboardRestoreState({
+          status: "error",
+          message: result.error,
+        });
+        return;
+      }
+
+      if (!result.data) {
+        setDashboardRestoreState({
+          status: "error",
+          message: "No saved resume analysis is available to restore.",
+        });
+        setSavedResumeLookupState("missing");
+        return;
+      }
+
+      const restoreResult = setActiveResumeReportFromSavedAnalysis(
+        result.data,
+      );
+
+      if (!restoreResult.ok) {
+        setDashboardRestoreState({
+          status: "error",
+          message: restoreResult.error,
+        });
+        return;
+      }
+
+      setDashboardRestoreState({
+        status: "success",
+        message: "Latest saved analysis is now this browser's active dashboard report.",
+      });
+    } catch {
+      setDashboardRestoreState({
+        status: "error",
+        message: "Could not restore the latest saved report right now.",
+      });
+    }
+  }
+
   if (!hasResumeAnalysis) {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-6xl space-y-6">
-          <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(2,6,23,0.96))] p-6 text-white shadow-2xl shadow-black/25 md:p-8">
+          <section className="rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.97))] p-6 text-white shadow-xl shadow-black/20 md:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
               Dashboard
             </p>
@@ -166,11 +228,24 @@ export default function DashboardPage() {
 
             <p className="mt-4 max-w-3xl text-base leading-7 text-gray-400">
               {hasSavedResumeWithoutActive
-                ? "Saved analyses may exist in your account, but none is loaded as this dashboard's active report in this browser."
+                ? "Saved analyses exist in your account, but none is currently loaded as this browser's active dashboard report."
                 : "SkillMint needs Resume Reality before showing Career IQ, Proof Confidence, Profile-fit roles, Latest JD Match context, and next missions."}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
+              {hasSavedResumeWithoutActive && (
+                <button
+                  type="button"
+                  onClick={handleRestoreLatestSavedReport}
+                  disabled={dashboardRestoreState.status === "loading"}
+                  className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {dashboardRestoreState.status === "loading"
+                    ? "Restoring..."
+                    : "Restore latest saved report"}
+                </button>
+              )}
+
               <Link
                 href="/upload"
                 className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
@@ -194,6 +269,18 @@ export default function DashboardPage() {
                 Career setup
               </Link>
             </div>
+
+            {dashboardRestoreState.message && (
+              <p
+                className={`mt-5 max-w-3xl rounded-2xl border p-4 text-sm leading-6 ${
+                  dashboardRestoreState.status === "error"
+                    ? "border-red-500/30 bg-red-500/10 text-red-100"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+                }`}
+              >
+                {dashboardRestoreState.message}
+              </p>
+            )}
           </section>
 
           <EmptyDashboardPreview />
@@ -276,6 +363,7 @@ export default function DashboardPage() {
           missions={data.missions}
           recommendations={data.recommendations}
           profile={data.profile}
+          proof={data.proof}
           hasLatestJobMatch={Boolean(latestJobMatch)}
         />
 

@@ -128,7 +128,7 @@ export default function ShareableCareerCard({
         />
 
         <SnapshotRow
-          label="Best Role"
+          label="Profile-fit role"
           value={bestMatch?.role ?? "Not enough data"}
         />
 
@@ -185,7 +185,7 @@ function buildShareSummary({
   return [
     "SkillMint Career Snapshot",
     `Career IQ: ${Math.round(careerIQ.score)} (${careerIQ.grade})`,
-    `Best role: ${bestMatch?.role ?? "Not enough data"}`,
+    `Profile-fit role: ${bestMatch?.role ?? "Not enough data"}`,
     `ATS readiness: ${Math.round(ats.score)}%`,
     `Recruiter confidence: ${Math.round(recruiter.score)}%`,
     proof

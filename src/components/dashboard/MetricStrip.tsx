@@ -27,19 +27,19 @@ export default function MetricStrip({
     {
       label: "Proof Confidence",
       value: `${Math.round(proof.proofConfidenceScore)}%`,
-      detail: proof.proofCoverageLabel,
+      detail: `${proof.proofCoverageLabel} · evidence candidates`,
       tone: "text-emerald-300",
     },
     {
       label: "ATS Readiness",
       value: `${Math.round(ats.score)}%`,
-      detail: ats.verdict,
+      detail: `${ats.verdict} · base resume scan`,
       tone: "text-sky-300",
     },
     {
       label: "Recruiter Confidence",
       value: `${Math.round(recruiter.score)}%`,
-      detail: recruiter.confidence,
+      detail: `${recruiter.confidence} · inferred shortlist signal`,
       tone: "text-amber-300",
     },
     {
@@ -49,7 +49,11 @@ export default function MetricStrip({
         : bestMatch
           ? `${Math.round(bestMatch.matchScore)}%`
           : "--",
-      detail: latestJobMatch?.title ?? bestMatch?.role ?? "Upload resume",
+      detail: latestJobMatch
+        ? `${latestJobMatch.title} · one JD`
+        : bestMatch
+          ? `${bestMatch.role} · profile-fit`
+          : "Upload resume",
       tone: "text-violet-300",
     },
   ];
@@ -69,7 +73,7 @@ export default function MetricStrip({
             {metric.value}
           </p>
 
-          <p className="mt-2 truncate text-sm text-neutral-400">
+          <p className="mt-2 break-words text-sm leading-6 text-neutral-400">
             {metric.detail}
           </p>
         </article>

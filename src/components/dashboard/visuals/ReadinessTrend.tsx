@@ -21,7 +21,7 @@ export default function ReadinessTrend({
     .join(" ");
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-violet-400/30">
+    <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
         Projected Readiness Path
       </p>

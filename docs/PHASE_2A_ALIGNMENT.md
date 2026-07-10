@@ -86,6 +86,22 @@ If no valid active report exists, SkillMint must hide Career IQ, Proof Confidenc
 
 **Trade-off:** Full account data deletion needs a future settings/privacy flow.
 
+### Saved Resume Analysis Delete Deferred
+
+**Decision:** Delete was not implemented because real repository/backend support was not available.
+
+**Rationale:** `resume_analyses` currently supports save, latest, and list operations. Unlike job matches, it does not expose a real account-level delete function.
+
+**Trade-off:** Saved analyses remain visible until account-level delete support exists. SkillMint must not hide rows and call that deletion.
+
+### Dashboard Restore CTA Is Explicit
+
+**Decision:** The dashboard may offer "Restore latest saved report" only in the no-active state and only after the user clicks.
+
+**Rationale:** The existing active report helper writes the active localStorage shape, sync status, and workspace update event safely. The dashboard still must not auto-restore on page load.
+
+**Trade-off:** Returning users may need one explicit click, but stale metrics are avoided.
+
 ## 3. Phase 2A Scope Boundaries
 
 ### In Scope
@@ -125,6 +141,8 @@ If no valid active report exists, SkillMint must hide Career IQ, Proof Confidenc
 - `clearSkillMintWorkspace()` removes browser workflow keys and dispatches the workspace update event.
 - The active report shape in localStorage must include a usable `userProfile`; otherwise dashboard metrics risk falling back to mock profile data.
 - Saved analysis rows may not contain target role metadata today. Top Profile-fit role can be derived when `userProfile` is available, but target role per saved report is future metadata.
+- Resume analysis delete support does not exist in the current resume repository. Add account-level delete saved resume analysis only when repository/backend support exists.
+- The current Product Trust block did not change scoring math. It improved limitation language, score bands, and score explanations.
 
 ## 5. Risks / Open Questions
 
@@ -136,6 +154,7 @@ If no valid active report exists, SkillMint must hide Career IQ, Proof Confidenc
 - Resume history may need pagination later.
 - Privacy/data deletion needs a future full settings flow.
 - Saved analyses do not currently store target role per report.
+- Score calibration still needs beta evidence. Career IQ, Proof Confidence, ATS Readiness, and JD Match should not be described as externally verified.
 
 ## 6. Success Criteria
 
@@ -143,9 +162,11 @@ If no valid active report exists, SkillMint must hide Career IQ, Proof Confidenc
 - User can restore latest saved analysis.
 - User can select a saved analysis as active.
 - Dashboard updates after restore/select.
+- Dashboard restore CTA writes the active browser report before showing full metrics.
 - No fake metrics are shown.
 - No stale metrics appear after clearing workspace.
 - Active versus saved state is understandable.
+- Proof Confidence explains evidence candidates and unverified proof gaps.
 - Lint/build pass.
 - Production smoke passes after merge/deploy.
 

@@ -25,7 +25,7 @@ export default function NextMissionsCard({
   const primaryMeta = getMissionMeta(primaryAction, 0);
 
   return (
-    <section className="flex h-full flex-col rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(124,58,237,0.12),rgba(15,23,42,0.78))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
       <div className="border-b border-white/10 bg-black/20 p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
           Next Missions

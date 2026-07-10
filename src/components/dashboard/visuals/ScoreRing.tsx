@@ -19,7 +19,7 @@ export default function ScoreRing({
     CIRCUMFERENCE - (normalizedScore / 100) * CIRCUMFERENCE;
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-emerald-400/30">
+    <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
         <div className="relative h-40 w-40 shrink-0">
           <svg
@@ -77,6 +77,11 @@ export default function ScoreRing({
               {caption}
             </p>
           )}
+
+          <p className="mt-3 text-xs leading-5 text-neutral-500">
+            Band: {getScoreBand(normalizedScore)}. Directional, not externally
+            verified.
+          </p>
         </div>
       </div>
     </article>
@@ -89,4 +94,13 @@ function clampScore(score: number): number {
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getScoreBand(score: number): string {
+  if (score >= 85) return "Strong";
+  if (score >= 70) return "Competitive";
+  if (score >= 55) return "Developing";
+  if (score >= 40) return "Weak";
+
+  return "Critical";
 }

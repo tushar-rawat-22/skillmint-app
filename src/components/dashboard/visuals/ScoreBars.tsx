@@ -17,7 +17,7 @@ export default function ScoreBars({
   items,
 }: ScoreBarsProps) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-sky-400/30">
+    <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
         {title}
       </p>
@@ -38,8 +38,8 @@ export default function ScoreBars({
                     {item.label}
                   </p>
 
-                  <p className="mt-1 truncate text-xs text-neutral-500">
-                    {item.detail}
+                  <p className="mt-1 break-words text-xs leading-5 text-neutral-500">
+                    {item.detail} · {getScoreBand(normalizedValue)}
                   </p>
                 </div>
 
@@ -86,4 +86,13 @@ function clampScore(score: number): number {
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getScoreBand(score: number): string {
+  if (score >= 85) return "Strong";
+  if (score >= 70) return "Competitive";
+  if (score >= 55) return "Developing";
+  if (score >= 40) return "Weak";
+
+  return "Critical";
 }

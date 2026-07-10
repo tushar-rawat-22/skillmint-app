@@ -635,14 +635,23 @@ function getCareerIQSummary(
   proofScore: ProofScoreResult,
 ): string {
   if (score >= 80) {
-    return `Strong readiness with ${proofScore.proofCoverageLabel.toLowerCase()} proof confidence. Keep converting claims into visible evidence.`;
+    return `Career IQ: ${getCareerIQBand(score)}, with ${proofScore.proofCoverageLabel.toLowerCase()} Proof Confidence. Treat it as directional until more evidence candidates are complete.`;
   }
 
   if (score >= 65) {
-    return `Good foundation, but Proof Confidence is ${proofScore.proofCoverageLabel.toLowerCase()}. More project evidence will raise trust.`;
+    return `Career IQ: ${getCareerIQBand(score)}, but Proof Confidence is ${proofScore.proofCoverageLabel.toLowerCase()}. More project evidence will raise trust.`;
   }
 
-  return `Career readiness is still building. ${proofScore.nextProofMove}`;
+  return `Career IQ: ${getCareerIQBand(score)}. ${proofScore.nextProofMove}`;
+}
+
+function getCareerIQBand(score: number): string {
+  if (score >= 85) return "Strong";
+  if (score >= 70) return "Competitive";
+  if (score >= 55) return "Developing";
+  if (score >= 40) return "Weak";
+
+  return "Critical";
 }
 
 function getRecruiterConfidenceLabel(score: number): string {

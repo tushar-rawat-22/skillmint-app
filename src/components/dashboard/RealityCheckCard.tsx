@@ -1,4 +1,5 @@
 import type { UserProfile } from "@/intelligence/types/profile";
+import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
   CareerIQResult,
@@ -14,6 +15,7 @@ type Props = {
   missions: string[];
   recommendations: string[];
   profile: UserProfile;
+  proof: ProofScoreResult;
   hasLatestJobMatch?: boolean;
 };
 
@@ -25,45 +27,62 @@ export default function RealityCheckCard({
   missions,
   recommendations,
   profile,
+  proof,
   hasLatestJobMatch = false,
 }: Props) {
+  const nextAction = getNextBestAction(proof, missions, recommendations);
   const insights = [
     {
-      label: "What is strong",
+      label: "Strongest signal",
       text: getStrongSignal(profile, roleMatches, hasLatestJobMatch),
       tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
     },
     {
-      label: "What is weak",
+      label: "Weakest signal",
       text: getWeakSignal(profile, ats, recruiter),
       tone: "border-amber-500/30 bg-amber-500/10 text-amber-100",
     },
     {
-      label: "Blocking hiring",
+      label: "Biggest risk",
       text: getHiringBlocker(profile, careerIQ, missions, recommendations),
       tone: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+    },
+    {
+      label: "Proof gap",
+      text: getProofGap(proof),
+      tone: "border-violet-500/30 bg-violet-500/10 text-violet-100",
+    },
+    {
+      label: "Next best action",
+      text: nextAction,
+      tone: "border-sky-500/30 bg-sky-500/10 text-sky-100",
     },
   ];
 
   return (
-    <section>
+    <section className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
-            Reality Check
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-rose-200/80">
+            Harsh Truth
           </p>
 
           <h2 className="mt-2 text-2xl font-black text-white">
-            The honest read
+            The honest read before applying
           </h2>
         </div>
 
         <p className="max-w-xl text-sm leading-6 text-neutral-400">
-          Deterministic signals from resume structure, proof, and role fit.
+          Direct, resume-based guidance. Missing proof means unverified, not
+          false.
         </p>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+      <p className="mt-5 max-w-4xl text-base leading-7 text-neutral-200">
+        {getHarshTruthSummary(profile, proof, nextAction)}
+      </p>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-5">
         {insights.map((insight) => (
           <article
             key={insight.label}
@@ -162,4 +181,66 @@ function getHiringBlocker(
   }
 
   return "The blocker is no longer one gap. You need stronger proof across multiple signals.";
+}
+
+function getProofGap(proof: ProofScoreResult): string {
+  if (proof.evidenceBackedSkills.length === 0) {
+    return "No evidence-backed skills were detected. Add proof candidates for the top claimed skills first.";
+  }
+
+  if (proof.unverifiedSkills.length > 0) {
+    return `${proof.unverifiedSkills.length} claimed skill${
+      proof.unverifiedSkills.length === 1 ? "" : "s"
+    } still need clearer evidence candidates.`;
+  }
+
+  if (!proof.extractedProofLinks.length) {
+    return "The resume has some internal evidence, but no proof links were detected.";
+  }
+
+  return "Proof candidates exist, but SkillMint has not externally verified those sources.";
+}
+
+function getNextBestAction(
+  proof: ProofScoreResult,
+  missions: string[],
+  recommendations: string[],
+): string {
+  return proof.nextProofMove || [...missions, ...recommendations][0] ||
+    "Upload a resume with projects, links, and measurable outcomes.";
+}
+
+function getHarshTruthSummary(
+  profile: UserProfile,
+  proof: ProofScoreResult,
+  nextAction: string,
+): string {
+  const sentenceAction = formatSentenceAction(nextAction);
+
+  if (!profile.projects.length) {
+    return `Your resume shows skills, but not enough project proof. Before applying to stronger roles, ${sentenceAction}`;
+  }
+
+  if (proof.unverifiedSkills.length >= 3) {
+    return `Your resume shows activity, but too many claimed skills are still unverified. Before applying to stronger roles, ${sentenceAction}`;
+  }
+
+  if (!profile.analysisFlags?.hasMeasurableImpact) {
+    return `Your resume has signals, but the outcomes are thin. Before applying to stronger roles, ${sentenceAction}`;
+  }
+
+  return `Your resume has usable signals, but trust still depends on evidence candidates. The next move is clear: ${nextAction}`;
+}
+
+function formatSentenceAction(action: string): string {
+  const trimmedAction = action.trim();
+
+  if (!trimmedAction) {
+    return "add evidence candidates for your top claimed skills.";
+  }
+
+  const sentence =
+    `${trimmedAction.charAt(0).toLowerCase()}${trimmedAction.slice(1)}`;
+
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
 }
