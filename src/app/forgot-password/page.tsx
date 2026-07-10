@@ -4,6 +4,10 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 
+import {
+  premiumInput,
+  premiumPrimaryCta,
+} from "@/components/ui/premium";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
@@ -61,11 +65,11 @@ export default function ForgotPasswordPage() {
     >
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-white/10 bg-black/28 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
       >
         <label
           htmlFor="email"
-          className="text-sm font-semibold text-gray-200"
+          className="text-sm font-semibold text-slate-700"
         >
           Email
         </label>
@@ -76,24 +80,24 @@ export default function ForgotPasswordPage() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 w-full rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400"
+          className={`mt-2 ${premiumInput}`}
           placeholder="you@example.com"
         />
 
         {error && (
-          <p className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm leading-6 text-red-100">
+          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
             {error}
           </p>
         )}
 
         {message && (
-          <p className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm leading-6 text-green-100">
+          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
             {message}
           </p>
         )}
 
         {!configStatus.isConfigured && (
-          <p className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm leading-6 text-yellow-100">
+          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
             {configStatus.message}
           </p>
         )}
@@ -101,17 +105,17 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-5 w-full rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900 disabled:text-gray-300"
+          className={`${premiumPrimaryCta} mt-5 w-full`}
         >
           {isSubmitting ? "Sending..." : "Send reset link"}
         </button>
       </form>
 
-      <p className="mt-6 text-sm text-gray-400">
+      <p className="mt-6 text-sm text-slate-600">
         Remember your password?{" "}
         <Link
           href="/login"
-          className="font-semibold text-green-300 transition hover:text-green-200"
+          className="font-semibold text-emerald-700 transition hover:text-emerald-900"
         >
           Log in
         </Link>

@@ -31,6 +31,9 @@ Tasks should only be added if they support an approved product objective.
 - [ ] Create a founder analytics dashboard for the 50-user beta.
 - [ ] Add score history only after active report and saved analysis semantics are stable.
 - [ ] Plan the future light-first premium report migration.
+- [ ] Export Shareable Snapshot as an image-style PNG/card later without compromising bundle size or adding risky dependencies.
+- [ ] Complete a future light-token migration if raw Tailwind class strings become difficult to maintain.
+- [ ] Keep auth recovery edge states aligned with the premium light auth experience as copy and states evolve.
 - [ ] Calibrate salary estimates before exposing them as a core report metric.
 - [ ] Add stronger proof-source validation in Proof Engine v2.
 - [ ] Add roadmap execution/completion state after scoring trust is validated.

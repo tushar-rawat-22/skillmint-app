@@ -3,6 +3,12 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
+import {
+  premiumEyebrow,
+  premiumInput,
+  premiumPrimaryCta,
+  premiumSurface,
+} from "@/components/ui/premium";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   getTargetRoleSetup,
@@ -204,18 +210,18 @@ export default function TargetRoleSetupForm() {
     <div className="space-y-6">
       <form
         onSubmit={handleSubmit}
-        className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+        className={premiumSurface}
       >
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
+          <p className={premiumEyebrow}>
             Your Career Direction
           </p>
 
-          <h2 className="mt-4 text-2xl font-bold text-white">
+          <h2 className="mt-4 text-2xl font-bold text-slate-950">
             Tell SkillMint where you are aiming.
           </h2>
 
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             Start with the role you want. The rest helps SkillMint pace your
             next steps without editing your resume analysis.
           </p>
@@ -299,7 +305,7 @@ export default function TargetRoleSetupForm() {
         </div>
 
         {error && (
-          <p className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm leading-6 text-red-100">
+          <p className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
             {error}
           </p>
         )}
@@ -313,7 +319,7 @@ export default function TargetRoleSetupForm() {
         <button
           type="submit"
           disabled={isSaving}
-          className="mt-6 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-gray-300"
+          className={`${premiumPrimaryCta} mt-6`}
         >
           {isSaving ? "Saving..." : "Save direction"}
         </button>
@@ -351,7 +357,7 @@ function TextField({
     <div>
       <label
         htmlFor={id}
-        className="text-sm font-semibold text-gray-200"
+        className="text-sm font-semibold text-slate-700"
       >
         {label}
       </label>
@@ -361,7 +367,7 @@ function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`mt-2 w-full rounded-xl border border-white/10 bg-black/35 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45 ${
+        className={`mt-2 ${premiumInput} ${
           isPrimary ? "px-5 py-4 text-base" : "px-4 py-3 text-sm"
         }`}
       />
@@ -388,7 +394,7 @@ function SelectField<T extends string>({
     <div>
       <label
         htmlFor={id}
-        className="text-sm font-semibold text-gray-200"
+        className="text-sm font-semibold text-slate-700"
       >
         {label}
       </label>
@@ -397,13 +403,13 @@ function SelectField<T extends string>({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value as T)}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-gray-100 outline-none transition focus:border-emerald-400 focus:bg-black/45"
+        className={`mt-2 ${premiumInput}`}
       >
         {options.map(([optionValue, optionLabel]) => (
           <option
             key={optionValue}
             value={optionValue}
-            className="bg-neutral-950 text-gray-100"
+            className="bg-white text-slate-950"
           >
             {optionLabel}
           </option>
@@ -425,24 +431,24 @@ function RecommendationCard({
   nextActions,
 }: RecommendationCardProps) {
   return (
-    <section className="rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(15,23,42,0.68))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-300/80">
+    <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950">
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
         Recommended Focus
       </p>
 
-      <h2 className="mt-4 text-xl font-bold text-white">
+      <h2 className="mt-4 text-xl font-bold">
         {headline}
       </h2>
 
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-green-50/80">
+      <p className="mt-3 max-w-3xl text-sm leading-6">
         {message}
       </p>
 
-      <ul className="mt-5 grid gap-3 text-sm leading-6 text-green-50/85 md:grid-cols-3">
+      <ul className="mt-5 grid gap-3 text-sm leading-6 text-slate-700 md:grid-cols-3">
         {nextActions.map((action) => (
           <li
             key={action}
-            className="rounded-2xl border border-emerald-400/20 bg-black/25 p-4"
+            className="rounded-2xl border border-emerald-200 bg-white p-4"
           >
             {action}
           </li>
@@ -456,14 +462,14 @@ function getSyncStatusClassName(tone: SyncStatus["tone"]): string {
   const baseClassName = "mt-5 rounded-lg border p-3 text-sm leading-6";
 
   if (tone === "success") {
-    return `${baseClassName} border-green-500/30 bg-green-500/10 text-green-100`;
+    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
   }
 
   if (tone === "warning") {
-    return `${baseClassName} border-yellow-500/30 bg-yellow-500/10 text-yellow-100`;
+    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
   }
 
-  return `${baseClassName} border-gray-800 bg-black/30 text-gray-300`;
+  return `${baseClassName} border-slate-200 bg-slate-50 text-slate-700`;
 }
 
 function getReadableCareerGoal(setup: TargetRoleSetup): string {

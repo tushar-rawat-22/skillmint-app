@@ -4,6 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useSyncExternalStore } from "react";
 
+import {
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+} from "@/components/ui/premium";
 import { ROUTES } from "@/constants/routes";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import type { CareerLoopStage } from "@/modules/activation/types";
@@ -61,30 +65,30 @@ export default function NextBestActionPanel({
   const isCurrentPage = pathname === action.href;
 
   return (
-    <article className={`rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.11),rgba(15,23,42,0.74))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${className}`}>
+    <article className={`rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.05)] ${className}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
             {action.eyebrow}
           </p>
 
-          <h2 className="mt-2 text-lg font-bold text-white">
+          <h2 className="mt-2 text-lg font-bold text-slate-950">
             {action.title}
           </h2>
 
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
             {action.body}
           </p>
         </div>
 
         {isCurrentPage ? (
-          <span className="w-fit rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-3 text-sm font-semibold text-green-200">
+          <span className={`${premiumSecondaryCta} w-fit`}>
             You are here
           </span>
         ) : (
           <Link
             href={action.href}
-            className="w-fit rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
+            className={`${premiumPrimaryCta} w-fit`}
           >
             {action.cta}
           </Link>

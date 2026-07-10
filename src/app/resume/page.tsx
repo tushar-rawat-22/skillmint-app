@@ -10,6 +10,15 @@ import {
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import ProofConfidenceExplainer from "@/components/dashboard/ProofConfidenceExplainer";
+import {
+  premiumCompactSurface,
+  premiumEyebrow,
+  premiumHeroSurface,
+  premiumInsetSurface,
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+  premiumSurface,
+} from "@/components/ui/premium";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
@@ -253,8 +262,8 @@ export default function ResumePage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-6xl space-y-6">
-          <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 text-center shadow-2xl shadow-black/25 md:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+          <section className={`${premiumHeroSurface} text-center`}>
+            <p className={premiumEyebrow}>
               Resume Intelligence
             </p>
 
@@ -262,7 +271,7 @@ export default function ResumePage() {
               No active resume report selected
             </h1>
 
-            <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-gray-400">
+            <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-600">
               Upload a resume or restore a saved analysis to make it the active
               dashboard report in this browser. Saved analyses are account
               history; they do not become active until you choose one.
@@ -273,14 +282,14 @@ export default function ResumePage() {
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 href="/setup"
-                className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                className={premiumSecondaryCta}
               >
                 Career Setup
               </Link>
 
               <Link
                 href="/upload"
-                className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
+                className={premiumPrimaryCta}
               >
                 Upload Resume
               </Link>
@@ -315,10 +324,10 @@ export default function ResumePage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-2xl shadow-black/25 md:p-8">
+        <div className={premiumHeroSurface}>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+            <p className={premiumEyebrow}>
               Resume Intelligence
             </p>
 
@@ -326,14 +335,14 @@ export default function ResumePage() {
               Latest Resume Analysis
             </h1>
 
-            <p className="mt-4 max-w-2xl text-gray-400">
+            <p className="mt-4 max-w-2xl text-slate-600">
               A safe extraction snapshot from your most recent upload.
             </p>
           </div>
 
           <Link
             href="/upload"
-            className="rounded-xl border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            className={premiumSecondaryCta}
           >
             Upload Another
           </Link>
@@ -413,14 +422,14 @@ export default function ResumePage() {
           />
         </div>
 
-        <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <section className={`mt-6 ${premiumSurface}`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold text-slate-950">
                 Resume processed
               </h2>
 
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                 Extraction details are summarized here. Raw extracted text is
                 hidden by default because the full text is already used for
                 parsing and scoring.
@@ -433,14 +442,14 @@ export default function ResumePage() {
                 onClick={() => {
                   setShowExtractedText((currentValue) => !currentValue);
                 }}
-                className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
               >
                 {showExtractedText
                   ? "Hide extracted text"
                   : "Show extracted text"}
               </button>
 
-              <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                 {formatStatus(activeAnalysis.status)}
               </span>
             </div>
@@ -471,7 +480,7 @@ export default function ResumePage() {
           {showExtractedText && (
             <>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm leading-6 text-gray-400">
+                <p className="text-sm leading-6 text-slate-600">
                   {extractedTextPreview.isTruncated &&
                     !showFullExtractedText
                     ? "Showing preview only. Full extracted text is used for analysis."
@@ -486,7 +495,7 @@ export default function ResumePage() {
                         !currentValue,
                       );
                     }}
-                    className="w-fit rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                    className="w-fit rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
                   >
                     {showFullExtractedText ? "Show less" : "Show more"}
                   </button>
@@ -495,7 +504,7 @@ export default function ResumePage() {
 
               {extractedTextPreview.isTruncated &&
                 !showFullExtractedText && (
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-slate-500">
                     Preview limited to{" "}
                     {EXTRACTED_TEXT_PREVIEW_LIMIT.toLocaleString()} of{" "}
                     {extractedTextPreview.fullLength.toLocaleString()}{" "}
@@ -503,7 +512,7 @@ export default function ResumePage() {
                   </p>
                 )}
 
-              <pre className="mt-5 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-black/40 p-5 text-sm leading-7 text-gray-200">
+              <pre className="mt-5 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-slate-200 bg-slate-950 p-5 text-sm leading-7 text-slate-100">
                 {visibleExtractedText}
               </pre>
             </>
@@ -521,12 +530,12 @@ type ExtractionDetailProps = {
 
 function ExtractionDetail({ label, value }: ExtractionDetailProps) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+    <div className={premiumInsetSurface}>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-2 truncate text-sm font-bold text-gray-100">
+      <p className="mt-2 break-words text-sm font-bold text-slate-950">
         {value}
       </p>
     </div>
@@ -587,10 +596,10 @@ function SavedResumeAnalysesSection({
   ];
 
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+    <section className={`mt-6 ${premiumSurface}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+          <p className={premiumEyebrow}>
             Resume History
           </p>
 
@@ -598,7 +607,7 @@ function SavedResumeAnalysesSection({
             Saved resume analyses
           </h2>
 
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             Saved analyses are account history. The dashboard only shows
             metrics for the active report loaded in this browser.
           </p>
@@ -608,7 +617,7 @@ function SavedResumeAnalysesSection({
           <button
             type="button"
             onClick={onRestoreLatest}
-            className="w-fit rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
+            className={premiumPrimaryCta}
           >
             Restore latest saved report
           </button>
@@ -626,8 +635,8 @@ function SavedResumeAnalysesSection({
         <p
           className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${
             restoreState.status === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-red-500/30 bg-red-500/10 text-red-100"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-rose-200 bg-rose-50 text-rose-800"
           }`}
         >
           {restoreState.message}
@@ -637,7 +646,7 @@ function SavedResumeAnalysesSection({
       {historyItems.length > 0 && (
         <>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-6 text-gray-400">
+            <p className="text-sm leading-6 text-slate-600">
               Showing {displayItems.length} of {historyItems.length} saved
               analyses.
             </p>
@@ -646,7 +655,7 @@ function SavedResumeAnalysesSection({
               <button
                 type="button"
                 onClick={() => setShowOlderAnalyses((current) => !current)}
-                className="w-fit rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-gray-100 transition hover:border-emerald-400/50 hover:text-emerald-200"
+                className={premiumSecondaryCta}
               >
                 {showOlderAnalyses ? "Show fewer" : "Show older analyses"}
               </button>
@@ -701,11 +710,11 @@ function ResumeHistoryStatus({
 
   return (
     <div className={`mt-5 rounded-2xl border p-4 ${presentation.className}`}>
-      <p className="text-sm font-semibold text-white">
+      <p className="text-sm font-semibold text-slate-950">
         {presentation.title}
       </p>
 
-      <p className="mt-2 text-sm leading-6 text-gray-300">
+      <p className="mt-2 text-sm leading-6 text-slate-700">
         {presentation.message}
       </p>
     </div>
@@ -726,7 +735,7 @@ function getResumeHistoryPresentation({
     return {
       title: "Checking saved analyses",
       message: "Looking for resume analyses saved to your account.",
-      className: "border-white/10 bg-black/24",
+      className: "border-slate-200 bg-slate-50",
     };
   }
 
@@ -735,7 +744,7 @@ function getResumeHistoryPresentation({
       title: "Account sync unavailable",
       message:
         "Resume history needs account sync. Upload and active reports still work in this browser.",
-      className: "border-yellow-500/30 bg-yellow-500/10",
+      className: "border-amber-200 bg-amber-50",
     };
   }
 
@@ -744,7 +753,7 @@ function getResumeHistoryPresentation({
       title: "Sign in to view saved analyses",
       message:
         "Browser reports still work here. Sign in to see resume analyses saved to your account.",
-      className: "border-white/10 bg-black/24",
+      className: "border-slate-200 bg-slate-50",
     };
   }
 
@@ -752,7 +761,7 @@ function getResumeHistoryPresentation({
     return {
       title: "Saved analyses unavailable",
       message: historyState.error,
-      className: "border-red-500/30 bg-red-500/10",
+      className: "border-rose-200 bg-rose-50",
     };
   }
 
@@ -761,7 +770,7 @@ function getResumeHistoryPresentation({
       title: "No saved resume analyses yet",
       message:
         "Upload a resume while signed in to save analyses to your account history.",
-      className: "border-white/10 bg-black/24",
+      className: "border-slate-200 bg-slate-50",
     };
   }
 
@@ -793,14 +802,20 @@ function SavedResumeAnalysisCard({
     : "Missing report data";
 
   return (
-    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/25 p-5">
+    <article
+      className={`min-w-0 rounded-2xl border p-5 ${
+        isActive
+          ? "border-emerald-300 bg-emerald-50 shadow-[0_12px_34px_rgba(15,23,42,0.07)]"
+          : "border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
+      }`}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="break-words text-lg font-bold text-white">
+          <h3 className="break-words text-lg font-bold text-slate-950">
             {resumeAnalysis.fileName || "Untitled resume"}
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-gray-400">
+          <p className="mt-2 text-sm leading-6 text-slate-600">
             Analyzed {formatAnalyzedDate(resumeAnalysis.createdAt)}
           </p>
         </div>
@@ -808,8 +823,8 @@ function SavedResumeAnalysisCard({
         <span
           className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${
             isActive
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-white/10 bg-white/5 text-gray-300"
+              ? "border-emerald-300 bg-white text-emerald-800"
+              : "border-slate-200 bg-slate-50 text-slate-600"
           }`}
         >
           {badgeLabel}
@@ -833,7 +848,7 @@ function SavedResumeAnalysisCard({
           type="button"
           onClick={() => onSetActive(resumeAnalysis)}
           disabled={isActive || !userProfile}
-          className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500"
+          className="rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-bold text-emerald-800 transition hover:border-emerald-400 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
         >
           {isActive
             ? "Current active report"
@@ -845,14 +860,14 @@ function SavedResumeAnalysisCard({
         {isActive && (
           <Link
             href="/dashboard"
-            className="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2.5 text-sm font-bold text-gray-100 transition hover:border-emerald-400/50 hover:text-emerald-200"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
           >
             View dashboard
           </Link>
         )}
 
         {isCurrentRestoreTarget && restoreState.status === "error" && (
-          <span className="text-sm text-red-200">
+          <span className="text-sm text-rose-700">
             Restore failed
           </span>
         )}
@@ -888,12 +903,12 @@ type SavedResumeMetaProps = {
 
 function SavedResumeMeta({ label, value }: SavedResumeMetaProps) {
   return (
-    <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.035] p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-2 break-words text-sm font-semibold text-gray-100">
+      <p className="mt-2 break-words text-sm font-semibold text-slate-950">
         {value}
       </p>
     </div>
@@ -917,17 +932,17 @@ function ResumeSyncStatusCard({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold text-slate-950">
             {presentation.title}
           </p>
 
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-300">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
             {presentation.message}
           </p>
         </div>
 
         {presentation.badge && (
-          <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-200">
+          <span className="w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
             {presentation.badge}
           </span>
         )}
@@ -993,10 +1008,10 @@ function CareerIntelligenceReady({
   ];
 
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(148,163,184,0.08),rgba(15,23,42,0.72))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={`mt-6 ${premiumSurface}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-400">
+          <p className={premiumEyebrow}>
             Resume Detection
           </p>
 
@@ -1005,7 +1020,7 @@ function CareerIntelligenceReady({
           </h2>
         </div>
 
-        <p className="max-w-2xl text-sm leading-6 text-gray-400">
+        <p className="max-w-2xl text-sm leading-6 text-slate-600">
           Base signals show what SkillMint detected in the resume. Proof
           Confidence shows what is supported by evidence candidates.
         </p>
@@ -1039,23 +1054,23 @@ function BaseSignalCard({
   const normalizedValue = Math.max(0, Math.min(100, Math.round(value)));
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-black/25 p-4">
-      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-gray-500">
+    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-2 text-2xl font-black text-white">
-        {normalizedValue} <span className="text-sm text-gray-500">/100</span>
+      <p className="mt-2 text-2xl font-black text-slate-950">
+        {normalizedValue} <span className="text-sm text-slate-500">/100</span>
       </p>
 
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
         <div
-          className="h-full rounded-full bg-slate-300"
+          className="h-full rounded-full bg-emerald-700"
           style={{ width: `${normalizedValue}%` }}
         />
       </div>
 
-      <p className="mt-3 text-xs leading-5 text-gray-500">
+      <p className="mt-3 text-xs leading-5 text-slate-500">
         {detail}
       </p>
     </article>
@@ -1099,10 +1114,10 @@ function ProofCoveragePanel({ proof }: ProofCoveragePanelProps) {
   ];
 
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={`mt-6 ${premiumSurface}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-300/80">
+          <p className={premiumEyebrow}>
             Proof Confidence
           </p>
 
@@ -1110,7 +1125,7 @@ function ProofCoveragePanel({ proof }: ProofCoveragePanelProps) {
             {proof.proofConfidenceScore}% · {proof.proofCoverageLabel}
           </h2>
 
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             {proof.proofSummary} Missing proof means unverified, not false.
           </p>
         </div>
@@ -1127,17 +1142,17 @@ function ProofCoveragePanel({ proof }: ProofCoveragePanelProps) {
         {proofStats.map((stat) => (
           <article
             key={stat.label}
-            className="rounded-2xl border border-white/10 bg-black/28 p-4"
+            className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
               {stat.label}
             </p>
 
-            <p className="mt-2 text-2xl font-black text-white">
+            <p className="mt-2 text-2xl font-black text-slate-950">
               {stat.value}
             </p>
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-500">
               {stat.detail}
             </p>
           </article>
@@ -1161,7 +1176,7 @@ function ProofCoveragePanel({ proof }: ProofCoveragePanelProps) {
         />
       </div>
 
-      <p className="mt-5 text-sm leading-6 text-gray-500">
+      <p className="mt-5 text-sm leading-6 text-slate-500">
         Based on resume structure, parsed projects, claimed skills, and links
         extracted from the resume. SkillMint does not scan external sources yet.
       </p>
@@ -1176,12 +1191,12 @@ type ProofInsightProps = {
 
 function ProofInsight({ label, value }: ProofInsightProps) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-black/25 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-2 text-sm leading-6 text-gray-200">
+      <p className="mt-2 text-sm leading-6 text-slate-700">
         {value}
       </p>
     </article>
@@ -1198,13 +1213,13 @@ function ParsedResumeSections({
   const links = getVisibleLinks(profile.links);
 
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={`mt-6 ${premiumSurface}`}>
       <div>
-        <h2 className="text-xl font-bold">
+        <h2 className="text-xl font-bold text-slate-950">
           Parsed Resume Sections
         </h2>
 
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-slate-600">
           Rule-based signals detected from your extracted resume text.
         </p>
       </div>
@@ -1216,7 +1231,7 @@ function ParsedResumeSections({
               {profile.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-200"
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800"
                 >
                   {skill}
                 </span>
@@ -1236,7 +1251,7 @@ function ParsedResumeSections({
                   href={link.href}
                   target={link.external ? "_blank" : undefined}
                   rel={link.external ? "noreferrer" : undefined}
-                  className="rounded-full border border-gray-700 px-3 py-1 text-sm font-semibold text-gray-200 transition hover:border-green-500 hover:text-green-300"
+                  className="rounded-full border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
                 >
                   {link.label}
                 </a>
@@ -1277,8 +1292,8 @@ function SectionPanel({
   children,
 }: SectionPanelProps) {
   return (
-    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-5">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+    <article className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
         {title}
       </h3>
 
@@ -1299,11 +1314,11 @@ function ParsedList({ items }: ParsedListProps) {
   }
 
   return (
-    <ul className="space-y-3 text-sm leading-6 text-gray-200">
+    <ul className="space-y-3 text-sm leading-6 text-slate-700">
       {items.map((item) => (
         <li
           key={item}
-          className="break-words border-l border-green-500/40 pl-3"
+          className="break-words border-l border-emerald-300 pl-3"
         >
           {item}
         </li>
@@ -1314,7 +1329,7 @@ function ParsedList({ items }: ParsedListProps) {
 
 function EmptyDetection() {
   return (
-    <p className="text-sm text-gray-500">
+    <p className="text-sm text-slate-500">
       Not detected yet
     </p>
   );
@@ -1330,12 +1345,12 @@ function SummaryItem({
   value,
 }: SummaryItemProps) {
   return (
-    <article className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
+    <article className={premiumCompactSurface}>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-3 break-words text-lg font-bold text-white">
+      <p className="mt-3 break-words text-lg font-bold text-slate-950">
         {value}
       </p>
     </article>
@@ -1357,7 +1372,7 @@ function getResumeSyncPresentation(
       title: "Account sync",
       message: "Checking account resume backup...",
       badge: "Checking",
-      className: "border-gray-800 bg-neutral-900",
+      className: "border-slate-200 bg-slate-50",
     };
   }
 
@@ -1370,8 +1385,8 @@ function getResumeSyncPresentation(
       message: databaseLoadState.message,
       badge: restored ? "Synced" : "Notice",
       className: restored
-        ? "border-green-500/30 bg-green-500/10"
-        : "border-yellow-500/30 bg-yellow-500/10",
+        ? "border-emerald-200 bg-emerald-50"
+        : "border-amber-200 bg-amber-50",
     };
   }
 
@@ -1384,7 +1399,7 @@ function getResumeSyncPresentation(
         )}.`
         : syncStatus.message,
       badge: "Synced",
-      className: "border-green-500/30 bg-green-500/10",
+      className: "border-emerald-200 bg-emerald-50",
     };
   }
 
@@ -1393,7 +1408,7 @@ function getResumeSyncPresentation(
       title: "Saved in this browser",
       message: syncStatus.message,
       badge: "Browser",
-      className: "border-yellow-500/30 bg-yellow-500/10",
+      className: "border-amber-200 bg-amber-50",
     };
   }
 
@@ -1402,7 +1417,7 @@ function getResumeSyncPresentation(
     message:
       "Latest resume is saved in this browser. Signed-in users can save it to their account after analysis.",
     badge: null,
-    className: "border-gray-800 bg-neutral-900",
+    className: "border-slate-200 bg-slate-50",
   };
 }
 
@@ -1481,18 +1496,18 @@ function getProofAnalysis(
 
 function getProofBadgeClassName(label: ProofCoverageLabel): string {
   if (label === "Strong") {
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-100";
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
 
   if (label === "Moderate") {
-    return "border-sky-500/30 bg-sky-500/10 text-sky-100";
+    return "border-sky-200 bg-sky-50 text-sky-800";
   }
 
   if (label === "Weak") {
-    return "border-amber-500/30 bg-amber-500/10 text-amber-100";
+    return "border-amber-200 bg-amber-50 text-amber-800";
   }
 
-  return "border-rose-500/30 bg-rose-500/10 text-rose-100";
+  return "border-rose-200 bg-rose-50 text-rose-800";
 }
 
 function formatCharacterCount(characterCount: number): string {

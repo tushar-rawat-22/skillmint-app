@@ -1,3 +1,7 @@
+import {
+  premiumEyebrow,
+  premiumSurface,
+} from "@/components/ui/premium";
 import type { UserProfile } from "@/intelligence/types/profile";
 import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
@@ -35,58 +39,58 @@ export default function RealityCheckCard({
     {
       label: "Strongest signal",
       text: getStrongSignal(profile, roleMatches, hasLatestJobMatch),
-      tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
+      tone: "border-emerald-200 bg-emerald-50 text-emerald-950",
     },
     {
       label: "Weakest signal",
       text: getWeakSignal(profile, ats, recruiter),
-      tone: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+      tone: "border-amber-200 bg-amber-50 text-amber-950",
     },
     {
       label: "Biggest risk",
       text: getHiringBlocker(profile, careerIQ, missions, recommendations),
-      tone: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+      tone: "border-rose-200 bg-rose-50 text-rose-950",
     },
     {
       label: "Proof gap",
       text: getProofGap(proof),
-      tone: "border-violet-500/30 bg-violet-500/10 text-violet-100",
+      tone: "border-slate-200 bg-slate-50 text-slate-900",
     },
     {
       label: "Next best action",
       text: nextAction,
-      tone: "border-sky-500/30 bg-sky-500/10 text-sky-100",
+      tone: "border-sky-200 bg-sky-50 text-sky-950",
     },
   ];
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-6">
+    <section className={premiumSurface}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-rose-200/80">
+          <p className={premiumEyebrow}>
             Harsh Truth
           </p>
 
-          <h2 className="mt-2 text-2xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-black text-slate-950">
             The honest read before applying
           </h2>
         </div>
 
-        <p className="max-w-xl text-sm leading-6 text-neutral-400">
+        <p className="max-w-xl text-sm leading-6 text-slate-600">
           Direct, resume-based guidance. Missing proof means unverified, not
           false.
         </p>
       </div>
 
-      <p className="mt-5 max-w-4xl text-base leading-7 text-neutral-200">
+      <p className="mt-5 max-w-4xl text-base leading-7 text-slate-700">
         {getHarshTruthSummary(profile, proof, nextAction)}
       </p>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-5">
+      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {insights.map((insight) => (
           <article
             key={insight.label}
-            className={`rounded-2xl border p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${insight.tone}`}
+            className={`rounded-2xl border p-5 ${insight.tone}`}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
               {insight.label}

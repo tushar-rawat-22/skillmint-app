@@ -26,23 +26,23 @@ export default function ProfileIdentityCard() {
     : "Choose a field in Setup";
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <article className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-xl font-black text-emerald-100 shadow-[0_0_34px_rgba(16,185,129,0.12)]">
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-emerald-200 bg-white text-xl font-black text-emerald-800 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
             {getInitials(displayName, user?.email)}
           </div>
 
           <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
               Profile Identity
             </p>
 
-            <h2 className="mt-2 truncate text-2xl font-black text-white">
+            <h2 className="mt-2 truncate text-2xl font-black text-slate-950">
               {displayName}
             </h2>
 
-            <p className="mt-1 break-words text-sm text-gray-400">
+            <p className="mt-1 break-words text-sm text-slate-600">
               {isLoading
                 ? "Checking account..."
                 : isConfigured
@@ -75,12 +75,12 @@ type IdentitySignalProps = {
 
 function IdentitySignal({ label, value }: IdentitySignalProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+    <div className="rounded-2xl border border-emerald-200 bg-white p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-1 break-words text-sm font-bold text-white">
+      <p className="mt-1 break-words text-sm font-bold text-slate-950">
         {value}
       </p>
     </div>

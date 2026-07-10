@@ -29,19 +29,19 @@ export default function ProductLoop() {
   return (
     <section
       id="how-it-works"
-      className="border-y border-white/10 bg-slate-950/80 px-6 py-24"
+      className="border-y border-slate-200 bg-[#f7f5ef] px-6 py-20"
     >
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-green-400">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">
             How SkillMint Works
           </p>
 
-          <h2 className="mt-4 text-4xl font-black text-white md:text-5xl">
+          <h2 className="mt-4 text-4xl font-black text-slate-950 md:text-5xl">
             One loop from direction to action.
           </h2>
 
-          <p className="mt-5 text-base leading-7 text-gray-400">
+          <p className="mt-5 text-base leading-7 text-slate-600">
             SkillMint starts with where you want to go, then uses your resume
             and one job description at a time to show the most useful next move.
           </p>
@@ -51,17 +51,17 @@ export default function ProductLoop() {
           {productLoopSteps.map((step, index) => (
             <article
               key={step.title}
-              className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-emerald-400/30 hover:bg-white/[0.055]"
+              className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_42px_rgba(15,23,42,0.04)]"
             >
-              <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                 {index + 1}
               </span>
 
-              <h3 className="mt-4 text-lg font-bold text-white">
+              <h3 className="mt-4 text-lg font-bold text-slate-950">
                 {step.title}
               </h3>
 
-              <p className="mt-3 text-sm leading-6 text-gray-400">
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 {step.description}
               </p>
             </article>
@@ -71,14 +71,14 @@ export default function ProductLoop() {
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
             href={ROUTES.SIGNUP}
-            className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/35 transition hover:bg-emerald-300"
+            className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
           >
             Start Free
           </Link>
 
           <a
             href="#preview"
-            className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-emerald-400/60 hover:text-emerald-200"
+            className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-800"
           >
             See Preview
           </a>

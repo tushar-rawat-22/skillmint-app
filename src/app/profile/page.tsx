@@ -10,14 +10,14 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.13),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-2xl shadow-black/25 md:p-8">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_18px_55px_rgba(15,23,42,0.07)] md:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-4xl font-black">
+              <h1 className="text-4xl font-black text-slate-950">
                 Profile
               </h1>
 
-              <p className="mt-4 max-w-2xl text-gray-400">
+              <p className="mt-4 max-w-2xl text-slate-600">
                 See your identity, saved direction, and account status in one
                 calm place.
               </p>
@@ -25,7 +25,7 @@ export default function ProfilePage() {
 
             <Link
               href="/setup"
-              className="w-fit rounded-xl border border-green-500/30 px-5 py-3 text-sm font-semibold text-green-100 transition hover:border-green-300 hover:text-white"
+              className="w-fit rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100"
             >
               Open career setup
             </Link>
@@ -46,7 +46,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <article className="mt-8 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <article className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
           <h2 className="text-xl font-bold">
             What gets saved
           </h2>
@@ -59,7 +59,7 @@ export default function ProfilePage() {
             ].map((item) => (
               <p
                 key={item}
-                className="rounded-2xl border border-white/10 bg-black/28 p-4 text-sm leading-6 text-gray-300"
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700"
               >
                 {item}
               </p>

@@ -10,6 +10,15 @@ import {
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import {
+  premiumBadge,
+  premiumCompactSurface,
+  premiumEyebrow,
+  premiumHeroSurface,
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+  premiumSurface,
+} from "@/components/ui/premium";
+import {
   generateCareerRoadmap,
   type CareerRoadmap,
   type RoadmapPhase,
@@ -181,7 +190,7 @@ export default function RoadmapPage() {
       <DashboardLayout>
         <section className="mx-auto max-w-6xl">
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+            <p className={premiumEyebrow}>
               Career Roadmap
             </p>
 
@@ -189,7 +198,7 @@ export default function RoadmapPage() {
               Build the missing source first.
             </h1>
 
-            <p className="mt-4 text-gray-400">
+            <p className="mt-4 text-slate-600">
               Your roadmap is built from resume proof, career direction, and
               your latest job match when available.
             </p>
@@ -218,10 +227,10 @@ export default function RoadmapPage() {
   return (
     <DashboardLayout>
       <section className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.14),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(2,6,23,0.94))] p-6 shadow-2xl shadow-black/25 md:p-8">
+        <div className={premiumHeroSurface}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+              <p className={premiumEyebrow}>
                 Career Roadmap
               </p>
 
@@ -229,7 +238,7 @@ export default function RoadmapPage() {
                 Career Roadmap
               </h1>
 
-              <p className="mt-4 max-w-2xl text-gray-400">
+              <p className="mt-4 max-w-2xl text-slate-600">
                 Your 30/60/90-day plan built from resume proof, career direction,
                 and your latest job match when available.
               </p>
@@ -237,7 +246,7 @@ export default function RoadmapPage() {
 
             <Link
               href="/ats"
-              className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+              className={premiumSecondaryCta}
             >
               Open ATS Match
             </Link>
@@ -253,12 +262,12 @@ export default function RoadmapPage() {
         <NextBestActionPanel className="mt-6" />
 
         {!latestJobMatch && (
-          <section className="mt-8 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5">
-            <h2 className="text-lg font-bold text-yellow-100">
+          <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+            <h2 className="text-lg font-bold">
               Add a job description for a more targeted roadmap.
             </h2>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-yellow-50/80">
+            <p className="mt-2 max-w-3xl text-sm leading-6">
               This version uses your resume profile only. A job description
               match unlocks role-specific gaps, keywords, and application
               strategy.
@@ -266,7 +275,7 @@ export default function RoadmapPage() {
 
             <Link
               href="/ats"
-              className="mt-4 inline-flex rounded-lg border border-yellow-400/40 px-4 py-2 text-sm font-semibold text-yellow-50 transition hover:border-yellow-300"
+              className={`${premiumSecondaryCta} mt-4`}
             >
               Go to ATS Match
             </Link>
@@ -337,8 +346,8 @@ function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <section className="mx-auto mt-8 flex min-h-[38vh] max-w-3xl flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+    <section className="mx-auto mt-8 flex min-h-[38vh] max-w-3xl flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
+      <p className={premiumEyebrow}>
         {eyebrow}
       </p>
 
@@ -346,13 +355,13 @@ function EmptyState({
         {title}
       </h1>
 
-      <p className="mt-5 max-w-2xl text-lg leading-8 text-gray-400">
+      <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
         {body}
       </p>
 
       <Link
         href={href}
-        className="mt-8 rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
+        className={`${premiumPrimaryCta} mt-8`}
       >
         {action}
       </Link>
@@ -376,18 +385,18 @@ function RoadmapSourceCard({
   latestJobMatch,
 }: RoadmapSourceCardProps) {
   return (
-    <section className="mt-8 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={`mt-8 ${premiumSurface}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+          <p className={premiumEyebrow}>
             Roadmap Source
           </p>
 
-          <h2 className="mt-3 text-xl font-bold text-white">
+          <h2 className="mt-3 text-xl font-bold text-slate-950">
             Your source signals
           </h2>
 
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             SkillMint builds this plan from resume proof, career direction, and
             the latest job match when available. Active Target uses the latest
             job match first; Profile-fit roles are separate general role
@@ -398,7 +407,7 @@ function RoadmapSourceCard({
         {!latestJobMatch && (
           <Link
             href="/ats"
-            className="w-fit rounded-lg border border-blue-500/40 px-4 py-2 text-sm font-semibold text-blue-100 transition hover:border-blue-300"
+            className={premiumSecondaryCta}
           >
             Add job match
           </Link>
@@ -426,7 +435,7 @@ function RoadmapSourceCard({
       </div>
 
       {!latestJobMatch && (
-        <p className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm leading-6 text-yellow-50/80">
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
           Add a job description in ATS Match to make this roadmap more
           job-specific.
         </p>
@@ -443,12 +452,12 @@ type SourceSignalProps = {
 
 function SourceSignal({ label, value, tone }: SourceSignalProps) {
   const toneClassName = tone === "success"
-    ? "border-green-500/30 bg-green-500/10 text-green-100"
-    : "border-yellow-500/30 bg-yellow-500/10 text-yellow-100";
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : "border-amber-200 bg-amber-50 text-amber-900";
 
   return (
     <div className={`min-w-0 rounded-lg border p-4 ${toneClassName}`}>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">
         {label}
       </p>
 
@@ -466,22 +475,22 @@ function RoadmapSyncStatusCard({ state }: RoadmapSyncStatusCardProps) {
     <section
       className={`mt-4 rounded-lg border p-4 ${
         isSynced
-          ? "border-green-500/30 bg-green-500/10"
-          : "border-yellow-500/30 bg-yellow-500/10"
+          ? "border-emerald-200 bg-emerald-50"
+          : "border-amber-200 bg-amber-50"
       }`}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold text-slate-950">
             {isSynced ? "Roadmap synced" : "Roadmap local"}
           </p>
 
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-gray-300">
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-700">
             {state.message}
           </p>
         </div>
 
-        <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-200">
+        <span className={premiumBadge}>
           {isSynced ? "Synced" : "Local"}
         </span>
       </div>
@@ -499,18 +508,18 @@ function ReadinessCard({
   latestJobMatch,
 }: ReadinessCardProps) {
   return (
-    <section className="mt-8 rounded-3xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.13),rgba(15,23,42,0.72))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className="mt-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-300/80">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
             Current Readiness
           </p>
 
-          <h2 className="mt-4 break-words text-3xl font-black text-white">
+          <h2 className="mt-4 break-words text-3xl font-black text-slate-950">
             {roadmap.targetRole}
           </h2>
 
-          <p className="mt-3 max-w-3xl text-base leading-7 text-green-50/80">
+          <p className="mt-3 max-w-3xl text-base leading-7 text-emerald-950">
             {roadmap.brutalSummary}
           </p>
         </div>
@@ -521,23 +530,23 @@ function ReadinessCard({
           </span>
 
           {latestJobMatch && (
-            <p className="mt-3 text-right text-sm text-green-50/70">
+            <p className="mt-3 text-right text-sm text-emerald-800">
               Latest match: {latestJobMatch.result.matchScore}%
             </p>
           )}
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-green-500/20 bg-black/22 p-5">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-green-200/70">
+      <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
           Current Blockers
         </h3>
 
-        <ul className="mt-4 space-y-3 text-sm leading-6 text-green-50/85">
+        <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
           {roadmap.currentBlockers.map((blocker) => (
             <li
               key={blocker}
-              className="break-words border-l border-green-400/50 pl-3"
+              className="break-words border-l border-emerald-300 pl-3"
             >
               {blocker}
             </li>
@@ -554,12 +563,12 @@ type PhaseSectionProps = {
 
 function PhaseSection({ phase }: PhaseSectionProps) {
   return (
-    <section className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <h2 className="text-xl font-bold text-white">
+    <section className={premiumCompactSurface}>
+      <h2 className="text-xl font-bold text-slate-950">
         {phase.title}
       </h2>
 
-      <p className="mt-2 text-sm leading-6 text-gray-400">
+      <p className="mt-2 text-sm leading-6 text-slate-600">
         {phase.goal}
       </p>
 
@@ -587,13 +596,13 @@ function TaskSection({
   tasks,
 }: TaskSectionProps) {
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={`mt-6 ${premiumSurface}`}>
       <div>
-        <h2 className="text-xl font-bold text-white">
+        <h2 className="text-xl font-bold text-slate-950">
           {title}
         </h2>
 
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
           {description}
         </p>
       </div>
@@ -616,18 +625,18 @@ type TaskCardProps = {
 
 function TaskCard({ task }: TaskCardProps) {
   return (
-    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-5">
+    <article className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-5">
       <TaskMeta task={task} />
 
-      <h3 className="mt-4 break-words text-lg font-bold text-white">
+      <h3 className="mt-4 break-words text-lg font-bold text-slate-950">
         {task.title}
       </h3>
 
-      <p className="mt-3 text-sm leading-6 text-gray-400">
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         {task.reason}
       </p>
 
-      <p className="mt-3 text-sm leading-6 text-gray-200">
+      <p className="mt-3 text-sm leading-6 text-slate-800">
         {task.action}
       </p>
     </article>
@@ -636,14 +645,14 @@ function TaskCard({ task }: TaskCardProps) {
 
 function CompactTaskCard({ task }: TaskCardProps) {
   return (
-    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-4">
+    <article className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <TaskMeta task={task} />
 
-      <h3 className="mt-3 break-words text-base font-bold text-white">
+      <h3 className="mt-3 break-words text-base font-bold text-slate-950">
         {task.title}
       </h3>
 
-      <p className="mt-2 text-sm leading-6 text-gray-300">
+      <p className="mt-2 text-sm leading-6 text-slate-700">
         {task.action}
       </p>
     </article>
@@ -668,7 +677,7 @@ function TaskMeta({ task }: TaskCardProps) {
         Impact: {impact}
       </span>
 
-      <span className="rounded-full border border-gray-700 px-3 py-1 text-xs font-semibold text-gray-400">
+      <span className={premiumBadge}>
         {task.estimatedTime}
       </span>
     </div>
@@ -773,16 +782,16 @@ type ApplicationStrategyProps = {
 
 function ApplicationStrategy({ items }: ApplicationStrategyProps) {
   return (
-    <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <h2 className="text-xl font-bold text-white">
+    <section className={`mt-6 ${premiumSurface}`}>
+      <h2 className="text-xl font-bold text-slate-950">
         Application Strategy
       </h2>
 
-      <ul className="mt-5 grid gap-3 text-sm leading-6 text-gray-200 lg:grid-cols-2">
+      <ul className="mt-5 grid gap-3 text-sm leading-6 text-slate-700 lg:grid-cols-2">
         {items.map((item) => (
           <li
             key={item}
-            className="break-words rounded-2xl border border-white/10 bg-black/28 p-4"
+            className="break-words rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
             {item}
           </li>
@@ -799,18 +808,18 @@ function getReadinessClassName(
     "inline-flex rounded-full border px-4 py-2 text-sm font-semibold";
 
   if (readiness === "Ready to apply") {
-    return `${baseClassName} border-green-400/40 bg-green-400/10 text-green-100`;
+    return `${baseClassName} border-emerald-300 bg-white text-emerald-800`;
   }
 
   if (readiness === "Apply selectively") {
-    return `${baseClassName} border-blue-400/40 bg-blue-400/10 text-blue-100`;
+    return `${baseClassName} border-sky-300 bg-white text-sky-800`;
   }
 
   if (readiness === "Getting ready") {
-    return `${baseClassName} border-yellow-400/40 bg-yellow-400/10 text-yellow-100`;
+    return `${baseClassName} border-amber-300 bg-white text-amber-800`;
   }
 
-  return `${baseClassName} border-red-400/40 bg-red-400/10 text-red-100`;
+  return `${baseClassName} border-rose-300 bg-white text-rose-800`;
 }
 
 function getPriorityClassName(priority: RoadmapTask["priority"]): string {
@@ -818,14 +827,14 @@ function getPriorityClassName(priority: RoadmapTask["priority"]): string {
     "rounded-full border px-3 py-1 text-xs font-semibold";
 
   if (priority === "High") {
-    return `${baseClassName} border-red-500/30 bg-red-500/10 text-red-100`;
+    return `${baseClassName} border-rose-200 bg-rose-50 text-rose-800`;
   }
 
   if (priority === "Medium") {
-    return `${baseClassName} border-yellow-500/30 bg-yellow-500/10 text-yellow-100`;
+    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
   }
 
-  return `${baseClassName} border-green-500/30 bg-green-500/10 text-green-200`;
+  return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
 }
 
 function getEffortClassName(effort: RoadmapEffort): string {
@@ -833,14 +842,14 @@ function getEffortClassName(effort: RoadmapEffort): string {
     "rounded-full border px-3 py-1 text-xs font-semibold";
 
   if (effort === "High") {
-    return `${baseClassName} border-violet-500/30 bg-violet-500/10 text-violet-100`;
+    return `${baseClassName} border-slate-300 bg-white text-slate-800`;
   }
 
   if (effort === "Medium") {
-    return `${baseClassName} border-blue-500/30 bg-blue-500/10 text-blue-100`;
+    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
   }
 
-  return `${baseClassName} border-gray-700 bg-black/20 text-gray-300`;
+  return `${baseClassName} border-slate-200 bg-white text-slate-700`;
 }
 
 function getImpactClassName(impact: RoadmapImpact): string {
@@ -848,26 +857,26 @@ function getImpactClassName(impact: RoadmapImpact): string {
     "rounded-full border px-3 py-1 text-xs font-semibold";
 
   if (impact === "Proof") {
-    return `${baseClassName} border-emerald-500/30 bg-emerald-500/10 text-emerald-100`;
+    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
   }
 
   if (impact === "ATS") {
-    return `${baseClassName} border-sky-500/30 bg-sky-500/10 text-sky-100`;
+    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
   }
 
   if (impact === "Recruiter Trust") {
-    return `${baseClassName} border-amber-500/30 bg-amber-500/10 text-amber-100`;
+    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
   }
 
   if (impact === "Portfolio") {
-    return `${baseClassName} border-violet-500/30 bg-violet-500/10 text-violet-100`;
+    return `${baseClassName} border-slate-300 bg-white text-slate-800`;
   }
 
   if (impact === "Interview") {
-    return `${baseClassName} border-rose-500/30 bg-rose-500/10 text-rose-100`;
+    return `${baseClassName} border-rose-200 bg-rose-50 text-rose-800`;
   }
 
-  return `${baseClassName} border-blue-500/30 bg-blue-500/10 text-blue-100`;
+  return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
 }
 
 function subscribeToStoredData(onStoreChange: () => void): () => void {

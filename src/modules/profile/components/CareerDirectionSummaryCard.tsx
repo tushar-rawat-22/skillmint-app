@@ -20,18 +20,18 @@ export default function CareerDirectionSummaryCard() {
   const signals = getCareerDirectionSignals(setup);
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <article className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
             Career Direction
           </p>
 
-          <h2 className="mt-3 text-2xl font-black text-white">
+          <h2 className="mt-3 text-2xl font-black text-slate-950">
             {setup?.targetRole || "Choose your direction"}
           </h2>
 
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
             Setup owns your role, field, goal, and weekly pace. Profile keeps it
             visible so SkillMint can frame guidance without editing your resume.
           </p>
@@ -39,7 +39,7 @@ export default function CareerDirectionSummaryCard() {
 
         <Link
           href="/setup"
-          className="w-fit rounded-xl border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:text-white"
+          className="w-fit rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100"
         >
           Edit in Setup
         </Link>
@@ -49,13 +49,13 @@ export default function CareerDirectionSummaryCard() {
         {signals.map((signal) => (
           <div
             key={signal.label}
-            className="rounded-2xl border border-white/10 bg-black/25 p-4"
+            className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
               {signal.label}
             </p>
 
-            <p className="mt-2 break-words text-sm font-bold text-white">
+            <p className="mt-2 break-words text-sm font-bold text-slate-950">
               {signal.value}
             </p>
           </div>

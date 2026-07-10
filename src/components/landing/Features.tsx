@@ -25,14 +25,14 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="mx-auto max-w-7xl px-6 py-24"
+      className="mx-auto max-w-7xl px-6 py-20"
     >
       <div className="mb-14 text-center">
-        <h2 className="text-4xl font-black md:text-5xl">
+        <h2 className="text-4xl font-black text-slate-950 md:text-5xl">
           What you get.
         </h2>
 
-        <p className="mt-6 text-lg text-gray-400">
+        <p className="mt-6 text-lg text-slate-600">
           Fewer vague suggestions. More clear proof, match, and action.
         </p>
       </div>
@@ -41,13 +41,13 @@ export default function Features() {
         {features.map((feature) => (
           <div
             key={feature.title}
-            className="rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-300 hover:border-emerald-400/35"
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_14px_42px_rgba(15,23,42,0.04)]"
           >
-            <h3 className="text-2xl font-bold text-white">
+            <h3 className="text-2xl font-bold text-slate-950">
               {feature.title}
             </h3>
 
-            <p className="mt-4 text-sm leading-6 text-gray-400">
+            <p className="mt-4 text-sm leading-6 text-slate-600">
               {feature.description}
             </p>
           </div>

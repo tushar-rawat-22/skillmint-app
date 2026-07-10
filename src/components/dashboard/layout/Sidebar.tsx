@@ -40,10 +40,10 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-full border-b border-white/10 bg-slate-950/90 p-4 backdrop-blur-xl md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:self-start md:overflow-y-auto md:border-b-0 md:border-r md:bg-slate-950/78 md:p-6">
+    <aside className="w-full border-b border-slate-200 bg-white/92 p-4 backdrop-blur-xl md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:self-start md:overflow-y-auto md:border-b-0 md:border-r md:p-6">
       <Link
         href="/"
-        className="mb-4 block text-2xl font-black tracking-tight text-emerald-300 transition hover:text-emerald-100 md:mb-10"
+        className="mb-4 block text-2xl font-black tracking-tight text-slate-950 transition hover:text-emerald-800 md:mb-10"
       >
         SkillMint
       </Link>
@@ -52,8 +52,8 @@ export default function Sidebar() {
         {navigationItems.map((item) => {
           const isActive = isActiveRoute(pathname, item.href);
           const className = isActive
-            ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_30px_rgba(16,185,129,0.06)]"
-            : "border-transparent text-slate-300 hover:border-white/10 hover:bg-white/[0.045] hover:text-white";
+            ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+            : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950";
 
           return (
             <Link
@@ -65,7 +65,7 @@ export default function Sidebar() {
               <span>{item.label}</span>
 
               {isActive && (
-                <span className="ml-3 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+                <span className="ml-3 h-2 w-2 rounded-full bg-emerald-600" />
               )}
             </Link>
           );

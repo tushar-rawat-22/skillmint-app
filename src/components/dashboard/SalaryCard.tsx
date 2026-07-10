@@ -14,8 +14,8 @@ export default function SalaryCard({ salary }: Props) {
   const roundedSalary = Math.round(salary);
 
   return (
-    <div className="min-w-0 rounded-3xl bg-neutral-900 p-6 text-white">
-      <p className="text-neutral-400">
+    <div className="min-w-0 rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
         Estimated Salary
       </p>
 

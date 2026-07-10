@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  premiumDangerCta,
+} from "@/components/ui/premium";
 import { clearSkillMintWorkspace } from "@/lib/storage/clearSkillMintWorkspace";
 
 const CONFIRM_CLEAR_WORKSPACE_MESSAGE =
@@ -30,16 +33,16 @@ export default function ClearWorkspaceCard() {
   }
 
   return (
-    <article className="rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red-200/70">
+    <article className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-950">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700">
         Browser workspace
       </p>
 
-      <h2 className="mt-3 text-xl font-bold text-white">
+      <h2 className="mt-3 text-xl font-bold">
         Clear active workspace
       </h2>
 
-      <p className="mt-3 text-sm leading-6 text-gray-400">
+      <p className="mt-3 text-sm leading-6">
         Clears the active browser workspace: active resume analysis, JD
         matches, roadmap state, beta feedback, and upgrade interest saved in
         this browser. This does not delete your account or synced history.
@@ -49,13 +52,13 @@ export default function ClearWorkspaceCard() {
         type="button"
         onClick={handleClearWorkspace}
         disabled={isClearing}
-        className="mt-5 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-2.5 text-sm font-bold text-red-100 transition hover:border-red-300 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`${premiumDangerCta} mt-5`}
       >
         {isClearing ? "Clearing..." : "Clear active workspace"}
       </button>
 
       {message && (
-        <p className="mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm leading-6 text-emerald-100">
+        <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
           {message}
         </p>
       )}

@@ -1,3 +1,8 @@
+import {
+  premiumBadge,
+  premiumEyebrow,
+  premiumSurface,
+} from "@/components/ui/premium";
 import type { ProofScoreResult } from "@/intelligence/proof";
 
 type ProofConfidenceExplainerProps = {
@@ -51,21 +56,21 @@ export default function ProofConfidenceExplainer({
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <section className={`rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${className}`}>
+    <section className={`${premiumSurface} ${className}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-300/80">
+          <p className={premiumEyebrow}>
             Why this Proof Confidence?
           </p>
 
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             Proof Confidence checks how much your resume claims are supported
             by evidence candidates like projects, links, measurable outcomes,
             and public proof.
           </p>
         </div>
 
-        <span className="w-fit rounded-full border border-violet-400/25 bg-violet-400/10 px-3 py-1 text-xs font-bold text-violet-100">
+        <span className={`${premiumBadge} w-fit`}>
           Missing proof means unverified, not false
         </span>
       </div>
@@ -83,18 +88,18 @@ export default function ProofConfidenceExplainer({
           items={trustLimits}
         />
 
-        <article className="rounded-2xl border border-white/10 bg-black/25 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+        <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
             Next move
           </p>
 
-          <p className="mt-3 text-sm leading-6 text-gray-200">
+          <p className="mt-3 text-sm leading-6 text-slate-800">
             {proof.nextProofMove}
           </p>
         </article>
       </div>
 
-      <p className="mt-4 text-xs leading-5 text-gray-500">
+      <p className="mt-4 text-xs leading-5 text-slate-500">
         SkillMint has not scanned GitHub, LinkedIn, LeetCode, or portfolio
         pages externally yet. Links are evidence candidates, not verified
         sources.
@@ -117,12 +122,12 @@ function ExplanationBlock({
   items,
 }: ExplanationBlockProps) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-black/25 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
         {title}
       </p>
 
-      <ul className="mt-3 space-y-2 text-sm leading-6 text-gray-200">
+      <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
         {items.map((item) => (
           <li
             key={item}

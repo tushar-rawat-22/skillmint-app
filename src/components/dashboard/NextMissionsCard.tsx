@@ -1,3 +1,10 @@
+import {
+  premiumBadge,
+  premiumCompactSurface,
+  premiumEyebrow,
+  premiumInsetSurface,
+} from "@/components/ui/premium";
+
 type Props = {
   missions: string[];
   recommendations: string[];
@@ -25,30 +32,30 @@ export default function NextMissionsCard({
   const primaryMeta = getMissionMeta(primaryAction, 0);
 
   return (
-    <section className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-      <div className="border-b border-white/10 bg-black/20 p-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
+    <section className={`${premiumCompactSurface} flex h-full flex-col p-0`}>
+      <div className="border-b border-slate-200 p-6">
+        <p className={premiumEyebrow}>
           Next Missions
         </p>
 
-        <h2 className="mt-2 text-2xl font-black">
+        <h2 className="mt-2 text-2xl font-black text-slate-950">
           What to fix next
         </h2>
 
-        <p className="mt-2 text-sm leading-6 text-neutral-400">
-          Mission control for the next visible proof upgrade.
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Prioritized career actions for the next visible proof upgrade.
         </p>
       </div>
 
       <div className="flex flex-1 flex-col p-6">
-        <article className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-5">
+        <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/80">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                 Primary Next Action
               </p>
 
-              <h3 className="mt-3 text-xl font-black leading-snug">
+              <h3 className="mt-3 text-xl font-black leading-snug text-slate-950">
                 {primaryAction}
               </h3>
             </div>
@@ -82,8 +89,8 @@ export default function NextMissionsCard({
               />
             ))
           ) : (
-            <article className="rounded-lg border border-neutral-800 bg-black/30 p-4">
-              <p className="text-sm leading-6 text-neutral-400">
+            <article className={premiumInsetSurface}>
+              <p className="text-sm leading-6 text-slate-600">
                 Upload a resume or run a job match to unlock sharper mission
                 sequencing.
               </p>
@@ -91,22 +98,22 @@ export default function NextMissionsCard({
           )}
         </div>
 
-        <div className="mt-5 rounded-2xl border border-white/10 bg-black/28 p-4">
+        <div className={`mt-5 ${premiumInsetSurface}`}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Mission Stack
               </p>
 
-              <p className="mt-1 text-sm text-neutral-300">
+              <p className="mt-1 text-sm text-slate-700">
                 {actions.length} prioritized action
                 {actions.length === 1 ? "" : "s"} ready
               </p>
             </div>
 
-            <div className="h-2 w-24 overflow-hidden rounded-full bg-neutral-800">
+            <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full rounded-full bg-emerald-400"
+                className="h-full rounded-full bg-emerald-600"
                 style={{
                   width: `${Math.min(100, actions.length * 34)}%`,
                 }}
@@ -133,15 +140,15 @@ function SupportingMissionCard({
   return (
     <article
       key={action}
-      className="rounded-2xl border border-white/10 bg-black/28 p-4"
+      className="rounded-2xl border border-slate-200 bg-white p-4"
     >
       <div className="flex gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-700 bg-neutral-950 text-xs font-black text-neutral-200">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xs font-black text-slate-700">
           {index + 2}
         </span>
 
         <div className="min-w-0">
-          <p className="font-bold">
+          <p className="font-bold text-slate-950">
             {action}
           </p>
 
@@ -150,11 +157,11 @@ function SupportingMissionCard({
             <MissionBadge label={`Impact: ${meta.impact}`} />
           </div>
 
-          <p className="mt-3 text-sm leading-6 text-neutral-400">
+          <p className="mt-3 text-sm leading-6 text-slate-600">
             {getMissionReason(action)}
           </p>
 
-          <p className="mt-2 text-sm leading-6 text-neutral-300">
+          <p className="mt-2 text-sm leading-6 text-slate-700">
             Expected outcome: {meta.expectedOutcome}
           </p>
         </div>
@@ -170,12 +177,12 @@ type MissionSignalProps = {
 
 function MissionSignal({ label, value }: MissionSignalProps) {
   return (
-    <div className="rounded-lg border border-violet-500/20 bg-black/20 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-300/70">
+    <div className="rounded-xl border border-emerald-200 bg-white p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-800">
         {label}
       </p>
 
-      <p className="mt-2 text-sm leading-6 text-violet-50/90">
+      <p className="mt-2 text-sm leading-6 text-slate-700">
         {value}
       </p>
     </div>
@@ -188,7 +195,7 @@ type MissionBadgeProps = {
 
 function MissionBadge({ label }: MissionBadgeProps) {
   return (
-    <span className="max-w-full break-words rounded-full border border-violet-500/30 bg-black/20 px-3 py-1 text-left text-xs font-bold leading-5 text-violet-100">
+    <span className={`${premiumBadge} break-words text-left leading-5`}>
       {label}
     </span>
   );

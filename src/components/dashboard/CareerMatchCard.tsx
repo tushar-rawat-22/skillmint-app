@@ -1,3 +1,8 @@
+import {
+  premiumCompactSurface,
+  premiumEyebrow,
+  premiumInsetSurface,
+} from "@/components/ui/premium";
 import type { RoleMatchResult } from "@/intelligence/types/results";
 import type { ProofScoreResult } from "@/intelligence/proof";
 import type { UserProfile } from "@/intelligence/types/profile";
@@ -16,10 +21,10 @@ export default function CareerMatchCard({
   const topMatches = matches.slice(0, 3);
 
   return (
-    <section className="text-white">
+    <section className="text-slate-950">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
+          <p className={premiumEyebrow}>
             Career Fit Engine
           </p>
 
@@ -28,7 +33,7 @@ export default function CareerMatchCard({
           </h2>
         </div>
 
-        <p className="max-w-xl text-sm leading-6 text-neutral-400">
+        <p className="max-w-xl text-sm leading-6 text-slate-600">
           Profile-fit roles show where your resume naturally fits. Latest JD
           Match shows fit for one specific pasted job.
         </p>
@@ -43,7 +48,7 @@ export default function CareerMatchCard({
           return (
             <div
               key={match.role}
-              className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+              className={premiumCompactSurface}
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
@@ -51,35 +56,35 @@ export default function CareerMatchCard({
                     {match.role}
                   </h3>
 
-                  <p className="mt-1 break-words text-sm leading-6 text-neutral-400">
+                  <p className="mt-1 break-words text-sm leading-6 text-slate-600">
                     {match.category} | {match.salaryRange} | {match.difficulty}
                   </p>
                 </div>
 
                 <div className="shrink-0 text-left sm:text-right">
-                  <p className="text-2xl font-black tabular-nums text-emerald-300">
+                  <p className="text-2xl font-black tabular-nums text-emerald-700">
                     {Math.round(match.matchScore)}%
                   </p>
 
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-slate-500">
                     match
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-emerald-400"
+                  className="h-full rounded-full bg-emerald-600"
                   style={{ width: `${match.matchScore}%` }}
                 />
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/10 bg-black/22 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <div className={`mt-5 ${premiumInsetSurface}`}>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Why this role appears
                 </p>
 
-                <p className="mt-2 text-sm leading-6 text-neutral-300">
+                <p className="mt-2 text-sm leading-6 text-slate-700">
                   SkillMint suggested this as a general profile-fit role because
                   your resume contains matching detected signals. It is separate
                   from any Latest JD Match.
@@ -131,7 +136,7 @@ function RoleReasonBlock({
 }: RoleReasonBlockProps) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {title}
       </p>
 
@@ -146,7 +151,7 @@ function RoleReasonBlock({
             </span>
           ))
         ) : (
-          <span className="text-sm text-neutral-500">
+          <span className="text-sm text-slate-500">
             {emptyText}
           </span>
         )}
@@ -159,14 +164,14 @@ function getReasonPillClassName(
   tone: RoleReasonBlockProps["tone"],
 ): string {
   if (tone === "success") {
-    return "bg-emerald-500/10 text-emerald-300";
+    return "border border-emerald-200 bg-emerald-50 text-emerald-800";
   }
 
   if (tone === "warning") {
-    return "bg-amber-500/10 text-amber-200";
+    return "border border-amber-200 bg-amber-50 text-amber-800";
   }
 
-  return "bg-white/10 text-neutral-200";
+  return "border border-slate-200 bg-slate-50 text-slate-700";
 }
 
 function getMatchedSignals(match: RoleMatchResult): string[] {

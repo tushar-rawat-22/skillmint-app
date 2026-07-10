@@ -4,56 +4,34 @@ import { ROUTES } from "@/constants/routes";
 
 export default function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/82 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-
-        <Link
-          href="/"
-          className="text-2xl font-black tracking-tight text-white transition hover:text-emerald-200"
-        >
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-5">
+        <Link href="/" className="text-2xl font-black tracking-tight text-slate-950">
           SkillMint
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-
-          <a
-            href="#preview"
-            className="text-gray-300 transition hover:text-green-400"
-          >
+        <div className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+          <a className="transition hover:text-emerald-700" href="#preview">
             Product Preview
           </a>
-
-          <a
-            href="#how-it-works"
-            className="text-gray-300 transition hover:text-green-400"
-          >
+          <a className="transition hover:text-emerald-700" href="#how-it-works">
             How it works
           </a>
-
-          <a
-            href="#features"
-            className="text-gray-300 transition hover:text-green-400"
-          >
+          <a className="transition hover:text-emerald-700" href="#features">
             What you get
           </a>
-
-          <Link
-            href={ROUTES.LOGIN}
-            className="text-gray-300 transition hover:text-green-400"
-          >
+          <Link className="transition hover:text-emerald-700" href={ROUTES.LOGIN}>
             Log in
           </Link>
-
-        </nav>
+        </div>
 
         <Link
           href={ROUTES.SIGNUP}
-          className="hidden rounded-xl bg-emerald-500 px-5 py-2 font-semibold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300 md:block"
+          className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
         >
           Start Free
         </Link>
-
-      </div>
+      </nav>
     </header>
   );
 }

@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import {
+  premiumCompactSurface,
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+} from "@/components/ui/premium";
 import { getAccountOverview } from "@/modules/account/services/accountRepository";
 import type { AccountOverview } from "@/modules/account/types";
 
@@ -83,12 +88,12 @@ export default function AccountOverviewCard({
 
   if (state.status === "loading") {
     return (
-      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+      <article className={premiumCompactSurface}>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
           Account Status
         </p>
 
-        <h2 className="mt-4 text-xl font-bold text-white">
+        <h2 className="mt-4 text-xl font-bold text-slate-950">
           Checking account status...
         </h2>
       </article>
@@ -97,16 +102,16 @@ export default function AccountOverviewCard({
 
   if (state.status === "error") {
     return (
-      <article className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-yellow-200/80">
+      <article className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">
           Account Status
         </p>
 
-        <h2 className="mt-4 text-xl font-bold text-yellow-50">
+        <h2 className="mt-4 text-xl font-bold">
           Account data unavailable
         </h2>
 
-        <p className="mt-3 text-sm leading-6 text-yellow-50/80">
+        <p className="mt-3 text-sm leading-6">
           {state.error}
         </p>
       </article>
@@ -119,14 +124,14 @@ export default function AccountOverviewCard({
 
   if (!overview.isConfigured) {
     return (
-      <article className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
+      <article className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
         <AccountOverviewHeader
           eyebrow="Account Status"
           title="Account sync is unavailable"
           body={overview.message}
         />
 
-        <p className="mt-4 text-sm leading-6 text-yellow-50/80">
+        <p className="mt-4 text-sm leading-6">
           Resume, job match, and roadmap flows still work in this browser.
         </p>
       </article>
@@ -135,7 +140,7 @@ export default function AccountOverviewCard({
 
   if (!overview.isSignedIn) {
     return (
-      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <article className={premiumCompactSurface}>
         <AccountOverviewHeader
           eyebrow="Account Status"
           title="Sign in to sync your account."
@@ -145,14 +150,14 @@ export default function AccountOverviewCard({
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
             href="/login"
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500"
+            className={premiumPrimaryCta}
           >
             Log in
           </Link>
 
           <Link
             href="/signup"
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            className={premiumSecondaryCta}
           >
             Create account
           </Link>
@@ -162,7 +167,7 @@ export default function AccountOverviewCard({
   }
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <article className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <AccountOverviewHeader
           eyebrow="Account Status"
@@ -174,12 +179,12 @@ export default function AccountOverviewCard({
             : overview.message}
         />
 
-        <span className="w-fit rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-green-200">
+        <span className="w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">
           Signed in
         </span>
       </div>
 
-      <p className="mt-4 break-words text-sm leading-6 text-gray-300">
+      <p className="mt-4 break-words text-sm leading-6 text-slate-700">
         {overview.email ?? "No email available"}
       </p>
 
@@ -224,15 +229,15 @@ function AccountOverviewHeader({
 }: AccountOverviewHeaderProps) {
   return (
     <div className="min-w-0">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
         {eyebrow}
       </p>
 
-      <h2 className="mt-4 text-xl font-bold text-white">
+      <h2 className="mt-4 text-xl font-bold text-slate-950">
         {title}
       </h2>
 
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
         {body}
       </p>
     </div>
@@ -251,17 +256,17 @@ function OverviewMetric({
   detail,
 }: OverviewMetricProps) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/28 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-3 break-words text-lg font-bold text-white">
+      <p className="mt-3 break-words text-lg font-bold text-slate-950">
         {value}
       </p>
 
       {detail && (
-        <p className="mt-2 break-words text-xs leading-5 text-gray-500">
+        <p className="mt-2 break-words text-xs leading-5 text-slate-500">
           {detail}
         </p>
       )}

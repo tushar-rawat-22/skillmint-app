@@ -4,6 +4,10 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
+import {
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+} from "@/components/ui/premium";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   getCurrentUserProfile,
@@ -115,12 +119,12 @@ export default function PersistentProfileForm() {
 
   if (!user) {
     return (
-      <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <article className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
         <h2 className="text-xl font-bold">
           Sign in to sync your account.
         </h2>
 
-        <p className="mt-3 text-sm leading-6 text-gray-400">
+        <p className="mt-3 text-sm leading-6 text-slate-600">
           SkillMint works in this browser without an account. Sign in to sync your
           saved profile direction, resume analyses, job matches, and roadmap.
         </p>
@@ -128,14 +132,14 @@ export default function PersistentProfileForm() {
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
             href="/login"
-            className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
+            className={premiumPrimaryCta}
           >
             Log in
           </Link>
 
           <Link
             href="/signup"
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+            className={premiumSecondaryCta}
           >
             Create account
           </Link>
@@ -147,10 +151,10 @@ export default function PersistentProfileForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]"
     >
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
           Saved Career Profile
         </p>
 
@@ -158,7 +162,7 @@ export default function PersistentProfileForm() {
           Save your direction
         </h2>
 
-        <p className="mt-3 text-sm leading-6 text-gray-400">
+        <p className="mt-3 text-sm leading-6 text-slate-600">
           Keep your target role and career goal attached to your account.
           Career setup can update these without changing resume intelligence.
         </p>
@@ -185,7 +189,7 @@ export default function PersistentProfileForm() {
       <div className="mt-4">
         <label
           htmlFor="career-goal"
-          className="text-sm font-semibold text-gray-200"
+          className="text-sm font-semibold text-slate-700"
         >
           Career goal
         </label>
@@ -197,24 +201,24 @@ export default function PersistentProfileForm() {
             setForm({ ...form, careerGoal: event.target.value })}
           rows={4}
           placeholder="What are you trying to become more hire-ready for?"
-          className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm leading-6 text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
+          className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
         />
       </div>
 
       {isLoadingProfile && (
-        <p className="mt-4 text-sm text-gray-400">
+        <p className="mt-4 text-sm text-slate-600">
           Loading saved profile...
         </p>
       )}
 
       {error && (
-        <p className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm leading-6 text-red-100">
+        <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
           {error}
         </p>
       )}
 
       {message && (
-        <p className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm leading-6 text-green-100">
+        <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
           {message}
         </p>
       )}
@@ -222,7 +226,7 @@ export default function PersistentProfileForm() {
       <button
         type="submit"
         disabled={isSaving || isLoadingProfile}
-        className="mt-5 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900 disabled:text-gray-300"
+        className={`${premiumPrimaryCta} mt-5`}
       >
         {isSaving ? "Saving..." : "Save profile"}
       </button>
@@ -249,7 +253,7 @@ function ProfileField({
     <div>
       <label
         htmlFor={id}
-        className="text-sm font-semibold text-gray-200"
+        className="text-sm font-semibold text-slate-700"
       >
         {label}
       </label>
@@ -259,7 +263,7 @@ function ProfileField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400 focus:bg-black/45"
+        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
       />
     </div>
   );
@@ -275,12 +279,12 @@ function ProfileInfoCard({
   body,
 }: ProfileInfoCardProps) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <article className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
       <h2 className="text-xl font-bold">
         {title}
       </h2>
 
-      <p className="mt-3 text-sm leading-6 text-gray-400">
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         {body}
       </p>
     </article>

@@ -52,13 +52,13 @@ export default function SignOutButton({
         type="button"
         onClick={handleSignOut}
         disabled={isSigningOut}
-        className={className ?? "rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-100 transition hover:border-red-500/60 hover:text-red-200 disabled:cursor-not-allowed disabled:text-gray-500"}
+        className={className ?? "rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:text-slate-400"}
       >
         {isSigningOut ? "Signing out..." : "Sign out"}
       </button>
 
       {error && (
-        <p className="mt-3 text-sm text-red-300">
+        <p className="mt-3 text-sm text-rose-700">
           {error}
         </p>
       )}

@@ -17,12 +17,12 @@ export default function Topbar() {
   const label = routeLabels[pathname] ?? "SkillMint";
 
   return (
-    <header className="border-b border-white/10 bg-slate-950/58 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+    <header className="border-b border-slate-200 bg-white/82 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
         Current Section
       </p>
 
-      <h2 className="mt-1 text-2xl font-black text-slate-50">
+      <h2 className="mt-1 text-2xl font-black text-slate-950">
         {label}
       </h2>
     </header>

@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+import {
+  premiumSecondaryCta,
+} from "@/components/ui/premium";
 import { saveUpgradeInterest } from "@/modules/activation/storage/upgradeInterestStorage";
 import type { UpgradeInterestSource } from "@/modules/activation/types";
 
@@ -35,23 +38,23 @@ export default function UpgradeInterestCard({
   }
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.09),rgba(15,23,42,0.78))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
         Free beta
       </p>
 
       <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="text-lg font-bold text-slate-950">
             {title}
           </h2>
 
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             {body}
           </p>
 
           {message && (
-            <p className="mt-3 text-sm font-semibold text-green-200">
+            <p className="mt-3 text-sm font-semibold text-emerald-700">
               {message}
             </p>
           )}
@@ -60,7 +63,7 @@ export default function UpgradeInterestCard({
         <button
           type="button"
           onClick={handleClick}
-          className="w-fit rounded-xl border border-emerald-400/35 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-400/15"
+          className={`${premiumSecondaryCta} w-fit`}
         >
           {cta}
         </button>

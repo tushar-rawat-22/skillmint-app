@@ -1,3 +1,5 @@
+import { premiumCompactSurface } from "@/components/ui/premium";
+
 type ReadinessTrendProps = {
   score: number;
   topMission: string;
@@ -21,16 +23,16 @@ export default function ReadinessTrend({
     .join(" ");
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
+    <article className={premiumCompactSurface}>
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
         Projected Readiness Path
       </p>
 
-      <p className="mt-2 text-sm leading-6 text-neutral-400">
+      <p className="mt-2 text-sm leading-6 text-slate-600">
         Projection only, based on completing the next visible mission.
       </p>
 
-      <div className="mt-5 rounded-2xl border border-white/10 bg-black/28 p-4">
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <svg
           viewBox="0 0 220 120"
           className="h-36 w-full"
@@ -42,14 +44,14 @@ export default function ReadinessTrend({
             y1="108"
             x2="216"
             y2="108"
-            stroke="rgb(64 64 64)"
+            stroke="rgb(203 213 225)"
             strokeWidth="1"
           />
 
           <polyline
             points={polylinePoints}
             fill="none"
-            stroke="rgb(167 139 250)"
+            stroke="rgb(4 120 87)"
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="4"
@@ -62,8 +64,8 @@ export default function ReadinessTrend({
                 cx={point.x}
                 cy={point.y}
                 r="5"
-                fill="rgb(139 92 246)"
-                stroke="rgb(10 10 10)"
+                fill="rgb(5 150 105)"
+                stroke="rgb(248 250 252)"
                 strokeWidth="3"
                 className="motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out"
               />
@@ -71,7 +73,7 @@ export default function ReadinessTrend({
               <text
                 x={point.x}
                 y="119"
-                fill="rgb(163 163 163)"
+                fill="rgb(100 116 139)"
                 fontSize="9"
                 textAnchor="middle"
               >
@@ -82,7 +84,7 @@ export default function ReadinessTrend({
         </svg>
       </div>
 
-      <p className="mt-4 line-clamp-2 text-sm leading-6 text-neutral-300">
+      <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-700">
         Next mission: {topMission}
       </p>
     </article>

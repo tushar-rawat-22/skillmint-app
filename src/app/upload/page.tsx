@@ -7,6 +7,7 @@ import UploadHero from "@/components/upload/UploadHero";
 import DropZone from "@/components/upload/DropZone";
 import FileCard from "@/components/upload/FileCard";
 import AnalysisProgress from "@/components/upload/AnalysisProgress";
+import { premiumPrimaryCta } from "@/components/ui/premium";
 import { NextBestActionPanel } from "@/modules/activation";
 import {
   analyzeResume as runResumeAnalysis,
@@ -72,7 +73,7 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_32%),#020617] pb-24 text-white">
+    <main className="min-h-screen bg-[#f7f8f4] pb-24 text-slate-950">
       <UploadHero />
 
       <div className="mx-auto max-w-5xl px-6">
@@ -95,18 +96,18 @@ export default function UploadPage() {
             <button
               onClick={analyzeSelectedResume}
               disabled={loading}
-              className="rounded-xl bg-green-600 px-10 py-4 font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-green-900 disabled:text-gray-300"
+              className={`${premiumPrimaryCta} px-10 py-4`}
             >
               {loading ? "Building report..." : "Analyze Resume"}
             </button>
 
             {error && (
-              <div className="mx-auto mt-5 max-w-xl rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-left">
-                <p className="text-sm font-bold text-red-100">
+              <div className="mx-auto mt-5 max-w-xl rounded-xl border border-rose-200 bg-rose-50 p-4 text-left">
+                <p className="text-sm font-bold text-rose-800">
                   Analysis failed
                 </p>
 
-                <p className="mt-1 text-sm leading-6 text-red-200/80">
+                <p className="mt-1 text-sm leading-6 text-rose-700">
                   {error}
                 </p>
               </div>

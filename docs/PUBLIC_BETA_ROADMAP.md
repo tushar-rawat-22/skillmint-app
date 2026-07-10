@@ -1,8 +1,18 @@
-# SkillMint 50-User Beta Roadmap
+# SkillMint Beta v1 Launch Roadmap
 
 ## Position
 
-This is a controlled 50-user beta, not a full public launch. Do not expand features if the core journey fails.
+This is a controlled beta plan, not a full public launch. Do not invite users until Beta v1 Complete unless the founder explicitly changes strategy. Do not expand features if the core journey fails.
+
+## Locked Beta v1 Build Blocks
+
+1. Premium Product UI System
+2. Scoring Calibration + Truth Engine
+3. Mission Execution System
+4. Active Target + JD Workflow
+5. Data Controls + Trust Center
+6. Analytics + Founder Dashboard
+7. Beta Launch Readiness
 
 ## Target Users
 
@@ -14,12 +24,11 @@ This is a controlled 50-user beta, not a full public launch. Do not expand featu
 
 ## Timeline
 
-- Day 1-3: Product Trust + Beta Readiness block.
-- Day 4: Review, deploy, and smoke test.
-- Day 5-7: 5-user close pilot.
-- Day 8-10: Fix only P0/P1 blockers and serious confusion.
-- Day 11-17: Invite 20-30 users in batches.
-- Day 18-21: Reach 50 invited users and collect feedback.
+- Beta v1 build: realistic 5-6 weeks.
+- Conservative build: 7-8 weeks.
+- After Beta v1 Complete: review, deploy, and smoke test.
+- After founder approval: run a 5-user close pilot.
+- Then fix only P0/P1 blockers and serious confusion before expanding invites.
 
 ## Success Metrics
 
@@ -49,8 +58,10 @@ Do not expand features if the core journey fails. Fix trust, explanation, upload
 
 ## Next Build Blocks
 
-- Analytics/founder dashboard.
-- Scoring calibration.
-- Proof Engine v2.
-- Roadmap execution system.
-- Monetization readiness later.
+- Premium Product UI System.
+- Scoring Calibration + Truth Engine.
+- Mission Execution System.
+- Active Target + JD Workflow.
+- Data Controls + Trust Center.
+- Analytics + Founder Dashboard.
+- Beta Launch Readiness.

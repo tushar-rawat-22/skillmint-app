@@ -12,11 +12,11 @@ export default function SignupPage() {
     >
       <AuthForm mode="signup" />
 
-      <p className="mt-6 text-sm text-gray-400">
+      <p className="mt-6 text-sm text-slate-600">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold text-green-300 transition hover:text-green-200"
+          className="font-semibold text-emerald-700 transition hover:text-emerald-900"
         >
           Log in
         </Link>

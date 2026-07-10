@@ -12,12 +12,12 @@ export default function LoginPage() {
     >
       <AuthForm mode="login" />
 
-      <div className="mt-6 flex flex-col gap-3 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
         <p>
           New to SkillMint?{" "}
           <Link
             href="/signup"
-            className="font-semibold text-green-300 transition hover:text-green-200"
+            className="font-semibold text-emerald-700 transition hover:text-emerald-900"
           >
             Create an account
           </Link>
@@ -25,7 +25,7 @@ export default function LoginPage() {
 
         <Link
           href="/forgot-password"
-          className="font-semibold text-green-300 transition hover:text-green-200"
+          className="font-semibold text-emerald-700 transition hover:text-emerald-900"
         >
           Forgot password?
         </Link>

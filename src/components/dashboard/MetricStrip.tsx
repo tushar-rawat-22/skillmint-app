@@ -1,3 +1,4 @@
+import { premiumCompactSurface } from "@/components/ui/premium";
 import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
@@ -28,19 +29,19 @@ export default function MetricStrip({
       label: "Proof Confidence",
       value: `${Math.round(proof.proofConfidenceScore)}%`,
       detail: `${proof.proofCoverageLabel} · evidence candidates`,
-      tone: "text-emerald-300",
+      tone: "text-emerald-700",
     },
     {
       label: "ATS Readiness",
       value: `${Math.round(ats.score)}%`,
       detail: `${ats.verdict} · base resume scan`,
-      tone: "text-sky-300",
+      tone: "text-sky-700",
     },
     {
       label: "Recruiter Confidence",
       value: `${Math.round(recruiter.score)}%`,
       detail: `${recruiter.confidence} · inferred shortlist signal`,
-      tone: "text-amber-300",
+      tone: "text-amber-700",
     },
     {
       label: latestJobMatch ? "Latest JD Match" : "Profile-fit role",
@@ -54,7 +55,7 @@ export default function MetricStrip({
         : bestMatch
           ? `${bestMatch.role} · profile-fit`
           : "Upload resume",
-      tone: "text-violet-300",
+      tone: "text-slate-800",
     },
   ];
 
@@ -63,9 +64,9 @@ export default function MetricStrip({
       {metrics.map((metric) => (
         <article
           key={metric.label}
-          className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.045] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-white/20 hover:bg-white/[0.06]"
+          className={`${premiumCompactSurface} min-w-0 transition hover:border-emerald-200 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]`}
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
             {metric.label}
           </p>
 
@@ -73,7 +74,7 @@ export default function MetricStrip({
             {metric.value}
           </p>
 
-          <p className="mt-2 break-words text-sm leading-6 text-neutral-400">
+          <p className="mt-2 break-words text-sm leading-6 text-slate-600">
             {metric.detail}
           </p>
         </article>

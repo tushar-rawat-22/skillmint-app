@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  premiumHeroSurface,
+} from "@/components/ui/premium";
+
 type AuthPageShellProps = {
   eyebrow: string;
   title: string;
@@ -14,18 +18,18 @@ export default function AuthPageShell({
   children,
 }: AuthPageShellProps) {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),#020617] px-6 py-12 text-white">
+    <main className="min-h-screen bg-[#f7f8f4] px-6 py-12 text-slate-950">
       <section className="mx-auto grid min-h-[80vh] max-w-6xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
         <div>
           <Link
             href="/"
-            className="text-2xl font-black text-emerald-300 transition hover:text-emerald-100"
+            className="text-2xl font-black text-slate-950 transition hover:text-emerald-800"
           >
             SkillMint
           </Link>
 
           <div className="mt-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
               {eyebrow}
             </p>
 
@@ -33,7 +37,7 @@ export default function AuthPageShell({
               {title}
             </h1>
 
-            <p className="mt-4 text-base leading-7 text-gray-400">
+            <p className="mt-4 text-base leading-7 text-slate-600">
               {subtitle}
             </p>
           </div>
@@ -41,7 +45,7 @@ export default function AuthPageShell({
           <AuthTrustPanel />
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-6 shadow-2xl shadow-black/30">
+        <div className={premiumHeroSurface}>
           {children}
         </div>
       </section>
@@ -51,7 +55,7 @@ export default function AuthPageShell({
 
 function AuthTrustPanel() {
   return (
-    <div className="mt-8 grid gap-3 text-sm leading-6 text-gray-300">
+    <div className="mt-8 grid gap-3 text-sm leading-6 text-slate-700">
       {[
         "Save your career direction",
         "Keep resume proof and job matches",
@@ -59,7 +63,7 @@ function AuthTrustPanel() {
       ].map((item) => (
         <p
           key={item}
-          className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
         >
           {item}
         </p>

@@ -18,11 +18,11 @@ export default function SkillDistribution({
   items,
 }: SkillDistributionProps) {
   return (
-    <article className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-      <div className="border-b border-white/10 bg-black/20 p-6">
+    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
+      <div className="border-b border-slate-200 p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
               {title}
             </p>
 
@@ -31,13 +31,13 @@ export default function SkillDistribution({
             </h2>
           </div>
 
-          <p className="max-w-xl text-sm leading-6 text-neutral-400">
+          <p className="max-w-xl text-sm leading-6 text-slate-600">
             {subtitle}
           </p>
         </div>
       </div>
 
-      <div className="grid gap-px bg-white/10 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <EvidenceCard key={item.label} item={item} />
         ))}
@@ -54,9 +54,9 @@ function EvidenceCard({ item }: EvidenceCardProps) {
   const tone = getToneClassName(item.tone);
 
   return (
-    <div className="min-w-0 bg-slate-950/70 p-5 transition-colors duration-200 hover:bg-slate-900/70">
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-colors duration-200 hover:border-emerald-200 hover:bg-white">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-bold text-white">
+        <p className="text-sm font-bold text-slate-950">
           {item.label}
         </p>
 
@@ -69,7 +69,7 @@ function EvidenceCard({ item }: EvidenceCardProps) {
         {item.value}
       </p>
 
-      <p className="mt-3 text-sm leading-6 text-neutral-400">
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         {item.detail}
       </p>
     </div>
@@ -82,41 +82,41 @@ function getToneClassName(tone: SkillDistributionItem["tone"]): {
 } {
   if (tone === "emerald") {
     return {
-      text: "text-emerald-300",
-      badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
+      text: "text-emerald-700",
+      badge: "border-emerald-200 bg-emerald-50 text-emerald-800",
     };
   }
 
   if (tone === "sky") {
     return {
-      text: "text-sky-300",
-      badge: "border-sky-500/30 bg-sky-500/10 text-sky-100",
+      text: "text-sky-700",
+      badge: "border-sky-200 bg-sky-50 text-sky-800",
     };
   }
 
   if (tone === "amber") {
     return {
-      text: "text-amber-300",
-      badge: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+      text: "text-amber-700",
+      badge: "border-amber-200 bg-amber-50 text-amber-800",
     };
   }
 
   if (tone === "rose") {
     return {
-      text: "text-rose-300",
-      badge: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+      text: "text-rose-700",
+      badge: "border-rose-200 bg-rose-50 text-rose-800",
     };
   }
 
   if (tone === "violet") {
     return {
-      text: "text-violet-300",
-      badge: "border-violet-500/30 bg-violet-500/10 text-violet-100",
+      text: "text-slate-700",
+      badge: "border-slate-200 bg-white text-slate-700",
     };
   }
 
   return {
-    text: "text-neutral-200",
-    badge: "border-neutral-700 bg-neutral-900 text-neutral-300",
+    text: "text-slate-700",
+    badge: "border-slate-200 bg-white text-slate-700",
   };
 }

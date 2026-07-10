@@ -1,3 +1,5 @@
+import { premiumCompactSurface } from "@/components/ui/premium";
+
 type ScoreRingProps = {
   score: number;
   label: string;
@@ -19,7 +21,7 @@ export default function ScoreRing({
     CIRCUMFERENCE - (normalizedScore / 100) * CIRCUMFERENCE;
 
   return (
-    <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+    <article className={premiumCompactSurface}>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
         <div className="relative h-40 w-40 shrink-0">
           <svg
@@ -32,7 +34,7 @@ export default function ScoreRing({
               cy="70"
               r={RADIUS}
               fill="none"
-              stroke="rgb(38 38 38)"
+              stroke="rgb(226 232 240)"
               strokeWidth="12"
             />
 
@@ -41,7 +43,7 @@ export default function ScoreRing({
               cy="70"
               r={RADIUS}
               fill="none"
-              stroke="rgb(52 211 153)"
+              stroke="rgb(4 120 87)"
               strokeLinecap="round"
               strokeWidth="12"
               strokeDasharray={CIRCUMFERENCE}
@@ -56,7 +58,7 @@ export default function ScoreRing({
             </span>
 
             {grade && (
-              <span className="mt-1 text-sm font-bold text-emerald-300">
+              <span className="mt-1 text-sm font-bold text-emerald-800">
                 {grade}
               </span>
             )}
@@ -64,7 +66,7 @@ export default function ScoreRing({
         </div>
 
         <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
             {label}
           </p>
 
@@ -73,12 +75,12 @@ export default function ScoreRing({
           </h2>
 
           {caption && (
-            <p className="mt-3 text-sm leading-6 text-neutral-400">
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               {caption}
             </p>
           )}
 
-          <p className="mt-3 text-xs leading-5 text-neutral-500">
+          <p className="mt-3 text-xs leading-5 text-slate-500">
             Band: {getScoreBand(normalizedScore)}. Directional, not externally
             verified.
           </p>

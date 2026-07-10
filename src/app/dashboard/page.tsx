@@ -24,6 +24,15 @@ import {
   type ScoreBarItem,
   type SkillDistributionItem,
 } from "@/components/dashboard/visuals";
+import {
+  premiumCompactSurface,
+  premiumEyebrow,
+  premiumHeroSurface,
+  premiumPageStack,
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+  premiumSurface,
+} from "@/components/ui/premium";
 
 import { AccountOverviewCard } from "@/modules/account";
 import {
@@ -215,8 +224,8 @@ export default function DashboardPage() {
     return (
       <DashboardLayout>
         <div className="mx-auto max-w-6xl space-y-6">
-          <section className="rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.97))] p-6 text-white shadow-xl shadow-black/20 md:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-400">
+          <section className={premiumHeroSurface}>
+            <p className={premiumEyebrow}>
               Dashboard
             </p>
 
@@ -226,7 +235,7 @@ export default function DashboardPage() {
                 : "Upload your resume to build your career report."}
             </h1>
 
-            <p className="mt-4 max-w-3xl text-base leading-7 text-gray-400">
+            <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
               {hasSavedResumeWithoutActive
                 ? "Saved analyses exist in your account, but none is currently loaded as this browser's active dashboard report."
                 : "SkillMint needs Resume Reality before showing Career IQ, Proof Confidence, Profile-fit roles, Latest JD Match context, and next missions."}
@@ -238,7 +247,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={handleRestoreLatestSavedReport}
                   disabled={dashboardRestoreState.status === "loading"}
-                  className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
+                  className={premiumPrimaryCta}
                 >
                   {dashboardRestoreState.status === "loading"
                     ? "Restoring..."
@@ -248,7 +257,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/upload"
-                className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300"
+                className={premiumPrimaryCta}
               >
                 Upload resume
               </Link>
@@ -256,7 +265,7 @@ export default function DashboardPage() {
               {hasSavedResumeWithoutActive && (
                 <Link
                   href="/resume"
-                  className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                  className={premiumSecondaryCta}
                 >
                   Go to Resume
                 </Link>
@@ -264,7 +273,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/setup"
-                className="rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+                className={premiumSecondaryCta}
               >
                 Career setup
               </Link>
@@ -274,8 +283,8 @@ export default function DashboardPage() {
               <p
                 className={`mt-5 max-w-3xl rounded-2xl border p-4 text-sm leading-6 ${
                   dashboardRestoreState.status === "error"
-                    ? "border-red-500/30 bg-red-500/10 text-red-100"
-                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+                    ? "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
                 }`}
               >
                 {dashboardRestoreState.message}
@@ -297,7 +306,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-7xl space-y-7">
+      <div className={premiumPageStack}>
         <CareerReportHero
           careerIQ={data.careerIQ}
           proof={data.proof}
@@ -391,6 +400,7 @@ export default function DashboardPage() {
           isReady={hasResumeAnalysis}
           nextProofMove={getShareableProofMove(data.proof.nextProofMove)}
           proof={data.proof}
+          latestJobMatch={latestJobMatch}
         />
 
         {hasUserProgress && (
@@ -433,10 +443,10 @@ function EmptyDashboardPreview() {
   ];
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:p-6">
+    <section className={premiumSurface}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
+          <p className={premiumEyebrow}>
             After upload
           </p>
 
@@ -445,23 +455,23 @@ function EmptyDashboardPreview() {
           </h2>
         </div>
 
-        <p className="max-w-xl text-sm leading-6 text-gray-400">
+        <p className="max-w-xl text-sm leading-6 text-slate-600">
           These sections stay hidden until there is an active resume report, so
           the dashboard never shows stale or demo metrics.
         </p>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {previewItems.map((item) => (
           <article
             key={item.title}
-            className="rounded-2xl border border-white/10 bg-black/24 p-4"
+            className={premiumCompactSurface}
           >
-            <h3 className="text-sm font-bold text-white">
+            <h3 className="text-sm font-bold text-slate-950">
               {item.title}
             </h3>
 
-            <p className="mt-2 text-xs leading-5 text-gray-500">
+            <p className="mt-2 text-xs leading-5 text-slate-500">
               {item.body}
             </p>
           </article>
@@ -500,36 +510,36 @@ function ReportReadingGuide() {
   ];
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={premiumSurface}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
+          <p className={premiumEyebrow}>
             How to read this report
           </p>
 
-          <h2 className="mt-2 text-xl font-black text-white">
+          <h2 className="mt-2 text-xl font-black text-slate-950">
             Read the scores in the right order.
           </h2>
         </div>
 
-        <p className="max-w-2xl text-sm leading-6 text-gray-400">
+        <p className="max-w-2xl text-sm leading-6 text-slate-600">
           SkillMint separates resume reality, proof trust, general role fit,
           and one-job matching so the dashboard does not collapse everything
           into one vague score.
         </p>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {guideItems.map((item) => (
           <article
             key={item.label}
-            className="rounded-2xl border border-white/10 bg-black/25 p-4"
+            className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold text-slate-950">
               {item.label}
             </p>
 
-            <p className="mt-2 text-xs leading-5 text-gray-500">
+            <p className="mt-2 text-xs leading-5 text-slate-500">
               {item.description}
             </p>
           </article>

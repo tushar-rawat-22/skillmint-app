@@ -4,6 +4,11 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 
+import {
+  premiumInput,
+  premiumPrimaryCta,
+  premiumSecondaryCta,
+} from "@/components/ui/premium";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
@@ -68,7 +73,7 @@ export default function ResetPasswordPage() {
     >
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-white/10 bg-black/28 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
       >
         <PasswordField
           id="new-password"
@@ -89,19 +94,19 @@ export default function ResetPasswordPage() {
         </div>
 
         {error && (
-          <p className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm leading-6 text-red-100">
+          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
             {error}
           </p>
         )}
 
         {message && (
-          <p className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm leading-6 text-green-100">
+          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
             {message}
           </p>
         )}
 
         {!configStatus.isConfigured && (
-          <p className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm leading-6 text-yellow-100">
+          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
             {configStatus.message}
           </p>
         )}
@@ -109,7 +114,7 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-5 w-full rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-950/30 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-900 disabled:text-gray-300"
+          className={`${premiumPrimaryCta} mt-5 w-full`}
         >
           {isSubmitting ? "Updating..." : "Update password"}
         </button>
@@ -118,14 +123,14 @@ export default function ResetPasswordPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/login"
-          className="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+          className={premiumSecondaryCta}
         >
           Log in
         </Link>
 
         <Link
           href="/dashboard"
-          className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-semibold text-green-100 transition hover:border-green-300 hover:text-white"
+          className={premiumSecondaryCta}
         >
           Continue to SkillMint
         </Link>
@@ -153,7 +158,7 @@ function PasswordField({
     <div>
       <label
         htmlFor={id}
-        className="text-sm font-semibold text-gray-200"
+        className="text-sm font-semibold text-slate-700"
       >
         {label}
       </label>
@@ -164,7 +169,7 @@ function PasswordField({
         autoComplete={autoComplete}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-black/45 px-4 py-3 text-sm text-gray-100 outline-none transition placeholder:text-gray-600 focus:border-emerald-400"
+        className={`mt-2 ${premiumInput}`}
         placeholder="Enter your new password"
       />
     </div>

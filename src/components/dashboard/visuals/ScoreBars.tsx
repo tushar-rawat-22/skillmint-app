@@ -1,3 +1,5 @@
+import { premiumCompactSurface } from "@/components/ui/premium";
+
 export type ScoreBarItem = {
   label: string;
   value: number;
@@ -17,12 +19,12 @@ export default function ScoreBars({
   items,
 }: ScoreBarsProps) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
+    <article className={premiumCompactSurface}>
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
         {title}
       </p>
 
-      <p className="mt-2 text-sm leading-6 text-neutral-400">
+      <p className="mt-2 text-sm leading-6 text-slate-600">
         {subtitle}
       </p>
 
@@ -38,7 +40,7 @@ export default function ScoreBars({
                     {item.label}
                   </p>
 
-                  <p className="mt-1 break-words text-xs leading-5 text-neutral-500">
+                  <p className="mt-1 break-words text-xs leading-5 text-slate-500">
                     {item.detail} · {getScoreBand(normalizedValue)}
                   </p>
                 </div>
@@ -48,7 +50,7 @@ export default function ScoreBars({
                 </p>
               </div>
 
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className={`h-full rounded-full ${getToneClassName(
                     item.tone,
@@ -66,18 +68,18 @@ export default function ScoreBars({
 
 function getToneClassName(tone: ScoreBarItem["tone"]): string {
   if (tone === "sky") {
-    return "bg-sky-400";
+    return "bg-sky-600";
   }
 
   if (tone === "amber") {
-    return "bg-amber-400";
+    return "bg-amber-500";
   }
 
   if (tone === "violet") {
-    return "bg-violet-400";
+    return "bg-slate-500";
   }
 
-  return "bg-emerald-400";
+  return "bg-emerald-700";
 }
 
 function clampScore(score: number): number {

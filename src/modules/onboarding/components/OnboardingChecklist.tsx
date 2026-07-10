@@ -8,6 +8,11 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import {
+  premiumEyebrow,
+  premiumSecondaryCta,
+  premiumSurface,
+} from "@/components/ui/premium";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
@@ -105,7 +110,7 @@ export default function OnboardingChecklist() {
           setHasOpenedCompletedChecklist(true);
           updateDismissed(false);
         }}
-        className="w-fit rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-emerald-400/50 hover:text-emerald-200"
+        className={premiumSecondaryCta}
       >
         Show setup checklist
       </button>
@@ -113,18 +118,18 @@ export default function OnboardingChecklist() {
   }
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.025))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <section className={premiumSurface}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-green-400">
+          <p className={premiumEyebrow}>
             Your SkillMint setup
           </p>
 
-          <h2 className="mt-4 text-2xl font-bold text-white">
+          <h2 className="mt-4 text-2xl font-bold text-slate-950">
             Start with the next useful step
           </h2>
 
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
             {getSetupMessage(
               activeStep,
               completedCount,
@@ -140,7 +145,7 @@ export default function OnboardingChecklist() {
             setHasOpenedCompletedChecklist(false);
             updateDismissed(true);
           }}
-          className="w-fit rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-white/25 hover:text-white"
+          className={premiumSecondaryCta}
         >
           Hide for now
         </button>
@@ -173,7 +178,7 @@ function OnboardingStepCard({
   return (
     <article className={getStepCardClassName(step.status)}>
       <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full border border-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-400">
+        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">
           {index}
         </span>
 
@@ -182,22 +187,22 @@ function OnboardingStepCard({
         </span>
       </div>
 
-      <h3 className="mt-4 text-base font-bold text-white">
+      <h3 className="mt-4 text-base font-bold text-slate-950">
         {step.title}
       </h3>
 
-      <p className="mt-3 text-sm leading-6 text-gray-400">
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         {step.description}
       </p>
 
       {isLocked ? (
-        <span className="mt-4 inline-flex rounded-lg border border-gray-800 px-3 py-2 text-sm font-semibold text-gray-600">
+        <span className="mt-4 inline-flex rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400">
           {step.cta}
         </span>
       ) : (
         <Link
           href={step.href}
-          className="mt-4 inline-flex rounded-lg border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-100 transition hover:border-green-500 hover:text-green-300"
+          className="mt-4 inline-flex rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
         >
           {step.cta}
         </Link>
@@ -231,14 +236,14 @@ function getStepCardClassName(status: OnboardingStep["status"]): string {
   const baseClassName = "min-w-0 rounded-2xl border p-4";
 
   if (status === "complete") {
-    return `${baseClassName} border-emerald-400/30 bg-emerald-400/10`;
+    return `${baseClassName} border-emerald-200 bg-emerald-50`;
   }
 
   if (status === "active") {
-    return `${baseClassName} border-sky-400/30 bg-sky-400/10`;
+    return `${baseClassName} border-sky-200 bg-sky-50`;
   }
 
-  return `${baseClassName} border-white/10 bg-black/25`;
+  return `${baseClassName} border-slate-200 bg-slate-50`;
 }
 
 function getStatusBadgeClassName(status: OnboardingStep["status"]): string {
@@ -246,14 +251,14 @@ function getStatusBadgeClassName(status: OnboardingStep["status"]): string {
     "rounded-full border px-2.5 py-1 text-xs font-semibold";
 
   if (status === "complete") {
-    return `${baseClassName} border-green-500/30 text-green-200`;
+    return `${baseClassName} border-emerald-200 bg-white text-emerald-800`;
   }
 
   if (status === "active") {
-    return `${baseClassName} border-blue-500/30 text-blue-100`;
+    return `${baseClassName} border-sky-200 bg-white text-sky-800`;
   }
 
-  return `${baseClassName} border-gray-700 text-gray-500`;
+  return `${baseClassName} border-slate-200 bg-white text-slate-500`;
 }
 
 function formatStatus(status: OnboardingStep["status"]): string {
