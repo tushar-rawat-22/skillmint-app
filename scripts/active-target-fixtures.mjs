@@ -75,18 +75,26 @@ const {
   buildActiveTargetEngineResult,
 } = require("../src/intelligence/target/activeTargetEngine.ts");
 const {
+  createActiveTargetResumeContext,
+} = require("../src/intelligence/target/activeTargetResumeContext.ts");
+const {
+  createManualActiveTarget,
   createActiveTargetFromLatestJd,
   createActiveTargetFromProfileFitRole,
   createActiveTargetFromUltimateGoal,
 } = require("../src/intelligence/target/activeTargetSelection.ts");
 const {
   ACTIVE_TARGET_STORAGE_KEY,
+  ACTIVE_TARGET_STORAGE_VERSION,
   clearActiveTarget,
   getActiveTarget,
   parseActiveTarget,
   readActiveTargetStorageSnapshot,
   setActiveTarget,
 } = require("../src/intelligence/target/activeTargetStorage.ts");
+const {
+  clearSkillMintWorkspace,
+} = require("../src/lib/storage/clearSkillMintWorkspace.ts");
 
 global.window = {
   localStorage: createMemoryStorage(),
@@ -146,6 +154,29 @@ const fixture = {
 };
 
 const evaluated = evaluateFixture(fixture);
+const resumeAContext = createActiveTargetResumeContext({
+  fileName: "resume-a.pdf",
+  fileType: "application/pdf",
+  fileSize: 1200,
+  extractedText: fixture.resumeText,
+  analyzedAt: "2026-07-11T00:00:00.000Z",
+  scoringVersion: "fixture-v1",
+  userProfile: fixture.profile,
+});
+const resumeBContext = createActiveTargetResumeContext({
+  fileName: "resume-b.pdf",
+  fileType: "application/pdf",
+  fileSize: 1800,
+  extractedText:
+    `${fixture.resumeText}\nProjects: Built Kubernetes deployment workflows and Linux monitoring automation.`,
+  analyzedAt: "2026-07-12T00:00:00.000Z",
+  scoringVersion: "fixture-v1",
+  userProfile: {
+    ...fixture.profile,
+    skills: [...fixture.profile.skills, "Kubernetes", "Linux"],
+    projectsScore: fixture.profile.projectsScore + 2,
+  },
+});
 const dockerJd = analyzeJobDescriptionMatch(
   fixture.profile,
   "We are hiring a Full Stack Intern to build React and Next.js interfaces, Node.js APIs, SQL data models, Dockerized services, CI/CD checks, testing workflows, and clear product documentation.",
@@ -161,6 +192,7 @@ const dockerTarget = createActiveTargetFromLatestJd({
   jdText:
     "React Next.js Node.js SQL Docker CI/CD testing product documentation.",
   result: dockerJd,
+  resumeContext: resumeAContext,
   targetRole: fixture.targetRole,
   careerField: fixture.careerField,
   now: "2026-07-11T00:00:00.000Z",
@@ -172,6 +204,7 @@ const kubernetesTarget = createActiveTargetFromLatestJd({
   jdText:
     "Node.js Kubernetes monitoring Linux automation testing runbooks.",
   result: kubernetesJd,
+  resumeContext: resumeAContext,
   targetRole: "Platform Engineer",
   careerField: fixture.careerField,
   now: "2026-07-11T00:00:00.000Z",
@@ -187,12 +220,18 @@ const ultimateTarget = createActiveTargetFromUltimateGoal({
   closestRole: evaluated.roles[0]?.role,
   now: "2026-07-11T00:00:00.000Z",
 });
+const manualTarget = createManualActiveTarget({
+  title: "Data Analyst",
+  careerField: fixture.careerField,
+  now: "2026-07-11T00:00:00.000Z",
+});
 
 const noTargetNoResume = buildActiveTargetEngineResult({
   hasResumeAnalysis: false,
 });
 const resumeNoTarget = buildActiveTargetEngineResult({
   hasResumeAnalysis: true,
+  resumeContext: resumeAContext,
   roleMatches: evaluated.roles,
   latestJobMatch: {
     title: "Full Stack Intern",
@@ -205,6 +244,7 @@ const resumeNoTarget = buildActiveTargetEngineResult({
 const jdTargetResult = buildActiveTargetEngineResult({
   activeTarget: dockerTarget,
   hasResumeAnalysis: true,
+  resumeContext: resumeAContext,
   careerIQ: evaluated.careerIQ,
   proof: evaluated.proof,
   roleMatches: evaluated.roles,
@@ -216,12 +256,19 @@ assertNoResumeNoTarget();
 assertResumeSuggestions();
 assertJdTargetContract();
 assertNonJdTargetsDoNotFakeJdScore();
+assertStaleJdMatchHandling();
 assertTargetDoesNotChangeCareerIq();
 assertTargetAwareMission();
 assertStorageBehavior();
+assertStorageHardening();
+assertAccountIsolation();
+assertClearWorkspaceIntegration();
 assertReplacingTargetChangesGap();
 assertRoadmapUsesActiveTargetJd();
+assertPathSelectionSemantics();
 assertOldLatestJdCanConvert();
+assertNoDuplicateMissionGeneration();
+assertDeterministicRepeatedOutput();
 assertNoUnsafeWording();
 assertDashboardNextBestLimit();
 
@@ -273,8 +320,53 @@ function assertJdTargetContract() {
 }
 
 function assertNonJdTargetsDoNotFakeJdScore() {
+  assert(ultimateTarget, "Ultimate goal target should be created.");
+  assert(manualTarget, "Manual custom goal target should be created.");
   assert(!profileTarget.jdMatch, "Profile-fit target must not fake JD Match.");
   assert(!ultimateTarget.jdMatch, "Ultimate goal target must not fake JD Match.");
+  assert(!manualTarget.jdMatch, "Manual target must not fake JD Match.");
+}
+
+function assertStaleJdMatchHandling() {
+  const staleResult = buildActiveTargetEngineResult({
+    activeTarget: dockerTarget,
+    hasResumeAnalysis: true,
+    resumeContext: resumeBContext,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+  });
+  const noContextTarget = createActiveTargetFromLatestJd({
+    title: "Legacy JD",
+    result: dockerJd,
+    now: "2026-07-11T00:00:00.000Z",
+  });
+  const noContextResult = buildActiveTargetEngineResult({
+    activeTarget: noContextTarget,
+    hasResumeAnalysis: true,
+    resumeContext: resumeAContext,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+  });
+
+  assert(
+    staleResult.jdMatchStatus === "stale",
+    "Resume A JD Match should become stale against Resume B.",
+  );
+  assert(
+    !staleResult.activeTarget?.jdMatch,
+    "Stale JD Match score must not be exposed as current.",
+  );
+  assert(
+    /Re-run.*JD match/i.test(staleResult.mainGap),
+    "Stale JD Match should ask the user to re-run for the current resume.",
+  );
+  assert(
+    noContextResult.jdMatchStatus === "stale" &&
+      !noContextResult.activeTarget?.jdMatch,
+    "JD target without resume context should not expose a current score.",
+  );
 }
 
 function assertTargetDoesNotChangeCareerIq() {
@@ -331,6 +423,176 @@ function assertStorageBehavior() {
   assert(parseActiveTarget(null) === null, "Empty Active Target should parse as null.");
 }
 
+function assertStorageHardening() {
+  const serializedTarget = JSON.stringify({
+    version: ACTIVE_TARGET_STORAGE_VERSION,
+    ownerUserId: null,
+    target: dockerTarget,
+  });
+  const invalidCases = [
+    "null",
+    "42",
+    JSON.stringify({
+      version: 999,
+      ownerUserId: null,
+      target: dockerTarget,
+    }),
+    JSON.stringify({
+      version: ACTIVE_TARGET_STORAGE_VERSION,
+      ownerUserId: null,
+      target: {
+        ...dockerTarget,
+        title: undefined,
+      },
+    }),
+    JSON.stringify({
+      version: ACTIVE_TARGET_STORAGE_VERSION,
+      ownerUserId: null,
+      target: {
+        ...dockerTarget,
+        title: "   ",
+      },
+    }),
+    JSON.stringify({
+      version: ACTIVE_TARGET_STORAGE_VERSION,
+      ownerUserId: null,
+      target: {
+        ...dockerTarget,
+        createdAt: "not-a-date",
+      },
+    }),
+  ];
+
+  assert(
+    parseActiveTarget(serializedTarget)?.id === dockerTarget.id,
+    "Versioned storage envelope should parse.",
+  );
+
+  for (const storedValue of invalidCases) {
+    assert(
+      parseActiveTarget(storedValue) === null,
+      `Invalid stored target should be ignored: ${storedValue.slice(0, 24)}`,
+    );
+  }
+
+  const longTarget = createManualActiveTarget({
+    title: "A".repeat(500),
+    now: "2026-07-11T00:00:00.000Z",
+  });
+  const scriptTarget = createManualActiveTarget({
+    title: "<script>alert('x')</script> Product Analyst",
+    now: "2026-07-11T00:00:00.000Z",
+  });
+  const nonJdWithMatch = parseActiveTarget(JSON.stringify({
+    version: ACTIVE_TARGET_STORAGE_VERSION,
+    ownerUserId: null,
+    target: {
+      ...profileTarget,
+      jdMatch: dockerTarget.jdMatch,
+      jdText: "Should be stripped",
+      jdHash: "fake",
+    },
+  }));
+
+  assert(longTarget?.title.length === 140, "Long manual target should be capped.");
+  assert(
+    scriptTarget?.title.includes("<script>"),
+    "HTML-like input should remain inert plain text.",
+  );
+  assert(
+    !nonJdWithMatch?.jdMatch && !nonJdWithMatch?.jdText,
+    "Non-JD target carrying JD Match data should be normalized safely.",
+  );
+  assert(
+    createManualActiveTarget({
+      title: "   ",
+      now: "2026-07-11T00:00:00.000Z",
+    }) === null,
+    "Whitespace-only manual target should be rejected.",
+  );
+
+  assertStorageUnavailableStates();
+}
+
+function assertStorageUnavailableStates() {
+  const originalWindow = global.window;
+
+  try {
+    global.window = {};
+    assert(getActiveTarget() === null, "Missing localStorage should read null.");
+    assert(!setActiveTarget(dockerTarget), "Missing localStorage should not save.");
+    assert(!clearActiveTarget(), "Missing localStorage should not clear.");
+
+    global.window = {
+      get localStorage() {
+        throw new Error("blocked");
+      },
+      dispatchEvent() {},
+    };
+    assert(getActiveTarget() === null, "Throwing localStorage getter should read null.");
+    assert(!setActiveTarget(dockerTarget), "Throwing localStorage getter should not save.");
+
+    global.window = {
+      localStorage: {
+        getItem() {
+          return null;
+        },
+        setItem() {
+          throw new Error("quota");
+        },
+        removeItem() {
+          throw new Error("blocked");
+        },
+      },
+      dispatchEvent() {},
+    };
+    assert(!setActiveTarget(dockerTarget), "Storage write failure should return false.");
+    assert(!clearActiveTarget(), "Storage remove failure should return false.");
+  } finally {
+    global.window = originalWindow;
+  }
+}
+
+function assertAccountIsolation() {
+  assert(
+    setActiveTarget(dockerTarget, { ownerUserId: "user-a" }),
+    "User-scoped Active Target should save.",
+  );
+  assert(
+    getActiveTarget({ currentUserId: "user-a" })?.id === dockerTarget.id,
+    "Owner should read their Active Target.",
+  );
+  assert(
+    getActiveTarget({ currentUserId: "user-b" }) === null,
+    "Different signed-in user must not see another user's Active Target.",
+  );
+  assert(
+    getActiveTarget({ currentUserId: null }) === null,
+    "Signed-out browser should not see a signed-in user's target.",
+  );
+  assert(
+    getActiveTarget({ currentUserId: undefined }) === null,
+    "Unknown auth state should not expose stored target.",
+  );
+  assert(
+    setActiveTarget(profileTarget, { ownerUserId: null }),
+    "Anonymous Active Target should save.",
+  );
+  assert(
+    getActiveTarget({ currentUserId: null })?.id === profileTarget.id,
+    "Anonymous browser target should remain available while signed out.",
+  );
+}
+
+function assertClearWorkspaceIntegration() {
+  setActiveTarget(dockerTarget);
+  clearSkillMintWorkspace();
+  assert(
+    getActiveTarget() === null,
+    "Clear workspace should remove browser-local Active Target.",
+  );
+}
+
 function assertReplacingTargetChangesGap() {
   assert(dockerTarget.id !== kubernetesTarget.id, "Replacing target should change id.");
   assert(
@@ -346,6 +608,7 @@ function assertRoadmapUsesActiveTargetJd() {
     proof: evaluated.proof,
     roleMatches: evaluated.roles,
     activeTarget: dockerTarget,
+    resumeContext: resumeAContext,
     latestJobMatch: {
       title: dockerTarget.title,
       companyName: dockerTarget.companyName,
@@ -386,6 +649,7 @@ function assertOldLatestJdCanConvert() {
   };
   const result = buildActiveTargetEngineResult({
     hasResumeAnalysis: true,
+    resumeContext: resumeAContext,
     latestJobMatch: oldLatestJd,
     roleMatches: evaluated.roles,
   });
@@ -393,6 +657,147 @@ function assertOldLatestJdCanConvert() {
   assert(
     result.suggestions.some((suggestion) => suggestion.source === "latest_jd"),
     "Old/latest JD data should offer conversion to Active Target.",
+  );
+}
+
+function assertPathSelectionSemantics() {
+  const latestJdPath = buildCareerPathEngineResult({
+    profile: fixture.profile,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+    activeTarget: dockerTarget,
+    resumeContext: resumeAContext,
+    latestJobMatch: {
+      title: dockerTarget.title,
+      companyName: dockerTarget.companyName,
+      result: dockerJd,
+    },
+    targetRole: fixture.targetRole,
+    careerField: fixture.careerField,
+    resumeText: fixture.resumeText,
+  });
+  const staleTarget = buildActiveTargetEngineResult({
+    activeTarget: dockerTarget,
+    hasResumeAnalysis: true,
+    resumeContext: resumeBContext,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+  }).activeTarget;
+  const staleLatestJdPath = buildCareerPathEngineResult({
+    profile: fixture.profile,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+    activeTarget: staleTarget,
+    resumeContext: resumeBContext,
+    latestJobMatch: null,
+    targetRole: fixture.targetRole,
+    careerField: fixture.careerField,
+    resumeText: fixture.resumeText,
+  });
+  const profileFitPath = buildCareerPathEngineResult({
+    profile: fixture.profile,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+    activeTarget: profileTarget,
+    resumeContext: resumeAContext,
+    targetRole: fixture.targetRole,
+    careerField: fixture.careerField,
+    resumeText: fixture.resumeText,
+  });
+  const ultimateGoalPath = buildCareerPathEngineResult({
+    profile: fixture.profile,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+    activeTarget: ultimateTarget,
+    resumeContext: resumeAContext,
+    targetRole: ultimateTarget.targetRole,
+    careerField: fixture.careerField,
+    resumeText: fixture.resumeText,
+  });
+  const manualPath = buildCareerPathEngineResult({
+    profile: fixture.profile,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+    activeTarget: manualTarget,
+    resumeContext: resumeAContext,
+    targetRole: manualTarget.targetRole,
+    careerField: fixture.careerField,
+    resumeText: fixture.resumeText,
+  });
+
+  assert(
+    latestJdPath.recommendedPathId === "path:latest-jd",
+    "Latest JD target should recommend Latest JD Path.",
+  );
+  assert(
+    staleLatestJdPath.recommendedPathId === "path:latest-jd",
+    "Stale JD target should still point to Latest JD Path for rerun.",
+  );
+  assert(
+    staleLatestJdPath.tracks.find((track) => track.id === "path:latest-jd")
+      ?.status === "locked",
+    "Stale JD path should be locked until rerun.",
+  );
+  assert(
+    profileFitPath.recommendedPathId === "path:profile-fit",
+    "Profile-fit target should recommend Closest Role Path.",
+  );
+  assert(
+    ultimateGoalPath.recommendedPathId === "path:ultimate-goal",
+    "Ultimate Goal target should recommend Ultimate Goal Path.",
+  );
+  assert(
+    manualPath.recommendedPathId === "path:ultimate-goal",
+    "Manual custom goal target should recommend Ultimate Goal Path.",
+  );
+}
+
+function assertNoDuplicateMissionGeneration() {
+  const missions = generateStructuredMissions({
+    profile: fixture.profile,
+    careerIQ: evaluated.careerIQ,
+    proof: evaluated.proof,
+    roleMatches: evaluated.roles,
+    activeTarget: dockerTarget,
+    resumeContext: resumeAContext,
+    latestJobMatch: {
+      title: dockerTarget.title,
+      companyName: dockerTarget.companyName,
+      result: dockerJd,
+    },
+    targetRole: fixture.targetRole,
+    careerField: fixture.careerField,
+    sourcePath: "latest_jd",
+  });
+  const missionIds = missions.map((mission) => mission.id);
+
+  assert(
+    new Set(missionIds).size === missionIds.length,
+    "Mission generation should not produce duplicate mission IDs.",
+  );
+}
+
+function assertDeterministicRepeatedOutput() {
+  const firstRun = getTargetAwareMissions().map((mission) => ({
+    id: mission.id,
+    title: mission.title,
+    priority: mission.priority,
+  }));
+  const secondRun = getTargetAwareMissions().map((mission) => ({
+    id: mission.id,
+    title: mission.title,
+    priority: mission.priority,
+  }));
+
+  assert(
+    JSON.stringify(firstRun) === JSON.stringify(secondRun),
+    "Repeated Active Target mission output should be deterministic.",
   );
 }
 
@@ -427,6 +832,7 @@ function assertDashboardNextBestLimit() {
     proof: evaluated.proof,
     roleMatches: evaluated.roles,
     activeTarget: dockerTarget,
+    resumeContext: resumeAContext,
     latestJobMatch: {
       title: dockerTarget.title,
       companyName: dockerTarget.companyName,
@@ -455,6 +861,7 @@ function getTargetAwareMissions() {
       result: dockerJd,
     },
     activeTarget: dockerTarget,
+    resumeContext: resumeAContext,
     targetRole: fixture.targetRole,
     careerField: fixture.careerField,
     sourcePath: "latest_jd",

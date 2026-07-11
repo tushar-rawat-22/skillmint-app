@@ -64,6 +64,10 @@ export default function ActiveTargetCard({ result }: ActiveTargetCardProps) {
               <span className={premiumBadge}>
                 JD Match: {Math.round(target.jdMatch.score)}/100
               </span>
+            ) : result.jdMatchStatus === "stale" ? (
+              <span className={premiumBadge}>
+                JD Match stale
+              </span>
             ) : (
               <span className={premiumBadge}>
                 No JD Match yet
@@ -79,7 +83,11 @@ export default function ActiveTargetCard({ result }: ActiveTargetCardProps) {
             {result.mainGap}
           </p>
 
-          {!target.jdMatch && (
+          {result.jdMatchStatus === "stale" ? (
+            <p className="mt-2 text-sm leading-6 text-amber-800">
+              Re-run this JD match for the current resume.
+            </p>
+          ) : !target.jdMatch && (
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Paste a JD for target-specific matching.
             </p>

@@ -8,8 +8,14 @@ import type {
 import type {
   ActiveTarget,
   ActiveTargetEngineResult,
+  ActiveTargetJdMatchStatus,
+  ActiveTargetResumeContext,
   ActiveTargetSuggestion,
 } from "./activeTargetContract";
+import {
+  getStaleJdMatchReason,
+  isJdMatchCurrentForResume,
+} from "./activeTargetResumeContext";
 import {
   createActiveTargetFromLatestJd,
   createActiveTargetFromProfileFitRole,
@@ -28,6 +34,7 @@ export type ActiveTargetLatestJdInput = {
 export type ActiveTargetEngineInput = {
   activeTarget?: ActiveTarget | null;
   hasResumeAnalysis: boolean;
+  resumeContext?: ActiveTargetResumeContext | null;
   careerIQ?: CareerIQResult | null;
   proof?: ProofScoreResult | null;
   roleMatches?: RoleMatchResult[];
@@ -42,16 +49,25 @@ export function buildActiveTargetEngineResult(
   const suggestions = input.hasResumeAnalysis
     ? buildActiveTargetSuggestions(input)
     : [];
+  const jdMatchStatus = getJdMatchStatus(input.activeTarget, input);
+  const staleJdMatchReason = getStaleJdMatchReason(
+    input.activeTarget?.jdMatch,
+    input.resumeContext,
+  );
   const activeTarget = input.activeTarget
-    ? decorateActiveTarget(input.activeTarget, input.hasResumeAnalysis)
+    ? decorateActiveTarget(
+        input.activeTarget,
+        input.hasResumeAnalysis,
+        jdMatchStatus,
+      )
     : null;
   const status = activeTarget?.status ??
     (input.hasResumeAnalysis ? "none" : "none");
-  const mainGap = activeTarget
-    ? getTargetMainGap(activeTarget, input)
+  const mainGap = input.activeTarget
+    ? getTargetMainGap(input.activeTarget, input)
     : getFallbackMainGap(input);
-  const nextBestMove = activeTarget
-    ? getTargetNextBestMove(activeTarget, input)
+  const nextBestMove = input.activeTarget
+    ? getTargetNextBestMove(input.activeTarget, input)
     : getFallbackNextBestMove(input);
 
   return {
@@ -66,20 +82,24 @@ export function buildActiveTargetEngineResult(
     suggestions,
     primarySuggestion: suggestions.find((suggestion) => !suggestion.disabled),
     targetSummary: activeTarget
-      ? getTargetSummary(activeTarget)
+      ? getTargetSummary(activeTarget, jdMatchStatus)
       : "No Active Target yet. Set one target so SkillMint can focus missions and roadmap.",
     mainGap,
     nextBestMove,
     recommendedPathSource: getRecommendedPathSourceForTarget(activeTarget),
+    jdMatchStatus,
+    staleJdMatchReason,
   };
 }
 
 function decorateActiveTarget(
   target: ActiveTarget,
   hasResumeAnalysis: boolean,
+  jdMatchStatus: ActiveTargetJdMatchStatus,
 ): ActiveTarget {
   return {
     ...target,
+    jdMatch: jdMatchStatus === "current" ? target.jdMatch : undefined,
     status: hasResumeAnalysis ? "active" : "needs_resume_analysis",
   };
 }
@@ -96,6 +116,7 @@ function buildActiveTargetSuggestions(
       roleTitle: input.latestJobMatch.roleTitle,
       jdText: input.latestJobMatch.jobDescription,
       result: input.latestJobMatch.result,
+      resumeContext: input.resumeContext,
       targetRole: input.targetRole,
       careerField: input.careerField,
     });
@@ -138,22 +159,31 @@ function buildActiveTargetSuggestions(
       closestRole: topRole?.role,
     });
 
-    suggestions.push({
-      id: target.id,
-      source: "ultimate_goal",
-      title: target.title,
-      targetRole: target.targetRole,
-      reason:
-        "Use your setup goal when you want missions to push toward a farther role.",
-    });
+    if (target) {
+      suggestions.push({
+        id: target.id,
+        source: "ultimate_goal",
+        title: target.title,
+        targetRole: target.targetRole,
+        reason:
+          "Use your setup goal when you want missions to push toward a farther role.",
+      });
+    }
   }
 
   return suggestions;
 }
 
-function getTargetSummary(target: ActiveTarget): string {
+function getTargetSummary(
+  target: ActiveTarget,
+  jdMatchStatus: ActiveTargetJdMatchStatus,
+): string {
   if (target.status === "needs_resume_analysis") {
     return "Active Target is saved in this browser. Upload or restore an active resume report to focus gaps.";
+  }
+
+  if (target.source === "latest_jd" && jdMatchStatus === "stale") {
+    return "This Active Target JD is saved, but its JD Match score belongs to another or unknown resume context. Re-run this JD match for the current resume.";
   }
 
   if (target.source === "latest_jd") {
@@ -181,6 +211,10 @@ function getTargetMainGap(
     return "No active resume analysis is loaded in this browser.";
   }
 
+  if (isStaleLatestJdTarget(target, input)) {
+    return "Re-run this JD match for the current resume before trusting target-specific gaps.";
+  }
+
   if (target.source === "latest_jd" && target.jdMatch) {
     return getJdMainGap(target.jdMatch);
   }
@@ -206,6 +240,10 @@ function getTargetNextBestMove(
 ): string {
   if (target.status === "needs_resume_analysis") {
     return "Upload or restore your active resume report before trusting target-specific gaps.";
+  }
+
+  if (isStaleLatestJdTarget(target, input)) {
+    return "Open ATS Match and analyze this JD against the active resume.";
   }
 
   if (target.source === "latest_jd" && target.jdMatch) {
@@ -264,4 +302,29 @@ function getFallbackNextBestMove(input: ActiveTargetEngineInput): string {
   }
 
   return "Build or show real proof before changing your resume.";
+}
+
+function getJdMatchStatus(
+  target: ActiveTarget | null | undefined,
+  input: ActiveTargetEngineInput,
+): ActiveTargetJdMatchStatus {
+  if (!target || target.source !== "latest_jd") {
+    return "not_applicable";
+  }
+
+  if (!target.jdMatch) {
+    return "missing";
+  }
+
+  return isJdMatchCurrentForResume(target.jdMatch, input.resumeContext)
+    ? "current"
+    : "stale";
+}
+
+function isStaleLatestJdTarget(
+  target: ActiveTarget,
+  input: ActiveTargetEngineInput,
+): boolean {
+  return target.source === "latest_jd" &&
+    getJdMatchStatus(target, input) === "stale";
 }

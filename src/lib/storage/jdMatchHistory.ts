@@ -1,6 +1,7 @@
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import type { ResumeImprovementPlan } from "@/intelligence/core/resumeImprovement";
 import type { ResumeRewritePlan } from "@/intelligence/core/resumeRewrite";
+import type { ActiveTargetResumeContext } from "@/intelligence/target";
 
 export interface SavedJobMatch {
   id: string;
@@ -13,6 +14,7 @@ export interface SavedJobMatch {
   roadmap?: unknown;
   databaseId?: string;
   syncStatus?: "synced" | "local-only";
+  resumeContext?: ActiveTargetResumeContext;
   analyzedAt: string;
 }
 
@@ -185,7 +187,26 @@ function isSavedJobMatch(value: unknown): value is SavedJobMatch {
     isNullableResumeRewritePlan(value.rewritePlan) &&
     isOptionalString(value.databaseId) &&
     isOptionalSyncStatus(value.syncStatus) &&
+    (
+      value.resumeContext === undefined ||
+      isActiveTargetResumeContext(value.resumeContext)
+    ) &&
     isString(value.analyzedAt)
+  );
+}
+
+function isActiveTargetResumeContext(
+  value: unknown,
+): value is ActiveTargetResumeContext {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.fingerprint) &&
+    isOptionalString(value.analyzedAt) &&
+    isOptionalString(value.fileName) &&
+    isOptionalString(value.scoringVersion)
   );
 }
 

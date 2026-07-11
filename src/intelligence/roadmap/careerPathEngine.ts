@@ -45,8 +45,7 @@ export function buildCareerPathEngineResult(
     ultimateGoalTrack,
   ];
   const recommendedPathId =
-    tracks.find((track) => track.recommended && track.status === "available")
-      ?.id ??
+    tracks.find((track) => track.recommended)?.id ??
     tracks.find((track) => track.status === "available")?.id ??
     closestRoleTrack.id;
   const selectedPathId = tracks.some((track) =>

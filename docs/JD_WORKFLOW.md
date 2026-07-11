@@ -34,11 +34,14 @@ If no active resume report exists, the page should not show fake JD readiness. I
 
 If an old/latest JD match exists but no Active Target exists, the page can offer conversion to Active Target without deleting the old JD data.
 
+If the active resume changes after a JD Match is calculated, the old match must not be displayed as a current score. The ATS page should ask the user to re-run the JD match for the current active resume.
+
 ## JD Target Rules
 
 JD-based Active Targets can include:
 
 - JD Match score
+- resume-context fingerprint for freshness checks
 - verdict
 - matched skills
 - missing skills
@@ -48,6 +51,8 @@ JD-based Active Targets can include:
 - recommendations
 
 Non-JD targets must not receive fake JD scores. They should show that JD Match is not available yet.
+
+JD targets without valid resume context are treated as stale until the user re-runs the match.
 
 ## Recommendations
 
@@ -79,5 +84,6 @@ Block 4 does not add:
 - cover letter generation
 - resume version generation
 - backend target persistence
+- account-level Active Target sync
 - Supabase migration
 - payment gates

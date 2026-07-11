@@ -1,6 +1,6 @@
 # SkillMint Beta v1 Build Roadmap
 
-**Status:** Locked roadmap for Beta v1 completion; Block 4 is the current block
+**Status:** Locked roadmap for Beta v1 completion; Block 4 is the current block under final release audit
 **Timeline:** Realistic 5-6 weeks; conservative 7-8 weeks  
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
 
@@ -66,11 +66,13 @@ Status: Current block.
 
 Purpose: Add one browser-local Active Target focus layer so users can focus ATS/JD workflow, dashboard target summary, mission priority, and roadmap emphasis without changing scores.
 
-Block 4 scope: Active Target contract, local storage adapter, Active Target engine, JD Match to Active Target flow, latest JD conversion, dashboard Active Target card, target-aware mission priority, roadmap recommended path behavior, clear/replace target, copy target summary, fixtures, and docs.
+Block 4 scope: Active Target contract, local storage adapter, Active Target engine, resume-context freshness checks for JD Match snapshots, account-safe browser-local target isolation, JD Match to Active Target flow, latest JD conversion, dashboard Active Target card, target-aware mission priority, roadmap recommended path behavior, clear/replace target, copy target summary, fixtures, and docs.
 
 Out of scope: score boosts, scoring math changes, fake JD scores for non-JD targets, saved JD history, multi-job tracker, job board, job scraping, auto apply, cover letters, resume version generation, backend target persistence, Supabase migration, payment gates, or employer-specific guarantees.
 
 Dependencies: Blocks 1-3 must remain intact.
+
+Block 4 is complete only after the final independent release audit passes. Block 5 is next, but Data Controls + Trust Center is not implemented in Block 4.
 
 ### 5. Data Controls + Trust Center
 
@@ -122,6 +124,8 @@ Dependencies: Blocks 1-6 must remain intact.
 - Missing proof means unverified, not false.
 - Profile-fit roles are general resume-fit suggestions.
 - Latest JD Match is one specific pasted JD.
+- Latest JD Match is tied to the resume-analysis context that produced it.
+- Stale JD Match results must be recalculated before showing a current score.
 - Active Target focuses next actions and does not change core scores.
 - Saved analysis is account history.
 - Active report powers this browser dashboard.

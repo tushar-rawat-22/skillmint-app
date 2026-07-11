@@ -11,7 +11,10 @@ import {
   type MissionEvidenceContext,
 } from "@/intelligence/missions/missionEvidence";
 import type { ProofScoreResult } from "@/intelligence/proof";
-import type { ActiveTarget } from "@/intelligence/target";
+import type {
+  ActiveTarget,
+  ActiveTargetResumeContext,
+} from "@/intelligence/target";
 import type { UserProfile } from "@/intelligence/types/profile";
 import type {
   CareerIQResult,
@@ -32,6 +35,7 @@ export type RoadmapTrackGeneratorInput = {
   roleMatches: RoleMatchResult[];
   latestJobMatch?: LatestJobMissionContext | null;
   activeTarget?: ActiveTarget | null;
+  resumeContext?: ActiveTargetResumeContext | null;
   targetRole?: string | null;
   careerField?: string | null;
   missionStatusMap?: MissionStatusMap;
@@ -90,19 +94,27 @@ export function buildLatestJdTrack(
   const latestJobMatch = input.latestJobMatch;
 
   if (!latestJobMatch) {
+    const hasActiveTargetJd = input.activeTarget?.source === "latest_jd";
+
     return buildLockedTrack({
       id: "path:latest-jd",
       source: "latest_jd",
       title: "Latest JD Path",
       label: "Latest JD Path",
       status: "locked",
-      summary:
-        "Paste a job description in ATS Match to unlock this path.",
+      summary: hasActiveTargetJd
+        ? "Re-run this Active Target JD match for the current resume to unlock this path."
+        : "Paste a job description in ATS Match to unlock this path.",
       currentReality:
-        "No Latest JD Match is available. This path is intentionally locked until one pasted JD exists.",
-      mainGap: "No pasted JD has been analyzed yet.",
-      lockedReason:
-        "Paste a job description in ATS Match to unlock this path.",
+        hasActiveTargetJd
+          ? "The Active Target JD is saved, but its match score is stale for the current resume."
+          : "No Latest JD Match is available. This path is intentionally locked until one pasted JD exists.",
+      mainGap: hasActiveTargetJd
+        ? "Re-run the JD match before trusting target-specific gaps."
+        : "No pasted JD has been analyzed yet.",
+      lockedReason: hasActiveTargetJd
+        ? "Re-run this JD match for the current resume."
+        : "Paste a job description in ATS Match to unlock this path.",
       recommended,
     });
   }
@@ -196,6 +208,7 @@ function prepareTrackMissions(
     roleMatches: input.roleMatches,
     latestJobMatch: input.latestJobMatch,
     activeTarget: input.activeTarget,
+    resumeContext: input.resumeContext,
     targetRole: input.targetRole,
     careerField: input.careerField,
     sourcePath,

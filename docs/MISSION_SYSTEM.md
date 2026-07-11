@@ -104,6 +104,7 @@ Rules:
 
 - Target-aware missions are prioritized, not score-boosted.
 - Target-aware JD missions are generated only for `latest_jd` Active Targets.
+- Target-aware JD missions require the JD Match resume context to match the current active resume.
 - Profile-fit, ultimate goal, and manual targets must not receive fake JD gap missions.
 - Evidence detected still comes only from resume re-analysis/evidence detection logic.
 - Marked done remains self-progress only.

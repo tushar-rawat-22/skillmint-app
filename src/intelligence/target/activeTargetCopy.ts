@@ -8,11 +8,17 @@ export function buildActiveTargetCopyText(
   target: ActiveTarget,
   engineResult?: ActiveTargetEngineResult | null,
 ): string {
+  const jdMatchText = engineResult?.jdMatchStatus === "stale"
+    ? "Re-run for the current resume"
+    : target.jdMatch
+      ? `${Math.round(target.jdMatch.score)}/100`
+      : "Not available yet";
+
   return [
     "My SkillMint Active Target:",
     `Target: ${formatTargetTitle(target)}`,
     `Source: ${getActiveTargetSourceLabel(target.source)}`,
-    `JD Match: ${target.jdMatch ? `${Math.round(target.jdMatch.score)}/100` : "Not available yet"}`,
+    `JD Match: ${jdMatchText}`,
     `Main gap: ${engineResult?.mainGap ?? target.mainGap}`,
     `Next move: ${engineResult?.nextBestMove ?? target.nextBestMove}`,
     "Active Target focuses next actions. It does not change core scores.",

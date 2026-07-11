@@ -29,14 +29,17 @@ import {
   buildActiveTargetCopyText,
   buildActiveTargetEngineResult,
   clearActiveTarget,
+  createActiveTargetResumeContextFromStoredAnalysis,
   createActiveTargetFromLatestJd,
   createActiveTargetFromProfileFitRole,
   createActiveTargetFromUltimateGoal,
   getActiveTargetSourceLabel,
+  isResumeContextCurrent,
   parseActiveTarget,
   readActiveTargetStorageSnapshot,
   setActiveTarget,
   type ActiveTargetEngineResult,
+  type ActiveTargetResumeContext,
   type ActiveTargetSuggestion,
 } from "@/intelligence/target";
 import {
@@ -94,6 +97,7 @@ type ActiveJobMatch = {
   improvementPlan: ResumeImprovementPlan | null;
   rewritePlan: ResumeRewritePlan | null;
   roadmap?: unknown;
+  resumeContext?: ActiveTargetResumeContext;
   analyzedAt: string;
 };
 
@@ -119,21 +123,28 @@ export default function ATSMatcherPage() {
     () => getStoredUserProfile(storedAnalysis),
     [storedAnalysis],
   );
+  const {
+    user,
+    isConfigured,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const userId = user?.id ?? null;
+  const resumeContext = useMemo(
+    () => createActiveTargetResumeContextFromStoredAnalysis(storedAnalysis),
+    [storedAnalysis],
+  );
   const activeTarget = useMemo(
-    () => parseActiveTarget(storedActiveTarget),
-    [storedActiveTarget],
+    () => parseActiveTarget(storedActiveTarget, {
+      currentUserId,
+    }),
+    [currentUserId, storedActiveTarget],
   );
   const roleMatches = useMemo(
     () => userProfile ? calculateRoleMatches(userProfile) : [],
     [userProfile],
   );
   const targetRoleSetup = getTargetRoleSetup();
-  const {
-    user,
-    isConfigured,
-    isLoading: isAuthLoading,
-  } = useAuthSession();
-  const userId = user?.id ?? null;
   const [jobDescription, setJobDescription] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -155,6 +166,7 @@ export default function ATSMatcherPage() {
       buildActiveTargetEngineResult({
         activeTarget,
         hasResumeAnalysis: Boolean(userProfile),
+        resumeContext,
         roleMatches,
         latestJobMatch: activeMatch
           ? {
@@ -172,6 +184,7 @@ export default function ATSMatcherPage() {
       activeMatch,
       activeTarget,
       roleMatches,
+      resumeContext,
       targetRoleSetup,
       userProfile,
     ],
@@ -180,15 +193,25 @@ export default function ATSMatcherPage() {
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       const savedMatches = getSavedJobMatches();
+      const latestStoredMatch = readLatestJobMatch() ?? getLatestJobMatch();
+      const currentLatestMatch = getCurrentJobMatchForResume(
+        latestStoredMatch,
+        resumeContext,
+      );
 
       setSavedJobMatches(savedMatches);
-      setActiveMatch(readLatestJobMatch() ?? getLatestJobMatch());
+      setActiveMatch(currentLatestMatch);
       setSyncStatus(readJobMatchSyncStatus());
+      if (latestStoredMatch && !currentLatestMatch) {
+        setHistorySyncMessage(
+          "Latest JD Match was calculated for another or unknown resume. Re-run it for the current resume.",
+        );
+      }
       setHasLoadedLocalHistory(true);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [resumeContext]);
 
   useEffect(() => {
     const textarea = jobDescriptionTextareaRef.current;
@@ -384,6 +407,7 @@ export default function ATSMatcherPage() {
       result,
       improvementPlan: plan,
       rewritePlan: rewrite,
+      resumeContext: resumeContext ?? undefined,
       analyzedAt,
     };
 
@@ -396,6 +420,18 @@ export default function ATSMatcherPage() {
   function handleViewSavedMatch(match: SavedJobMatch) {
     setError("");
     setDeleteSyncMessage("");
+
+    if (!getCurrentJobMatchForResume(match, resumeContext)) {
+      setActiveMatch(null);
+      setJobTitle(match.jobTitle);
+      setCompanyName(match.companyName);
+      setJobDescription(match.jobDescription);
+      setHistorySyncMessage(
+        "This saved JD Match belongs to another or unknown resume. Re-run the match for the current active resume.",
+      );
+      return;
+    }
+
     setActiveMatch(match);
     persistLatestJobMatch(match);
   }
@@ -444,17 +480,27 @@ export default function ATSMatcherPage() {
       return;
     }
 
+    if (!resumeContext) {
+      setTargetActionMessage(
+        "Upload or restore an active resume report before setting a JD Active Target.",
+      );
+      return;
+    }
+
     const target = createActiveTargetFromLatestJd({
       title: activeMatch.jobTitle,
       companyName: activeMatch.companyName,
       roleTitle: activeMatch.jobTitle,
       jdText: activeMatch.jobDescription,
       result: activeMatch.result,
+      resumeContext,
       targetRole: targetRoleSetup?.targetRole,
       careerField: targetRoleSetup?.careerField,
     });
 
-    setActiveTarget(target);
+    setActiveTarget(target, {
+      ownerUserId: currentUserId ?? null,
+    });
     setTargetActionMessage(
       activeTarget
         ? "Active Target replaced. Saved in this browser during beta."
@@ -476,6 +522,9 @@ export default function ATSMatcherPage() {
           roleMatch: roleMatches[0],
           careerField: targetRoleSetup?.careerField,
         }),
+        {
+          ownerUserId: currentUserId ?? null,
+        },
       );
       setTargetActionMessage(
         "Closest Role Path set as Active Target. Saved in this browser during beta.",
@@ -484,13 +533,20 @@ export default function ATSMatcherPage() {
     }
 
     if (suggestion.source === "ultimate_goal" && targetRoleSetup?.targetRole) {
-      setActiveTarget(
-        createActiveTargetFromUltimateGoal({
-          targetRole: targetRoleSetup.targetRole,
-          careerField: targetRoleSetup.careerField,
-          closestRole: roleMatches[0]?.role,
-        }),
-      );
+      const target = createActiveTargetFromUltimateGoal({
+        targetRole: targetRoleSetup.targetRole,
+        careerField: targetRoleSetup.careerField,
+        closestRole: roleMatches[0]?.role,
+      });
+
+      if (!target) {
+        setTargetActionMessage("Set a target role before using Ultimate Goal.");
+        return;
+      }
+
+      setActiveTarget(target, {
+        ownerUserId: currentUserId ?? null,
+      });
       setTargetActionMessage(
         "Ultimate Goal set as Active Target. Saved in this browser during beta.",
       );
@@ -926,9 +982,7 @@ function ActiveTargetWorkflowPanel({
 
         <TargetSignal
           label="JD Match"
-          value={target?.jdMatch
-            ? `${Math.round(target.jdMatch.score)}/100`
-            : "Not available yet"}
+          value={getTargetJdMatchSignal(result)}
         />
       </div>
 
@@ -984,12 +1038,27 @@ function ActiveTargetWorkflowPanel({
       </p>
 
       {actionMessage && (
-        <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
+        <p
+          role="status"
+          className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900"
+        >
           {actionMessage}
         </p>
       )}
     </section>
   );
+}
+
+function getTargetJdMatchSignal(result: ActiveTargetEngineResult): string {
+  if (result.jdMatchStatus === "current" && result.activeTarget?.jdMatch) {
+    return `${Math.round(result.activeTarget.jdMatch.score)}/100`;
+  }
+
+  if (result.jdMatchStatus === "stale") {
+    return "Re-run for current resume";
+  }
+
+  return "Not available yet";
 }
 
 type TargetSignalProps = {
@@ -1821,6 +1890,9 @@ function readLatestJobMatch(): ActiveJobMatch | null {
         ? parsedValue.rewritePlan
         : null,
       roadmap: parsedValue.roadmap,
+      resumeContext: isActiveTargetResumeContext(parsedValue.resumeContext)
+        ? parsedValue.resumeContext
+        : undefined,
       analyzedAt: isString(parsedValue.analyzedAt)
         ? parsedValue.analyzedAt
         : "",
@@ -1851,6 +1923,7 @@ function persistLatestJobMatch(match: ActiveJobMatch) {
         roadmap: match.roadmap,
         databaseId: match.databaseId,
         syncStatus: match.syncStatus,
+        resumeContext: match.resumeContext,
         analyzedAt: match.analyzedAt,
       }),
     );
@@ -1942,6 +2015,19 @@ function mapPersistentJobMatchToSavedMatch(
     syncStatus: "synced",
     analyzedAt: jobMatch.createdAt || new Date().toISOString(),
   };
+}
+
+function getCurrentJobMatchForResume(
+  match: ActiveJobMatch | SavedJobMatch | null,
+  currentResumeContext: ActiveTargetResumeContext | null,
+): ActiveJobMatch | null {
+  if (!match) {
+    return null;
+  }
+
+  return isResumeContextCurrent(match.resumeContext, currentResumeContext)
+    ? match
+    : null;
 }
 
 function getPersistedJobMatchId(
@@ -2180,6 +2266,21 @@ function isJobMatchSyncStatus(
     isString(value.message) &&
     (value.syncedAt === undefined || isString(value.syncedAt)) &&
     (value.databaseId === undefined || isString(value.databaseId))
+  );
+}
+
+function isActiveTargetResumeContext(
+  value: unknown,
+): value is ActiveTargetResumeContext {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.fingerprint) &&
+    (value.analyzedAt === undefined || isString(value.analyzedAt)) &&
+    (value.fileName === undefined || isString(value.fileName)) &&
+    (value.scoringVersion === undefined || isString(value.scoringVersion))
   );
 }
 

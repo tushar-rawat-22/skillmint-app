@@ -43,6 +43,7 @@ Tasks should only be added if they support an approved product objective.
 - [ ] Add backend mission persistence only after trust/data-control decisions are ready.
 - [ ] Add mission completion analytics only after Beta v1 Complete and privacy review.
 - [x] Add browser-local Active Target workflow in Block 4 without confusing Profile-fit roles with Latest JD Match.
+- [x] Add stale JD Match safeguards so stored JD scores are tied to their resume-analysis context.
 - [ ] Add saved JD history only after the single Active Target workflow is validated.
 - [ ] Add account-level Active Target persistence only after Data Controls + Trust Center decisions are ready.
 

@@ -1,6 +1,10 @@
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import type { ProofScoreResult } from "@/intelligence/proof";
-import type { ActiveTarget } from "@/intelligence/target";
+import {
+  isJdMatchCurrentForResume,
+  type ActiveTarget,
+  type ActiveTargetResumeContext,
+} from "@/intelligence/target";
 import type { UserProfile } from "@/intelligence/types/profile";
 import type {
   CareerIQResult,
@@ -27,6 +31,7 @@ export type MissionGeneratorInput = {
   roleMatches: RoleMatchResult[];
   latestJobMatch?: LatestJobMissionContext | null;
   activeTarget?: ActiveTarget | null;
+  resumeContext?: ActiveTargetResumeContext | null;
   targetRole?: string | null;
   careerField?: string | null;
   sourcePath?: MissionSourcePath;
@@ -363,11 +368,13 @@ function getLatestJdMissions({
 
 function getActiveTargetMissions({
   activeTarget,
+  resumeContext,
   sourcePath,
 }: MissionGeneratorInput): Mission[] {
   if (
     !activeTarget?.jdMatch ||
     activeTarget.source !== "latest_jd" ||
+    !isJdMatchCurrentForResume(activeTarget.jdMatch, resumeContext) ||
     sourcePath === "ultimate_goal" ||
     sourcePath === "profile_fit"
   ) {

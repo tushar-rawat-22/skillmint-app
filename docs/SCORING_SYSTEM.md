@@ -302,13 +302,15 @@ Active Target must never directly change:
 
 Only `latest_jd` Active Targets can include a JD Match. Profile-fit, ultimate goal, and manual targets must not receive fake JD scores.
 
+JD Match scores are valid only for the resume-analysis context that produced them. If the active resume changes, the stored JD Match snapshot is stale and must be recalculated before showing a current numeric score. Staleness never changes Career IQ, Proof Confidence, Profile-fit role score, ATS Readiness, Recruiter Confidence, or mission status.
+
 Active Target fixture checks live in:
 
 ```text
 scripts/active-target-fixtures.mjs
 ```
 
-These fixtures protect no-score-change behavior, JD-only match data, storage safety, roadmap recommendation behavior, and target-aware mission wording.
+These fixtures protect no-score-change behavior, JD-only match data, stale JD handling, account/browser isolation, storage safety, roadmap recommendation behavior, and target-aware mission wording.
 
 ## What Intentionally Did Not Change
 

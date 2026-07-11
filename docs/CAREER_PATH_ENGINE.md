@@ -68,10 +68,13 @@ Active Target can change which path is recommended:
 
 - `latest_jd` Active Target recommends Latest JD Path.
 - `profile_fit` Active Target recommends Closest Role Path.
-- `ultimate_goal` or `manual` Active Target recommends Ultimate Goal Path.
+- `ultimate_goal` Active Target recommends Ultimate Goal Path.
+- `manual` Active Target means a custom goal-path target in Block 4 and recommends Ultimate Goal Path.
 - If no Active Target exists, the Closest Role Path remains the default recommendation when available.
 
 This is path emphasis only. It does not boost Career IQ, Proof Confidence, Profile-fit role score, Recruiter Confidence, ATS Readiness, or Latest JD Match.
+
+If an Active Target JD Match is stale for the current active resume, Latest JD Path stays recommended but locked until the user re-runs the JD match. The stale numeric score must not be used as current roadmap input.
 
 ## Trust Rules
 
@@ -79,6 +82,7 @@ This is path emphasis only. It does not boost Career IQ, Proof Confidence, Profi
 - Proof Confidence is based on evidence candidates, not external verification.
 - Profile-fit roles are general resume-fit suggestions.
 - Latest JD Match is one pasted JD only.
+- Latest JD Match is tied to the resume-analysis context that produced it.
 - Active Target focuses next actions. It does not change your core scores.
 - Mission status is not proof verification.
 - Marked done never changes scores.

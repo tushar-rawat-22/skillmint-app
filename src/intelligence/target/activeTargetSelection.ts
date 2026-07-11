@@ -5,8 +5,15 @@ import type {
   ActiveTarget,
   ActiveTargetJdMatch,
   ActiveTargetRecommendedPathSource,
+  ActiveTargetResumeContext,
   ActiveTargetSource,
 } from "./activeTargetContract";
+
+const MAX_TITLE_LENGTH = 140;
+const MAX_SHORT_TEXT_LENGTH = 160;
+const MAX_GAP_LENGTH = 320;
+const MAX_JD_TEXT_LENGTH = 12000;
+const MAX_MATCH_ARRAY_ITEMS = 20;
 
 type LatestJdTargetInput = {
   title?: string;
@@ -15,6 +22,7 @@ type LatestJdTargetInput = {
   location?: string;
   jdText?: string;
   result: JobDescriptionMatchResult;
+  resumeContext?: ActiveTargetResumeContext | null;
   targetRole?: string | null;
   careerField?: string | null;
   now?: string;
@@ -43,7 +51,7 @@ type ManualTargetInput = {
 export function createActiveTargetFromLatestJd(
   input: LatestJdTargetInput,
 ): ActiveTarget {
-  const createdAt = input.now ?? new Date().toISOString();
+  const createdAt = normalizeTimestamp(input.now);
   const title = getTargetTitle(input.title, input.roleTitle, "Latest pasted JD");
   const jdHash = stableHash([
     input.jdText ?? "",
@@ -51,21 +59,21 @@ export function createActiveTargetFromLatestJd(
     input.companyName ?? "",
     input.roleTitle ?? "",
   ].join("|"));
-  const jdMatch = mapJdMatch(input.result);
+  const jdMatch = mapJdMatch(input.result, input.resumeContext);
 
   return {
     id: `active-target:latest-jd:${jdHash}`,
     source: "latest_jd",
     status: "active",
     title,
-    companyName: normalizeOptionalString(input.companyName),
-    roleTitle: normalizeOptionalString(input.roleTitle) ?? title,
-    location: normalizeOptionalString(input.location),
-    jdText: normalizeOptionalString(input.jdText),
+    companyName: normalizeOptionalString(input.companyName, MAX_SHORT_TEXT_LENGTH),
+    roleTitle: normalizeOptionalString(input.roleTitle, MAX_TITLE_LENGTH) ?? title,
+    location: normalizeOptionalString(input.location, MAX_SHORT_TEXT_LENGTH),
+    jdText: normalizeOptionalString(input.jdText, MAX_JD_TEXT_LENGTH),
     jdHash,
     jdMatch,
-    targetRole: normalizeOptionalString(input.targetRole) ?? title,
-    careerField: normalizeOptionalString(input.careerField),
+    targetRole: normalizeOptionalString(input.targetRole, MAX_TITLE_LENGTH) ?? title,
+    careerField: normalizeOptionalString(input.careerField, MAX_SHORT_TEXT_LENGTH),
     mainGap: getJdMainGap(jdMatch),
     nextBestMove: getJdNextBestMove(jdMatch),
     createdAt,
@@ -76,8 +84,9 @@ export function createActiveTargetFromLatestJd(
 export function createActiveTargetFromProfileFitRole(
   input: ProfileFitTargetInput,
 ): ActiveTarget {
-  const createdAt = input.now ?? new Date().toISOString();
-  const role = input.roleMatch.role.trim() || "Closest profile-fit role";
+  const createdAt = normalizeTimestamp(input.now);
+  const role = normalizeOptionalString(input.roleMatch.role, MAX_TITLE_LENGTH) ??
+    "Closest profile-fit role";
   const firstGap = input.roleMatch.gaps[0];
 
   return {
@@ -87,7 +96,7 @@ export function createActiveTargetFromProfileFitRole(
     title: role,
     roleTitle: role,
     targetRole: role,
-    careerField: normalizeOptionalString(input.careerField),
+    careerField: normalizeOptionalString(input.careerField, MAX_SHORT_TEXT_LENGTH),
     mainGap: firstGap
       ? `${firstGap} still needs clearer proof for this profile-fit direction.`
       : "Add clearer proof evidence before optimizing for this target.",
@@ -101,9 +110,14 @@ export function createActiveTargetFromProfileFitRole(
 
 export function createActiveTargetFromUltimateGoal(
   input: UltimateGoalTargetInput,
-): ActiveTarget {
-  const createdAt = input.now ?? new Date().toISOString();
-  const targetRole = input.targetRole.trim();
+): ActiveTarget | null {
+  const createdAt = normalizeTimestamp(input.now);
+  const targetRole = normalizeOptionalString(input.targetRole, MAX_TITLE_LENGTH);
+
+  if (!targetRole) {
+    return null;
+  }
+
   const currentReality = input.closestRole &&
       !input.closestRole.toLowerCase().includes(targetRole.toLowerCase())
     ? `Your current resume is closer to ${input.closestRole}, while this target points toward ${targetRole}.`
@@ -116,7 +130,7 @@ export function createActiveTargetFromUltimateGoal(
     title: targetRole,
     roleTitle: targetRole,
     targetRole,
-    careerField: normalizeOptionalString(input.careerField),
+    careerField: normalizeOptionalString(input.careerField, MAX_SHORT_TEXT_LENGTH),
     mainGap: currentReality,
     nextBestMove:
       "Build or show real goal-relevant proof before optimizing your resume for this target.",
@@ -127,18 +141,23 @@ export function createActiveTargetFromUltimateGoal(
 
 export function createManualActiveTarget(
   input: ManualTargetInput,
-): ActiveTarget {
-  const createdAt = input.now ?? new Date().toISOString();
-  const title = input.title.trim();
+): ActiveTarget | null {
+  const createdAt = normalizeTimestamp(input.now);
+  const title = normalizeOptionalString(input.title, MAX_TITLE_LENGTH);
+
+  if (!title) {
+    return null;
+  }
 
   return {
     id: `active-target:manual:${slugifyTargetPart(title)}`,
     source: "manual",
     status: "active",
     title,
-    roleTitle: normalizeOptionalString(input.targetRole) ?? title,
-    targetRole: normalizeOptionalString(input.targetRole) ?? title,
-    careerField: normalizeOptionalString(input.careerField),
+    roleTitle: normalizeOptionalString(input.targetRole, MAX_TITLE_LENGTH) ?? title,
+    targetRole: normalizeOptionalString(input.targetRole, MAX_TITLE_LENGTH) ?? title,
+    careerField: normalizeOptionalString(input.careerField, MAX_SHORT_TEXT_LENGTH),
+    manualIntent: "custom_goal",
     mainGap: "Paste a JD to unlock target-specific gaps.",
     nextBestMove:
       "Add clearer proof evidence before optimizing for this target.",
@@ -148,18 +167,31 @@ export function createManualActiveTarget(
 }
 
 export function normalizeActiveTarget(target: ActiveTarget): ActiveTarget {
+  const source = target.source;
+  const title = normalizeOptionalString(target.title, MAX_TITLE_LENGTH);
+  const createdAt = normalizeTimestamp(target.createdAt);
+  const updatedAt = normalizeTimestamp(target.updatedAt || createdAt);
+
   const normalizedTarget: ActiveTarget = {
     ...target,
-    title: target.title.trim(),
+    title: title ?? "Active Target",
     status: target.status === "needs_resume_analysis"
       ? "needs_resume_analysis"
       : "active",
-    mainGap: target.mainGap.trim() ||
+    companyName: normalizeOptionalString(target.companyName, MAX_SHORT_TEXT_LENGTH),
+    roleTitle: normalizeOptionalString(target.roleTitle, MAX_TITLE_LENGTH),
+    location: normalizeOptionalString(target.location, MAX_SHORT_TEXT_LENGTH),
+    jdText: normalizeOptionalString(target.jdText, MAX_JD_TEXT_LENGTH),
+    jdHash: normalizeOptionalString(target.jdHash, MAX_SHORT_TEXT_LENGTH),
+    targetRole: normalizeOptionalString(target.targetRole, MAX_TITLE_LENGTH),
+    careerField: normalizeOptionalString(target.careerField, MAX_SHORT_TEXT_LENGTH),
+    manualIntent: source === "manual" ? "custom_goal" : undefined,
+    mainGap: normalizeOptionalString(target.mainGap, MAX_GAP_LENGTH) ||
       "Add clearer proof evidence before optimizing for this target.",
-    nextBestMove: target.nextBestMove.trim() ||
+    nextBestMove: normalizeOptionalString(target.nextBestMove, MAX_GAP_LENGTH) ||
       "Build or show real proof before changing your resume.",
-    createdAt: target.createdAt || new Date().toISOString(),
-    updatedAt: target.updatedAt || target.createdAt || new Date().toISOString(),
+    createdAt,
+    updatedAt,
   };
 
   if (normalizedTarget.source !== "latest_jd") {
@@ -180,6 +212,7 @@ export function getRecommendedPathSourceForTarget(
 
   if (target.source === "latest_jd") return "latest_jd";
   if (target.source === "profile_fit") return "profile_fit";
+  if (target.source === "manual") return "ultimate_goal";
 
   return "ultimate_goal";
 }
@@ -192,17 +225,21 @@ export function getActiveTargetSourceLabel(source: ActiveTargetSource): string {
   return "Manual Target";
 }
 
-function mapJdMatch(result: JobDescriptionMatchResult): ActiveTargetJdMatch {
+function mapJdMatch(
+  result: JobDescriptionMatchResult,
+  resumeContext: ActiveTargetResumeContext | null | undefined,
+): ActiveTargetJdMatch {
   return {
-    score: result.matchScore,
-    verdict: result.verdict,
-    brutalReality: result.brutalReality,
-    matchedSkills: result.matchedSkills,
-    missingSkills: result.missingSkills,
-    missingKeywords: result.missingKeywords,
-    strengths: result.strengths,
-    weaknesses: result.weaknesses,
-    recommendations: result.recommendations,
+    score: clampScore(result.matchScore),
+    verdict: normalizeOptionalString(result.verdict, MAX_GAP_LENGTH),
+    brutalReality: normalizeOptionalString(result.brutalReality, MAX_GAP_LENGTH),
+    matchedSkills: normalizeStringArray(result.matchedSkills),
+    missingSkills: normalizeStringArray(result.missingSkills),
+    missingKeywords: normalizeStringArray(result.missingKeywords),
+    strengths: normalizeStringArray(result.strengths),
+    weaknesses: normalizeStringArray(result.weaknesses),
+    recommendations: normalizeStringArray(result.recommendations, MAX_GAP_LENGTH),
+    resumeContext: resumeContext ?? undefined,
   };
 }
 
@@ -234,15 +271,47 @@ function getTargetTitle(
   roleTitle: string | undefined,
   fallback: string,
 ): string {
-  return normalizeOptionalString(title) ??
-    normalizeOptionalString(roleTitle) ??
+  return normalizeOptionalString(title, MAX_TITLE_LENGTH) ??
+    normalizeOptionalString(roleTitle, MAX_TITLE_LENGTH) ??
     fallback;
 }
 
-function normalizeOptionalString(value: string | null | undefined): string | undefined {
-  const trimmedValue = value?.trim();
+export function normalizeOptionalString(
+  value: string | null | undefined,
+  maxLength = MAX_SHORT_TEXT_LENGTH,
+): string | undefined {
+  const trimmedValue = value
+    ?.replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
 
   return trimmedValue || undefined;
+}
+
+function normalizeStringArray(
+  values: string[],
+  maxLength = MAX_SHORT_TEXT_LENGTH,
+): string[] {
+  return values
+    .map((value) => normalizeOptionalString(value, maxLength))
+    .filter((value): value is string => Boolean(value))
+    .slice(0, MAX_MATCH_ARRAY_ITEMS);
+}
+
+function normalizeTimestamp(value: string | undefined): string {
+  if (value) {
+    const timestamp = Date.parse(value);
+
+    if (Number.isFinite(timestamp)) {
+      return new Date(timestamp).toISOString();
+    }
+  }
+
+  return new Date().toISOString();
+}
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
 }
 
 export function slugifyTargetPart(value: string): string {

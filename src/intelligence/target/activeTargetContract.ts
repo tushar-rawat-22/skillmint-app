@@ -14,6 +14,21 @@ export type ActiveTargetRecommendedPathSource =
   | "profile_fit"
   | "ultimate_goal";
 
+export type ActiveTargetManualIntent = "custom_goal";
+
+export type ActiveTargetJdMatchStatus =
+  | "not_applicable"
+  | "current"
+  | "stale"
+  | "missing";
+
+export type ActiveTargetResumeContext = {
+  fingerprint: string;
+  analyzedAt?: string;
+  fileName?: string;
+  scoringVersion?: string;
+};
+
 export type ActiveTargetJdMatch = {
   score: number;
   verdict?: string;
@@ -24,6 +39,7 @@ export type ActiveTargetJdMatch = {
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
+  resumeContext?: ActiveTargetResumeContext;
 };
 
 export type ActiveTarget = {
@@ -39,6 +55,7 @@ export type ActiveTarget = {
   jdMatch?: ActiveTargetJdMatch;
   targetRole?: string;
   careerField?: string;
+  manualIntent?: ActiveTargetManualIntent;
   mainGap: string;
   nextBestMove: string;
   createdAt: string;
@@ -65,4 +82,6 @@ export type ActiveTargetEngineResult = {
   mainGap: string;
   nextBestMove: string;
   recommendedPathSource?: ActiveTargetRecommendedPathSource;
+  jdMatchStatus: ActiveTargetJdMatchStatus;
+  staleJdMatchReason?: string;
 };
