@@ -3,6 +3,7 @@
 **Status:** Beta v1 Block 3 - Mission Execution System  
 **Storage:** Browser local storage only for mission status  
 **Rule:** Missions guide proof-building. They do not boost scores.
+**Block 4 addition:** Active Target can prioritize target-aware missions, but it does not boost scores.
 
 ## Purpose
 
@@ -62,9 +63,10 @@ Mission state is stored locally in this browser:
 ```text
 skillmint:mission-status:v1
 skillmint:selected-career-path:v1
+skillmint:active-target:v1
 ```
 
-This is not account-level mission persistence. Backend mission persistence is out of scope for Block 3.
+This is not account-level mission persistence. Backend mission persistence is out of scope for Beta v1 Block 4.
 
 ## Mission Sources
 
@@ -77,6 +79,7 @@ Mission generation uses existing deterministic signals:
 - ATS clarity gaps
 - Profile-fit role gaps
 - Latest JD Match gaps when a pasted JD exists
+- Active Target JD gaps when the target source is `latest_jd`
 - Ultimate Goal mismatch when setup target exists
 
 Missing proof means unverified, not false.
@@ -90,6 +93,23 @@ Missions are prioritized by:
 - lower difficulty when priority and impact tie
 
 The dashboard shows at most three next best things. Full execution lives on the roadmap page.
+
+## Block 4 Active Target Behavior
+
+Active Target is a focus layer for mission priority, not a score layer.
+
+JD-based Active Targets can create missions such as "Back Docker for your Active Target" when the Active Target JD asks for a skill and the active resume does not show that skill in project, experience, certification, or proof context.
+
+Rules:
+
+- Target-aware missions are prioritized, not score-boosted.
+- Target-aware JD missions are generated only for `latest_jd` Active Targets.
+- Target-aware JD missions require the JD Match resume context to match the current active resume.
+- Profile-fit, ultimate goal, and manual targets must not receive fake JD gap missions.
+- Evidence detected still comes only from resume re-analysis/evidence detection logic.
+- Marked done remains self-progress only.
+- Re-upload your resume so SkillMint can check whether evidence is now visible.
+- Only add missing skills if you actually used them. Otherwise, build proof first.
 
 ## Out Of Scope
 
@@ -113,4 +133,4 @@ Mission fixture checks live in:
 scripts/mission-path-fixtures.mjs
 ```
 
-Covered scenarios include deterministic mission IDs, local storage adapter behavior, locked paths, JD path unlocking, status validity, dashboard max-three summary, done status not changing scores, and evidence detection after re-analysis.
+Covered scenarios include deterministic mission IDs, local storage adapter behavior, locked paths, JD path unlocking, Active Target mission priority, status validity, dashboard max-three summary, done status not changing scores, and evidence detection after re-analysis.

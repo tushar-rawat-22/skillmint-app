@@ -277,6 +277,41 @@ scripts/mission-path-fixtures.mjs
 ```
 - old profile-shaped data still scores with safe fallbacks
 
+## Block 4 Active Target Safety
+
+Active Target is a focus layer, not a score layer.
+
+Active Target can influence:
+
+- dashboard target summary
+- ATS/JD workflow state
+- target-specific gap summary
+- mission ordering and target-aware mission priority
+- roadmap recommended path emphasis
+- Latest JD Path input when the Active Target is JD-based
+
+Active Target must never directly change:
+
+- Career IQ
+- Proof Confidence
+- Profile-fit role score
+- Recruiter Confidence
+- ATS Readiness core score
+- Latest JD Match math
+- any Block 2 scoring math
+
+Only `latest_jd` Active Targets can include a JD Match. Profile-fit, ultimate goal, and manual targets must not receive fake JD scores.
+
+JD Match scores are valid only for the resume-analysis context that produced them. If the active resume changes, the stored JD Match snapshot is stale and must be recalculated before showing a current numeric score. Staleness never changes Career IQ, Proof Confidence, Profile-fit role score, ATS Readiness, Recruiter Confidence, or mission status.
+
+Active Target fixture checks live in:
+
+```text
+scripts/active-target-fixtures.mjs
+```
+
+These fixtures protect no-score-change behavior, JD-only match data, stale JD handling, account/browser isolation, storage safety, roadmap recommendation behavior, and target-aware mission wording.
+
 ## What Intentionally Did Not Change
 
 - Auth logic
@@ -285,8 +320,8 @@ scripts/mission-path-fixtures.mjs
 - Package dependencies
 - Payments or checkout
 - Analytics implementation
-- Mission completion
-- Active target workflow
+- Mission completion scoring behavior
+- Backend active target persistence
 - Saved JD history workflow
 - External proof verification
 - AI API calls

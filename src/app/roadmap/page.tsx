@@ -49,6 +49,15 @@ import {
   type CareerPathPhase,
   type CareerPathTrack,
 } from "@/intelligence/roadmap";
+import {
+  buildActiveTargetEngineResult,
+  createActiveTargetResumeContextFromStoredAnalysis,
+  isResumeContextCurrent,
+  parseActiveTarget,
+  readActiveTargetStorageSnapshot,
+  type ActiveTarget,
+  type ActiveTargetResumeContext,
+} from "@/intelligence/target";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   notifySkillMintWorkspaceUpdated,
@@ -60,6 +69,7 @@ import {
   UpgradeInterestCard,
 } from "@/modules/activation";
 import { updateCurrentUserJobMatchRoadmap } from "@/modules/jobMatch";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import { TARGET_ROLE_SETUP_STORAGE_KEY } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
@@ -75,6 +85,7 @@ type LatestJobMatch = {
   improvementPlan: ResumeImprovementPlan | null;
   rewritePlan: ResumeRewritePlan | null;
   roadmap?: unknown;
+  resumeContext?: ActiveTargetResumeContext;
 };
 
 type RoadmapSetupSource = {
@@ -135,6 +146,11 @@ export default function RoadmapPage() {
     readStoredSetup,
     getServerSnapshot,
   );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredActiveTarget,
+    getServerSnapshot,
+  );
   const storedMissionStatuses = useSyncExternalStore(
     subscribeToStoredData,
     readStoredMissionStatuses,
@@ -146,18 +162,68 @@ export default function RoadmapPage() {
     getServerSnapshot,
   );
   const data = useCareerData();
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const analysisContext = useMemo(
     () => getStoredAnalysisContext(storedAnalysis),
     [storedAnalysis],
   );
+  const resumeContext = useMemo(
+    () => createActiveTargetResumeContextFromStoredAnalysis(storedAnalysis),
+    [storedAnalysis],
+  );
   const latestJobMatch = useMemo(
-    () => parseLatestJobMatch(storedJobMatch),
-    [storedJobMatch],
+    () => parseLatestJobMatch(storedJobMatch, resumeContext),
+    [resumeContext, storedJobMatch],
   );
   const setupSource = useMemo(
     () => parseSetupSource(storedSetup),
     [storedSetup],
   );
+  const rawActiveTarget = useMemo(
+    () => parseActiveTarget(storedActiveTarget, {
+      currentUserId,
+    }),
+    [currentUserId, storedActiveTarget],
+  );
+  const activeTargetResult = useMemo(
+    () =>
+      buildActiveTargetEngineResult({
+        activeTarget: rawActiveTarget,
+        hasResumeAnalysis: Boolean(analysisContext),
+        resumeContext,
+        careerIQ: analysisContext ? data.careerIQ : null,
+        proof: analysisContext ? data.proof : null,
+        roleMatches: analysisContext ? data.roleMatches : [],
+        latestJobMatch: latestJobMatch
+          ? {
+              title: formatLatestJobMatchSource(latestJobMatch),
+              companyName: latestJobMatch.companyName,
+              roleTitle: latestJobMatch.jobTitle,
+              jobDescription: latestJobMatch.jobDescription,
+              result: latestJobMatch.result,
+            }
+          : null,
+        targetRole: data.targetRole ?? setupSource?.targetRole,
+        careerField: data.careerField ?? setupSource?.careerField,
+      }),
+    [
+      analysisContext,
+      data.careerField,
+      data.careerIQ,
+      data.proof,
+      data.roleMatches,
+      data.targetRole,
+      latestJobMatch,
+      rawActiveTarget,
+      resumeContext,
+      setupSource,
+    ],
+  );
+  const activeTarget = activeTargetResult.activeTarget;
   const missionStatusMap = useMemo(
     () => parseMissionStatusMap(storedMissionStatuses),
     [storedMissionStatuses],
@@ -194,19 +260,28 @@ export default function RoadmapPage() {
       return null;
     }
 
+    const targetLatestJobMatch = getLatestJobMatchForActiveTarget(
+      activeTarget,
+      latestJobMatch,
+    );
+
     return buildCareerPathEngineResult({
       profile: data.profile,
       careerIQ: data.careerIQ,
       proof: data.proof,
       roleMatches: data.roleMatches,
-      latestJobMatch: latestJobMatch
+      latestJobMatch: targetLatestJobMatch
         ? {
-            title: formatLatestJobMatchSource(latestJobMatch),
-            companyName: latestJobMatch.companyName,
-            result: latestJobMatch.result,
+            title: targetLatestJobMatch.title,
+            companyName: targetLatestJobMatch.companyName,
+            result: targetLatestJobMatch.result,
           }
         : null,
-      targetRole: data.targetRole ?? setupSource?.targetRole,
+      activeTarget,
+      resumeContext,
+      targetRole: activeTarget?.targetRole ??
+        data.targetRole ??
+        setupSource?.targetRole,
       careerField: data.careerField ?? setupSource?.careerField,
       missionStatusMap,
       selectedPathId,
@@ -220,8 +295,10 @@ export default function RoadmapPage() {
     data.proof,
     data.roleMatches,
     data.targetRole,
+    activeTarget,
     latestJobMatch,
     missionStatusMap,
+    resumeContext,
     selectedPathId,
     setupSource,
   ]);
@@ -349,6 +426,8 @@ export default function RoadmapPage() {
             hasResume={Boolean(analysisContext)}
             setupSource={setupSource}
             latestJobMatch={latestJobMatch}
+            activeTarget={activeTarget}
+            activeTargetJdMatchStatus={activeTargetResult.jdMatchStatus}
           />
 
           <NextBestActionPanel className="mt-6" />
@@ -407,6 +486,8 @@ export default function RoadmapPage() {
           hasResume={Boolean(analysisContext)}
           setupSource={setupSource}
           latestJobMatch={latestJobMatch}
+          activeTarget={activeTarget}
+          activeTargetJdMatchStatus={activeTargetResult.jdMatchStatus}
         />
 
         <PathSelector
@@ -506,12 +587,16 @@ type RoadmapSourceCardProps = {
   hasResume: boolean;
   setupSource: RoadmapSetupSource | null;
   latestJobMatch: LatestJobMatch | null;
+  activeTarget: ActiveTarget | null;
+  activeTargetJdMatchStatus: string;
 };
 
 function RoadmapSourceCard({
   hasResume,
   setupSource,
   latestJobMatch,
+  activeTarget,
+  activeTargetJdMatchStatus,
 }: RoadmapSourceCardProps) {
   return (
     <section className={premiumSurface}>
@@ -542,7 +627,7 @@ function RoadmapSourceCard({
         )}
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <SourceSignal
           label="Active resume report"
           value={hasResume ? "Available" : "Missing"}
@@ -559,6 +644,15 @@ function RoadmapSourceCard({
           label="Latest JD Match"
           value={formatLatestJobMatchSource(latestJobMatch)}
           tone={latestJobMatch ? "success" : "warning"}
+        />
+
+        <SourceSignal
+          label="Active Target"
+          value={formatActiveTargetSource(
+            activeTarget,
+            activeTargetJdMatchStatus,
+          )}
+          tone={activeTarget ? "success" : "warning"}
         />
       </div>
     </section>
@@ -1017,6 +1111,10 @@ function readStoredSetup(): string | null {
   return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
 }
 
+function readStoredActiveTarget(): string | null {
+  return readActiveTargetStorageSnapshot();
+}
+
 function readStoredMissionStatuses(): string | null {
   return getBrowserStorage()?.getItem(MISSION_STATUS_STORAGE_KEY) ?? null;
 }
@@ -1069,6 +1167,7 @@ function getStoredAnalysisContext(
 
 function parseLatestJobMatch(
   storedJobMatch: string | null,
+  resumeContext: ActiveTargetResumeContext | null,
 ): LatestJobMatch | null {
   if (!storedJobMatch) {
     return null;
@@ -1081,6 +1180,16 @@ function parseLatestJobMatch(
       !isRecord(parsedJobMatch) ||
       !isJobDescriptionMatchResult(parsedJobMatch.result)
     ) {
+      return null;
+    }
+
+    const matchResumeContext = isActiveTargetResumeContext(
+      parsedJobMatch.resumeContext,
+    )
+      ? parsedJobMatch.resumeContext
+      : null;
+
+    if (!isResumeContextCurrent(matchResumeContext, resumeContext)) {
       return null;
     }
 
@@ -1108,10 +1217,26 @@ function parseLatestJobMatch(
         ? parsedJobMatch.rewritePlan
         : null,
       roadmap: parsedJobMatch.roadmap,
+      resumeContext: matchResumeContext ?? undefined,
     };
   } catch {
     return null;
   }
+}
+
+function isActiveTargetResumeContext(
+  value: unknown,
+): value is ActiveTargetResumeContext {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    isString(value.fingerprint) &&
+    (value.analyzedAt === undefined || isString(value.analyzedAt)) &&
+    (value.fileName === undefined || isString(value.fileName)) &&
+    (value.scoringVersion === undefined || isString(value.scoringVersion))
+  );
 }
 
 function parseSetupSource(storedSetup: string | null): RoadmapSetupSource | null {
@@ -1197,6 +1322,61 @@ function formatLatestJobMatchSource(
   }
 
   return `${Math.round(latestJobMatch.result.matchScore)}% latest JD match`;
+}
+
+function formatActiveTargetSource(
+  activeTarget: ActiveTarget | null,
+  jdMatchStatus: string,
+): string {
+  if (!activeTarget) {
+    return "Not set";
+  }
+
+  if (jdMatchStatus === "stale") {
+    return "Re-run JD match for current resume";
+  }
+
+  if (activeTarget.companyName && activeTarget.roleTitle) {
+    return `${activeTarget.roleTitle} at ${activeTarget.companyName}`;
+  }
+
+  return activeTarget.title;
+}
+
+function getLatestJobMatchForActiveTarget(
+  activeTarget: ActiveTarget | null,
+  latestJobMatch: LatestJobMatch | null,
+): {
+  title: string;
+  companyName?: string;
+  result: JobDescriptionMatchResult;
+} | null {
+  if (activeTarget?.source === "latest_jd" && activeTarget.jdMatch) {
+    return {
+      title: activeTarget.roleTitle ?? activeTarget.title,
+      companyName: activeTarget.companyName,
+      result: {
+        matchScore: activeTarget.jdMatch.score,
+        verdict: activeTarget.jdMatch.verdict ?? "Active Target JD Match",
+        brutalReality: activeTarget.jdMatch.brutalReality ??
+          "JD Match is based on one pasted job description.",
+        matchedSkills: activeTarget.jdMatch.matchedSkills,
+        missingSkills: activeTarget.jdMatch.missingSkills,
+        missingKeywords: activeTarget.jdMatch.missingKeywords,
+        strengths: activeTarget.jdMatch.strengths,
+        weaknesses: activeTarget.jdMatch.weaknesses,
+        recommendations: activeTarget.jdMatch.recommendations,
+      },
+    };
+  }
+
+  return latestJobMatch
+    ? {
+        title: formatLatestJobMatchSource(latestJobMatch),
+        companyName: latestJobMatch.companyName,
+        result: latestJobMatch.result,
+      }
+    : null;
 }
 
 function getRoadmapRoleContext(

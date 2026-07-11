@@ -1,5 +1,10 @@
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import type { ProofScoreResult } from "@/intelligence/proof";
+import {
+  isJdMatchCurrentForResume,
+  type ActiveTarget,
+  type ActiveTargetResumeContext,
+} from "@/intelligence/target";
 import type { UserProfile } from "@/intelligence/types/profile";
 import type {
   CareerIQResult,
@@ -25,6 +30,8 @@ export type MissionGeneratorInput = {
   proof: ProofScoreResult;
   roleMatches: RoleMatchResult[];
   latestJobMatch?: LatestJobMissionContext | null;
+  activeTarget?: ActiveTarget | null;
+  resumeContext?: ActiveTargetResumeContext | null;
   targetRole?: string | null;
   careerField?: string | null;
   sourcePath?: MissionSourcePath;
@@ -40,6 +47,7 @@ export function generateStructuredMissions(
     ...getProjectImpactMissions(input),
     ...getAtsMissions(input),
     ...getProfileFitMissions(input),
+    ...getActiveTargetMissions(input),
     ...getLatestJdMissions(input),
     ...getUltimateGoalMissions(input),
   ].filter((mission) =>
@@ -353,6 +361,60 @@ function getLatestJdMissions({
         "Re-upload after adding truthful JD evidence. SkillMint should detect the skill in applied context.",
       expectedOutcome:
         "Can improve Latest JD Match only when the resume evidence changes.",
+      createdFrom: "jd_match_gap",
+    })
+  );
+}
+
+function getActiveTargetMissions({
+  activeTarget,
+  resumeContext,
+  sourcePath,
+}: MissionGeneratorInput): Mission[] {
+  if (
+    !activeTarget?.jdMatch ||
+    activeTarget.source !== "latest_jd" ||
+    !isJdMatchCurrentForResume(activeTarget.jdMatch, resumeContext) ||
+    sourcePath === "ultimate_goal" ||
+    sourcePath === "profile_fit"
+  ) {
+    return [];
+  }
+
+  const missingSignals = uniqueValues([
+    ...activeTarget.jdMatch.missingSkills,
+    ...activeTarget.jdMatch.missingKeywords,
+  ]).slice(0, 3);
+
+  return missingSignals.map((skill, index) =>
+    createMission({
+      id: makeMissionId([
+        "active-target",
+        activeTarget.jdHash ?? activeTarget.id,
+        skill,
+        "proof",
+      ]),
+      title: `Back ${skill} for your Active Target`,
+      category: "jd_match",
+      priority: 940 - index * 10,
+      impact: "high",
+      difficulty: "medium",
+      linkedScore: "Latest JD Match",
+      sourcePath: "latest_jd",
+      evidenceTarget: skill,
+      whyThisMatters:
+        `Your Active Target JD asks for ${skill}, but your resume does not show ${skill} usage in project, experience, certification, or proof context.`,
+      evidenceNeeded:
+        `Only add ${skill} if you actually used it. Otherwise, build a small proof project first.`,
+      steps: [
+        `Check whether you have a real ${skill} example.`,
+        "If yes, connect it to a project, internship, certification, or work bullet.",
+        "If not, build a small proof project before adding it to your resume.",
+      ],
+      completionCheck:
+        `Re-upload your resume so SkillMint can check whether ${skill} evidence is now visible.`,
+      expectedOutcome:
+        "Can improve target-specific JD alignment only after resume evidence changes and SkillMint detects it.",
       createdFrom: "jd_match_gap",
     })
   );

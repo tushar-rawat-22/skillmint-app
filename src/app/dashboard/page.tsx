@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import ActiveTargetCard from "@/components/dashboard/ActiveTargetCard";
 import CareerReportHero from "@/components/dashboard/CareerReportHero";
 import MetricStrip from "@/components/dashboard/MetricStrip";
 import RealityCheckCard from "@/components/dashboard/RealityCheckCard";
@@ -36,6 +37,15 @@ import {
 
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import { buildCareerPathEngineResult } from "@/intelligence/roadmap";
+import {
+  buildActiveTargetEngineResult,
+  createActiveTargetResumeContextFromStoredAnalysis,
+  isResumeContextCurrent,
+  parseActiveTarget,
+  readActiveTargetStorageSnapshot,
+  type ActiveTarget,
+  type ActiveTargetResumeContext,
+} from "@/intelligence/target";
 import { AccountOverviewCard } from "@/modules/account";
 import {
   NextBestActionPanel,
@@ -47,6 +57,7 @@ import {
   getLatestCurrentUserResumeAnalysis,
   setActiveResumeReportFromSavedAnalysis,
 } from "@/modules/resume";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 
 const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
@@ -82,9 +93,23 @@ export default function DashboardPage() {
     readStoredJobMatch,
     getServerSnapshot,
   );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredActiveTarget,
+    getServerSnapshot,
+  );
   const data = useCareerData();
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const hasResumeAnalysis = useMemo(
     () => hasValidResume(storedResume),
+    [storedResume],
+  );
+  const resumeContext = useMemo(
+    () => createActiveTargetResumeContextFromStoredAnalysis(storedResume),
     [storedResume],
   );
   const hasJobMatch = useMemo(
@@ -103,29 +128,74 @@ export default function DashboardPage() {
       message: null,
     });
   const latestJobMatch = useMemo(
-    () => getLatestJobMatchSummary(storedJobMatch),
-    [storedJobMatch],
+    () => getLatestJobMatchSummary(storedJobMatch, resumeContext),
+    [resumeContext, storedJobMatch],
+  );
+  const activeTarget = useMemo(
+    () => parseActiveTarget(storedActiveTarget, {
+      currentUserId,
+    }),
+    [currentUserId, storedActiveTarget],
+  );
+  const dashboardActiveTarget = useMemo(
+    () =>
+      buildActiveTargetEngineResult({
+        activeTarget,
+        hasResumeAnalysis,
+        resumeContext,
+        careerIQ: hasResumeAnalysis ? data.careerIQ : null,
+        proof: hasResumeAnalysis ? data.proof : null,
+        roleMatches: hasResumeAnalysis ? data.roleMatches : [],
+        latestJobMatch: latestJobMatch
+          ? {
+              title: latestJobMatch.title,
+              result: latestJobMatch.result,
+            }
+          : null,
+        targetRole: data.targetRole,
+        careerField: data.careerField,
+      }),
+    [
+      activeTarget,
+      data.careerField,
+      data.careerIQ,
+      data.proof,
+      data.roleMatches,
+      data.targetRole,
+      hasResumeAnalysis,
+      latestJobMatch,
+      resumeContext,
+    ],
   );
   const dashboardCareerPath = useMemo(() => {
     if (!hasResumeAnalysis) {
       return null;
     }
+    const currentActiveTarget = dashboardActiveTarget.activeTarget;
+    const targetLatestJobMatch = getLatestJobMatchForActiveTarget(
+      currentActiveTarget,
+      latestJobMatch,
+    );
 
     return buildCareerPathEngineResult({
       profile: data.profile,
       careerIQ: data.careerIQ,
       proof: data.proof,
       roleMatches: data.roleMatches,
-      latestJobMatch: latestJobMatch
+      latestJobMatch: targetLatestJobMatch
         ? {
-            title: latestJobMatch.title,
-            result: latestJobMatch.result,
+            title: targetLatestJobMatch.title,
+            companyName: targetLatestJobMatch.companyName,
+            result: targetLatestJobMatch.result,
           }
         : null,
+      activeTarget: currentActiveTarget,
+      resumeContext,
       targetRole: data.targetRole,
       careerField: data.careerField,
     });
   }, [
+    dashboardActiveTarget,
     data.careerField,
     data.careerIQ,
     data.profile,
@@ -134,6 +204,7 @@ export default function DashboardPage() {
     data.targetRole,
     hasResumeAnalysis,
     latestJobMatch,
+    resumeContext,
   ]);
 
   useEffect(() => {
@@ -327,6 +398,8 @@ export default function DashboardPage() {
 
           <EmptyDashboardPreview />
 
+          <ActiveTargetCard result={dashboardActiveTarget} />
+
           <OnboardingChecklist />
 
           <NextBestActionPanel />
@@ -350,6 +423,8 @@ export default function DashboardPage() {
         <OnboardingChecklist />
 
         <NextBestActionPanel />
+
+        <ActiveTargetCard result={dashboardActiveTarget} />
 
         <MetricStrip
           proof={data.proof}
@@ -599,6 +674,10 @@ function readStoredJobMatch(): string | null {
   return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
 }
 
+function readStoredActiveTarget(): string | null {
+  return readActiveTargetStorageSnapshot();
+}
+
 function getServerSnapshot(): null {
   return null;
 }
@@ -652,12 +731,23 @@ function hasSavedResumeAnalysisSignal(storedValue: string | null): boolean {
 
 function getLatestJobMatchSummary(
   storedValue: string | null,
+  resumeContext: ActiveTargetResumeContext | null,
 ): LatestJobMatchSummary | null {
   const parsedValue = parseRecord(storedValue);
   const result = isRecord(parsedValue?.result) ? parsedValue.result : null;
   const matchScore = result?.matchScore;
 
   if (typeof matchScore !== "number") {
+    return null;
+  }
+
+  const matchResumeContext = isActiveTargetResumeContext(
+    parsedValue?.resumeContext,
+  )
+    ? parsedValue.resumeContext
+    : null;
+
+  if (!isResumeContextCurrent(matchResumeContext, resumeContext)) {
     return null;
   }
 
@@ -694,6 +784,30 @@ function getLatestJobMatchSummary(
   };
 }
 
+function isActiveTargetResumeContext(
+  value: unknown,
+): value is ActiveTargetResumeContext {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    getStringValue(value.fingerprint) !== null &&
+    (
+      value.analyzedAt === undefined ||
+      typeof value.analyzedAt === "string"
+    ) &&
+    (
+      value.fileName === undefined ||
+      typeof value.fileName === "string"
+    ) &&
+    (
+      value.scoringVersion === undefined ||
+      typeof value.scoringVersion === "string"
+    )
+  );
+}
+
 function getStringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string =>
@@ -706,6 +820,36 @@ function getStringValue(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0
     ? value
     : null;
+}
+
+function getLatestJobMatchForActiveTarget(
+  activeTarget: ActiveTarget | null,
+  latestJobMatch: LatestJobMatchSummary | null,
+): {
+  title: string;
+  companyName?: string;
+  result: JobDescriptionMatchResult;
+} | null {
+  if (activeTarget?.source === "latest_jd" && activeTarget.jdMatch) {
+    return {
+      title: activeTarget.roleTitle ?? activeTarget.title,
+      companyName: activeTarget.companyName,
+      result: {
+        matchScore: activeTarget.jdMatch.score,
+        verdict: activeTarget.jdMatch.verdict ?? "Active Target JD Match",
+        brutalReality: activeTarget.jdMatch.brutalReality ??
+          "JD Match is based on one pasted job description.",
+        matchedSkills: activeTarget.jdMatch.matchedSkills,
+        missingSkills: activeTarget.jdMatch.missingSkills,
+        missingKeywords: activeTarget.jdMatch.missingKeywords,
+        strengths: activeTarget.jdMatch.strengths,
+        weaknesses: activeTarget.jdMatch.weaknesses,
+        recommendations: activeTarget.jdMatch.recommendations,
+      },
+    };
+  }
+
+  return latestJobMatch;
 }
 
 function parseRecord(storedValue: string | null): Record<string, unknown> | null {
