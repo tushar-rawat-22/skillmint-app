@@ -1,9 +1,13 @@
+import Link from "next/link";
+
 import {
   premiumBadge,
   premiumCompactSurface,
   premiumEyebrow,
   premiumInsetSurface,
+  premiumSecondaryCta,
 } from "@/components/ui/premium";
+import type { Mission } from "@/intelligence/missions";
 
 type Props = {
   missions: string[];
@@ -11,6 +15,7 @@ type Props = {
   proofNextMove?: string;
   atsMissingSkills?: string[];
   hasResumeAnalysis?: boolean;
+  nextBestMissions?: Mission[];
 };
 
 export default function NextMissionsCard({
@@ -19,106 +24,88 @@ export default function NextMissionsCard({
   proofNextMove,
   atsMissingSkills = [],
   hasResumeAnalysis = false,
+  nextBestMissions = [],
 }: Props) {
-  const actions = getActions({
+  const missionActions = getMissionActions({
+    nextBestMissions,
     missions,
     recommendations,
     proofNextMove,
     atsMissingSkills,
     hasResumeAnalysis,
   });
-  const primaryAction = actions[0];
-  const supportingActions = actions.slice(1);
-  const primaryMeta = getMissionMeta(primaryAction, 0);
+  const primaryAction = missionActions[0];
+  const supportingActions = missionActions.slice(1);
 
   return (
     <section className={`${premiumCompactSurface} flex h-full flex-col p-0`}>
       <div className="border-b border-slate-200 p-6">
-        <p className={premiumEyebrow}>
-          Next Missions
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className={premiumEyebrow}>
+              Next best things
+            </p>
 
-        <h2 className="mt-2 text-2xl font-black text-slate-950">
-          What to fix next
-        </h2>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">
+              What to do next
+            </h2>
+          </div>
+
+          <Link
+            href="/roadmap"
+            className={`${premiumSecondaryCta} w-fit`}
+          >
+            Open roadmap
+          </Link>
+        </div>
 
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Prioritized career actions for the next visible proof upgrade.
+          Based on your latest resume evidence. Full 30/60/90 proof plans live
+          on the roadmap.
         </p>
       </div>
 
       <div className="flex flex-1 flex-col p-6">
-        <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
-                Primary Next Action
-              </p>
-
-              <h3 className="mt-3 text-xl font-black leading-snug text-slate-950">
-                {primaryAction}
-              </h3>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-end">
-              <MissionBadge label={`Priority: ${primaryMeta.priority}`} />
-              <MissionBadge label={`Impact: ${primaryMeta.impact}`} />
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <MissionSignal
-              label="Expected outcome"
-              value={primaryMeta.expectedOutcome}
-            />
-
-            <MissionSignal
-              label="Why this matters"
-              value={getMissionReason(primaryAction)}
-            />
-          </div>
-        </article>
+        {primaryAction ? (
+          <MissionActionCard
+            mission={primaryAction}
+            index={0}
+            featured
+          />
+        ) : (
+          <article className={premiumInsetSurface}>
+            <p className="text-sm leading-6 text-slate-600">
+              Upload a resume to generate the next best proof-building action.
+            </p>
+          </article>
+        )}
 
         <div className="mt-5 grid flex-1 gap-3">
-          {supportingActions.length ? (
-            supportingActions.map((action, index) => (
-              <SupportingMissionCard
-                key={action}
-                action={action}
-                index={index}
-              />
-            ))
-          ) : (
-            <article className={premiumInsetSurface}>
-              <p className="text-sm leading-6 text-slate-600">
-                Upload a resume or run a job match to unlock sharper mission
-                sequencing.
-              </p>
-            </article>
-          )}
+          {supportingActions.map((mission, index) => (
+            <MissionActionCard
+              key={mission.id}
+              mission={mission}
+              index={index + 1}
+            />
+          ))}
         </div>
 
         <div className={`mt-5 ${premiumInsetSurface}`}>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Mission Stack
+                Mission trust rule
               </p>
 
-              <p className="mt-1 text-sm text-slate-700">
-                {actions.length} prioritized action
-                {actions.length === 1 ? "" : "s"} ready
+              <p className="mt-1 text-sm leading-6 text-slate-700">
+                Marking done never changes scores. Re-upload your resume so
+                SkillMint can detect evidence.
               </p>
             </div>
 
-            <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-emerald-600"
-                style={{
-                  width: `${Math.min(100, actions.length * 34)}%`,
-                }}
-              />
-            </div>
+            <span className={premiumBadge}>
+              Max 3 shown
+            </span>
           </div>
         </div>
       </div>
@@ -126,66 +113,56 @@ export default function NextMissionsCard({
   );
 }
 
-type SupportingMissionCardProps = {
-  action: string;
+type MissionActionCardProps = {
+  mission: Mission;
   index: number;
+  featured?: boolean;
 };
 
-function SupportingMissionCard({
-  action,
+function MissionActionCard({
+  mission,
   index,
-}: SupportingMissionCardProps) {
-  const meta = getMissionMeta(action, index + 1);
+  featured = false,
+}: MissionActionCardProps) {
+  const cardClassName = featured
+    ? "rounded-2xl border border-emerald-200 bg-emerald-50 p-5"
+    : "rounded-2xl border border-slate-200 bg-white p-4";
 
   return (
-    <article
-      key={action}
-      className="rounded-2xl border border-slate-200 bg-white p-4"
-    >
+    <article className={cardClassName}>
       <div className="flex gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xs font-black text-slate-700">
-          {index + 2}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-black text-slate-700">
+          {index + 1}
         </span>
 
-        <div className="min-w-0">
-          <p className="font-bold text-slate-950">
-            {action}
-          </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                {mission.linkedScore}
+              </p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <MissionBadge label={`Priority: ${meta.priority}`} />
-            <MissionBadge label={`Impact: ${meta.impact}`} />
+              <h3 className="mt-2 break-words text-lg font-black leading-snug text-slate-950">
+                {mission.title}
+              </h3>
+            </div>
+
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <MissionBadge label={`Impact: ${mission.impact}`} />
+              <MissionBadge label={formatStatus(mission.status)} />
+            </div>
           </div>
 
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            {getMissionReason(action)}
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            {mission.whyThisMatters}
           </p>
 
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Expected outcome: {meta.expectedOutcome}
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Expected outcome: {mission.expectedOutcome}
           </p>
         </div>
       </div>
     </article>
-  );
-}
-
-type MissionSignalProps = {
-  label: string;
-  value: string;
-};
-
-function MissionSignal({ label, value }: MissionSignalProps) {
-  return (
-    <div className="rounded-xl border border-emerald-200 bg-white p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-800">
-        {label}
-      </p>
-
-      <p className="mt-2 text-sm leading-6 text-slate-700">
-        {value}
-      </p>
-    </div>
   );
 }
 
@@ -201,183 +178,77 @@ function MissionBadge({ label }: MissionBadgeProps) {
   );
 }
 
-type MissionMeta = {
-  priority: "High" | "Medium" | "Low";
-  impact: "Proof Confidence" | "ATS" | "Recruiter Trust" | "Portfolio" | "Interview" | "Skill Gap";
-  expectedOutcome: string;
-};
-
-function getMissionMeta(action: string, index: number): MissionMeta {
-  const normalizedAction = action.toLowerCase();
-  const impact = getMissionImpact(normalizedAction);
-  const priority = getMissionPriority(normalizedAction, index);
-
-  return {
-    priority,
-    impact,
-    expectedOutcome: getExpectedOutcome(impact),
-  };
-}
-
-function getMissionPriority(
-  normalizedAction: string,
-  index: number,
-): MissionMeta["priority"] {
-  if (
-    index === 0 ||
-    normalizedAction.includes("jd gap") ||
-    normalizedAction.includes("proof") ||
-    normalizedAction.includes("missing")
-  ) {
-    return "High";
-  }
-
-  if (
-    normalizedAction.includes("linkedin") ||
-    normalizedAction.includes("profile")
-  ) {
-    return "Low";
-  }
-
-  return "Medium";
-}
-
-function getMissionImpact(normalizedAction: string): MissionMeta["impact"] {
-  if (
-    normalizedAction.includes("jd gap") ||
-    normalizedAction.includes("ats") ||
-    normalizedAction.includes("keyword")
-  ) {
-    return "ATS";
-  }
-
-  if (
-    normalizedAction.includes("github") ||
-    normalizedAction.includes("portfolio") ||
-    normalizedAction.includes("demo")
-  ) {
-    return "Portfolio";
-  }
-
-  if (
-    normalizedAction.includes("interview") ||
-    normalizedAction.includes("answer")
-  ) {
-    return "Interview";
-  }
-
-  if (
-    normalizedAction.includes("learn") ||
-    normalizedAction.includes("skill") ||
-    normalizedAction.includes("gap")
-  ) {
-    return "Skill Gap";
-  }
-
-  if (
-    normalizedAction.includes("project") ||
-    normalizedAction.includes("proof")
-  ) {
-    return "Proof Confidence";
-  }
-
-  return "Recruiter Trust";
-}
-
-function getExpectedOutcome(impact: MissionMeta["impact"]): string {
-  if (impact === "Proof Confidence") {
-    return "More claimed skills become supported by visible evidence candidates.";
-  }
-
-  if (impact === "ATS") {
-    return "The next job match becomes easier to read and tailor truthfully.";
-  }
-
-  if (impact === "Portfolio") {
-    return "Your strongest work becomes easier for recruiters to inspect.";
-  }
-
-  if (impact === "Interview") {
-    return "You can explain your projects and choices with less guessing.";
-  }
-
-  if (impact === "Skill Gap") {
-    return "A missing skill becomes something you can learn, build, and then add truthfully.";
-  }
-
-  return "Recruiters get a clearer reason to trust the resume claims.";
-}
-
-function getActions({
+function getMissionActions({
+  nextBestMissions,
   missions,
   recommendations,
   proofNextMove,
   atsMissingSkills,
   hasResumeAnalysis,
 }: {
+  nextBestMissions: Mission[];
   missions: string[];
   recommendations: string[];
   proofNextMove?: string;
   atsMissingSkills: string[];
   hasResumeAnalysis: boolean;
-}): string[] {
-  const prioritizedActions = [
+}): Mission[] {
+  if (nextBestMissions.length) {
+    return nextBestMissions.slice(0, 3);
+  }
+
+  const fallbackActions = [
     proofNextMove,
     atsMissingSkills.length
       ? `Close latest JD gap truthfully: ${atsMissingSkills[0]}`
       : undefined,
-    hasResumeAnalysis ? "Improve GitHub/project proof" : undefined,
     ...missions,
     ...recommendations,
   ].filter((action): action is string => {
-    if (!action?.trim()) {
+    const actionText = action?.trim();
+
+    if (!actionText) {
       return false;
     }
 
-    return !hasResumeAnalysis || !isUploadResumeAction(action);
+    return hasResumeAnalysis || !isUploadResumeAction(actionText);
   });
-  const uniqueActions = new Set(prioritizedActions);
-  const actions = Array.from(uniqueActions).slice(0, 3);
 
-  if (actions.length) {
-    return actions;
-  }
-
-  return hasResumeAnalysis
-    ? ["Strengthen one project with clearer proof links and outcomes"]
-    : ["Upload a resume to generate missions"];
-}
-
-function getMissionReason(action: string): string {
-  const normalizedAction = action.toLowerCase();
-
-  if (normalizedAction.includes("project")) {
-    return "Projects convert skills into proof, which matters more than keyword volume.";
-  }
-
-  if (normalizedAction.includes("github")) {
-    return "A public repository makes your work easier to inspect and trust.";
-  }
-
-  if (normalizedAction.includes("resume")) {
-    return "Resume structure controls how quickly your strongest evidence is understood.";
-  }
-
-  if (normalizedAction.includes("ats")) {
-    return "ATS clarity helps the right experience and skills survive the first screen.";
-  }
-
-  if (normalizedAction.includes("jd gap")) {
-    return "Latest JD gaps should be learned or proved truthfully before they appear on the resume.";
-  }
-
-  if (normalizedAction.includes("linkedin")) {
-    return "LinkedIn fills the trust gap between your resume and public identity.";
-  }
-
-  return "This is the next practical move from your current readiness signals.";
+  return Array.from(new Set(fallbackActions))
+    .slice(0, 3)
+    .map((action, index) => ({
+      id: `dashboard:fallback:${index}:${action.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      title: action,
+      category: "proof",
+      status: "suggested",
+      priority: 100 - index,
+      impact: index === 0 ? "high" : "medium",
+      difficulty: "medium",
+      linkedScore: "Proof Confidence",
+      sourcePath: "global",
+      whyThisMatters:
+        "This is the next practical move from your current readiness signals.",
+      evidenceNeeded:
+        "Visible resume evidence, proof candidate links, or measurable outcomes.",
+      steps: [
+        "Make the evidence visible in your resume.",
+        "Re-upload your resume after the edit.",
+      ],
+      completionCheck:
+        "Re-upload your resume so SkillMint can check whether the evidence is now visible.",
+      expectedOutcome:
+        "Scores can improve only after resume evidence changes and SkillMint detects it.",
+      createdFrom: "proof_blocker",
+    }));
 }
 
 function isUploadResumeAction(action: string): boolean {
   return action.toLowerCase().includes("upload a resume");
+}
+
+function formatStatus(status: Mission["status"]): string {
+  if (status === "done_by_user") return "Marked done";
+  if (status === "evidence_detected") return "Evidence detected";
+
+  return status.replace(/_/g, " ");
 }

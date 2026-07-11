@@ -1,6 +1,6 @@
 # SkillMint Beta v1 Build Roadmap
 
-**Status:** Locked roadmap for Beta v1 completion; Block 2 is the current block
+**Status:** Locked roadmap for Beta v1 completion; Block 3 is the current block
 **Timeline:** Realistic 5-6 weeks; conservative 7-8 weeks  
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
 
@@ -38,7 +38,7 @@ Dependencies: Existing dashboard, resume, ATS, roadmap, settings, upload, setup,
 
 ### 2. Scoring Calibration + Truth Engine
 
-Status: Current block.
+Status: Completed before Block 3.
 
 Purpose: Calibrate Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, Profile-fit roles, Latest JD Match, and trust language against representative resumes.
 
@@ -50,9 +50,13 @@ Dependencies: Block 1 premium light UI must remain intact.
 
 ### 3. Mission Execution System
 
+Status: Current block.
+
 Purpose: Turn roadmap and next actions into mature career execution without making SkillMint childish or game-like.
 
-Out of scope: arcade XP, coins, leaderboards, over-celebration, payments, AI chat, or score manipulation.
+Block 3 scope: mission contract, deterministic mission generation, mission prioritization, local mission status, evidence-detected state from re-analysis, Career Path Engine, Closest Role Path, Latest JD Path, Ultimate Goal Path, and 30/60/90 proof plans.
+
+Out of scope: arcade XP, coins, leaderboards, over-celebration, payments, AI chat, job board, backend mission persistence, mission completion analytics, external proof verification, active target workflow, saved JD history, or score manipulation.
 
 Dependencies: Blocks 1 and 2 must remain intact.
 

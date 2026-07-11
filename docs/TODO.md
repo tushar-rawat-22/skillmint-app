@@ -39,7 +39,10 @@ Tasks should only be added if they support an approved product objective.
 - [ ] Calibrate salary estimates before exposing them as a core report metric.
 - [ ] Evaluate external proof verification later without calling evidence candidates verified today.
 - [ ] Add stronger proof-source validation in Proof Engine v2.
-- [ ] Add roadmap execution/completion state after scoring trust is validated.
+- [x] Add local Mission Execution state and Career Path Engine for Beta v1 Block 3.
+- [ ] Add backend mission persistence only after trust/data-control decisions are ready.
+- [ ] Add mission completion analytics only after Beta v1 Complete and privacy review.
+- [ ] Add active target and saved JD workflow in Block 4 without confusing Profile-fit roles with Latest JD Match.
 
 ---
 

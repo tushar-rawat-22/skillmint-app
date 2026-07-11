@@ -34,6 +34,8 @@ import {
   premiumSurface,
 } from "@/components/ui/premium";
 
+import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
+import { buildCareerPathEngineResult } from "@/intelligence/roadmap";
 import { AccountOverviewCard } from "@/modules/account";
 import {
   NextBestActionPanel,
@@ -55,6 +57,7 @@ type LatestJobMatchSummary = {
   title: string;
   matchScore: number;
   missingSkills: string[];
+  result: JobDescriptionMatchResult;
 };
 
 type SavedResumeLookupState = "checking" | "found" | "missing";
@@ -103,6 +106,35 @@ export default function DashboardPage() {
     () => getLatestJobMatchSummary(storedJobMatch),
     [storedJobMatch],
   );
+  const dashboardCareerPath = useMemo(() => {
+    if (!hasResumeAnalysis) {
+      return null;
+    }
+
+    return buildCareerPathEngineResult({
+      profile: data.profile,
+      careerIQ: data.careerIQ,
+      proof: data.proof,
+      roleMatches: data.roleMatches,
+      latestJobMatch: latestJobMatch
+        ? {
+            title: latestJobMatch.title,
+            result: latestJobMatch.result,
+          }
+        : null,
+      targetRole: data.targetRole,
+      careerField: data.careerField,
+    });
+  }, [
+    data.careerField,
+    data.careerIQ,
+    data.profile,
+    data.proof,
+    data.roleMatches,
+    data.targetRole,
+    hasResumeAnalysis,
+    latestJobMatch,
+  ]);
 
   useEffect(() => {
     if (hasResumeAnalysis || hasSavedResumeSyncSignal) {
@@ -390,6 +422,7 @@ export default function DashboardPage() {
             proofNextMove={data.proof.nextProofMove}
             atsMissingSkills={atsMissingSkills}
             hasResumeAnalysis={hasResumeAnalysis}
+            nextBestMissions={dashboardCareerPath?.nextBestMissions ?? []}
           />
         </div>
 
@@ -638,16 +671,41 @@ function getLatestJobMatchSummary(
     ? `${jobTitle} at ${companyName}`
     : jobTitle || `${Math.round(matchScore)}% latest JD match`;
   const missingSkills = result?.missingSkills;
+  const missingKeywords = result?.missingKeywords;
+  const jobMatchResult: JobDescriptionMatchResult = {
+    matchScore,
+    verdict: getStringValue(result?.verdict) ?? "Latest JD Match available",
+    brutalReality:
+      getStringValue(result?.brutalReality) ??
+      "SkillMint found a latest pasted JD match. Review the ATS page for the full gap explanation.",
+    matchedSkills: getStringArray(result?.matchedSkills),
+    missingSkills: getStringArray(missingSkills),
+    missingKeywords: getStringArray(missingKeywords),
+    strengths: getStringArray(result?.strengths),
+    weaknesses: getStringArray(result?.weaknesses),
+    recommendations: getStringArray(result?.recommendations),
+  };
 
   return {
     title,
     matchScore,
-    missingSkills: Array.isArray(missingSkills)
-      ? missingSkills.filter((skill): skill is string =>
-          typeof skill === "string" && skill.trim().length > 0
-        )
-      : [],
+    missingSkills: jobMatchResult.missingSkills,
+    result: jobMatchResult,
   };
+}
+
+function getStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string =>
+        typeof item === "string" && item.trim().length > 0
+      )
+    : [];
+}
+
+function getStringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value
+    : null;
 }
 
 function parseRecord(storedValue: string | null): Record<string, unknown> | null {

@@ -14,15 +14,16 @@ import {
   premiumCompactSurface,
   premiumEyebrow,
   premiumHeroSurface,
+  premiumInput,
+  premiumPageStack,
   premiumPrimaryCta,
   premiumSecondaryCta,
   premiumSurface,
+  premiumWarningSurface,
 } from "@/components/ui/premium";
 import {
   generateCareerRoadmap,
   type CareerRoadmap,
-  type RoadmapPhase,
-  type RoadmapTask,
 } from "@/intelligence/core/careerRoadmap";
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import type { ResumeImprovementPlan } from "@/intelligence/core/resumeImprovement";
@@ -30,11 +31,30 @@ import type {
   ResumeRewritePlan,
   ResumeRewriteSuggestion,
 } from "@/intelligence/core/resumeRewrite";
+import type {
+  Mission,
+  MissionStatus,
+  MissionStatusMap,
+} from "@/intelligence/missions";
+import {
+  isMissionStatus,
+  MISSION_STATUS_STORAGE_KEY,
+  SELECTED_CAREER_PATH_STORAGE_KEY,
+  setMissionStatus,
+  setSelectedCareerPathId,
+} from "@/intelligence/missions";
+import {
+  buildCareerPathEngineResult,
+  type CareerPathEngineResult,
+  type CareerPathPhase,
+  type CareerPathTrack,
+} from "@/intelligence/roadmap";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   notifySkillMintWorkspaceUpdated,
   subscribeToSkillMintWorkspaceUpdates,
 } from "@/lib/storage/skillMintStorageEvents";
+import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import {
   NextBestActionPanel,
   UpgradeInterestCard,
@@ -59,12 +79,45 @@ type LatestJobMatch = {
 
 type RoadmapSetupSource = {
   targetRole: string;
+  careerField?: string;
+};
+
+type StoredAnalysisContext = {
+  profile: UserProfile;
+  extractedText: string;
 };
 
 type RoadmapSyncState = {
   status: "synced" | "local-only";
   message: string;
 };
+
+type CopyState = {
+  key: string;
+  status: "idle" | "copied" | "failed";
+};
+
+const USER_SELECTABLE_STATUSES: Array<{
+  value: MissionStatus;
+  label: string;
+}> = [
+  {
+    value: "suggested",
+    label: "Suggested",
+  },
+  {
+    value: "started",
+    label: "Started",
+  },
+  {
+    value: "done_by_user",
+    label: "Marked done",
+  },
+  {
+    value: "blocked",
+    label: "Blocked",
+  },
+];
 
 export default function RoadmapPage() {
   const storedAnalysis = useSyncExternalStore(
@@ -82,8 +135,19 @@ export default function RoadmapPage() {
     readStoredSetup,
     getServerSnapshot,
   );
-  const userProfile = useMemo(
-    () => getStoredUserProfile(storedAnalysis),
+  const storedMissionStatuses = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredMissionStatuses,
+    getServerSnapshot,
+  );
+  const selectedPathId = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredSelectedPath,
+    getServerSnapshot,
+  );
+  const data = useCareerData();
+  const analysisContext = useMemo(
+    () => getStoredAnalysisContext(storedAnalysis),
     [storedAnalysis],
   );
   const latestJobMatch = useMemo(
@@ -94,19 +158,27 @@ export default function RoadmapPage() {
     () => parseSetupSource(storedSetup),
     [storedSetup],
   );
+  const missionStatusMap = useMemo(
+    () => parseMissionStatusMap(storedMissionStatuses),
+    [storedMissionStatuses],
+  );
+  const [roadmapSyncState, setRoadmapSyncState] =
+    useState<RoadmapSyncState | null>(null);
+  const [copyState, setCopyState] = useState<CopyState>({
+    key: "",
+    status: "idle",
+  });
   const roadmapRoleContext = useMemo(
     () => getRoadmapRoleContext(latestJobMatch, setupSource),
     [latestJobMatch, setupSource],
   );
-  const [roadmapSyncState, setRoadmapSyncState] =
-    useState<RoadmapSyncState | null>(null);
-  const roadmap = useMemo(() => {
-    if (!userProfile) {
+  const legacyRoadmap = useMemo(() => {
+    if (!analysisContext) {
       return null;
     }
 
     return generateCareerRoadmap(
-      userProfile,
+      analysisContext.profile,
       latestJobMatch?.result ?? null,
       latestJobMatch?.improvementPlan ?? null,
       latestJobMatch?.rewritePlan ?? null,
@@ -116,15 +188,52 @@ export default function RoadmapPage() {
         jobDescription: latestJobMatch?.jobDescription,
       },
     );
-  }, [latestJobMatch, roadmapRoleContext, setupSource, userProfile]);
+  }, [analysisContext, latestJobMatch, roadmapRoleContext, setupSource]);
+  const careerPathResult = useMemo(() => {
+    if (!analysisContext) {
+      return null;
+    }
+
+    return buildCareerPathEngineResult({
+      profile: data.profile,
+      careerIQ: data.careerIQ,
+      proof: data.proof,
+      roleMatches: data.roleMatches,
+      latestJobMatch: latestJobMatch
+        ? {
+            title: formatLatestJobMatchSource(latestJobMatch),
+            companyName: latestJobMatch.companyName,
+            result: latestJobMatch.result,
+          }
+        : null,
+      targetRole: data.targetRole ?? setupSource?.targetRole,
+      careerField: data.careerField ?? setupSource?.careerField,
+      missionStatusMap,
+      selectedPathId,
+      resumeText: analysisContext.extractedText,
+    });
+  }, [
+    analysisContext,
+    data.careerField,
+    data.careerIQ,
+    data.profile,
+    data.proof,
+    data.roleMatches,
+    data.targetRole,
+    latestJobMatch,
+    missionStatusMap,
+    selectedPathId,
+    setupSource,
+  ]);
+  const selectedTrack = getSelectedTrack(careerPathResult);
   const latestDatabaseMatchId = latestJobMatch?.databaseId ?? null;
 
   useEffect(() => {
-    if (!roadmap) {
+    if (!legacyRoadmap) {
       return;
     }
 
-    const generatedRoadmap = roadmap;
+    const generatedRoadmap = legacyRoadmap;
     let isActive = true;
     const timeoutId = window.setTimeout(() => {
       persistLatestJobMatchRoadmap(generatedRoadmap);
@@ -137,7 +246,7 @@ export default function RoadmapPage() {
           setRoadmapSyncState({
             status: "local-only",
             message:
-              "Roadmap built in this browser. Account save will retry after your latest match is saved.",
+              "Career Path Engine is saved in this browser. Account roadmap sync will retry after your latest match is saved.",
           });
         }
         return;
@@ -174,7 +283,7 @@ export default function RoadmapPage() {
         setRoadmapSyncState({
           status: "local-only",
           message:
-            "Roadmap built in this browser. Account save did not finish right now.",
+            "Career Path Engine is saved in this browser. Account roadmap sync did not finish right now.",
         });
       }
     }
@@ -183,15 +292,47 @@ export default function RoadmapPage() {
       isActive = false;
       window.clearTimeout(timeoutId);
     };
-  }, [latestDatabaseMatchId, roadmap]);
+  }, [latestDatabaseMatchId, legacyRoadmap]);
 
-  if (!userProfile || !roadmap) {
+  function handleSelectPath(pathId: string) {
+    setSelectedCareerPathId(pathId);
+    notifySkillMintWorkspaceUpdated();
+  }
+
+  function handleMissionStatusChange(
+    missionId: string,
+    status: MissionStatus,
+  ) {
+    if (status === "evidence_detected") {
+      return;
+    }
+
+    setMissionStatus(missionId, status);
+    notifySkillMintWorkspaceUpdated();
+  }
+
+  async function handleCopy(key: string, value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyState({
+        key,
+        status: "copied",
+      });
+    } catch {
+      setCopyState({
+        key,
+        status: "failed",
+      });
+    }
+  }
+
+  if (!analysisContext || !careerPathResult || !selectedTrack) {
     return (
       <DashboardLayout>
         <section className="mx-auto max-w-6xl">
           <div className="max-w-3xl">
             <p className={premiumEyebrow}>
-              Career Roadmap
+              Mission Execution
             </p>
 
             <h1 className="mt-4 text-4xl font-black md:text-5xl">
@@ -199,13 +340,13 @@ export default function RoadmapPage() {
             </h1>
 
             <p className="mt-4 text-slate-600">
-              Your roadmap is built from resume proof, career direction, and
-              your latest job match when available.
+              SkillMint needs an active resume report before it can create
+              proof-aware missions or career paths.
             </p>
           </div>
 
           <RoadmapSourceCard
-            hasResume={Boolean(userProfile)}
+            hasResume={Boolean(analysisContext)}
             setupSource={setupSource}
             latestJobMatch={latestJobMatch}
           />
@@ -213,11 +354,11 @@ export default function RoadmapPage() {
           <NextBestActionPanel className="mt-6" />
 
           <EmptyState
-            eyebrow="Next Step"
-            title="Analyze your resume to generate the roadmap."
-            body="Setup gives SkillMint your direction, but resume intelligence is required before a truthful 30/60/90-day roadmap can be generated."
+            eyebrow="Next step"
+            title="Analyze your resume to generate missions."
+            body="Setup gives SkillMint your direction, but resume evidence is required before a truthful Mission Execution plan can be generated."
             href="/upload"
-            action="Upload Resume"
+            action="Upload resume"
           />
         </section>
       </DashboardLayout>
@@ -226,106 +367,98 @@ export default function RoadmapPage() {
 
   return (
     <DashboardLayout>
-      <section className="mx-auto max-w-6xl">
-        <div className={premiumHeroSurface}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className={premiumPageStack}>
+        <section className={premiumHeroSurface}>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <p className={premiumEyebrow}>
-                Career Roadmap
+                Mission Execution
               </p>
 
-              <h1 className="mt-4 text-4xl font-black md:text-5xl">
-                Career Roadmap
+              <h1 className="mt-4 break-words text-4xl font-black md:text-5xl">
+                Career Path Engine
               </h1>
 
-              <p className="mt-4 max-w-2xl text-slate-600">
-                Your 30/60/90-day plan built from resume proof, career direction,
-                and your latest job match when available.
+              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+                Choose one path at a time. Missions help you build proof, but
+                only resume re-analysis can move a score or detect evidence.
               </p>
             </div>
 
-            <Link
-              href="/ats"
-              className={premiumSecondaryCta}
-            >
-              Open ATS Match
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/dashboard"
+                className={premiumSecondaryCta}
+              >
+                View dashboard
+              </Link>
+
+              <Link
+                href="/ats"
+                className={premiumSecondaryCta}
+              >
+                Open ATS Match
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
 
         <RoadmapSourceCard
-          hasResume={Boolean(userProfile)}
+          hasResume={Boolean(analysisContext)}
           setupSource={setupSource}
           latestJobMatch={latestJobMatch}
         />
 
-        <NextBestActionPanel className="mt-6" />
-
-        {!latestJobMatch && (
-          <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
-            <h2 className="text-lg font-bold">
-              Add a job description for a more targeted roadmap.
-            </h2>
-
-            <p className="mt-2 max-w-3xl text-sm leading-6">
-              This version uses your resume profile only. A job description
-              match unlocks role-specific gaps, keywords, and application
-              strategy.
-            </p>
-
-            <Link
-              href="/ats"
-              className={`${premiumSecondaryCta} mt-4`}
-            >
-              Go to ATS Match
-            </Link>
-          </section>
-        )}
-
-        <ReadinessCard
-          roadmap={roadmap}
-          latestJobMatch={latestJobMatch}
+        <PathSelector
+          result={careerPathResult}
+          selectedPathId={selectedTrack.id}
+          onSelect={handleSelectPath}
         />
+
+        <SelectedPathPanel
+          track={selectedTrack}
+          nextBestMissions={careerPathResult.nextBestMissions}
+          copyState={copyState}
+          onCopy={handleCopy}
+        />
+
+        <section className="grid gap-5 xl:grid-cols-3">
+          {selectedTrack.phases.map((phase) => (
+            <PathPhaseCard
+              key={phase.window}
+              phase={phase}
+              copyState={copyState}
+              onCopy={handleCopy}
+              onStatusChange={handleMissionStatusChange}
+            />
+          ))}
+        </section>
+
+        <section className={premiumWarningSurface}>
+          <p className="text-sm font-bold text-amber-950">
+            Mission trust rule
+          </p>
+
+          <p className="mt-2 text-sm leading-6 text-amber-900">
+            Marked done is self-progress, not proof verification. Missing proof
+            means unverified, not false. Re-upload the resume when evidence is
+            visible so SkillMint can detect the latest state.
+          </p>
+        </section>
 
         {roadmapSyncState && (
           <RoadmapSyncStatusCard state={roadmapSyncState} />
         )}
 
-        <div className="mt-6">
-          <UpgradeInterestCard
-            source="roadmap"
-            title="Want a guided 30-day sprint?"
-            body="SkillMint is free during beta. Paid plans are not required for this roadmap. Paid beta interest only helps shape deeper weekly missions, accountability, and advanced career plans."
-            cta="Join paid beta"
-          />
-        </div>
+        <NextBestActionPanel />
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-3">
-          <PhaseSection phase={roadmap.thirtyDayPlan} />
-          <PhaseSection phase={roadmap.sixtyDayPlan} />
-          <PhaseSection phase={roadmap.ninetyDayPlan} />
-        </section>
-
-        <TaskSection
-          title="Weekly Missions"
-          description="Practical weekly moves that turn the roadmap into action."
-          tasks={roadmap.weeklyMissions}
+        <UpgradeInterestCard
+          source="roadmap"
+          title="Want a guided 30-day sprint?"
+          body="SkillMint is free during beta. Paid plans are not required for this roadmap. Paid beta interest only helps shape deeper proof reviews and career planning."
+          cta="Join paid beta"
         />
-
-        <TaskSection
-          title="Project Roadmap"
-          description="Build inspectable proof for the target role."
-          tasks={roadmap.projectRoadmap}
-        />
-
-        <TaskSection
-          title="Skill Roadmap"
-          description="Learn, build proof, then add skills truthfully."
-          tasks={roadmap.skillRoadmap}
-        />
-
-        <ApplicationStrategy items={roadmap.applicationStrategy} />
-      </section>
+      </div>
     </DashboardLayout>
   );
 }
@@ -369,10 +502,6 @@ function EmptyState({
   );
 }
 
-type RoadmapSyncStatusCardProps = {
-  state: RoadmapSyncState;
-};
-
 type RoadmapSourceCardProps = {
   hasResume: boolean;
   setupSource: RoadmapSetupSource | null;
@@ -385,7 +514,7 @@ function RoadmapSourceCard({
   latestJobMatch,
 }: RoadmapSourceCardProps) {
   return (
-    <section className={`mt-8 ${premiumSurface}`}>
+    <section className={premiumSurface}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className={premiumEyebrow}>
@@ -397,10 +526,9 @@ function RoadmapSourceCard({
           </h2>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            SkillMint builds this plan from resume proof, career direction, and
-            the latest job match when available. Active Target uses the latest
-            job match first; Profile-fit roles are separate general role
-            suggestions.
+            Closest Role Path uses Profile-fit roles. Latest JD Path uses one
+            pasted job description. Ultimate Goal Path uses setup direction.
+            SkillMint keeps those sources separate.
           </p>
         </div>
 
@@ -416,30 +544,23 @@ function RoadmapSourceCard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <SourceSignal
-          label="Resume proof"
+          label="Active resume report"
           value={hasResume ? "Available" : "Missing"}
           tone={hasResume ? "success" : "warning"}
         />
 
         <SourceSignal
-          label="Career direction"
+          label="Ultimate goal"
           value={setupSource?.targetRole ?? "Not set"}
           tone={setupSource ? "success" : "warning"}
         />
 
         <SourceSignal
-          label="Job match"
+          label="Latest JD Match"
           value={formatLatestJobMatchSource(latestJobMatch)}
           tone={latestJobMatch ? "success" : "warning"}
         />
       </div>
-
-      {!latestJobMatch && (
-        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-          Add a job description in ATS Match to make this roadmap more
-          job-specific.
-        </p>
-      )}
     </section>
   );
 }
@@ -468,12 +589,394 @@ function SourceSignal({ label, value, tone }: SourceSignalProps) {
   );
 }
 
+type PathSelectorProps = {
+  result: CareerPathEngineResult;
+  selectedPathId: string;
+  onSelect: (pathId: string) => void;
+};
+
+function PathSelector({
+  result,
+  selectedPathId,
+  onSelect,
+}: PathSelectorProps) {
+  return (
+    <section className={premiumSurface}>
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className={premiumEyebrow}>
+            Path selector
+          </p>
+
+          <h2 className="mt-2 text-2xl font-black text-slate-950">
+            Pick the plan you want to execute.
+          </h2>
+        </div>
+
+        <span className={premiumBadge}>
+          One path shown at a time
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        {result.tracks.map((track) => {
+          const isSelected = track.id === selectedPathId;
+          const isRecommended = track.id === result.recommendedPathId;
+
+          return (
+            <button
+              key={track.id}
+              type="button"
+              onClick={() => onSelect(track.id)}
+              className={`min-w-0 rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 ${
+                isSelected
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-950"
+                  : "border-slate-200 bg-white text-slate-900 hover:border-emerald-200 hover:bg-emerald-50"
+              }`}
+            >
+              <div className="flex flex-wrap gap-2">
+                <span className={premiumBadge}>
+                  {formatTrackStatus(track.status)}
+                </span>
+
+                {isRecommended && (
+                  <span className="inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                    Recommended
+                  </span>
+                )}
+              </div>
+
+              <h3 className="mt-4 break-words text-base font-black">
+                {track.title}
+              </h3>
+
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
+                {track.status === "available"
+                  ? track.summary
+                  : track.lockedReason ?? track.summary}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+type SelectedPathPanelProps = {
+  track: CareerPathTrack;
+  nextBestMissions: Mission[];
+  copyState: CopyState;
+  onCopy: (key: string, value: string) => void;
+};
+
+function SelectedPathPanel({
+  track,
+  nextBestMissions,
+  copyState,
+  onCopy,
+}: SelectedPathPanelProps) {
+  const pathCopy = buildTrackCopyText(track);
+  const planCopy = buildFullPlanCopyText(track);
+
+  return (
+    <section className={premiumHeroSurface}>
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap gap-2">
+            <span className={premiumBadge}>
+              {track.label}
+            </span>
+
+            <span className={premiumBadge}>
+              {formatTrackStatus(track.status)}
+            </span>
+
+            {track.targetRole && (
+              <span className={premiumBadge}>
+                Target: {track.targetRole}
+              </span>
+            )}
+          </div>
+
+          <h2 className="mt-4 break-words text-3xl font-black text-slate-950">
+            {track.title}
+          </h2>
+
+          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
+            {track.summary}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onCopy("path-summary", pathCopy)}
+            className={premiumSecondaryCta}
+          >
+            {getCopyLabel(copyState, "path-summary", "Copy path summary")}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onCopy("full-plan", planCopy)}
+            className={premiumSecondaryCta}
+          >
+            {getCopyLabel(copyState, "full-plan", "Copy full plan")}
+          </button>
+        </div>
+      </div>
+
+      {track.status === "available" ? (
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <PathInsight
+            label="Current reality"
+            value={track.currentReality}
+          />
+
+          <PathInsight
+            label="Main gap"
+            value={track.mainGap}
+          />
+
+          <PathInsight
+            label="Next best things"
+            value={formatNextBestMissions(nextBestMissions)}
+          />
+        </div>
+      ) : (
+        <div className={`mt-6 ${premiumWarningSurface}`}>
+          <p className="text-sm font-bold text-amber-950">
+            {track.lockedReason ?? track.mainGap}
+          </p>
+
+          <p className="mt-2 text-sm leading-6 text-amber-900">
+            SkillMint keeps unavailable paths locked instead of inventing
+            missions from missing context.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+type PathInsightProps = {
+  label: string;
+  value: string;
+};
+
+function PathInsight({ label, value }: PathInsightProps) {
+  return (
+    <article className={premiumCompactSurface}>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </p>
+
+      <p className="mt-3 break-words text-sm leading-6 text-slate-700">
+        {value}
+      </p>
+    </article>
+  );
+}
+
+type PathPhaseCardProps = {
+  phase: CareerPathPhase;
+  copyState: CopyState;
+  onCopy: (key: string, value: string) => void;
+  onStatusChange: (missionId: string, status: MissionStatus) => void;
+};
+
+function PathPhaseCard({
+  phase,
+  copyState,
+  onCopy,
+  onStatusChange,
+}: PathPhaseCardProps) {
+  return (
+    <section className={`${premiumSurface} min-w-0`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className={premiumEyebrow}>
+            {formatPhaseWindow(phase.window)}
+          </p>
+
+          <h2 className="mt-2 text-xl font-black text-slate-950">
+            {phase.title}
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onCopy(phase.window, buildPhaseCopyText(phase))}
+          className={`${premiumSecondaryCta} px-4 py-2`}
+        >
+          {getCopyLabel(copyState, phase.window, "Copy")}
+        </button>
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-slate-600">
+        {phase.goal}
+      </p>
+
+      <div className="mt-5 space-y-4">
+        {phase.missions.length ? (
+          phase.missions.map((mission) => (
+            <MissionCard
+              key={mission.id}
+              mission={mission}
+              copyState={copyState}
+              onCopy={onCopy}
+              onStatusChange={onStatusChange}
+            />
+          ))
+        ) : (
+          <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm leading-6 text-slate-600">
+              This path needs a real source before missions can be generated.
+            </p>
+          </article>
+        )}
+      </div>
+    </section>
+  );
+}
+
+type MissionCardProps = {
+  mission: Mission;
+  copyState: CopyState;
+  onCopy: (key: string, value: string) => void;
+  onStatusChange: (missionId: string, status: MissionStatus) => void;
+};
+
+function MissionCard({
+  mission,
+  copyState,
+  onCopy,
+  onStatusChange,
+}: MissionCardProps) {
+  const isEvidenceDetected = mission.status === "evidence_detected";
+
+  return (
+    <article className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap gap-2">
+        <span className={getStatusClassName(mission.status)}>
+          {formatMissionStatus(mission.status)}
+        </span>
+
+        <span className={premiumBadge}>
+          {mission.linkedScore}
+        </span>
+
+        <span className={premiumBadge}>
+          Impact: {mission.impact}
+        </span>
+
+        <span className={premiumBadge}>
+          Effort: {mission.difficulty}
+        </span>
+      </div>
+
+      <h3 className="mt-4 break-words text-base font-black leading-snug text-slate-950">
+        {mission.title}
+      </h3>
+
+      <p className="mt-3 text-sm leading-6 text-slate-700">
+        {mission.whyThisMatters}
+      </p>
+
+      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Evidence needed
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-slate-700">
+          {mission.evidenceNeeded}
+        </p>
+      </div>
+
+      <ol className="mt-4 space-y-2 text-sm leading-6 text-slate-700">
+        {mission.steps.map((step) => (
+          <li
+            key={step}
+            className="break-words border-l border-slate-300 pl-3"
+          >
+            {step}
+          </li>
+        ))}
+      </ol>
+
+      <p className="mt-4 text-xs leading-5 text-slate-500">
+        {mission.completionCheck}
+      </p>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <label className="min-w-0 flex-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Status
+          <select
+            value={mission.status}
+            disabled={isEvidenceDetected}
+            onChange={(event) =>
+              onStatusChange(
+                mission.id,
+                event.target.value as MissionStatus,
+              )}
+            className={`${premiumInput} mt-2 py-2`}
+          >
+            {isEvidenceDetected && (
+              <option value="evidence_detected">
+                Evidence detected
+              </option>
+            )}
+
+            {USER_SELECTABLE_STATUSES.map((option) => (
+              <option
+                key={option.value}
+                value={option.value}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="button"
+          onClick={() =>
+            onCopy(mission.id, mission.copyText ?? buildMissionCopyText(mission))
+          }
+          className={`${premiumSecondaryCta} px-4 py-2`}
+        >
+          {getCopyLabel(copyState, mission.id, "Copy")}
+        </button>
+      </div>
+
+      {mission.status === "done_by_user" && (
+        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+          Marked done. Re-upload your resume so SkillMint can check whether the
+          evidence is now visible.
+        </p>
+      )}
+
+      {isEvidenceDetected && (
+        <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
+          Evidence detected from the latest resume analysis. This is not
+          external proof verification.
+        </p>
+      )}
+    </article>
+  );
+}
+
+type RoadmapSyncStatusCardProps = {
+  state: RoadmapSyncState;
+};
+
 function RoadmapSyncStatusCard({ state }: RoadmapSyncStatusCardProps) {
   const isSynced = state.status === "synced";
 
   return (
     <section
-      className={`mt-4 rounded-lg border p-4 ${
+      className={`rounded-lg border p-4 ${
         isSynced
           ? "border-emerald-200 bg-emerald-50"
           : "border-amber-200 bg-amber-50"
@@ -498,387 +1001,6 @@ function RoadmapSyncStatusCard({ state }: RoadmapSyncStatusCardProps) {
   );
 }
 
-type ReadinessCardProps = {
-  roadmap: CareerRoadmap;
-  latestJobMatch: LatestJobMatch | null;
-};
-
-function ReadinessCard({
-  roadmap,
-  latestJobMatch,
-}: ReadinessCardProps) {
-  return (
-    <section className="mt-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)]">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
-            Current Readiness
-          </p>
-
-          <h2 className="mt-4 break-words text-3xl font-black text-slate-950">
-            {roadmap.targetRole}
-          </h2>
-
-          <p className="mt-3 max-w-3xl text-base leading-7 text-emerald-950">
-            {roadmap.brutalSummary}
-          </p>
-        </div>
-
-        <div className="shrink-0">
-          <span className={getReadinessClassName(roadmap.readiness)}>
-            {roadmap.readiness}
-          </span>
-
-          {latestJobMatch && (
-            <p className="mt-3 text-right text-sm text-emerald-800">
-              Latest match: {latestJobMatch.result.matchScore}%
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
-          Current Blockers
-        </h3>
-
-        <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
-          {roadmap.currentBlockers.map((blocker) => (
-            <li
-              key={blocker}
-              className="break-words border-l border-emerald-300 pl-3"
-            >
-              {blocker}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-type PhaseSectionProps = {
-  phase: RoadmapPhase;
-};
-
-function PhaseSection({ phase }: PhaseSectionProps) {
-  return (
-    <section className={premiumCompactSurface}>
-      <h2 className="text-xl font-bold text-slate-950">
-        {phase.title}
-      </h2>
-
-      <p className="mt-2 text-sm leading-6 text-slate-600">
-        {phase.goal}
-      </p>
-
-      <div className="mt-5 space-y-3">
-        {phase.tasks.map((task) => (
-          <CompactTaskCard
-            key={`${phase.title}-${task.title}`}
-            task={task}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-type TaskSectionProps = {
-  title: string;
-  description: string;
-  tasks: RoadmapTask[];
-};
-
-function TaskSection({
-  title,
-  description,
-  tasks,
-}: TaskSectionProps) {
-  return (
-    <section className={`mt-6 ${premiumSurface}`}>
-      <div>
-        <h2 className="text-xl font-bold text-slate-950">
-          {title}
-        </h2>
-
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          {description}
-        </p>
-      </div>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {tasks.map((task) => (
-          <TaskCard
-            key={`${title}-${task.title}`}
-            task={task}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-type TaskCardProps = {
-  task: RoadmapTask;
-};
-
-function TaskCard({ task }: TaskCardProps) {
-  return (
-    <article className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-      <TaskMeta task={task} />
-
-      <h3 className="mt-4 break-words text-lg font-bold text-slate-950">
-        {task.title}
-      </h3>
-
-      <p className="mt-3 text-sm leading-6 text-slate-600">
-        {task.reason}
-      </p>
-
-      <p className="mt-3 text-sm leading-6 text-slate-800">
-        {task.action}
-      </p>
-    </article>
-  );
-}
-
-function CompactTaskCard({ task }: TaskCardProps) {
-  return (
-    <article className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <TaskMeta task={task} />
-
-      <h3 className="mt-3 break-words text-base font-bold text-slate-950">
-        {task.title}
-      </h3>
-
-      <p className="mt-2 text-sm leading-6 text-slate-700">
-        {task.action}
-      </p>
-    </article>
-  );
-}
-
-function TaskMeta({ task }: TaskCardProps) {
-  const effort = getTaskEffort(task);
-  const impact = getTaskImpact(task);
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      <span className={getPriorityClassName(task.priority)}>
-        Priority: {task.priority}
-      </span>
-
-      <span className={getEffortClassName(effort)}>
-        Effort: {effort}
-      </span>
-
-      <span className={getImpactClassName(impact)}>
-        Impact: {impact}
-      </span>
-
-      <span className={premiumBadge}>
-        {task.estimatedTime}
-      </span>
-    </div>
-  );
-}
-
-type RoadmapEffort = "Low" | "Medium" | "High";
-type RoadmapImpact =
-  | "Proof"
-  | "ATS"
-  | "Recruiter Trust"
-  | "Portfolio"
-  | "Interview"
-  | "Skill Gap";
-
-function getTaskEffort(task: RoadmapTask): RoadmapEffort {
-  const taskText = `${task.title} ${task.action} ${task.estimatedTime}`
-    .toLowerCase();
-
-  if (/\b(15|20|30|45)\s*(min|mins|minutes)\b/.test(taskText)) {
-    return "Low";
-  }
-
-  if (
-    taskText.includes("deploy") ||
-    taskText.includes("build") ||
-    taskText.includes("project") ||
-    taskText.includes("portfolio") ||
-    taskText.includes("case study")
-  ) {
-    return "High";
-  }
-
-  if (
-    taskText.includes("rewrite") ||
-    taskText.includes("readme") ||
-    taskText.includes("screenshots") ||
-    taskText.includes("practice") ||
-    taskText.includes("tracker")
-  ) {
-    return "Medium";
-  }
-
-  if (
-    taskText.includes("add") ||
-    taskText.includes("list") ||
-    taskText.includes("review")
-  ) {
-    return "Low";
-  }
-
-  if (task.priority === "High") {
-    return "Medium";
-  }
-
-  return "Low";
-}
-
-function getTaskImpact(task: RoadmapTask): RoadmapImpact {
-  const taskText = `${task.title} ${task.reason} ${task.action}`.toLowerCase();
-
-  if (task.category === "ATS" || taskText.includes("keyword")) {
-    return "ATS";
-  }
-
-  if (task.category === "Interview" || taskText.includes("interview")) {
-    return "Interview";
-  }
-
-  if (
-    task.category === "Skills" ||
-    taskText.includes("missing skill") ||
-    taskText.includes("learn")
-  ) {
-    return "Skill Gap";
-  }
-
-  if (
-    task.category === "GitHub" ||
-    task.category === "Portfolio" ||
-    taskText.includes("github") ||
-    taskText.includes("portfolio") ||
-    taskText.includes("demo")
-  ) {
-    return "Portfolio";
-  }
-
-  if (
-    task.category === "Applications" ||
-    taskText.includes("recruiter") ||
-    taskText.includes("linkedin")
-  ) {
-    return "Recruiter Trust";
-  }
-
-  return "Proof";
-}
-
-type ApplicationStrategyProps = {
-  items: string[];
-};
-
-function ApplicationStrategy({ items }: ApplicationStrategyProps) {
-  return (
-    <section className={`mt-6 ${premiumSurface}`}>
-      <h2 className="text-xl font-bold text-slate-950">
-        Application Strategy
-      </h2>
-
-      <ul className="mt-5 grid gap-3 text-sm leading-6 text-slate-700 lg:grid-cols-2">
-        {items.map((item) => (
-          <li
-            key={item}
-            className="break-words rounded-2xl border border-slate-200 bg-slate-50 p-4"
-          >
-            {item}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function getReadinessClassName(
-  readiness: CareerRoadmap["readiness"],
-): string {
-  const baseClassName =
-    "inline-flex rounded-full border px-4 py-2 text-sm font-semibold";
-
-  if (readiness === "Ready to apply") {
-    return `${baseClassName} border-emerald-300 bg-white text-emerald-800`;
-  }
-
-  if (readiness === "Apply selectively") {
-    return `${baseClassName} border-sky-300 bg-white text-sky-800`;
-  }
-
-  if (readiness === "Getting ready") {
-    return `${baseClassName} border-amber-300 bg-white text-amber-800`;
-  }
-
-  return `${baseClassName} border-rose-300 bg-white text-rose-800`;
-}
-
-function getPriorityClassName(priority: RoadmapTask["priority"]): string {
-  const baseClassName =
-    "rounded-full border px-3 py-1 text-xs font-semibold";
-
-  if (priority === "High") {
-    return `${baseClassName} border-rose-200 bg-rose-50 text-rose-800`;
-  }
-
-  if (priority === "Medium") {
-    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
-  }
-
-  return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
-}
-
-function getEffortClassName(effort: RoadmapEffort): string {
-  const baseClassName =
-    "rounded-full border px-3 py-1 text-xs font-semibold";
-
-  if (effort === "High") {
-    return `${baseClassName} border-slate-300 bg-white text-slate-800`;
-  }
-
-  if (effort === "Medium") {
-    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
-  }
-
-  return `${baseClassName} border-slate-200 bg-white text-slate-700`;
-}
-
-function getImpactClassName(impact: RoadmapImpact): string {
-  const baseClassName =
-    "rounded-full border px-3 py-1 text-xs font-semibold";
-
-  if (impact === "Proof") {
-    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
-  }
-
-  if (impact === "ATS") {
-    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
-  }
-
-  if (impact === "Recruiter Trust") {
-    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
-  }
-
-  if (impact === "Portfolio") {
-    return `${baseClassName} border-slate-300 bg-white text-slate-800`;
-  }
-
-  if (impact === "Interview") {
-    return `${baseClassName} border-rose-200 bg-rose-50 text-rose-800`;
-  }
-
-  return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
-}
-
 function subscribeToStoredData(onStoreChange: () => void): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
@@ -893,6 +1015,15 @@ function readStoredJobMatch(): string | null {
 
 function readStoredSetup(): string | null {
   return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
+}
+
+function readStoredMissionStatuses(): string | null {
+  return getBrowserStorage()?.getItem(MISSION_STATUS_STORAGE_KEY) ?? null;
+}
+
+function readStoredSelectedPath(): string | null {
+  return getBrowserStorage()?.getItem(SELECTED_CAREER_PATH_STORAGE_KEY) ??
+    null;
 }
 
 function getServerSnapshot(): null {
@@ -911,9 +1042,9 @@ function getBrowserStorage(): Storage | null {
   }
 }
 
-function getStoredUserProfile(
+function getStoredAnalysisContext(
   storedAnalysis: string | null,
-): UserProfile | null {
+): StoredAnalysisContext | null {
   if (!storedAnalysis) {
     return null;
   }
@@ -921,13 +1052,16 @@ function getStoredUserProfile(
   try {
     const parsedAnalysis = JSON.parse(storedAnalysis);
 
-    if (!isRecord(parsedAnalysis)) {
+    if (!isRecord(parsedAnalysis) || !isUserProfile(parsedAnalysis.userProfile)) {
       return null;
     }
 
-    return isUserProfile(parsedAnalysis.userProfile)
-      ? parsedAnalysis.userProfile
-      : null;
+    return {
+      profile: parsedAnalysis.userProfile,
+      extractedText: isString(parsedAnalysis.extractedText)
+        ? parsedAnalysis.extractedText
+        : "",
+    };
   } catch {
     return null;
   }
@@ -994,10 +1128,57 @@ function parseSetupSource(storedSetup: string | null): RoadmapSetupSource | null
 
     const targetRole = parsedSetup.targetRole.trim();
 
-    return targetRole ? { targetRole } : null;
+    if (!targetRole) {
+      return null;
+    }
+
+    return {
+      targetRole,
+      careerField: isString(parsedSetup.careerField)
+        ? parsedSetup.careerField
+        : undefined,
+    };
   } catch {
     return null;
   }
+}
+
+function parseMissionStatusMap(
+  storedMissionStatuses: string | null,
+): MissionStatusMap {
+  if (!storedMissionStatuses) {
+    return {};
+  }
+
+  try {
+    const parsedStatuses = JSON.parse(storedMissionStatuses);
+
+    if (!isRecord(parsedStatuses)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsedStatuses).filter(
+        (entry): entry is [string, MissionStatus] =>
+          isString(entry[0]) && isMissionStatus(entry[1]),
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function getSelectedTrack(
+  result: CareerPathEngineResult | null,
+): CareerPathTrack | null {
+  if (!result) {
+    return null;
+  }
+
+  return result.tracks.find((track) => track.id === result.selectedPathId) ??
+    result.tracks.find((track) => track.id === result.recommendedPathId) ??
+    result.tracks[0] ??
+    null;
 }
 
 function formatLatestJobMatchSource(
@@ -1015,7 +1196,7 @@ function formatLatestJobMatchSource(
     return latestJobMatch.jobTitle;
   }
 
-  return `${latestJobMatch.result.matchScore}% match`;
+  return `${Math.round(latestJobMatch.result.matchScore)}% latest JD match`;
 }
 
 function getRoadmapRoleContext(
@@ -1068,14 +1249,15 @@ function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
 
 function getRoadmapLocalOnlyMessage(error: string): string {
   if (isMissingSupabaseConfigError(error)) {
-    return "Roadmap built in this browser. Account saving is unavailable.";
+    return "Career Path Engine is saved in this browser. Account saving is unavailable.";
   }
 
   if (error.includes("Sign in")) {
-    return "Roadmap built in this browser. Sign in to save your progress.";
+    return "Career Path Engine is saved in this browser. Sign in to save your progress.";
   }
 
-  return error || "Roadmap built in this browser. Account save did not finish.";
+  return error ||
+    "Career Path Engine is saved in this browser. Account save did not finish.";
 }
 
 function isMissingSupabaseConfigError(error: string): boolean {
@@ -1095,6 +1277,111 @@ function getDatabaseIdFromLegacyId(value: unknown): string | undefined {
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     .test(value);
+}
+
+function formatTrackStatus(status: CareerPathTrack["status"]): string {
+  if (status === "available") return "Available";
+  if (status === "locked") return "Locked";
+
+  return "Empty";
+}
+
+function formatMissionStatus(status: MissionStatus): string {
+  if (status === "done_by_user") return "Marked done";
+  if (status === "evidence_detected") return "Evidence detected";
+
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getStatusClassName(status: MissionStatus): string {
+  const baseClassName =
+    "inline-flex rounded-full border px-3 py-1 text-xs font-semibold";
+
+  if (status === "evidence_detected") {
+    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
+  }
+
+  if (status === "done_by_user") {
+    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
+  }
+
+  if (status === "blocked") {
+    return `${baseClassName} border-rose-200 bg-rose-50 text-rose-800`;
+  }
+
+  if (status === "started") {
+    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
+  }
+
+  return `${baseClassName} border-slate-200 bg-white text-slate-700`;
+}
+
+function formatPhaseWindow(window: CareerPathPhase["window"]): string {
+  if (window === "30_days") return "30-day focus";
+  if (window === "60_days") return "60-day build";
+
+  return "90-day proof plan";
+}
+
+function formatNextBestMissions(missions: Mission[]): string {
+  if (!missions.length) {
+    return "No missions available until this path has a real source.";
+  }
+
+  return missions.slice(0, 3).map((mission) => mission.title).join(" | ");
+}
+
+function getCopyLabel(
+  copyState: CopyState,
+  key: string,
+  fallback: string,
+): string {
+  if (copyState.key !== key) {
+    return fallback;
+  }
+
+  if (copyState.status === "copied") return "Copied";
+  if (copyState.status === "failed") return "Copy failed";
+
+  return fallback;
+}
+
+function buildTrackCopyText(track: CareerPathTrack): string {
+  return track.copyText ?? [
+    "My SkillMint path:",
+    `${track.title}: ${track.targetRole ?? track.label}`,
+    `Current reality: ${track.currentReality}`,
+    `Main gap: ${track.mainGap}`,
+    "Marked done is not verification. Re-upload your resume so SkillMint can check whether evidence is visible.",
+  ].join("\n");
+}
+
+function buildFullPlanCopyText(track: CareerPathTrack): string {
+  return [
+    buildTrackCopyText(track),
+    ...track.phases.map(buildPhaseCopyText),
+  ].join("\n\n");
+}
+
+function buildPhaseCopyText(phase: CareerPathPhase): string {
+  const missionLines = phase.missions.map((mission, index) =>
+    `${index + 1}. ${mission.title} - ${mission.evidenceNeeded}`
+  );
+
+  return [
+    `${phase.title}: ${phase.goal}`,
+    ...missionLines,
+  ].join("\n");
+}
+
+function buildMissionCopyText(mission: Mission): string {
+  return [
+    `SkillMint mission: ${mission.title}`,
+    `Linked score: ${mission.linkedScore}`,
+    `Why: ${mission.whyThisMatters}`,
+    `Evidence needed: ${mission.evidenceNeeded}`,
+    `Completion check: ${mission.completionCheck}`,
+  ].join("\n");
 }
 
 function isJobDescriptionMatchResult(

@@ -79,6 +79,8 @@ export function useCareerData() {
     missions: generateMissions(profile),
     recommendations: generateRecommendations(profile),
     roleMatches: calculateRoleMatches(profile),
+    targetRole: storedTargetRole,
+    careerField: storedCareerField,
   };
 }
 

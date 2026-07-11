@@ -258,6 +258,23 @@ Covered scenarios:
 - all scores clamped to 0-100
 - no NaN or Infinity scores
 - missing optional fields do not crash
+
+## Block 3 Mission Safety
+
+Mission Execution uses scoring outputs as inputs, but it does not change scoring math.
+
+Mission status rules:
+
+- `done_by_user` is self-progress only.
+- `evidence_detected` can appear when the latest resume analysis contains matching evidence signals.
+- Mission clicks never boost Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, Profile-fit role score, or Latest JD Match.
+- Scores can move only after resume evidence changes and SkillMint re-analyzes the active report.
+
+Additional mission/path fixture checks live in:
+
+```text
+scripts/mission-path-fixtures.mjs
+```
 - old profile-shaped data still scores with safe fallbacks
 
 ## What Intentionally Did Not Change

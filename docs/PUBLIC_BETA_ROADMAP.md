@@ -56,6 +56,10 @@ This is a controlled beta plan, not a full public launch. Do not invite users un
 
 Do not expand features if the core journey fails. Fix trust, explanation, upload, active report state, JD match clarity, and mobile completion first.
 
+## Block 3 Note
+
+Mission Execution and Career Path Engine should make next steps clearer without gamifying the product. Marked done is not verification, and mission progress must not be presented as a score boost.
+
 ## Next Build Blocks
 
 - Premium Product UI System.
