@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import ActiveTargetCard from "@/components/dashboard/ActiveTargetCard";
 import CareerReportHero from "@/components/dashboard/CareerReportHero";
 import MetricStrip from "@/components/dashboard/MetricStrip";
 import RealityCheckCard from "@/components/dashboard/RealityCheckCard";
@@ -36,6 +37,12 @@ import {
 
 import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescriptionMatch";
 import { buildCareerPathEngineResult } from "@/intelligence/roadmap";
+import {
+  buildActiveTargetEngineResult,
+  parseActiveTarget,
+  readActiveTargetStorageSnapshot,
+  type ActiveTarget,
+} from "@/intelligence/target";
 import { AccountOverviewCard } from "@/modules/account";
 import {
   NextBestActionPanel,
@@ -82,6 +89,11 @@ export default function DashboardPage() {
     readStoredJobMatch,
     getServerSnapshot,
   );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredActiveTarget,
+    getServerSnapshot,
+  );
   const data = useCareerData();
   const hasResumeAnalysis = useMemo(
     () => hasValidResume(storedResume),
@@ -106,26 +118,65 @@ export default function DashboardPage() {
     () => getLatestJobMatchSummary(storedJobMatch),
     [storedJobMatch],
   );
+  const activeTarget = useMemo(
+    () => parseActiveTarget(storedActiveTarget),
+    [storedActiveTarget],
+  );
+  const dashboardActiveTarget = useMemo(
+    () =>
+      buildActiveTargetEngineResult({
+        activeTarget,
+        hasResumeAnalysis,
+        careerIQ: hasResumeAnalysis ? data.careerIQ : null,
+        proof: hasResumeAnalysis ? data.proof : null,
+        roleMatches: hasResumeAnalysis ? data.roleMatches : [],
+        latestJobMatch: latestJobMatch
+          ? {
+              title: latestJobMatch.title,
+              result: latestJobMatch.result,
+            }
+          : null,
+        targetRole: data.targetRole,
+        careerField: data.careerField,
+      }),
+    [
+      activeTarget,
+      data.careerField,
+      data.careerIQ,
+      data.proof,
+      data.roleMatches,
+      data.targetRole,
+      hasResumeAnalysis,
+      latestJobMatch,
+    ],
+  );
   const dashboardCareerPath = useMemo(() => {
     if (!hasResumeAnalysis) {
       return null;
     }
+    const targetLatestJobMatch = getLatestJobMatchForActiveTarget(
+      activeTarget,
+      latestJobMatch,
+    );
 
     return buildCareerPathEngineResult({
       profile: data.profile,
       careerIQ: data.careerIQ,
       proof: data.proof,
       roleMatches: data.roleMatches,
-      latestJobMatch: latestJobMatch
+      latestJobMatch: targetLatestJobMatch
         ? {
-            title: latestJobMatch.title,
-            result: latestJobMatch.result,
+            title: targetLatestJobMatch.title,
+            companyName: targetLatestJobMatch.companyName,
+            result: targetLatestJobMatch.result,
           }
         : null,
+      activeTarget,
       targetRole: data.targetRole,
       careerField: data.careerField,
     });
   }, [
+    activeTarget,
     data.careerField,
     data.careerIQ,
     data.profile,
@@ -327,6 +378,8 @@ export default function DashboardPage() {
 
           <EmptyDashboardPreview />
 
+          <ActiveTargetCard result={dashboardActiveTarget} />
+
           <OnboardingChecklist />
 
           <NextBestActionPanel />
@@ -350,6 +403,8 @@ export default function DashboardPage() {
         <OnboardingChecklist />
 
         <NextBestActionPanel />
+
+        <ActiveTargetCard result={dashboardActiveTarget} />
 
         <MetricStrip
           proof={data.proof}
@@ -599,6 +654,10 @@ function readStoredJobMatch(): string | null {
   return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
 }
 
+function readStoredActiveTarget(): string | null {
+  return readActiveTargetStorageSnapshot();
+}
+
 function getServerSnapshot(): null {
   return null;
 }
@@ -706,6 +765,36 @@ function getStringValue(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0
     ? value
     : null;
+}
+
+function getLatestJobMatchForActiveTarget(
+  activeTarget: ActiveTarget | null,
+  latestJobMatch: LatestJobMatchSummary | null,
+): {
+  title: string;
+  companyName?: string;
+  result: JobDescriptionMatchResult;
+} | null {
+  if (activeTarget?.source === "latest_jd" && activeTarget.jdMatch) {
+    return {
+      title: activeTarget.roleTitle ?? activeTarget.title,
+      companyName: activeTarget.companyName,
+      result: {
+        matchScore: activeTarget.jdMatch.score,
+        verdict: activeTarget.jdMatch.verdict ?? "Active Target JD Match",
+        brutalReality: activeTarget.jdMatch.brutalReality ??
+          "JD Match is based on one pasted job description.",
+        matchedSkills: activeTarget.jdMatch.matchedSkills,
+        missingSkills: activeTarget.jdMatch.missingSkills,
+        missingKeywords: activeTarget.jdMatch.missingKeywords,
+        strengths: activeTarget.jdMatch.strengths,
+        weaknesses: activeTarget.jdMatch.weaknesses,
+        recommendations: activeTarget.jdMatch.recommendations,
+      },
+    };
+  }
+
+  return latestJobMatch;
 }
 
 function parseRecord(storedValue: string | null): Record<string, unknown> | null {

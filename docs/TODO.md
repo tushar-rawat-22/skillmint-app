@@ -42,7 +42,9 @@ Tasks should only be added if they support an approved product objective.
 - [x] Add local Mission Execution state and Career Path Engine for Beta v1 Block 3.
 - [ ] Add backend mission persistence only after trust/data-control decisions are ready.
 - [ ] Add mission completion analytics only after Beta v1 Complete and privacy review.
-- [ ] Add active target and saved JD workflow in Block 4 without confusing Profile-fit roles with Latest JD Match.
+- [x] Add browser-local Active Target workflow in Block 4 without confusing Profile-fit roles with Latest JD Match.
+- [ ] Add saved JD history only after the single Active Target workflow is validated.
+- [ ] Add account-level Active Target persistence only after Data Controls + Trust Center decisions are ready.
 
 ---
 

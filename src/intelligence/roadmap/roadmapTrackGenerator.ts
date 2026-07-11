@@ -11,6 +11,7 @@ import {
   type MissionEvidenceContext,
 } from "@/intelligence/missions/missionEvidence";
 import type { ProofScoreResult } from "@/intelligence/proof";
+import type { ActiveTarget } from "@/intelligence/target";
 import type { UserProfile } from "@/intelligence/types/profile";
 import type {
   CareerIQResult,
@@ -30,6 +31,7 @@ export type RoadmapTrackGeneratorInput = {
   proof: ProofScoreResult;
   roleMatches: RoleMatchResult[];
   latestJobMatch?: LatestJobMissionContext | null;
+  activeTarget?: ActiveTarget | null;
   targetRole?: string | null;
   careerField?: string | null;
   missionStatusMap?: MissionStatusMap;
@@ -116,8 +118,9 @@ export function buildLatestJdTrack(
     label: "Latest JD Path",
     status: "available",
     targetRole: label,
-    summary:
-      "Based on one pasted job description. This does not replace your Profile-fit path.",
+    summary: input.activeTarget?.source === "latest_jd"
+      ? "Based on your Active Target JD. This does not replace your Profile-fit path."
+      : "Based on one pasted job description. This does not replace your Profile-fit path.",
     currentReality:
       `Latest JD Match is ${Math.round(latestJobMatch.result.matchScore)}% for ${label}.`,
     mainGap: getMainGap(
@@ -192,6 +195,7 @@ function prepareTrackMissions(
     proof: input.proof,
     roleMatches: input.roleMatches,
     latestJobMatch: input.latestJobMatch,
+    activeTarget: input.activeTarget,
     targetRole: input.targetRole,
     careerField: input.careerField,
     sourcePath,

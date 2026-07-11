@@ -6,6 +6,7 @@ const SKILLMINT_WORKSPACE_KEYS = [
   "skillmint:jd-match",
   "skillmint:jd-match-history",
   "skillmint:jd-match-sync-status",
+  "skillmint:active-target:v1",
   "skillmint:target-role-setup",
   "skillmint:onboarding-dismissed",
   "skillmint:beta-feedback",

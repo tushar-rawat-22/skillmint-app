@@ -49,6 +49,11 @@ import {
   type CareerPathPhase,
   type CareerPathTrack,
 } from "@/intelligence/roadmap";
+import {
+  parseActiveTarget,
+  readActiveTargetStorageSnapshot,
+  type ActiveTarget,
+} from "@/intelligence/target";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   notifySkillMintWorkspaceUpdated,
@@ -135,6 +140,11 @@ export default function RoadmapPage() {
     readStoredSetup,
     getServerSnapshot,
   );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    readStoredActiveTarget,
+    getServerSnapshot,
+  );
   const storedMissionStatuses = useSyncExternalStore(
     subscribeToStoredData,
     readStoredMissionStatuses,
@@ -157,6 +167,10 @@ export default function RoadmapPage() {
   const setupSource = useMemo(
     () => parseSetupSource(storedSetup),
     [storedSetup],
+  );
+  const activeTarget = useMemo(
+    () => parseActiveTarget(storedActiveTarget),
+    [storedActiveTarget],
   );
   const missionStatusMap = useMemo(
     () => parseMissionStatusMap(storedMissionStatuses),
@@ -194,19 +208,27 @@ export default function RoadmapPage() {
       return null;
     }
 
+    const targetLatestJobMatch = getLatestJobMatchForActiveTarget(
+      activeTarget,
+      latestJobMatch,
+    );
+
     return buildCareerPathEngineResult({
       profile: data.profile,
       careerIQ: data.careerIQ,
       proof: data.proof,
       roleMatches: data.roleMatches,
-      latestJobMatch: latestJobMatch
+      latestJobMatch: targetLatestJobMatch
         ? {
-            title: formatLatestJobMatchSource(latestJobMatch),
-            companyName: latestJobMatch.companyName,
-            result: latestJobMatch.result,
+            title: targetLatestJobMatch.title,
+            companyName: targetLatestJobMatch.companyName,
+            result: targetLatestJobMatch.result,
           }
         : null,
-      targetRole: data.targetRole ?? setupSource?.targetRole,
+      activeTarget,
+      targetRole: activeTarget?.targetRole ??
+        data.targetRole ??
+        setupSource?.targetRole,
       careerField: data.careerField ?? setupSource?.careerField,
       missionStatusMap,
       selectedPathId,
@@ -220,6 +242,7 @@ export default function RoadmapPage() {
     data.proof,
     data.roleMatches,
     data.targetRole,
+    activeTarget,
     latestJobMatch,
     missionStatusMap,
     selectedPathId,
@@ -349,6 +372,7 @@ export default function RoadmapPage() {
             hasResume={Boolean(analysisContext)}
             setupSource={setupSource}
             latestJobMatch={latestJobMatch}
+            activeTarget={activeTarget}
           />
 
           <NextBestActionPanel className="mt-6" />
@@ -407,6 +431,7 @@ export default function RoadmapPage() {
           hasResume={Boolean(analysisContext)}
           setupSource={setupSource}
           latestJobMatch={latestJobMatch}
+          activeTarget={activeTarget}
         />
 
         <PathSelector
@@ -506,12 +531,14 @@ type RoadmapSourceCardProps = {
   hasResume: boolean;
   setupSource: RoadmapSetupSource | null;
   latestJobMatch: LatestJobMatch | null;
+  activeTarget: ActiveTarget | null;
 };
 
 function RoadmapSourceCard({
   hasResume,
   setupSource,
   latestJobMatch,
+  activeTarget,
 }: RoadmapSourceCardProps) {
   return (
     <section className={premiumSurface}>
@@ -542,7 +569,7 @@ function RoadmapSourceCard({
         )}
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <SourceSignal
           label="Active resume report"
           value={hasResume ? "Available" : "Missing"}
@@ -559,6 +586,12 @@ function RoadmapSourceCard({
           label="Latest JD Match"
           value={formatLatestJobMatchSource(latestJobMatch)}
           tone={latestJobMatch ? "success" : "warning"}
+        />
+
+        <SourceSignal
+          label="Active Target"
+          value={formatActiveTargetSource(activeTarget)}
+          tone={activeTarget ? "success" : "warning"}
         />
       </div>
     </section>
@@ -1017,6 +1050,10 @@ function readStoredSetup(): string | null {
   return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
 }
 
+function readStoredActiveTarget(): string | null {
+  return readActiveTargetStorageSnapshot();
+}
+
 function readStoredMissionStatuses(): string | null {
   return getBrowserStorage()?.getItem(MISSION_STATUS_STORAGE_KEY) ?? null;
 }
@@ -1197,6 +1234,54 @@ function formatLatestJobMatchSource(
   }
 
   return `${Math.round(latestJobMatch.result.matchScore)}% latest JD match`;
+}
+
+function formatActiveTargetSource(activeTarget: ActiveTarget | null): string {
+  if (!activeTarget) {
+    return "Not set";
+  }
+
+  if (activeTarget.companyName && activeTarget.roleTitle) {
+    return `${activeTarget.roleTitle} at ${activeTarget.companyName}`;
+  }
+
+  return activeTarget.title;
+}
+
+function getLatestJobMatchForActiveTarget(
+  activeTarget: ActiveTarget | null,
+  latestJobMatch: LatestJobMatch | null,
+): {
+  title: string;
+  companyName?: string;
+  result: JobDescriptionMatchResult;
+} | null {
+  if (activeTarget?.source === "latest_jd" && activeTarget.jdMatch) {
+    return {
+      title: activeTarget.roleTitle ?? activeTarget.title,
+      companyName: activeTarget.companyName,
+      result: {
+        matchScore: activeTarget.jdMatch.score,
+        verdict: activeTarget.jdMatch.verdict ?? "Active Target JD Match",
+        brutalReality: activeTarget.jdMatch.brutalReality ??
+          "JD Match is based on one pasted job description.",
+        matchedSkills: activeTarget.jdMatch.matchedSkills,
+        missingSkills: activeTarget.jdMatch.missingSkills,
+        missingKeywords: activeTarget.jdMatch.missingKeywords,
+        strengths: activeTarget.jdMatch.strengths,
+        weaknesses: activeTarget.jdMatch.weaknesses,
+        recommendations: activeTarget.jdMatch.recommendations,
+      },
+    };
+  }
+
+  return latestJobMatch
+    ? {
+        title: formatLatestJobMatchSource(latestJobMatch),
+        companyName: latestJobMatch.companyName,
+        result: latestJobMatch.result,
+      }
+    : null;
 }
 
 function getRoadmapRoleContext(

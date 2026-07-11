@@ -1,12 +1,12 @@
 # SkillMint Beta v1 Build Roadmap
 
-**Status:** Locked roadmap for Beta v1 completion; Block 3 is the current block
+**Status:** Locked roadmap for Beta v1 completion; Block 4 is the current block
 **Timeline:** Realistic 5-6 weeks; conservative 7-8 weeks  
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
 
 ## Current State
 
-SkillMint already has resume upload, active browser report state, saved resume analyses, dashboard restore, Career IQ, Proof Confidence, Harsh Truth, Profile-fit roles, Latest JD Match, roadmap display, account status, and browser-only clear workspace controls.
+SkillMint already has resume upload, active browser report state, saved resume analyses, dashboard restore, Career IQ, Proof Confidence, Harsh Truth, Profile-fit roles, Latest JD Match, mission execution, roadmap display, account status, and browser-only clear workspace controls.
 
 Beta v1 is now about making the product trustworthy enough for students, freshers, and early-career users to accept direct scoring, proof gaps, and career guidance without mistaking signals for guarantees.
 
@@ -50,7 +50,7 @@ Dependencies: Block 1 premium light UI must remain intact.
 
 ### 3. Mission Execution System
 
-Status: Current block.
+Status: Completed before Block 4.
 
 Purpose: Turn roadmap and next actions into mature career execution without making SkillMint childish or game-like.
 
@@ -62,9 +62,13 @@ Dependencies: Blocks 1 and 2 must remain intact.
 
 ### 4. Active Target + JD Workflow
 
-Purpose: Clarify the active target and job-description workflow so users understand one specific pasted JD versus general profile-fit direction.
+Status: Current block.
 
-Out of scope: confusing Profile-fit roles with Latest JD Match, fake saved JD state, job board, or employer-specific guarantees.
+Purpose: Add one browser-local Active Target focus layer so users can focus ATS/JD workflow, dashboard target summary, mission priority, and roadmap emphasis without changing scores.
+
+Block 4 scope: Active Target contract, local storage adapter, Active Target engine, JD Match to Active Target flow, latest JD conversion, dashboard Active Target card, target-aware mission priority, roadmap recommended path behavior, clear/replace target, copy target summary, fixtures, and docs.
+
+Out of scope: score boosts, scoring math changes, fake JD scores for non-JD targets, saved JD history, multi-job tracker, job board, job scraping, auto apply, cover letters, resume version generation, backend target persistence, Supabase migration, payment gates, or employer-specific guarantees.
 
 Dependencies: Blocks 1-3 must remain intact.
 
@@ -118,6 +122,7 @@ Dependencies: Blocks 1-6 must remain intact.
 - Missing proof means unverified, not false.
 - Profile-fit roles are general resume-fit suggestions.
 - Latest JD Match is one specific pasted JD.
+- Active Target focuses next actions and does not change core scores.
 - Saved analysis is account history.
 - Active report powers this browser dashboard.
 - Clear workspace is browser-only.

@@ -26,6 +26,20 @@ import {
   type JobDescriptionMatchResult,
 } from "@/intelligence/core/jobDescriptionMatch";
 import {
+  buildActiveTargetCopyText,
+  buildActiveTargetEngineResult,
+  clearActiveTarget,
+  createActiveTargetFromLatestJd,
+  createActiveTargetFromProfileFitRole,
+  createActiveTargetFromUltimateGoal,
+  getActiveTargetSourceLabel,
+  parseActiveTarget,
+  readActiveTargetStorageSnapshot,
+  setActiveTarget,
+  type ActiveTargetEngineResult,
+  type ActiveTargetSuggestion,
+} from "@/intelligence/target";
+import {
   generateResumeImprovementPlan,
   type ResumeImprovementPlan,
 } from "@/intelligence/core/resumeImprovement";
@@ -96,10 +110,24 @@ export default function ATSMatcherPage() {
     readStoredAnalysis,
     getServerSnapshot,
   );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredAnalysis,
+    readStoredActiveTarget,
+    getServerSnapshot,
+  );
   const userProfile = useMemo(
     () => getStoredUserProfile(storedAnalysis),
     [storedAnalysis],
   );
+  const activeTarget = useMemo(
+    () => parseActiveTarget(storedActiveTarget),
+    [storedActiveTarget],
+  );
+  const roleMatches = useMemo(
+    () => userProfile ? calculateRoleMatches(userProfile) : [],
+    [userProfile],
+  );
+  const targetRoleSetup = getTargetRoleSetup();
   const {
     user,
     isConfigured,
@@ -117,8 +145,37 @@ export default function ATSMatcherPage() {
   );
   const [historySyncMessage, setHistorySyncMessage] = useState("");
   const [deleteSyncMessage, setDeleteSyncMessage] = useState("");
+  const [targetActionMessage, setTargetActionMessage] = useState("");
+  const [targetCopyState, setTargetCopyState] =
+    useState<"idle" | "copied" | "failed">("idle");
   const [hasLoadedLocalHistory, setHasLoadedLocalHistory] = useState(false);
   const jobDescriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const activeTargetResult = useMemo(
+    () =>
+      buildActiveTargetEngineResult({
+        activeTarget,
+        hasResumeAnalysis: Boolean(userProfile),
+        roleMatches,
+        latestJobMatch: activeMatch
+          ? {
+              title: activeMatch.jobTitle,
+              companyName: activeMatch.companyName,
+              roleTitle: activeMatch.jobTitle,
+              jobDescription: activeMatch.jobDescription,
+              result: activeMatch.result,
+            }
+          : null,
+        targetRole: targetRoleSetup?.targetRole,
+        careerField: targetRoleSetup?.careerField,
+      }),
+    [
+      activeMatch,
+      activeTarget,
+      roleMatches,
+      targetRoleSetup,
+      userProfile,
+    ],
+  );
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -259,6 +316,17 @@ export default function ATSMatcherPage() {
             </Link>
           </div>
 
+          <ActiveTargetWorkflowPanel
+            result={activeTargetResult}
+            activeMatch={activeMatch}
+            actionMessage={targetActionMessage}
+            copyState={targetCopyState}
+            onSetLatestJd={handleSetLatestJdAsActiveTarget}
+            onSetSuggestion={handleSetSuggestionAsActiveTarget}
+            onClear={handleClearActiveTarget}
+            onCopy={handleCopyActiveTargetSummary}
+          />
+
           <NextBestActionPanel className="mt-8 text-left" />
         </section>
       </DashboardLayout>
@@ -303,8 +371,8 @@ export default function ATSMatcherPage() {
       {
         jobTitle,
         companyName,
-        setupTargetRole: getTargetRoleSetup()?.targetRole,
-        profileFitRole: calculateRoleMatches(userProfile)[0]?.role,
+        setupTargetRole: targetRoleSetup?.targetRole,
+        profileFitRole: roleMatches[0]?.role,
       },
     );
     const analyzedAt = new Date().toISOString();
@@ -367,6 +435,93 @@ export default function ATSMatcherPage() {
 
     if (activeMatch) {
       persistLatestJobMatch(activeMatch);
+    }
+  }
+
+  function handleSetLatestJdAsActiveTarget() {
+    if (!activeMatch) {
+      setTargetActionMessage("Analyze or select a JD match first.");
+      return;
+    }
+
+    const target = createActiveTargetFromLatestJd({
+      title: activeMatch.jobTitle,
+      companyName: activeMatch.companyName,
+      roleTitle: activeMatch.jobTitle,
+      jdText: activeMatch.jobDescription,
+      result: activeMatch.result,
+      targetRole: targetRoleSetup?.targetRole,
+      careerField: targetRoleSetup?.careerField,
+    });
+
+    setActiveTarget(target);
+    setTargetActionMessage(
+      activeTarget
+        ? "Active Target replaced. Saved in this browser during beta."
+        : "Latest JD set as Active Target. Saved in this browser during beta.",
+    );
+  }
+
+  function handleSetSuggestionAsActiveTarget(
+    suggestion: ActiveTargetSuggestion,
+  ) {
+    if (suggestion.source === "latest_jd") {
+      handleSetLatestJdAsActiveTarget();
+      return;
+    }
+
+    if (suggestion.source === "profile_fit" && roleMatches[0]) {
+      setActiveTarget(
+        createActiveTargetFromProfileFitRole({
+          roleMatch: roleMatches[0],
+          careerField: targetRoleSetup?.careerField,
+        }),
+      );
+      setTargetActionMessage(
+        "Closest Role Path set as Active Target. Saved in this browser during beta.",
+      );
+      return;
+    }
+
+    if (suggestion.source === "ultimate_goal" && targetRoleSetup?.targetRole) {
+      setActiveTarget(
+        createActiveTargetFromUltimateGoal({
+          targetRole: targetRoleSetup.targetRole,
+          careerField: targetRoleSetup.careerField,
+          closestRole: roleMatches[0]?.role,
+        }),
+      );
+      setTargetActionMessage(
+        "Ultimate Goal set as Active Target. Saved in this browser during beta.",
+      );
+      return;
+    }
+
+    setTargetActionMessage(
+      suggestion.disabledReason ?? "This Active Target source is not available yet.",
+    );
+  }
+
+  function handleClearActiveTarget() {
+    clearActiveTarget();
+    setTargetActionMessage("Active Target cleared from this browser.");
+  }
+
+  async function handleCopyActiveTargetSummary() {
+    if (!activeTargetResult.activeTarget) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        buildActiveTargetCopyText(
+          activeTargetResult.activeTarget,
+          activeTargetResult,
+        ),
+      );
+      setTargetCopyState("copied");
+    } catch {
+      setTargetCopyState("failed");
     }
   }
 
@@ -497,6 +652,17 @@ export default function ATSMatcherPage() {
         </div>
 
         <NextBestActionPanel className="mt-8" />
+
+        <ActiveTargetWorkflowPanel
+          result={activeTargetResult}
+          activeMatch={activeMatch}
+          actionMessage={targetActionMessage}
+          copyState={targetCopyState}
+          onSetLatestJd={handleSetLatestJdAsActiveTarget}
+          onSetSuggestion={handleSetSuggestionAsActiveTarget}
+          onClear={handleClearActiveTarget}
+          onCopy={handleCopyActiveTargetSummary}
+        />
 
         <section className="mt-8 grid gap-4 lg:grid-cols-3">
           <article className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
@@ -664,6 +830,187 @@ type MatchResultPanelProps = {
   match: ActiveJobMatch;
 };
 
+type ActiveTargetWorkflowPanelProps = {
+  result: ActiveTargetEngineResult;
+  activeMatch: ActiveJobMatch | null;
+  actionMessage: string;
+  copyState: "idle" | "copied" | "failed";
+  onSetLatestJd: () => void;
+  onSetSuggestion: (suggestion: ActiveTargetSuggestion) => void;
+  onClear: () => void;
+  onCopy: () => void;
+};
+
+function ActiveTargetWorkflowPanel({
+  result,
+  activeMatch,
+  actionMessage,
+  copyState,
+  onSetLatestJd,
+  onSetSuggestion,
+  onClear,
+  onCopy,
+}: ActiveTargetWorkflowPanelProps) {
+  const target = result.activeTarget;
+
+  return (
+    <section className={`mt-8 ${premiumSurface}`}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className={premiumEyebrow}>
+            ATS Match + Active Target
+          </p>
+
+          <h2 className="mt-3 break-words text-2xl font-black text-slate-950">
+            {target ? formatActiveTargetTitle(target) : "No Active Target yet"}
+          </h2>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            Active Target focuses your next actions. It does not change your
+            core scores. JD Match is based on one pasted job description, and
+            Profile-fit roles are separate from JD Match.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          {activeMatch && (
+            <button
+              type="button"
+              onClick={onSetLatestJd}
+              className={premiumPrimaryCta}
+            >
+              {target ? "Replace Active Target" : "Set as Active Target"}
+            </button>
+          )}
+
+          {target && (
+            <>
+              <button
+                type="button"
+                onClick={onCopy}
+                className={premiumSecondaryCta}
+              >
+                {copyState === "copied"
+                  ? "Copied"
+                  : copyState === "failed"
+                    ? "Copy failed"
+                    : "Copy target summary"}
+              </button>
+
+              <button
+                type="button"
+                onClick={onClear}
+                className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
+              >
+                Clear Active Target
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        <TargetSignal
+          label="Status"
+          value={target
+            ? target.status === "needs_resume_analysis"
+              ? "Needs active resume"
+              : "Active"
+            : "Not set"}
+        />
+
+        <TargetSignal
+          label="Source"
+          value={target ? getActiveTargetSourceLabel(target.source) : "Choose a target"}
+        />
+
+        <TargetSignal
+          label="JD Match"
+          value={target?.jdMatch
+            ? `${Math.round(target.jdMatch.score)}/100`
+            : "Not available yet"}
+        />
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-sm font-semibold text-slate-950">
+          Main gap
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-slate-700">
+          {result.mainGap}
+        </p>
+
+        <p className="mt-4 text-sm font-semibold text-slate-950">
+          Next move
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-slate-700">
+          {result.nextBestMove}
+        </p>
+      </div>
+
+      {!target && result.suggestions.length > 0 && (
+        <div className="mt-5 grid gap-3 lg:grid-cols-3">
+          {result.suggestions.map((suggestion) => (
+            <button
+              key={suggestion.id}
+              type="button"
+              disabled={suggestion.disabled}
+              onClick={() => onSetSuggestion(suggestion)}
+              className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-emerald-200 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className={premiumBadge}>
+                {getActiveTargetSourceLabel(suggestion.source)}
+              </span>
+
+              <h3 className="mt-3 break-words text-base font-black text-slate-950">
+                {suggestion.title}
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {suggestion.disabled
+                  ? suggestion.disabledReason
+                  : suggestion.reason}
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+        Only add missing skills if you actually used them. Otherwise, build
+        proof first. Saved in this browser during beta.
+      </p>
+
+      {actionMessage && (
+        <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
+          {actionMessage}
+        </p>
+      )}
+    </section>
+  );
+}
+
+type TargetSignalProps = {
+  label: string;
+  value: string;
+};
+
+function TargetSignal({ label, value }: TargetSignalProps) {
+  return (
+    <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </p>
+
+      <p className="mt-2 break-words text-sm font-bold text-slate-950">
+        {value}
+      </p>
+    </article>
+  );
+}
+
 function MatchResultPanel({ match }: MatchResultPanelProps) {
   const { result, improvementPlan, rewritePlan } = match;
 
@@ -817,10 +1164,10 @@ function JobMatchHistoryPanel({
             Job Match History
           </h2>
 
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          History works in this browser first. Signed-in users can also save
-          job matches to their account.
-        </p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            History works in this browser first. Signed-in users can also save
+            job matches to their account.
+          </p>
         </div>
 
         {matches.length > 0 && (
@@ -1689,6 +2036,10 @@ function readStoredAnalysis(): string | null {
   return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
 }
 
+function readStoredActiveTarget(): string | null {
+  return readActiveTargetStorageSnapshot();
+}
+
 function getServerSnapshot(): null {
   return null;
 }
@@ -1713,6 +2064,16 @@ function getStoredUserProfile(
   } catch {
     return null;
   }
+}
+
+function formatActiveTargetTitle(
+  target: NonNullable<ActiveTargetEngineResult["activeTarget"]>,
+): string {
+  if (target.companyName && target.roleTitle) {
+    return `${target.roleTitle} at ${target.companyName}`;
+  }
+
+  return target.title;
 }
 
 function isJobDescriptionMatchResult(

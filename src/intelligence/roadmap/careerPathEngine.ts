@@ -2,6 +2,10 @@ import {
   getTopMissions,
   type MissionStatusMap,
 } from "@/intelligence/missions";
+import {
+  getRecommendedPathSourceForTarget,
+  type ActiveTarget,
+} from "@/intelligence/target";
 
 import type { RoadmapTrackGeneratorInput } from "./roadmapTrackGenerator";
 import {
@@ -14,14 +18,27 @@ import type { CareerPathEngineResult } from "./careerPathContract";
 export type CareerPathEngineInput = RoadmapTrackGeneratorInput & {
   selectedPathId?: string | null;
   missionStatusMap?: MissionStatusMap;
+  activeTarget?: ActiveTarget | null;
 };
 
 export function buildCareerPathEngineResult(
   input: CareerPathEngineInput,
 ): CareerPathEngineResult {
-  const closestRoleTrack = buildClosestRoleTrack(input, true);
-  const latestJdTrack = buildLatestJdTrack(input, false);
-  const ultimateGoalTrack = buildUltimateGoalTrack(input, false);
+  const recommendedSource = getRecommendedPathSourceForTarget(
+    input.activeTarget,
+  );
+  const closestRoleTrack = buildClosestRoleTrack(
+    input,
+    recommendedSource ? recommendedSource === "profile_fit" : true,
+  );
+  const latestJdTrack = buildLatestJdTrack(
+    input,
+    recommendedSource === "latest_jd",
+  );
+  const ultimateGoalTrack = buildUltimateGoalTrack(
+    input,
+    recommendedSource === "ultimate_goal",
+  );
   const tracks = [
     closestRoleTrack,
     latestJdTrack,
