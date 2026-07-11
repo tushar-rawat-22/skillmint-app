@@ -2,6 +2,14 @@ import type { JobDescriptionMatchResult } from "@/intelligence/core/jobDescripti
 import type { ResumeImprovementPlan } from "@/intelligence/core/resumeImprovement";
 import type { ResumeRewritePlan } from "@/intelligence/core/resumeRewrite";
 import type { ActiveTargetResumeContext } from "@/intelligence/target";
+import {
+  readVisibleStorageValue,
+  writeOwnedJsonStorageValue,
+} from "@/lib/storage/ownedSkillMintStorage";
+import type {
+  BrowserOwnerContext,
+  SkillMintStorageDescriptor,
+} from "@/lib/storage/skillMintStorageTypes";
 
 export interface SavedJobMatch {
   id: string;
@@ -18,19 +26,33 @@ export interface SavedJobMatch {
   analyzedAt: string;
 }
 
-const JD_MATCH_HISTORY_STORAGE_KEY = "skillmint:jd-match-history";
+export const JD_MATCH_HISTORY_STORAGE_KEY = "skillmint:jd-match-history";
+export const JD_MATCH_HISTORY_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: JD_MATCH_HISTORY_STORAGE_KEY,
+    version: 1,
+    category: "job_match",
+    ownerScope: "anonymous_or_account",
+    containsPersonalData: true,
+    clearWithBrowserReset: true,
+    exportable: true,
+    exportPolicy: "json_value",
+    description:
+      "Browser-local list of recent JD Match snapshots and plans.",
+  };
 const MAX_SAVED_MATCHES = 20;
 
-export function getSavedJobMatches(): SavedJobMatch[] {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return [];
-  }
+export function getSavedJobMatches(
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): SavedJobMatch[] {
+  const storedValue = readVisibleStorageValue(
+    JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+    options,
+  );
 
   try {
-    const storedValue = storage.getItem(JD_MATCH_HISTORY_STORAGE_KEY);
-
     if (!storedValue) {
       return [];
     }
@@ -54,69 +76,60 @@ export function getSavedJobMatches(): SavedJobMatch[] {
   }
 }
 
-export function saveJobMatch(match: SavedJobMatch): SavedJobMatch[] {
-  const storage = getBrowserStorage();
+export function saveJobMatch(
+  match: SavedJobMatch,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): SavedJobMatch[] {
   const nextMatches = sortNewestFirst([
     match,
-    ...getSavedJobMatches().filter((savedMatch) => savedMatch.id !== match.id),
+    ...getSavedJobMatches(options).filter((savedMatch) =>
+      savedMatch.id !== match.id
+    ),
   ]).slice(0, MAX_SAVED_MATCHES);
 
-  if (!storage) {
-    return nextMatches;
-  }
-
-  try {
-    storage.setItem(
-      JD_MATCH_HISTORY_STORAGE_KEY,
-      JSON.stringify(nextMatches),
-    );
-  } catch {
-    // Storage failures should not block the active analysis from rendering.
-  }
+  writeOwnedJsonStorageValue(
+    JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+    nextMatches,
+    options,
+  );
 
   return nextMatches;
 }
 
 export function replaceSavedJobMatches(
   matches: SavedJobMatch[],
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
 ): SavedJobMatch[] {
-  const storage = getBrowserStorage();
   const nextMatches = sortNewestFirst(matches).slice(0, MAX_SAVED_MATCHES);
 
-  if (!storage) {
-    return nextMatches;
-  }
-
-  try {
-    storage.setItem(
-      JD_MATCH_HISTORY_STORAGE_KEY,
-      JSON.stringify(nextMatches),
-    );
-  } catch {
-    // Storage failures should not block restored matches from rendering.
-  }
+  writeOwnedJsonStorageValue(
+    JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+    nextMatches,
+    options,
+  );
 
   return nextMatches;
 }
 
-export function deleteSavedJobMatch(id: string): SavedJobMatch[] {
-  const storage = getBrowserStorage();
-  const nextMatches = getSavedJobMatches().filter(
+export function deleteSavedJobMatch(
+  id: string,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): SavedJobMatch[] {
+  const nextMatches = getSavedJobMatches(options).filter(
     (savedMatch) => savedMatch.id !== id,
   );
 
-  if (!storage) {
-    return nextMatches;
-  }
-
-  try {
-    storage.setItem(
-      JD_MATCH_HISTORY_STORAGE_KEY,
-      JSON.stringify(nextMatches),
-    );
-  } catch {
-    // Storage failures should not block the UI from updating safely.
-  }
+  writeOwnedJsonStorageValue(
+    JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+    nextMatches,
+    options,
+  );
 
   return nextMatches;
 }
@@ -135,8 +148,12 @@ export function clearSavedJobMatches(): void {
   }
 }
 
-export function getLatestJobMatch(): SavedJobMatch | null {
-  return getSavedJobMatches()[0] ?? null;
+export function getLatestJobMatch(
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): SavedJobMatch | null {
+  return getSavedJobMatches(options)[0] ?? null;
 }
 
 function sortNewestFirst(matches: SavedJobMatch[]): SavedJobMatch[] {

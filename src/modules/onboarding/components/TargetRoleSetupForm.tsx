@@ -87,6 +87,7 @@ const WEEKLY_TIME_OPTIONS = [
 
 export default function TargetRoleSetupForm() {
   const { user, isConfigured, isLoading } = useAuthSession();
+  const currentUserId = isLoading ? undefined : user?.id ?? null;
   const [form, setForm] = useState<TargetRoleSetupFormState>(DEFAULT_FORM);
   const [savedSetup, setSavedSetup] = useState<TargetRoleSetup | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -95,7 +96,9 @@ export default function TargetRoleSetupForm() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const setup = getTargetRoleSetup();
+      const setup = getTargetRoleSetup({
+        currentUserId,
+      });
 
       if (!setup) {
         return;
@@ -113,7 +116,7 @@ export default function TargetRoleSetupForm() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [currentUserId]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -134,7 +137,9 @@ export default function TargetRoleSetupForm() {
 
     setIsSaving(true);
     setError("");
-    saveTargetRoleSetup(nextSetup);
+    saveTargetRoleSetup(nextSetup, {
+      currentUserId,
+    });
     setSavedSetup(nextSetup);
 
     const syncMessage = await syncSetupToProfile(nextSetup);
@@ -318,10 +323,14 @@ export default function TargetRoleSetupForm() {
 
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaving || isLoading}
           className={`${premiumPrimaryCta} mt-6`}
         >
-          {isSaving ? "Saving..." : "Save direction"}
+          {isSaving
+            ? "Saving..."
+            : isLoading
+              ? "Checking account..."
+              : "Save direction"}
         </button>
       </form>
 

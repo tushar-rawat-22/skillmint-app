@@ -5,8 +5,21 @@ import type {
   RepositoryResult,
   SubmitFeedbackInput,
 } from "@/modules/feedback/types";
+import type { SkillMintStorageDescriptor } from "@/lib/storage/skillMintStorageTypes";
 
-const BETA_FEEDBACK_STORAGE_KEY = "skillmint:beta-feedback";
+export const BETA_FEEDBACK_STORAGE_KEY = "skillmint:beta-feedback";
+export const BETA_FEEDBACK_STORAGE_DESCRIPTOR: SkillMintStorageDescriptor = {
+  key: BETA_FEEDBACK_STORAGE_KEY,
+  version: 1,
+  category: "feedback",
+  ownerScope: "anonymous_or_account",
+  containsPersonalData: true,
+  clearWithBrowserReset: true,
+  exportable: true,
+  exportPolicy: "json_value",
+  description:
+    "Browser-local beta feedback fallback when account sync is unavailable.",
+};
 const MAX_LOCAL_FEEDBACK_ITEMS = 20;
 
 export function getLocalFeedbackItems(): LocalBetaFeedback[] {

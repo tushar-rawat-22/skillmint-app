@@ -10,6 +10,7 @@ const routeLabels: Record<string, string> = {
   "/roadmap": "Career Roadmap",
   "/profile": "Profile",
   "/settings": "Settings",
+  "/settings/data": "Data & Privacy",
 };
 
 export default function Topbar() {

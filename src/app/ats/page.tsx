@@ -54,9 +54,16 @@ import {
 } from "@/intelligence/core/resumeRewrite";
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
-  notifySkillMintWorkspaceUpdated,
   subscribeToSkillMintWorkspaceUpdates,
 } from "@/lib/storage/skillMintStorageEvents";
+import {
+  clearCurrentJobMatchSnapshot,
+  readCurrentJobMatchSnapshot,
+  readCurrentJobMatchSyncStatusSnapshot,
+  writeCurrentJobMatchSnapshot,
+  writeCurrentJobMatchSyncStatus,
+  type BrowserJobMatchSyncStatus,
+} from "@/lib/storage/jdMatchCurrentStorage";
 import {
   NextBestActionPanel,
   UpgradeInterestCard,
@@ -78,10 +85,9 @@ import {
   type PersistentJobMatch,
 } from "@/modules/jobMatch";
 import { getTargetRoleSetup } from "@/modules/onboarding/storage/targetRoleSetupStorage";
-
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
-const JD_MATCH_SYNC_STATUS_STORAGE_KEY = "skillmint:jd-match-sync-status";
+import {
+  readActiveResumeReportSnapshot,
+} from "@/modules/resume/services/activeResumeReportStorage";
 const MIN_JOB_DESCRIPTION_LENGTH = 80;
 const JOB_DESCRIPTION_MIN_HEIGHT = 140;
 const JOB_DESCRIPTION_MAX_HEIGHT = 420;
@@ -101,17 +107,19 @@ type ActiveJobMatch = {
   analyzedAt: string;
 };
 
-type JobMatchSyncStatus = {
-  status: "synced" | "local-only";
-  message: string;
-  syncedAt?: string;
-  databaseId?: string;
-};
+type JobMatchSyncStatus = BrowserJobMatchSyncStatus;
 
 export default function ATSMatcherPage() {
+  const {
+    user,
+    isConfigured,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const userId = user?.id ?? null;
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredAnalysis,
-    readStoredAnalysis,
+    () => readStoredAnalysis(currentUserId),
     getServerSnapshot,
   );
   const storedActiveTarget = useSyncExternalStore(
@@ -123,13 +131,6 @@ export default function ATSMatcherPage() {
     () => getStoredUserProfile(storedAnalysis),
     [storedAnalysis],
   );
-  const {
-    user,
-    isConfigured,
-    isLoading: isAuthLoading,
-  } = useAuthSession();
-  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
-  const userId = user?.id ?? null;
   const resumeContext = useMemo(
     () => createActiveTargetResumeContextFromStoredAnalysis(storedAnalysis),
     [storedAnalysis],
@@ -144,7 +145,9 @@ export default function ATSMatcherPage() {
     () => userProfile ? calculateRoleMatches(userProfile) : [],
     [userProfile],
   );
-  const targetRoleSetup = getTargetRoleSetup();
+  const targetRoleSetup = getTargetRoleSetup({
+    currentUserId,
+  });
   const [jobDescription, setJobDescription] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -192,8 +195,12 @@ export default function ATSMatcherPage() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const savedMatches = getSavedJobMatches();
-      const latestStoredMatch = readLatestJobMatch() ?? getLatestJobMatch();
+      const ownerContext = {
+        currentUserId,
+      };
+      const savedMatches = getSavedJobMatches(ownerContext);
+      const latestStoredMatch = readLatestJobMatch(ownerContext) ??
+        getLatestJobMatch(ownerContext);
       const currentLatestMatch = getCurrentJobMatchForResume(
         latestStoredMatch,
         resumeContext,
@@ -201,7 +208,7 @@ export default function ATSMatcherPage() {
 
       setSavedJobMatches(savedMatches);
       setActiveMatch(currentLatestMatch);
-      setSyncStatus(readJobMatchSyncStatus());
+      setSyncStatus(readJobMatchSyncStatus(ownerContext));
       if (latestStoredMatch && !currentLatestMatch) {
         setHistorySyncMessage(
           "Latest JD Match was calculated for another or unknown resume. Re-run it for the current resume.",
@@ -211,7 +218,7 @@ export default function ATSMatcherPage() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [resumeContext]);
+  }, [currentUserId, resumeContext]);
 
   useEffect(() => {
     const textarea = jobDescriptionTextareaRef.current;
@@ -272,14 +279,20 @@ export default function ATSMatcherPage() {
           return;
         }
 
-        const nextMatches = replaceSavedJobMatches(restoredMatches);
-        const nextActiveMatch = readLatestJobMatch() ?? nextMatches[0] ??
-          null;
+        const ownerContext = {
+          currentUserId,
+        };
+        const nextMatches = replaceSavedJobMatches(
+          restoredMatches,
+          ownerContext,
+        );
+        const nextActiveMatch = readLatestJobMatch(ownerContext) ??
+          nextMatches[0] ?? null;
 
         setSavedJobMatches(nextMatches);
         setActiveMatch(nextActiveMatch);
         if (nextActiveMatch) {
-          persistLatestJobMatch(nextActiveMatch);
+          persistLatestJobMatch(nextActiveMatch, ownerContext);
         }
         setHistorySyncMessage("Loaded recent job matches from your account.");
       } catch {
@@ -301,6 +314,7 @@ export default function ATSMatcherPage() {
     hasLoadedLocalHistory,
     isAuthLoading,
     isConfigured,
+    currentUserId,
     savedJobMatches.length,
     userId,
   ]);
@@ -412,8 +426,12 @@ export default function ATSMatcherPage() {
     };
 
     setActiveMatch(savedMatch);
-    setSavedJobMatches(saveJobMatch(savedMatch));
-    persistLatestJobMatch(savedMatch);
+    setSavedJobMatches(saveJobMatch(savedMatch, {
+      currentUserId,
+    }));
+    persistLatestJobMatch(savedMatch, {
+      currentUserId,
+    });
     void persistJobMatchToDatabase(savedMatch);
   }
 
@@ -433,12 +451,16 @@ export default function ATSMatcherPage() {
     }
 
     setActiveMatch(match);
-    persistLatestJobMatch(match);
+    persistLatestJobMatch(match, {
+      currentUserId,
+    });
   }
 
   function handleDeleteSavedMatch(id: string) {
     const matchToDelete = savedJobMatches.find((match) => match.id === id);
-    const nextMatches = deleteSavedJobMatch(id);
+    const nextMatches = deleteSavedJobMatch(id, {
+      currentUserId,
+    });
 
     setSavedJobMatches(nextMatches);
     setDeleteSyncMessage("");
@@ -453,7 +475,9 @@ export default function ATSMatcherPage() {
     setActiveMatch(nextActiveMatch);
 
     if (nextActiveMatch) {
-      persistLatestJobMatch(nextActiveMatch);
+      persistLatestJobMatch(nextActiveMatch, {
+        currentUserId,
+      });
     } else {
       clearLatestJobMatch();
     }
@@ -470,7 +494,9 @@ export default function ATSMatcherPage() {
     setSavedJobMatches([]);
 
     if (activeMatch) {
-      persistLatestJobMatch(activeMatch);
+      persistLatestJobMatch(activeMatch, {
+        currentUserId,
+      });
     }
   }
 
@@ -606,7 +632,9 @@ export default function ATSMatcherPage() {
           databaseId: saveResult.data.id,
         };
 
-        setSavedJobMatches(saveJobMatch(nextMatch));
+        setSavedJobMatches(saveJobMatch(nextMatch, {
+          currentUserId,
+        }));
         setActiveMatch((currentMatch) => {
           if (currentMatch?.id !== match.id) {
             return currentMatch;
@@ -614,8 +642,12 @@ export default function ATSMatcherPage() {
 
           return nextMatch;
         });
-        persistLatestJobMatch(nextMatch);
-        writeJobMatchSyncStatus(nextStatus);
+        persistLatestJobMatch(nextMatch, {
+          currentUserId,
+        });
+        writeJobMatchSyncStatus(nextStatus, {
+          currentUserId,
+        });
         setSyncStatus(nextStatus);
         return;
       }
@@ -639,7 +671,9 @@ export default function ATSMatcherPage() {
       message: getLocalOnlySyncMessage(message),
     };
 
-    setSavedJobMatches(saveJobMatch(nextMatch));
+    setSavedJobMatches(saveJobMatch(nextMatch, {
+      currentUserId,
+    }));
     setActiveMatch((currentMatch) => {
       if (currentMatch?.id !== match.id) {
         return currentMatch;
@@ -647,8 +681,12 @@ export default function ATSMatcherPage() {
 
       return nextMatch;
     });
-    persistLatestJobMatch(nextMatch);
-    writeJobMatchSyncStatus(nextStatus);
+    persistLatestJobMatch(nextMatch, {
+      currentUserId,
+    });
+    writeJobMatchSyncStatus(nextStatus, {
+      currentUserId,
+    });
     setSyncStatus(nextStatus);
   }
 
@@ -1840,16 +1878,14 @@ function getJobMatchSyncPresentation(
   };
 }
 
-function readLatestJobMatch(): ActiveJobMatch | null {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return null;
-  }
+function readLatestJobMatch(
+  ownerContext: {
+    currentUserId: string | null | undefined;
+  },
+): ActiveJobMatch | null {
+  const storedValue = readCurrentJobMatchSnapshot(ownerContext);
 
   try {
-    const storedValue = storage.getItem(JD_MATCH_STORAGE_KEY);
-
     if (!storedValue) {
       return null;
     }
@@ -1902,62 +1938,40 @@ function readLatestJobMatch(): ActiveJobMatch | null {
   }
 }
 
-function persistLatestJobMatch(match: ActiveJobMatch) {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(
-      JD_MATCH_STORAGE_KEY,
-      JSON.stringify({
-        id: match.id,
-        jobTitle: match.jobTitle,
-        companyName: match.companyName,
-        jobDescription: match.jobDescription,
-        result: match.result,
-        improvementPlan: match.improvementPlan,
-        rewritePlan: match.rewritePlan,
-        roadmap: match.roadmap,
-        databaseId: match.databaseId,
-        syncStatus: match.syncStatus,
-        resumeContext: match.resumeContext,
-        analyzedAt: match.analyzedAt,
-      }),
-    );
-    notifySkillMintWorkspaceUpdated();
-  } catch {
-    // Local storage failures should not block the user from seeing the result.
-  }
+function persistLatestJobMatch(
+  match: ActiveJobMatch,
+  ownerContext: {
+    currentUserId: string | null | undefined;
+  },
+) {
+  writeCurrentJobMatchSnapshot({
+    id: match.id,
+    jobTitle: match.jobTitle,
+    companyName: match.companyName,
+    jobDescription: match.jobDescription,
+    result: match.result,
+    improvementPlan: match.improvementPlan,
+    rewritePlan: match.rewritePlan,
+    roadmap: match.roadmap,
+    databaseId: match.databaseId,
+    syncStatus: match.syncStatus,
+    resumeContext: match.resumeContext,
+    analyzedAt: match.analyzedAt,
+  }, ownerContext);
 }
 
 function clearLatestJobMatch() {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.removeItem(JD_MATCH_STORAGE_KEY);
-    notifySkillMintWorkspaceUpdated();
-  } catch {
-    // Ignore storage failures.
-  }
+  clearCurrentJobMatchSnapshot();
 }
 
-function readJobMatchSyncStatus(): JobMatchSyncStatus | null {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return null;
-  }
+function readJobMatchSyncStatus(
+  ownerContext: {
+    currentUserId: string | null | undefined;
+  },
+): JobMatchSyncStatus | null {
+  const storedValue = readCurrentJobMatchSyncStatusSnapshot(ownerContext);
 
   try {
-    const storedValue = storage.getItem(JD_MATCH_SYNC_STATUS_STORAGE_KEY);
-
     if (!storedValue) {
       return null;
     }
@@ -1967,24 +1981,6 @@ function readJobMatchSyncStatus(): JobMatchSyncStatus | null {
     return isJobMatchSyncStatus(parsedValue) ? parsedValue : null;
   } catch {
     return null;
-  }
-}
-
-function writeJobMatchSyncStatus(status: JobMatchSyncStatus): void {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(
-      JD_MATCH_SYNC_STATUS_STORAGE_KEY,
-      JSON.stringify(status),
-    );
-    notifySkillMintWorkspaceUpdated();
-  } catch {
-    // Sync status is noncritical; the job match is already saved in this browser.
   }
 }
 
@@ -2100,26 +2096,18 @@ function formatAnalyzedAt(value: string): string {
   }).format(date);
 }
 
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function subscribeToStoredAnalysis(
   onStoreChange: () => void,
 ): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredAnalysis(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+function readStoredAnalysis(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveResumeReportSnapshot({
+    currentUserId,
+  });
 }
 
 function readStoredActiveTarget(): string | null {

@@ -4,10 +4,19 @@ import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
 
 import { ROUTES } from "@/constants/routes";
-
-const TARGET_ROLE_SETUP_STORAGE_KEY = "skillmint:target-role-setup";
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
+import {
+  readCurrentJobMatchSnapshot,
+} from "@/lib/storage/jdMatchCurrentStorage";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
+import {
+  subscribeToSkillMintWorkspaceUpdates,
+} from "@/lib/storage/skillMintStorageEvents";
+import {
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+} from "@/modules/onboarding/storage/targetRoleSetupStorage";
+import {
+  readActiveResumeReportSnapshot,
+} from "@/modules/resume/services/activeResumeReportStorage";
 
 type EntryState = {
   hasSetup: boolean;
@@ -128,41 +137,30 @@ function getEntrySuggestion(state: EntryState): EntrySuggestion {
 }
 
 function subscribeToStoredData(onStoreChange: () => void): () => void {
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-  };
+  return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
 function readStoredSetup(): string | null {
-  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId: null,
+  });
 }
 
 function readStoredResume(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+  return readActiveResumeReportSnapshot({
+    currentUserId: null,
+  });
 }
 
 function readStoredJobMatch(): string | null {
-  return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
+  return readCurrentJobMatchSnapshot({
+    currentUserId: null,
+  });
 }
 
 function getServerSnapshot(): null {
   return null;
 }
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function hasValidSetup(storedValue: string | null): boolean {
   const parsedValue = parseRecord(storedValue);
 

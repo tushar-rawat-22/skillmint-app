@@ -9,25 +9,25 @@ import FileCard from "@/components/upload/FileCard";
 import AnalysisProgress from "@/components/upload/AnalysisProgress";
 import { premiumPrimaryCta } from "@/components/ui/premium";
 import { NextBestActionPanel } from "@/modules/activation";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   analyzeResume as runResumeAnalysis,
   type ResumeAnalysisResult,
 } from "@/lib/resume/analyzeResume";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
-import { saveCurrentUserResumeAnalysis } from "@/modules/resume";
-
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
-
-type ResumeSyncStatus = {
-  status: "synced" | "local-only";
-  message: string;
-  syncedAt?: string;
-  databaseId?: string;
-};
+import {
+  saveCurrentUserResumeAnalysis,
+  writeActiveResumeReport,
+  writeResumeSyncStatus,
+} from "@/modules/resume";
 
 export default function UploadPage() {
   const router = useRouter();
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,13 +52,18 @@ export default function UploadPage() {
     try {
       const result = await runResumeAnalysis(file);
 
-      localStorage.setItem(
-        RESUME_ANALYSIS_STORAGE_KEY,
-        JSON.stringify(result),
-      );
+      const didSaveBrowserReport = writeActiveResumeReport(result, {
+        currentUserId,
+      });
+
+      if (!didSaveBrowserReport) {
+        throw new Error(
+          "Could not save this analysis in browser storage. Please try again.",
+        );
+      }
       notifySkillMintWorkspaceUpdated();
 
-      await persistResumeSyncStatus(result);
+      await persistResumeSyncStatus(result, currentUserId);
 
       router.push("/resume");
     } catch (error) {
@@ -95,10 +100,14 @@ export default function UploadPage() {
           <div className="mt-8 text-center">
             <button
               onClick={analyzeSelectedResume}
-              disabled={loading}
+              disabled={loading || isAuthLoading}
               className={`${premiumPrimaryCta} px-10 py-4`}
             >
-              {loading ? "Building report..." : "Analyze Resume"}
+              {loading
+                ? "Building report..."
+                : isAuthLoading
+                  ? "Checking account..."
+                  : "Analyze Resume"}
             </button>
 
             {error && (
@@ -123,6 +132,7 @@ export default function UploadPage() {
 
 async function persistResumeSyncStatus(
   result: ResumeAnalysisResult,
+  currentUserId: string | null | undefined,
 ): Promise<void> {
   try {
     const saveResult = await saveCurrentUserResumeAnalysis({
@@ -139,6 +149,8 @@ async function persistResumeSyncStatus(
         message: "Resume saved to your SkillMint account.",
         syncedAt: new Date().toISOString(),
         databaseId: saveResult.data.id,
+      }, {
+        currentUserId,
       });
       return;
     }
@@ -146,24 +158,16 @@ async function persistResumeSyncStatus(
     writeResumeSyncStatus({
       status: "local-only",
       message: getLocalOnlySyncMessage(saveResult.error),
+    }, {
+      currentUserId,
     });
   } catch {
     writeResumeSyncStatus({
       status: "local-only",
       message: "Resume analyzed in this browser. Account save did not finish.",
+    }, {
+      currentUserId,
     });
-  }
-}
-
-function writeResumeSyncStatus(status: ResumeSyncStatus): void {
-  try {
-    localStorage.setItem(
-      RESUME_SYNC_STATUS_STORAGE_KEY,
-      JSON.stringify(status),
-    );
-    notifySkillMintWorkspaceUpdated();
-  } catch {
-    // Sync status is noncritical; the resume analysis is already saved in this browser.
   }
 }
 

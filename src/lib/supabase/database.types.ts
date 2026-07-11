@@ -191,7 +191,16 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      delete_current_user_saved_reports: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          resume_analyses_deleted: number;
+          job_matches_deleted: number;
+          career_snapshots_deleted: number;
+        }>;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

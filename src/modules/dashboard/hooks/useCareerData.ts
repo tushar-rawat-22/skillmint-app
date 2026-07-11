@@ -18,20 +18,24 @@ import {
 } from "@/intelligence/proof";
 import type { ParsedProofProfile } from "@/intelligence/proof";
 import type { UserProfile } from "@/intelligence/types/profile";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
-import { TARGET_ROLE_SETUP_STORAGE_KEY } from "@/modules/onboarding/storage/targetRoleSetupStorage";
+import {
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+} from "@/modules/onboarding/storage/targetRoleSetupStorage";
+import {
+  ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
+} from "@/modules/resume/services/activeResumeReportStorage";
 
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-
-export function useCareerData() {
+export function useCareerData(currentUserId: string | null | undefined) {
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredAnalysis,
-    readStoredAnalysis,
+    () => readStoredAnalysis(currentUserId),
     getServerSnapshot,
   );
   const storedSetup = useSyncExternalStore(
     subscribeToStoredAnalysis,
-    readStoredSetup,
+    () => readStoredSetup(currentUserId),
     getServerSnapshot,
   );
   const analysisContext = useMemo(
@@ -90,31 +94,25 @@ function subscribeToStoredAnalysis(
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredAnalysis(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+function readStoredAnalysis(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredSetup(): string | null {
-  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ??
-    null;
+function readStoredSetup(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
 function getServerSnapshot(): null {
   return null;
 }
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 type StoredAnalysisContext = {
   profile: UserProfile;
   extractedText: string;

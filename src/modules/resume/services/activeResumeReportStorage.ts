@@ -1,6 +1,14 @@
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
 import type { UserProfile } from "@/intelligence/types/profile";
+import {
+  readVisibleStorageValue,
+  writeOwnedJsonStorageValue,
+} from "@/lib/storage/ownedSkillMintStorage";
+import type {
+  BrowserOwnerContext,
+  SkillMintStorageDescriptor,
+} from "@/lib/storage/skillMintStorageTypes";
 import type {
   PersistentResumeAnalysis,
   RepositoryResult,
@@ -9,6 +17,34 @@ import type {
 export const ACTIVE_RESUME_ANALYSIS_STORAGE_KEY =
   "skillmint:resume-analysis";
 export const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
+
+export const ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: ACTIVE_RESUME_ANALYSIS_STORAGE_KEY,
+    version: 1,
+    category: "resume",
+    ownerScope: "anonymous_or_account",
+    containsPersonalData: true,
+    clearWithBrowserReset: true,
+    exportable: true,
+    exportPolicy: "json_value",
+    description:
+      "Current active resume analysis powering this browser dashboard.",
+  };
+
+export const RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: RESUME_SYNC_STATUS_STORAGE_KEY,
+    version: 1,
+    category: "sync_status",
+    ownerScope: "anonymous_or_account",
+    containsPersonalData: false,
+    clearWithBrowserReset: true,
+    exportable: true,
+    exportPolicy: "json_value",
+    description:
+      "Browser-local sync status for the active resume analysis.",
+  };
 
 export type ActiveResumeAnalysis = Omit<
   ResumeAnalysisResult,
@@ -25,6 +61,8 @@ export type ResumeSyncStatus = {
   databaseId?: string;
 };
 
+type ActiveResumeStorageOptions = BrowserOwnerContext;
+
 const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
   skills: [],
   projects: [],
@@ -37,6 +75,9 @@ const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
 
 export function setActiveResumeReportFromSavedAnalysis(
   resumeAnalysis: PersistentResumeAnalysis,
+  options: ActiveResumeStorageOptions = {
+    currentUserId: null,
+  },
 ): RepositoryResult<ActiveResumeAnalysis> {
   const activeReport =
     mapPersistentResumeAnalysisToActiveReport(resumeAnalysis);
@@ -49,7 +90,7 @@ export function setActiveResumeReportFromSavedAnalysis(
     };
   }
 
-  const didWriteReport = writeActiveResumeReport(activeReport);
+  const didWriteReport = writeActiveResumeReport(activeReport, options);
 
   if (!didWriteReport) {
     return {
@@ -59,12 +100,15 @@ export function setActiveResumeReportFromSavedAnalysis(
     };
   }
 
-  writeResumeSyncStatus({
-    status: "synced",
-    message: "Loaded saved resume analysis as the active report.",
-    syncedAt: new Date().toISOString(),
-    databaseId: resumeAnalysis.id,
-  });
+  writeResumeSyncStatus(
+    {
+      status: "synced",
+      message: "Loaded saved resume analysis as the active report.",
+      syncedAt: new Date().toISOString(),
+      databaseId: resumeAnalysis.id,
+    },
+    options,
+  );
   notifySkillMintWorkspaceUpdated();
 
   return {
@@ -100,25 +144,49 @@ export function mapPersistentResumeAnalysisToActiveReport(
 
 export function writeActiveResumeReport(
   analysis: ActiveResumeAnalysis,
+  options: ActiveResumeStorageOptions = {
+    currentUserId: null,
+  },
 ): boolean {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return false;
-  }
-
-  try {
-    storage.setItem(
-      ACTIVE_RESUME_ANALYSIS_STORAGE_KEY,
-      JSON.stringify(analysis),
-    );
-    return true;
-  } catch {
-    return false;
-  }
+  return writeOwnedJsonStorageValue(
+    ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
+    analysis,
+    options,
+  );
 }
 
-export function writeResumeSyncStatus(status: ResumeSyncStatus): boolean {
+export function writeResumeSyncStatus(
+  status: ResumeSyncStatus,
+  options: ActiveResumeStorageOptions = {
+    currentUserId: null,
+  },
+): boolean {
+  return writeOwnedJsonStorageValue(
+    RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
+    status,
+    options,
+  );
+}
+
+export function readActiveResumeReportSnapshot(
+  options: ActiveResumeStorageOptions,
+): string | null {
+  return readVisibleStorageValue(
+    ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
+    options,
+  );
+}
+
+export function readResumeSyncStatusSnapshot(
+  options: ActiveResumeStorageOptions,
+): string | null {
+  return readVisibleStorageValue(
+    RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
+    options,
+  );
+}
+
+export function detachActiveResumeSyncStatus(databaseId: string): boolean {
   const storage = getBrowserStorage();
 
   if (!storage) {
@@ -126,10 +194,23 @@ export function writeResumeSyncStatus(status: ResumeSyncStatus): boolean {
   }
 
   try {
-    storage.setItem(
-      RESUME_SYNC_STATUS_STORAGE_KEY,
-      JSON.stringify(status),
-    );
+    const storedValue = storage.getItem(RESUME_SYNC_STATUS_STORAGE_KEY);
+
+    if (!storedValue) {
+      return false;
+    }
+
+    const parsedValue = JSON.parse(storedValue);
+    const value = isRecord(parsedValue) && "value" in parsedValue
+      ? parsedValue.value
+      : parsedValue;
+
+    if (!isRecord(value) || value.databaseId !== databaseId) {
+      return false;
+    }
+
+    storage.removeItem(RESUME_SYNC_STATUS_STORAGE_KEY);
+    notifySkillMintWorkspaceUpdated();
     return true;
   } catch {
     return false;

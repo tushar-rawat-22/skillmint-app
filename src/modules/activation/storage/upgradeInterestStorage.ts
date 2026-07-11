@@ -3,8 +3,22 @@ import type {
   UpgradeInterestSource,
 } from "@/modules/activation/types";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import type { SkillMintStorageDescriptor } from "@/lib/storage/skillMintStorageTypes";
 
-const UPGRADE_INTEREST_STORAGE_KEY = "skillmint:upgrade-interest";
+export const UPGRADE_INTEREST_STORAGE_KEY = "skillmint:upgrade-interest";
+export const UPGRADE_INTEREST_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: UPGRADE_INTEREST_STORAGE_KEY,
+    version: 1,
+    category: "activation",
+    ownerScope: "global_preference",
+    containsPersonalData: false,
+    clearWithBrowserReset: true,
+    exportable: true,
+    exportPolicy: "json_value",
+    description:
+      "Browser-local beta upgrade-interest clicks; no payment or entitlement.",
+  };
 const MAX_UPGRADE_INTEREST_RECORDS = 20;
 
 export function saveUpgradeInterest(input: {

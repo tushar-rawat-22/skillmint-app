@@ -1,8 +1,10 @@
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
+import Link from "next/link";
 import ClearWorkspaceCard from "@/components/settings/ClearWorkspaceCard";
 import {
   premiumCompactSurface,
   premiumHeroSurface,
+  premiumSecondaryCta,
 } from "@/components/ui/premium";
 import { AccountOverviewCard } from "@/modules/account";
 import AuthStatusCard from "@/modules/auth/components/AuthStatusCard";
@@ -47,6 +49,24 @@ export default function SettingsPage() {
 
           <div className="space-y-6">
             <AccountOverviewCard />
+
+            <article className={premiumCompactSurface}>
+              <h2 className="text-xl font-bold text-slate-950">
+                Data & privacy
+              </h2>
+
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                See what SkillMint stores in this browser and your account.
+                Download or remove your data.
+              </p>
+
+              <Link
+                href="/settings/data"
+                className={`${premiumSecondaryCta} mt-5`}
+              >
+                Open Data & privacy
+              </Link>
+            </article>
 
             <article className={premiumCompactSurface}>
               <h2 className="text-xl font-bold text-slate-950">

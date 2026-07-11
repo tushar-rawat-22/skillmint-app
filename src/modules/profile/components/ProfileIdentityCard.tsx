@@ -3,20 +3,26 @@
 import { useSyncExternalStore } from "react";
 
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import {
   getTargetRoleSetup,
-  TARGET_ROLE_SETUP_STORAGE_KEY,
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
 } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 
 export default function ProfileIdentityCard() {
   const { user, isConfigured, isLoading } = useAuthSession();
+  const currentUserId = isLoading ? undefined : user?.id ?? null;
   const storedSetupVersion = useSyncExternalStore(
     subscribeToSkillMintWorkspaceUpdates,
-    readStoredSetupVersion,
+    () => readStoredSetupVersion(currentUserId),
     getServerSnapshot,
   );
-  const setup = storedSetupVersion ? getTargetRoleSetup() : null;
+  const setup = storedSetupVersion
+    ? getTargetRoleSetup({
+        currentUserId,
+      })
+    : null;
   const displayName = user?.fullName || getEmailName(user?.email) ||
     "SkillMint User";
   const displayEmail = user?.email ?? "Works in this browser";
@@ -87,16 +93,12 @@ function IdentitySignal({ label, value }: IdentitySignalProps) {
   );
 }
 
-function readStoredSetupVersion(): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage.getItem(TARGET_ROLE_SETUP_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+function readStoredSetupVersion(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
 function getServerSnapshot(): null {

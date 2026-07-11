@@ -20,38 +20,43 @@ import {
   setOnboardingDismissed,
 } from "@/modules/onboarding/storage/onboardingStorage";
 import {
-  TARGET_ROLE_SETUP_STORAGE_KEY,
+  readCurrentJobMatchSnapshot,
+} from "@/lib/storage/jdMatchCurrentStorage";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
+import {
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
 } from "@/modules/onboarding/storage/targetRoleSetupStorage";
+import {
+  readActiveResumeReportSnapshot,
+} from "@/modules/resume/services/activeResumeReportStorage";
 import { buildOnboardingSteps } from "@/modules/onboarding/utils/onboardingProgress";
 import type {
   OnboardingProgress,
   OnboardingStep,
 } from "@/modules/onboarding/types";
 
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
-
 export default function OnboardingChecklist() {
-  const storedResumeAnalysis = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredResumeAnalysis,
-    getServerSnapshot,
-  );
-  const storedJobMatch = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredJobMatch,
-    getServerSnapshot,
-  );
-  const storedTargetRoleSetup = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredTargetRoleSetup,
-    getServerSnapshot,
-  );
   const {
     user,
     isConfigured,
     isLoading: isAuthLoading,
   } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const storedResumeAnalysis = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredResumeAnalysis(currentUserId),
+    getServerSnapshot,
+  );
+  const storedJobMatch = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredJobMatch(currentUserId),
+    getServerSnapshot,
+  );
+  const storedTargetRoleSetup = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredTargetRoleSetup(currentUserId),
+    getServerSnapshot,
+  );
   const [isDismissed, setIsDismissed] = useState(false);
   const [hasOpenedCompletedChecklist, setHasOpenedCompletedChecklist] =
     useState(false);
@@ -277,35 +282,33 @@ function subscribeToStoredData(onStoreChange: () => void): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredResumeAnalysis(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+function readStoredResumeAnalysis(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveResumeReportSnapshot({
+    currentUserId,
+  });
 }
 
-function readStoredJobMatch(): string | null {
-  return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
+function readStoredJobMatch(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readCurrentJobMatchSnapshot({
+    currentUserId,
+  });
 }
 
-function readStoredTargetRoleSetup(): string | null {
-  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ??
-    null;
+function readStoredTargetRoleSetup(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
 function getServerSnapshot(): null {
   return null;
 }
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function hasValidResumeAnalysis(storedValue: string | null): boolean {
   if (!storedValue) {
     return false;

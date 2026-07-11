@@ -9,7 +9,7 @@ import {
 import { clearSkillMintWorkspace } from "@/lib/storage/clearSkillMintWorkspace";
 
 const CONFIRM_CLEAR_WORKSPACE_MESSAGE =
-  "This clears the active browser workspace only. Your account and synced history are not deleted. Continue?";
+  "This clears SkillMint data from this browser only. Your account and synced records are not deleted. Continue?";
 
 export default function ClearWorkspaceCard() {
   const router = useRouter();
@@ -22,10 +22,10 @@ export default function ClearWorkspaceCard() {
     }
 
     setIsClearing(true);
-    clearSkillMintWorkspace();
-    setMessage(
-      "Active workspace cleared from this browser. Your account and synced history were not deleted.",
-    );
+    const result = clearSkillMintWorkspace();
+    setMessage(result.failedKeys.length
+      ? `Removed ${result.removed} browser item(s), but ${result.failedKeys.length} item(s) could not be cleared. Your account was not deleted.`
+      : "SkillMint data cleared from this browser. Your account and synced records were not deleted.");
 
     window.setTimeout(() => {
       router.push("/dashboard");
@@ -39,13 +39,14 @@ export default function ClearWorkspaceCard() {
       </p>
 
       <h2 className="mt-3 text-xl font-bold">
-        Clear active workspace
+        Clear SkillMint data from this browser
       </h2>
 
       <p className="mt-3 text-sm leading-6">
-        Clears the active browser workspace: active resume analysis, JD
-        matches, roadmap state, beta feedback, and upgrade interest saved in
-        this browser. This does not delete your account or synced history.
+        Removes registered SkillMint browser data: active resume analysis, JD
+        matches, Active Target, roadmap state, beta feedback, and preferences
+        saved in this browser. This does not delete your account or synced
+        records.
       </p>
 
       <button
@@ -54,7 +55,7 @@ export default function ClearWorkspaceCard() {
         disabled={isClearing}
         className={`${premiumDangerCta} mt-5`}
       >
-        {isClearing ? "Clearing..." : "Clear active workspace"}
+        {isClearing ? "Clearing..." : "Clear browser data"}
       </button>
 
       {message && (

@@ -1,4 +1,5 @@
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import type { SkillMintStorageDescriptor } from "@/lib/storage/skillMintStorageTypes";
 
 import type {
   ActiveTarget,
@@ -13,6 +14,19 @@ import {
 
 export const ACTIVE_TARGET_STORAGE_KEY = "skillmint:active-target:v1";
 export const ACTIVE_TARGET_STORAGE_VERSION = 1;
+
+export const ACTIVE_TARGET_STORAGE_DESCRIPTOR: SkillMintStorageDescriptor = {
+  key: ACTIVE_TARGET_STORAGE_KEY,
+  version: ACTIVE_TARGET_STORAGE_VERSION,
+  category: "active_target",
+  ownerScope: "anonymous_or_account",
+  containsPersonalData: true,
+  clearWithBrowserReset: true,
+  exportable: true,
+  exportPolicy: "json_value",
+  description:
+    "Browser-local Active Target focus layer with owner isolation.",
+};
 
 type ActiveTargetStorageEnvelope = {
   version: typeof ACTIVE_TARGET_STORAGE_VERSION;

@@ -25,5 +25,9 @@ export const ROUTES = {
 
   SETTINGS: "/settings",
 
+  DATA_SETTINGS: "/settings/data",
+
+  PRIVACY: "/privacy",
+
   ONBOARDING: "/onboarding",
 } as const;
