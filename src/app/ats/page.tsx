@@ -645,7 +645,7 @@ export default function ATSMatcherPage() {
         persistLatestJobMatch(nextMatch, {
           currentUserId,
         });
-        writeJobMatchSyncStatus(nextStatus, {
+        writeCurrentJobMatchSyncStatus(nextStatus, {
           currentUserId,
         });
         setSyncStatus(nextStatus);
@@ -684,7 +684,7 @@ export default function ATSMatcherPage() {
     persistLatestJobMatch(nextMatch, {
       currentUserId,
     });
-    writeJobMatchSyncStatus(nextStatus, {
+    writeCurrentJobMatchSyncStatus(nextStatus, {
       currentUserId,
     });
     setSyncStatus(nextStatus);

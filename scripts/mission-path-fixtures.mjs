@@ -331,9 +331,52 @@ function assertStorageAdapter() {
     "Mission storage key should contain mission progress.",
   );
   assert(
-    window.localStorage.getItem(SELECTED_CAREER_PATH_STORAGE_KEY) ===
-      "path:latest-jd",
-    "Selected path storage key should contain selected path.",
+    getSelectedCareerPathId({ currentUserId: "account-a" }) === null,
+    "Anonymous selected path should not become Account A state.",
+  );
+
+  const anonymousSelectedPathEnvelope = JSON.parse(
+    window.localStorage.getItem(SELECTED_CAREER_PATH_STORAGE_KEY),
+  );
+
+  assert(
+    anonymousSelectedPathEnvelope.owner.kind === "anonymous" &&
+      anonymousSelectedPathEnvelope.value === "path:latest-jd",
+    "Selected path storage key should contain an anonymous owner envelope.",
+  );
+
+  assert(
+    setSelectedCareerPathId("path:account-a", {
+      currentUserId: "account-a",
+    }),
+    "Account-owned selected path should save.",
+  );
+  assert(
+    getSelectedCareerPathId({ currentUserId: "account-a" }) ===
+      "path:account-a",
+    "Account A selected path should round-trip.",
+  );
+  assert(
+    getSelectedCareerPathId({ currentUserId: "account-b" }) === null,
+    "Account B should not read Account A selected path.",
+  );
+  assert(
+    getSelectedCareerPathId({ currentUserId: null }) === null,
+    "Signed-out state should not expose account-owned selected path.",
+  );
+
+  window.localStorage.setItem(
+    SELECTED_CAREER_PATH_STORAGE_KEY,
+    "path:legacy",
+  );
+
+  assert(
+    getSelectedCareerPathId({ currentUserId: null }) === "path:legacy",
+    "Legacy selected path should remain anonymous.",
+  );
+  assert(
+    getSelectedCareerPathId({ currentUserId: "account-a" }) === null,
+    "Legacy selected path should not be claimed by Account A.",
   );
 }
 

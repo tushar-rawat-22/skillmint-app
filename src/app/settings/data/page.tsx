@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -62,9 +62,27 @@ type AsyncState<T> =
       error: string;
     };
 
+type AccountCountsState = {
+  ownerId: string | null;
+  value: AsyncState<AccountDataCounts>;
+};
+
+const IDLE_ACCOUNT_COUNTS: AsyncState<AccountDataCounts> = {
+  status: "idle",
+  data: null,
+  message: null,
+  error: null,
+};
+
+const LOADING_ACCOUNT_COUNTS: AsyncState<AccountDataCounts> = {
+  status: "loading",
+  data: null,
+  message: null,
+  error: null,
+};
+
 export default function DataSettingsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const {
     user,
     session,
@@ -72,14 +90,12 @@ export default function DataSettingsPage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
-  const [browserSummary, setBrowserSummary] =
-    useState<BrowserStorageSummary | null>(null);
-  const [accountCounts, setAccountCounts] = useState<AsyncState<AccountDataCounts>>({
-    status: "idle",
-    data: null,
-    message: null,
-    error: null,
-  });
+  const [browserSummaryVersion, setBrowserSummaryVersion] = useState(0);
+  const [accountCountsState, setAccountCountsState] =
+    useState<AccountCountsState>({
+      ownerId: null,
+      value: IDLE_ACCOUNT_COUNTS,
+    });
   const [browserMessage, setBrowserMessage] = useState<string | null>(null);
   const [browserError, setBrowserError] = useState<string | null>(null);
   const [showBrowserClearDialog, setShowBrowserClearDialog] = useState(false);
@@ -105,16 +121,23 @@ export default function DataSettingsPage() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importDismissed, setImportDismissed] = useState(false);
 
-  const shouldOfferImport = useMemo(
-    () => Boolean(user?.id && !isAuthLoading && !importDismissed && hasAnonymousBrowserWorkspace()),
-    [importDismissed, isAuthLoading, user?.id],
+  void browserSummaryVersion;
+  const browserSummary: BrowserStorageSummary = getBrowserStorageSummary({
+    currentUserId,
+  });
+  const signedInUserId = user?.id ?? null;
+  const accountCounts = getVisibleAccountCounts({
+    accountCountsState,
+    isAuthLoading,
+    isConfigured,
+    userId: signedInUserId,
+  });
+  const shouldOfferImport = Boolean(
+    signedInUserId &&
+    !isAuthLoading &&
+    !importDismissed &&
+    hasAnonymousBrowserWorkspace()
   );
-
-  useEffect(() => {
-    setBrowserSummary(getBrowserStorageSummary({
-      currentUserId,
-    }));
-  }, [currentUserId]);
 
   useEffect(() => {
     if (!user?.id || isAuthLoading || !isConfigured) {
@@ -122,13 +145,7 @@ export default function DataSettingsPage() {
     }
 
     let isMounted = true;
-
-    setAccountCounts({
-      status: "loading",
-      data: null,
-      message: null,
-      error: null,
-    });
+    const requestOwnerId = user.id;
 
     void getCurrentUserAccountDataCounts()
       .then((result) => {
@@ -137,20 +154,26 @@ export default function DataSettingsPage() {
         }
 
         if (!result.ok) {
-          setAccountCounts({
-            status: "error",
-            data: null,
-            message: null,
-            error: result.error,
+          setAccountCountsState({
+            ownerId: requestOwnerId,
+            value: {
+              status: "error",
+              data: null,
+              message: null,
+              error: result.error,
+            },
           });
           return;
         }
 
-        setAccountCounts({
-          status: "success",
-          data: result.data,
-          message: "Account-synced data counts loaded.",
-          error: null,
+        setAccountCountsState({
+          ownerId: requestOwnerId,
+          value: {
+            status: "success",
+            data: result.data,
+            message: "Account-synced data counts loaded.",
+            error: null,
+          },
         });
       })
       .catch(() => {
@@ -158,11 +181,14 @@ export default function DataSettingsPage() {
           return;
         }
 
-        setAccountCounts({
-          status: "error",
-          data: null,
-          message: null,
-          error: "Account data counts are unavailable right now.",
+        setAccountCountsState({
+          ownerId: requestOwnerId,
+          value: {
+            status: "error",
+            data: null,
+            message: null,
+            error: "Account data counts are unavailable right now.",
+          },
         });
       });
 
@@ -172,9 +198,7 @@ export default function DataSettingsPage() {
   }, [isAuthLoading, isConfigured, user?.id]);
 
   function refreshBrowserSummary() {
-    setBrowserSummary(getBrowserStorageSummary({
-      currentUserId,
-    }));
+    setBrowserSummaryVersion((currentVersion) => currentVersion + 1);
   }
 
   function handleBrowserExport() {
@@ -199,31 +223,42 @@ export default function DataSettingsPage() {
   }
 
   async function handleAccountExport() {
-    setAccountCounts((currentState) => ({
-      ...currentState,
-      status: "loading",
-      error: null,
-      message: null,
-    }));
+    const ownerId = user?.id ?? null;
+
+    setAccountCountsState({
+      ownerId,
+      value: {
+        ...accountCounts,
+        status: "loading",
+        error: null,
+        message: null,
+      },
+    });
 
     const result = await buildCurrentUserAccountDataExport();
 
     if (!result.ok) {
-      setAccountCounts({
-        status: "error",
-        data: accountCounts.data,
-        message: null,
-        error: result.error,
+      setAccountCountsState({
+        ownerId,
+        value: {
+          status: "error",
+          data: accountCounts.data,
+          message: null,
+          error: result.error,
+        },
       });
       return;
     }
 
     downloadJson(result.data.fileName, result.data.json);
-    setAccountCounts({
-      status: "success",
-      data: accountCounts.data ?? createEmptyAccountCounts(),
-      message: "Account export created.",
-      error: null,
+    setAccountCountsState({
+      ownerId,
+      value: {
+        status: "success",
+        data: accountCounts.data ?? createEmptyAccountCounts(),
+        message: "Account export created.",
+        error: null,
+      },
     });
   }
 
@@ -303,11 +338,14 @@ export default function DataSettingsPage() {
     const counts = await getCurrentUserAccountDataCounts();
 
     if (counts.ok) {
-      setAccountCounts({
-        status: "success",
-        data: counts.data,
-        message: "Account-synced data counts refreshed.",
-        error: null,
+      setAccountCountsState({
+        ownerId: user?.id ?? null,
+        value: {
+          status: "success",
+          data: counts.data,
+          message: "Account-synced data counts refreshed.",
+          error: null,
+        },
       });
     }
   }
@@ -380,9 +418,6 @@ export default function DataSettingsPage() {
   }
 
   const descriptors = getSkillMintStorageDescriptors();
-  const visibleBrowserItems = browserSummary?.items.filter((item) =>
-    item.status === "visible"
-  ) ?? [];
   const accountCountData = accountCounts.data;
 
   return (
@@ -890,6 +925,28 @@ function createEmptyAccountCounts(): AccountDataCounts {
     careerSnapshots: 0,
     betaFeedback: 0,
   };
+}
+
+function getVisibleAccountCounts({
+  accountCountsState,
+  isAuthLoading,
+  isConfigured,
+  userId,
+}: {
+  accountCountsState: AccountCountsState;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+  userId: string | null;
+}): AsyncState<AccountDataCounts> {
+  if (!userId || !isConfigured || isAuthLoading) {
+    return IDLE_ACCOUNT_COUNTS;
+  }
+
+  if (accountCountsState.ownerId === userId) {
+    return accountCountsState.value;
+  }
+
+  return LOADING_ACCOUNT_COUNTS;
 }
 
 function downloadJson(fileName: string, json: string) {

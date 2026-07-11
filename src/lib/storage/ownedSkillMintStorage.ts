@@ -116,6 +116,10 @@ export function readVisibleStoredValue(
     };
   }
 
+  if (parsedValue === undefined && descriptor.exportPolicy === "string_value") {
+    return getLegacyVisibleStoredValue(storedValue, currentOwner);
+  }
+
   if (parsedValue === undefined) {
     return {
       status: "corrupted",
@@ -125,25 +129,7 @@ export function readVisibleStoredValue(
     };
   }
 
-  const anonymousOwner: BrowserDataOwner = {
-    kind: "anonymous",
-  };
-
-  if (!areBrowserDataOwnersEqual(anonymousOwner, currentOwner)) {
-    return {
-      status: "hidden_for_owner",
-      serializedValue: null,
-      owner: anonymousOwner,
-      legacy: true,
-    };
-  }
-
-  return {
-    status: "visible",
-    serializedValue: storedValue,
-    owner: anonymousOwner,
-    legacy: true,
-  };
+  return getLegacyVisibleStoredValue(storedValue, currentOwner);
 }
 
 export function createOwnedBrowserValue<T>(
@@ -301,6 +287,31 @@ function getActiveTargetEnvelope(
   return {
     ownerUserId: value.ownerUserId,
     target: value.target,
+  };
+}
+
+function getLegacyVisibleStoredValue(
+  storedValue: string,
+  currentOwner: BrowserDataOwner,
+): VisibleStoredValueResult {
+  const anonymousOwner: BrowserDataOwner = {
+    kind: "anonymous",
+  };
+
+  if (!areBrowserDataOwnersEqual(anonymousOwner, currentOwner)) {
+    return {
+      status: "hidden_for_owner",
+      serializedValue: null,
+      owner: anonymousOwner,
+      legacy: true,
+    };
+  }
+
+  return {
+    status: "visible",
+    serializedValue: storedValue,
+    owner: anonymousOwner,
+    legacy: true,
   };
 }
 

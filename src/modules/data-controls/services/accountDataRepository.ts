@@ -8,6 +8,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import type {
   AccountDataCounts,
   AccountDataExport,
+  AccountExportRecord,
   RepositoryResult,
   SavedReportsDeletionCounts,
 } from "@/modules/data-controls/types";
@@ -21,6 +22,56 @@ type SavedReportsRpcRow = {
   job_matches_deleted?: number;
   career_snapshots_deleted?: number;
 };
+
+const ACCOUNT_EXPORT_FIELDS = {
+  profiles: [
+    "full_name",
+    "email",
+    "career_goal",
+    "target_role",
+    "created_at",
+    "updated_at",
+  ],
+  resume_analyses: [
+    "id",
+    "file_name",
+    "file_type",
+    "extracted_text",
+    "parsed_profile",
+    "user_profile",
+    "created_at",
+  ],
+  job_matches: [
+    "id",
+    "job_title",
+    "company_name",
+    "job_description",
+    "match_result",
+    "improvement_plan",
+    "rewrite_plan",
+    "roadmap",
+    "created_at",
+  ],
+  career_snapshots: [
+    "id",
+    "career_iq",
+    "recruiter_confidence",
+    "salary_projection",
+    "role_matches",
+    "created_at",
+  ],
+  beta_feedback: [
+    "id",
+    "feedback_type",
+    "sentiment",
+    "message",
+    "page_path",
+    "created_at",
+  ],
+} as const satisfies Record<
+  keyof Database["public"]["Tables"],
+  readonly string[]
+>;
 
 export async function getCurrentUserAccountDataCounts(): Promise<
   RepositoryResult<AccountDataCounts>
@@ -100,11 +151,11 @@ export async function buildCurrentUserAccountDataExport(
     careerSnapshots,
     betaFeedback,
   ] = await Promise.all([
-    selectRows(supabase, "profiles", "id", user.id, "created_at"),
-    selectRows(supabase, "resume_analyses", "user_id", user.id, "created_at"),
-    selectRows(supabase, "job_matches", "user_id", user.id, "created_at"),
-    selectRows(supabase, "career_snapshots", "user_id", user.id, "created_at"),
-    selectRows(supabase, "beta_feedback", "user_id", user.id, "created_at"),
+    selectProfileExportRows(supabase, user.id),
+    selectResumeAnalysisExportRows(supabase, user.id),
+    selectJobMatchExportRows(supabase, user.id),
+    selectCareerSnapshotExportRows(supabase, user.id),
+    selectBetaFeedbackExportRows(supabase, user.id),
   ]);
 
   const failedQuery = [
@@ -158,12 +209,12 @@ export async function deleteCurrentUserSavedReports(): Promise<
   if (error) {
     return {
       ok: false,
-      error: getDatabaseErrorMessage(error.message),
+      error: getDatabaseErrorMessage(error.message ?? ""),
     };
   }
 
   const row = Array.isArray(data) ? data[0] : data;
-  const counts = isSavedReportsRpcRow(row) ? row : {};
+  const counts: SavedReportsRpcRow = isSavedReportsRpcRow(row) ? row : {};
 
   return {
     ok: true,
@@ -234,7 +285,7 @@ async function getCount(
   if (error) {
     return {
       ok: false,
-      error: getDatabaseErrorMessage(error.message),
+      error: getDatabaseErrorMessage(error.message ?? ""),
     };
   }
 
@@ -244,37 +295,141 @@ async function getCount(
   };
 }
 
-async function selectRows<TTableName extends keyof Database["public"]["Tables"]>(
+async function selectProfileExportRows(
   supabase: SupabaseBrowserClient,
-  tableName: TTableName,
-  ownerColumn: string,
-  ownerValue: string,
-  orderColumn: string,
-): Promise<RepositoryResult<Array<Database["public"]["Tables"][TTableName]["Row"]>>> {
+  userId: string,
+): Promise<RepositoryResult<AccountExportRecord[]>> {
   const { data, error } = await supabase
-    .from(tableName)
-    .select("*")
-    .eq(ownerColumn, ownerValue)
-    .order(orderColumn, {
+    .from("profiles")
+    .select("full_name,email,career_goal,target_role,created_at,updated_at")
+    .eq("id", userId)
+    .order("created_at", {
       ascending: true,
     });
 
+  return mapAccountExportRows("profiles", data, error);
+}
+
+async function selectResumeAnalysisExportRows(
+  supabase: SupabaseBrowserClient,
+  userId: string,
+): Promise<RepositoryResult<AccountExportRecord[]>> {
+  const { data, error } = await supabase
+    .from("resume_analyses")
+    .select("id,file_name,file_type,extracted_text,parsed_profile,user_profile,created_at")
+    .eq("user_id", userId)
+    .order("created_at", {
+      ascending: true,
+    })
+    .order("id", {
+      ascending: true,
+    });
+
+  return mapAccountExportRows("resume_analyses", data, error);
+}
+
+async function selectJobMatchExportRows(
+  supabase: SupabaseBrowserClient,
+  userId: string,
+): Promise<RepositoryResult<AccountExportRecord[]>> {
+  const { data, error } = await supabase
+    .from("job_matches")
+    .select("id,job_title,company_name,job_description,match_result,improvement_plan,rewrite_plan,roadmap,created_at")
+    .eq("user_id", userId)
+    .order("created_at", {
+      ascending: true,
+    })
+    .order("id", {
+      ascending: true,
+    });
+
+  return mapAccountExportRows("job_matches", data, error);
+}
+
+async function selectCareerSnapshotExportRows(
+  supabase: SupabaseBrowserClient,
+  userId: string,
+): Promise<RepositoryResult<AccountExportRecord[]>> {
+  const { data, error } = await supabase
+    .from("career_snapshots")
+    .select("id,career_iq,recruiter_confidence,salary_projection,role_matches,created_at")
+    .eq("user_id", userId)
+    .order("created_at", {
+      ascending: true,
+    })
+    .order("id", {
+      ascending: true,
+    });
+
+  return mapAccountExportRows("career_snapshots", data, error);
+}
+
+async function selectBetaFeedbackExportRows(
+  supabase: SupabaseBrowserClient,
+  userId: string,
+): Promise<RepositoryResult<AccountExportRecord[]>> {
+  const { data, error } = await supabase
+    .from("beta_feedback")
+    .select("id,feedback_type,sentiment,message,page_path,created_at")
+    .eq("user_id", userId)
+    .order("created_at", {
+      ascending: true,
+    })
+    .order("id", {
+      ascending: true,
+    });
+
+  return mapAccountExportRows("beta_feedback", data, error);
+}
+
+function mapAccountExportRows(
+  tableName: keyof typeof ACCOUNT_EXPORT_FIELDS,
+  data: unknown,
+  error: {
+    message?: string;
+  } | null,
+): RepositoryResult<AccountExportRecord[]> {
   if (error) {
+    const message = error.message ?? "";
+
     return {
       ok: false,
-      error: getDatabaseErrorMessage(error.message),
+      error: getDatabaseErrorMessage(message),
     };
   }
 
   return {
     ok: true,
-    data: data ?? [],
+    data: sanitizeAccountExportRows(tableName, Array.isArray(data) ? data : []),
   };
 }
 
+function sanitizeAccountExportRows(
+  tableName: keyof typeof ACCOUNT_EXPORT_FIELDS,
+  rows: unknown[],
+): AccountExportRecord[] {
+  const allowedFields = ACCOUNT_EXPORT_FIELDS[tableName];
+
+  return rows.map((row) => {
+    const source: Record<string, unknown> = isRecord(row) ? row : {};
+    const sanitizedRow: AccountExportRecord = {};
+
+    for (const field of allowedFields) {
+      if (field in source) {
+        sanitizedRow[field] = source[field];
+      }
+    }
+
+    return sanitizedRow;
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function isSavedReportsRpcRow(value: unknown): value is SavedReportsRpcRow {
-  return Boolean(value) && typeof value === "object" &&
-    !Array.isArray(value);
+  return isRecord(value);
 }
 
 function getDatabaseErrorMessage(message: string): string {

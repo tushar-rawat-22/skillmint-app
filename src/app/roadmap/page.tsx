@@ -320,7 +320,9 @@ export default function RoadmapPage() {
     const generatedRoadmap = legacyRoadmap;
     let isActive = true;
     const timeoutId = window.setTimeout(() => {
-      persistLatestJobMatchRoadmap(generatedRoadmap);
+      persistLatestJobMatchRoadmap(generatedRoadmap, {
+        currentUserId,
+      });
       void syncRoadmapToDatabase();
     }, 0);
 

@@ -106,6 +106,12 @@ export type BrowserExportResult =
       error: string;
     };
 
+type BrowserExportCategoryRecord = {
+  key: string;
+  description: string;
+  value: unknown;
+};
+
 export type BrowserImportResult =
   | {
       ok: true;
@@ -230,7 +236,9 @@ export function buildBrowserDataExport(
     };
   }
 
-  const categories: Partial<Record<SkillMintStorageCategory, unknown[]>> = {};
+  const categories: Partial<
+    Record<SkillMintStorageCategory, BrowserExportCategoryRecord[]>
+  > = {};
   const omitted: Array<{
     key: string;
     reason: string;
