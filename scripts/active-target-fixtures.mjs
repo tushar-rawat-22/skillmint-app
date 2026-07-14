@@ -554,6 +554,8 @@ function assertStorageUnavailableStates() {
 }
 
 function assertAccountIsolation() {
+  window.localStorage = createMemoryStorage();
+
   assert(
     setActiveTarget(dockerTarget, { ownerUserId: "user-a" }),
     "User-scoped Active Target should save.",

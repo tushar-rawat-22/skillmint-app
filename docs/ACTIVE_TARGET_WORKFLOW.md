@@ -78,6 +78,8 @@ Signed-in user A's Active Target must not be shown to signed-in user B in the sa
 
 Invalid or old stored target shapes should be ignored safely and must not crash the product.
 
+Browser export and browser clear use the registered data-controls boundary. They do not make a stale JD Match current, fabricate a target score, or weaken the resume-context freshness check.
+
 ## Product Loop
 
 1. User analyzes a resume.

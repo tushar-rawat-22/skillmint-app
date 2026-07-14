@@ -4,12 +4,14 @@ import type { ResumeRewritePlan } from "@/intelligence/core/resumeRewrite";
 import type { ActiveTargetResumeContext } from "@/intelligence/target";
 import {
   readVisibleStorageValue,
+  removeOwnedStoragePartition,
   writeOwnedJsonStorageValue,
 } from "@/lib/storage/ownedSkillMintStorage";
 import type {
   BrowserOwnerContext,
   SkillMintStorageDescriptor,
 } from "@/lib/storage/skillMintStorageTypes";
+import { isUuidShapedIdentifier } from "@/lib/storage/skillMintStorageTypes";
 
 export interface SavedJobMatch {
   id: string;
@@ -21,7 +23,7 @@ export interface SavedJobMatch {
   rewritePlan: ResumeRewritePlan | null;
   roadmap?: unknown;
   databaseId?: string;
-  syncStatus?: "synced" | "local-only";
+  syncStatus?: "synced" | "local-only" | "pending" | "failed";
   resumeContext?: ActiveTargetResumeContext;
   analyzedAt: string;
 }
@@ -36,11 +38,26 @@ export const JD_MATCH_HISTORY_STORAGE_DESCRIPTOR:
     containsPersonalData: true,
     clearWithBrowserReset: true,
     exportable: true,
+    importable: true,
     exportPolicy: "json_value",
+    validateValue: isSavedJobMatchList,
+    prepareAnonymousImport: prepareAnonymousJobMatchHistory,
     description:
       "Browser-local list of recent JD Match snapshots and plans.",
   };
 const MAX_SAVED_MATCHES = 20;
+
+export function getAccountHistoryRestoreMessage(
+  latestMatchWriteSucceeded: boolean,
+): string {
+  return latestMatchWriteSucceeded
+    ? "Loaded recent job matches from your account."
+    : "Loaded recent history, but the latest match could not be set in this browser.";
+}
+
+export function isSavedJobMatchList(value: unknown): value is SavedJobMatch[] {
+  return Array.isArray(value) && value.every(isSavedJobMatch);
+}
 
 export function getSavedJobMatches(
   options: BrowserOwnerContext = {
@@ -81,7 +98,7 @@ export function saveJobMatch(
   options: BrowserOwnerContext = {
     currentUserId: null,
   },
-): SavedJobMatch[] {
+): SavedJobMatch[] | null {
   const nextMatches = sortNewestFirst([
     match,
     ...getSavedJobMatches(options).filter((savedMatch) =>
@@ -89,13 +106,13 @@ export function saveJobMatch(
     ),
   ]).slice(0, MAX_SAVED_MATCHES);
 
-  writeOwnedJsonStorageValue(
+  const didWrite = writeOwnedJsonStorageValue(
     JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
     nextMatches,
     options,
   );
 
-  return nextMatches;
+  return didWrite ? nextMatches : null;
 }
 
 export function replaceSavedJobMatches(
@@ -103,16 +120,16 @@ export function replaceSavedJobMatches(
   options: BrowserOwnerContext = {
     currentUserId: null,
   },
-): SavedJobMatch[] {
+): SavedJobMatch[] | null {
   const nextMatches = sortNewestFirst(matches).slice(0, MAX_SAVED_MATCHES);
 
-  writeOwnedJsonStorageValue(
+  const didWrite = writeOwnedJsonStorageValue(
     JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
     nextMatches,
     options,
   );
 
-  return nextMatches;
+  return didWrite ? nextMatches : null;
 }
 
 export function deleteSavedJobMatch(
@@ -120,32 +137,27 @@ export function deleteSavedJobMatch(
   options: BrowserOwnerContext = {
     currentUserId: null,
   },
-): SavedJobMatch[] {
+): SavedJobMatch[] | null {
   const nextMatches = getSavedJobMatches(options).filter(
     (savedMatch) => savedMatch.id !== id,
   );
 
-  writeOwnedJsonStorageValue(
+  const didWrite = writeOwnedJsonStorageValue(
     JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
     nextMatches,
     options,
   );
 
-  return nextMatches;
+  return didWrite ? nextMatches : null;
 }
 
-export function clearSavedJobMatches(): void {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.removeItem(JD_MATCH_HISTORY_STORAGE_KEY);
-  } catch {
-    // Ignore storage failures.
-  }
+export function clearSavedJobMatches(
+  options: BrowserOwnerContext = { currentUserId: null },
+): boolean {
+  return removeOwnedStoragePartition(
+    JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+    options,
+  ).ok;
 }
 
 export function getLatestJobMatch(
@@ -177,19 +189,7 @@ function getSortableTime(time: number): number {
   return Number.isFinite(time) ? time : 0;
 }
 
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
-function isSavedJobMatch(value: unknown): value is SavedJobMatch {
+export function isSavedJobMatch(value: unknown): value is SavedJobMatch {
   if (!isRecord(value)) {
     return false;
   }
@@ -208,8 +208,123 @@ function isSavedJobMatch(value: unknown): value is SavedJobMatch {
       value.resumeContext === undefined ||
       isActiveTargetResumeContext(value.resumeContext)
     ) &&
-    isString(value.analyzedAt)
+    isIsoDateString(value.analyzedAt)
   );
+}
+
+export function prepareAnonymousJobMatchHistory(
+  value: unknown,
+): { ok: true; value: SavedJobMatch[] } | { ok: false; reason: string } {
+  if (!isSavedJobMatchList(value)) {
+    return { ok: false, reason: "JD Match history is invalid." };
+  }
+
+  const usedIds = new Set<string>();
+  return {
+    ok: true,
+    value: value.map((match, index) => {
+      const preferredId = getSafeLocalJobMatchId(match.id, match.databaseId);
+      const id = preferredId && !usedIds.has(preferredId)
+        ? preferredId
+        : createImportedLocalJobMatchId(match.analyzedAt, index, usedIds);
+      usedIds.add(id);
+
+      // Rebuild the documented local record; never copy unproven root metadata.
+      return {
+        id,
+        jobTitle: match.jobTitle,
+        companyName: match.companyName,
+        jobDescription: match.jobDescription,
+        result: match.result,
+        improvementPlan: match.improvementPlan ?? null,
+        rewritePlan: match.rewritePlan ?? null,
+        ...(match.roadmap === undefined ? {} : { roadmap: match.roadmap }),
+        ...(match.resumeContext === undefined
+          ? {}
+          : { resumeContext: match.resumeContext }),
+        analyzedAt: match.analyzedAt,
+        syncStatus: "local-only",
+      };
+    }),
+  };
+}
+
+export function detachDeletedJobMatchHistoryReferences(
+  value: unknown,
+): { value: unknown; changed: boolean } {
+  if (!isSavedJobMatchList(value)) return { value, changed: false };
+
+  if (!value.some((match) => hasSavedReportReference(match.databaseId))) {
+    return { value, changed: false };
+  }
+
+  const usedIds = new Set(
+    value
+      .filter((match) => !hasSavedReportReference(match.databaseId))
+      .map((match) => match.id),
+  );
+  const nextValue = value.map((match, index) => {
+    if (!hasSavedReportReference(match.databaseId)) {
+      return match;
+    }
+
+    const preferredId = getSafeLocalJobMatchId(match.id, match.databaseId);
+    const id = preferredId && !usedIds.has(preferredId)
+      ? preferredId
+      : createImportedLocalJobMatchId(match.analyzedAt, index, usedIds);
+    usedIds.add(id);
+    return {
+      id,
+      jobTitle: match.jobTitle,
+      companyName: match.companyName,
+      jobDescription: match.jobDescription,
+      result: match.result,
+      improvementPlan: match.improvementPlan ?? null,
+      rewritePlan: match.rewritePlan ?? null,
+      ...(match.roadmap === undefined ? {} : { roadmap: match.roadmap }),
+      ...(match.resumeContext === undefined
+        ? {}
+        : { resumeContext: match.resumeContext }),
+      analyzedAt: match.analyzedAt,
+      syncStatus: "local-only",
+    };
+  });
+
+  return { value: nextValue, changed: true };
+}
+
+export function createImportedLocalJobMatchId(
+  analyzedAt: string,
+  index: number,
+  usedIds: ReadonlySet<string>,
+): string {
+  const timestamp = Number.isFinite(Date.parse(analyzedAt))
+    ? analyzedAt.replace(/[^0-9]/g, "").slice(0, 14)
+    : "unknown-time";
+  const base = `imported-jd-${timestamp || "unknown-time"}-${index + 1}`;
+  let suffix = 0;
+  let candidate = base;
+  while (usedIds.has(candidate)) {
+    suffix += 1;
+    candidate = `${base}-${suffix + 1}`;
+  }
+  return candidate;
+}
+
+function getSafeLocalJobMatchId(
+  id: unknown,
+  databaseId: unknown,
+): string | undefined {
+  if (
+    typeof id !== "string" ||
+    !id.trim() ||
+    id === databaseId ||
+    isUuidShapedIdentifier(id)
+  ) {
+    return undefined;
+  }
+
+  return id;
 }
 
 function isActiveTargetResumeContext(
@@ -347,12 +462,18 @@ function isOptionalString(value: unknown): value is string | undefined {
   return value === undefined || typeof value === "string";
 }
 
+function hasSavedReportReference(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
 function isOptionalSyncStatus(
   value: unknown,
 ): value is SavedJobMatch["syncStatus"] {
   return value === undefined ||
     value === "synced" ||
-    value === "local-only";
+    value === "local-only" ||
+    value === "pending" ||
+    value === "failed";
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -362,4 +483,8 @@ function isStringArray(value: unknown): value is string[] {
 
 function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isIsoDateString(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
 }

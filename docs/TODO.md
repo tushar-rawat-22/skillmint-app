@@ -24,12 +24,21 @@ Tasks should only be added if they support an approved product objective.
 
 # Product Trust + Beta Readiness TODOs
 
+- [x] Establish independent authority for the isolated Block 5 test project and block the production project before contact.
+- [x] Harden v4 to exact observed table operations, active-user owner policies, and a service-role-only account-deletion preparation RPC.
+- [x] Apply/verify v1→v4 on the isolated project and prove exact catalog definitions, RLS isolation, stale-token rejection, concurrent-write containment, and disposable Account A/B deletion in one guarded run.
+
 - [ ] Build a scoring calibration set for Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, role match, and JD Match.
 - [ ] Recalibrate `career-iq-v2-beta` after beta feedback and reviewer-labeled resumes.
 - [ ] Plan an optional scoring-version migration path if future persisted reports need versioned score history.
-- [ ] Add account-level delete saved resume analysis when repository support exists.
-- [ ] When real delete support exists, use this confirmation: "Delete saved analysis? This removes this resume analysis from your saved account history. It does not delete your account."
-- [ ] Add a privacy/account deletion flow later; do not confuse it with browser-only clear workspace.
+- [x] Provide account-level saved-report deletion for resume analyses, JD matches, and career snapshots through the owner-bound RPC.
+- [x] Use truthful saved-report deletion confirmation that does not imply account deletion.
+- [x] Complete the independent Block 5 adversarial engineering review and automated DC-01–DC-40 reconciliation; retained manual/AT limitations are explicit non-claims.
+- [x] Verify isolated-live database schema, RLS, indexes, recent auth, deletion races/cascades, account-owned feedback deletion, and disposable account deletion.
+- [ ] Roll out the locked schema sequence to production under an approved production migration and rollback plan.
+- [ ] Document provider backup/log deletion and retention only after verification; do not promise immediate infrastructure-wide erasure.
+- [ ] Establish and verify a privacy/support contact before beta release; do not fabricate one in product copy.
+- [ ] Assign operational ownership for production account deletion and incident/rollback handling.
 - [ ] Create a founder analytics dashboard for the 50-user beta.
 - [ ] Add score history only after active report and saved analysis semantics are stable.
 - [ ] Plan the future light-first premium report migration.

@@ -3,6 +3,7 @@ import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageE
 import type { UserProfile } from "@/intelligence/types/profile";
 import {
   readVisibleStorageValue,
+  updateOwnedStorageValue,
   writeOwnedJsonStorageValue,
 } from "@/lib/storage/ownedSkillMintStorage";
 import type {
@@ -27,7 +28,10 @@ export const ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR:
     containsPersonalData: true,
     clearWithBrowserReset: true,
     exportable: true,
+    importable: true,
     exportPolicy: "json_value",
+    validateValue: isActiveResumeAnalysis,
+    prepareAnonymousImport: prepareAnonymousActiveResumeAnalysis,
     description:
       "Current active resume analysis powering this browser dashboard.",
   };
@@ -41,7 +45,10 @@ export const RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR:
     containsPersonalData: false,
     clearWithBrowserReset: true,
     exportable: true,
-    exportPolicy: "json_value",
+  importable: true,
+  exportPolicy: "json_value",
+  validateValue: isResumeSyncStatus,
+  prepareAnonymousImport: prepareAnonymousResumeSyncStatus,
     description:
       "Browser-local sync status for the active resume analysis.",
   };
@@ -55,7 +62,7 @@ export type ActiveResumeAnalysis = Omit<
 };
 
 export type ResumeSyncStatus = {
-  status: "synced" | "local-only";
+  status: "synced" | "local-only" | "pending" | "failed";
   message: string;
   syncedAt?: string;
   databaseId?: string;
@@ -186,47 +193,90 @@ export function readResumeSyncStatusSnapshot(
   );
 }
 
-export function detachActiveResumeSyncStatus(databaseId: string): boolean {
-  const storage = getBrowserStorage();
+export function detachActiveResumeSyncStatus(
+  databaseId: string,
+  context: BrowserOwnerContext,
+): boolean {
+  const result = updateOwnedStorageValue(
+    RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
+    context,
+    (value) => {
+      if (!isRecord(value) || value.databaseId !== databaseId) {
+        return { value, changed: false };
+      }
 
-  if (!storage) {
-    return false;
-  }
+      const nextValue = { ...value };
+      delete nextValue.databaseId;
+      if (nextValue.status === "synced") {
+        nextValue.status = "local-only";
+        nextValue.message = "Saved account reference was deleted; browser report remains local.";
+        delete nextValue.syncedAt;
+      }
+      return { value: nextValue, changed: true };
+    },
+  );
 
-  try {
-    const storedValue = storage.getItem(RESUME_SYNC_STATUS_STORAGE_KEY);
-
-    if (!storedValue) {
-      return false;
-    }
-
-    const parsedValue = JSON.parse(storedValue);
-    const value = isRecord(parsedValue) && "value" in parsedValue
-      ? parsedValue.value
-      : parsedValue;
-
-    if (!isRecord(value) || value.databaseId !== databaseId) {
-      return false;
-    }
-
-    storage.removeItem(RESUME_SYNC_STATUS_STORAGE_KEY);
+  if (result.ok && result.changed) {
     notifySkillMintWorkspaceUpdated();
-    return true;
-  } catch {
-    return false;
   }
+
+  return result.ok && result.changed;
 }
 
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
+export function prepareAnonymousResumeSyncStatus(
+  value: unknown,
+): { ok: true; value: ResumeSyncStatus } | { ok: false; reason: string } {
+  if (!isResumeSyncStatus(value)) {
+    return { ok: false, reason: "Resume sync status is invalid." };
   }
 
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
+  return {
+    ok: true,
+    value: {
+      status: "local-only",
+      message: "Imported into this browser workspace. It is not saved to your account.",
+    },
+  };
+}
+
+export function prepareAnonymousActiveResumeAnalysis(
+  value: unknown,
+): { ok: true; value: ActiveResumeAnalysis } | { ok: false; reason: string } {
+  if (!isActiveResumeAnalysis(value)) {
+    return { ok: false, reason: "Active resume analysis is invalid." };
   }
+
+  // Rebuild the documented browser report shape. Anonymous browser values may
+  // have passed a permissive runtime validator while carrying stale remote data.
+  return {
+    ok: true,
+    value: {
+      fileName: value.fileName,
+      fileType: value.fileType,
+      fileSize: value.fileSize,
+      extractedText: value.extractedText,
+      parsedProfile: value.parsedProfile,
+      userProfile: value.userProfile,
+      analyzedAt: value.analyzedAt,
+      status: value.status,
+    },
+  };
+}
+
+export function detachDeletedResumeSyncStatusReference(
+  value: unknown,
+): { value: unknown; changed: boolean } {
+  if (!isResumeSyncStatus(value) || !hasSavedReportReference(value.databaseId)) {
+    return { value, changed: false };
+  }
+
+  return {
+    value: {
+      status: "local-only",
+      message: "Saved account reference was deleted; browser report remains local.",
+    },
+    changed: true,
+  };
 }
 
 function isParsedResumeProfile(
@@ -247,6 +297,41 @@ function isParsedResumeProfile(
     isRecord(profile.links) &&
     isRecord(profile.rawSections)
   );
+}
+
+export function isActiveResumeAnalysis(
+  value: unknown,
+): value is ActiveResumeAnalysis {
+  if (!isRecord(value)) return false;
+
+  return typeof value.fileName === "string" &&
+    typeof value.fileType === "string" &&
+    isNumber(value.fileSize) &&
+    typeof value.extractedText === "string" &&
+    isParsedResumeProfile(value.parsedProfile) &&
+    isUserProfile(value.userProfile) &&
+    typeof value.analyzedAt === "string" &&
+    Number.isFinite(Date.parse(value.analyzedAt)) &&
+    value.status === "completed";
+}
+
+export function isResumeSyncStatus(value: unknown): value is ResumeSyncStatus {
+  if (!isRecord(value)) return false;
+
+  return isResumeSyncState(value.status) &&
+    typeof value.message === "string" &&
+    (value.syncedAt === undefined || (
+      typeof value.syncedAt === "string" &&
+      Number.isFinite(Date.parse(value.syncedAt))
+    )) &&
+    (value.databaseId === undefined || typeof value.databaseId === "string");
+}
+
+function isResumeSyncState(value: unknown): value is ResumeSyncStatus["status"] {
+  return value === "synced" ||
+    value === "local-only" ||
+    value === "pending" ||
+    value === "failed";
 }
 
 function isUserProfile(value: unknown): value is UserProfile {
@@ -278,6 +363,10 @@ function isUserProfile(value: unknown): value is UserProfile {
 
 function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function hasSavedReportReference(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function isStringArray(value: unknown): value is string[] {

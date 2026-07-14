@@ -25,7 +25,9 @@ export const MISSION_STATUS_STORAGE_DESCRIPTOR: SkillMintStorageDescriptor = {
   containsPersonalData: true,
   clearWithBrowserReset: true,
   exportable: true,
+  importable: true,
   exportPolicy: "json_value",
+  validateValue: isMissionStatusMap,
   description:
     "Browser-local mission status map; it does not verify proof or change scores.",
 };
@@ -39,10 +41,22 @@ export const SELECTED_CAREER_PATH_STORAGE_DESCRIPTOR:
     containsPersonalData: true,
     clearWithBrowserReset: true,
     exportable: true,
+    importable: true,
     exportPolicy: "string_value",
+    validateValue: isSelectedCareerPathId,
     description:
       "Browser-local selected career path ID used for roadmap display.",
-  };
+};
+
+export function isMissionStatusMap(value: unknown): value is MissionStatusMap {
+  return isRecord(value) && Object.entries(value).every(
+    ([missionId, status]) => missionId.trim().length > 0 && isMissionStatus(status),
+  );
+}
+
+export function isSelectedCareerPathId(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
 
 export function getMissionStatusMap(
   options: BrowserOwnerContext = {

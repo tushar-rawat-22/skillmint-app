@@ -15,11 +15,17 @@ export const UPGRADE_INTEREST_STORAGE_DESCRIPTOR:
     containsPersonalData: false,
     clearWithBrowserReset: true,
     exportable: true,
+    importable: false,
     exportPolicy: "json_value",
+    validateValue: isUpgradeInterestRecords,
     description:
       "Browser-local beta upgrade-interest clicks; no payment or entitlement.",
   };
 const MAX_UPGRADE_INTEREST_RECORDS = 20;
+
+function isUpgradeInterestRecords(value: unknown): boolean {
+  return Array.isArray(value) && value.every(isUpgradeInterestRecord);
+}
 
 export function saveUpgradeInterest(input: {
   source: UpgradeInterestSource;
@@ -91,7 +97,8 @@ function isUpgradeInterestRecord(
   return typeof record.id === "string" &&
     isUpgradeInterestSource(record.source) &&
     typeof record.label === "string" &&
-    typeof record.createdAt === "string";
+    typeof record.createdAt === "string" &&
+    Number.isFinite(Date.parse(record.createdAt));
 }
 
 function isUpgradeInterestSource(

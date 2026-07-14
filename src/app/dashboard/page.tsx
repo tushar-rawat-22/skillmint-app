@@ -104,7 +104,7 @@ export default function DashboardPage() {
   );
   const storedActiveTarget = useSyncExternalStore(
     subscribeToStoredData,
-    readStoredActiveTarget,
+    () => readStoredActiveTarget(currentUserId),
     getServerSnapshot,
   );
   const data = useCareerData(currentUserId);
@@ -693,8 +693,10 @@ function readStoredJobMatch(
   });
 }
 
-function readStoredActiveTarget(): string | null {
-  return readActiveTargetStorageSnapshot();
+function readStoredActiveTarget(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveTargetStorageSnapshot({ currentUserId });
 }
 
 function getServerSnapshot(): null {

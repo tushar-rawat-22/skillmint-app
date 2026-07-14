@@ -94,6 +94,19 @@ To install it:
 
 If the SQL has not been run yet, SkillMint should still load. The profile and resume pages will show helpful table/schema errors instead of crashing.
 
+## Block 5 schema sequence
+
+For a new empty environment, the locked forward-only order is:
+
+1. `supabase/schema_v1.sql`
+2. `supabase/schema_v2_feedback.sql`
+3. `supabase/schema_v3_data_controls.sql`
+4. `supabase/schema_v4_account_deletion_security.sql`
+
+The four files were hash-locked, transactionally applied, and exactly catalog-verified only on the authorized isolated test project. Do not replay them blindly against an existing production database. Production was not contacted during Block 5 closure; production rollout requires its own inventory, backup/rollback plan, approval, and post-application catalog verification.
+
+V4 enforces the observed least-privilege browser operation matrix, active-Auth-user owner policies, authenticated saved-report deletion, service-role-only full account preparation, and explicit helper-function grants. The application also requires server-only `SUPABASE_SECRET_KEY` for the protected deletion route; never expose it to browser code or commit it.
+
 ---
 
 ## Sprint 6.5 Behavior

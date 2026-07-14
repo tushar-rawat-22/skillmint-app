@@ -1,162 +1,86 @@
 import {
-  RESUME_SYNC_STATUS_STORAGE_KEY,
+  detachDeletedResumeSyncStatusReference,
+  RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
 } from "@/modules/resume/services/activeResumeReportStorage";
 import {
-  JD_MATCH_STORAGE_KEY,
-  JD_MATCH_SYNC_STATUS_STORAGE_KEY,
+  detachDeletedCurrentJobMatchReference,
+  detachDeletedJobMatchSyncStatusReference,
+  JD_MATCH_STORAGE_DESCRIPTOR,
+  JD_MATCH_SYNC_STATUS_STORAGE_DESCRIPTOR,
 } from "@/lib/storage/jdMatchCurrentStorage";
 import {
-  JD_MATCH_HISTORY_STORAGE_KEY,
+  detachDeletedJobMatchHistoryReferences,
+  JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
 } from "@/lib/storage/jdMatchHistory";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
-import {
-  getBrowserStorage,
-  isOwnedBrowserValue,
-  safeJsonParse,
-} from "@/lib/storage/ownedSkillMintStorage";
+import { updateOwnedStorageValue } from "@/lib/storage/ownedSkillMintStorage";
+import type {
+  BrowserOwnerContext,
+  SkillMintStorageDescriptor,
+} from "@/lib/storage/skillMintStorageTypes";
 
 export type SyncedReportReferenceCleanupResult = {
   changedKeys: string[];
+  unchangedKeys: string[];
   failedKeys: string[];
 };
 
-export function detachDeletedSavedReportReferences(): SyncedReportReferenceCleanupResult {
-  const storage = getBrowserStorage();
-  const changedKeys: string[] = [];
-  const failedKeys: string[] = [];
-
-  if (!storage) {
-    return {
-      changedKeys,
-      failedKeys: [
-        RESUME_SYNC_STATUS_STORAGE_KEY,
-        JD_MATCH_SYNC_STATUS_STORAGE_KEY,
-        JD_MATCH_STORAGE_KEY,
-        JD_MATCH_HISTORY_STORAGE_KEY,
-      ],
-    };
-  }
-
-  removeKey(storage, RESUME_SYNC_STATUS_STORAGE_KEY, changedKeys, failedKeys);
-  removeKey(storage, JD_MATCH_SYNC_STATUS_STORAGE_KEY, changedKeys, failedKeys);
-  detachJsonValue(storage, JD_MATCH_STORAGE_KEY, changedKeys, failedKeys);
-  detachJsonArray(storage, JD_MATCH_HISTORY_STORAGE_KEY, changedKeys, failedKeys);
-
-  if (changedKeys.length) {
-    notifySkillMintWorkspaceUpdated();
-  }
-
-  return {
-    changedKeys,
-    failedKeys,
-  };
-}
-
-function removeKey(
-  storage: Storage,
-  key: string,
-  changedKeys: string[],
-  failedKeys: string[],
-) {
-  try {
-    if (storage.getItem(key) !== null) {
-      storage.removeItem(key);
-      changedKeys.push(key);
-    }
-  } catch {
-    failedKeys.push(key);
-  }
-}
-
-function detachJsonValue(
-  storage: Storage,
-  key: string,
-  changedKeys: string[],
-  failedKeys: string[],
-) {
-  try {
-    const storedValue = storage.getItem(key);
-
-    if (!storedValue) {
-      return;
-    }
-
-    const parsedValue = safeJsonParse(storedValue);
-    const nextValue = detachDatabaseMetadata(parsedValue);
-
-    if (nextValue === parsedValue) {
-      return;
-    }
-
-    storage.setItem(key, JSON.stringify(nextValue));
-    changedKeys.push(key);
-  } catch {
-    failedKeys.push(key);
-  }
-}
-
-function detachJsonArray(
-  storage: Storage,
-  key: string,
-  changedKeys: string[],
-  failedKeys: string[],
-) {
-  try {
-    const storedValue = storage.getItem(key);
-
-    if (!storedValue) {
-      return;
-    }
-
-    const parsedValue = safeJsonParse(storedValue);
-    const values = isOwnedBrowserValue(parsedValue) &&
-      Array.isArray(parsedValue.value)
-      ? parsedValue.value
-      : Array.isArray(parsedValue)
-        ? parsedValue
-        : null;
-
-    if (!values) {
-      return;
-    }
-
-    const nextValues = values.map(detachDatabaseMetadata);
-    const nextStoredValue = isOwnedBrowserValue(parsedValue)
-      ? {
-          ...parsedValue,
-          value: nextValues,
-          updatedAt: new Date().toISOString(),
-        }
-      : nextValues;
-
-    storage.setItem(key, JSON.stringify(nextStoredValue));
-    changedKeys.push(key);
-  } catch {
-    failedKeys.push(key);
-  }
-}
-
-function detachDatabaseMetadata(value: unknown): unknown {
-  if (isOwnedBrowserValue(value)) {
-    return {
-      ...value,
-      value: detachDatabaseMetadata(value.value),
-      updatedAt: new Date().toISOString(),
-    };
-  }
-
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return value;
-  }
-
-  const nextValue = {
-    ...(value as Record<string, unknown>),
+export function detachDeletedSavedReportReferences(
+  context: BrowserOwnerContext,
+): SyncedReportReferenceCleanupResult {
+  const result: SyncedReportReferenceCleanupResult = {
+    changedKeys: [],
+    unchangedKeys: [],
+    failedKeys: [],
   };
 
-  if ("databaseId" in nextValue || "syncStatus" in nextValue) {
-    delete nextValue.databaseId;
-    delete nextValue.syncStatus;
-  }
+  recordMutation(
+    RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
+    updateOwnedStorageValue(
+      RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
+      context,
+      detachDeletedResumeSyncStatusReference,
+    ),
+    result,
+  );
+  recordMutation(
+    JD_MATCH_SYNC_STATUS_STORAGE_DESCRIPTOR,
+    updateOwnedStorageValue(
+      JD_MATCH_SYNC_STATUS_STORAGE_DESCRIPTOR,
+      context,
+      detachDeletedJobMatchSyncStatusReference,
+    ),
+    result,
+  );
+  recordMutation(
+    JD_MATCH_STORAGE_DESCRIPTOR,
+    updateOwnedStorageValue(
+      JD_MATCH_STORAGE_DESCRIPTOR,
+      context,
+      detachDeletedCurrentJobMatchReference,
+    ),
+    result,
+  );
+  recordMutation(
+    JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+    updateOwnedStorageValue(
+      JD_MATCH_HISTORY_STORAGE_DESCRIPTOR,
+      context,
+      detachDeletedJobMatchHistoryReferences,
+    ),
+    result,
+  );
 
-  return nextValue;
+  if (result.changedKeys.length) notifySkillMintWorkspaceUpdated();
+  return result;
+}
+
+function recordMutation(
+  descriptor: SkillMintStorageDescriptor,
+  mutation: { ok: boolean; changed: boolean },
+  result: SyncedReportReferenceCleanupResult,
+) {
+  if (!mutation.ok) result.failedKeys.push(descriptor.key);
+  else if (mutation.changed) result.changedKeys.push(descriptor.key);
+  else result.unchangedKeys.push(descriptor.key);
 }

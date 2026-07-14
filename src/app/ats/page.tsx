@@ -56,6 +56,7 @@ import type { UserProfile } from "@/intelligence/types/profile";
 import {
   subscribeToSkillMintWorkspaceUpdates,
 } from "@/lib/storage/skillMintStorageEvents";
+import { resolveBrowserWorkspaceWriteOwner } from "@/lib/storage/skillMintStorageTypes";
 import {
   clearCurrentJobMatchSnapshot,
   readCurrentJobMatchSnapshot,
@@ -71,6 +72,7 @@ import {
 import {
   clearSavedJobMatches,
   deleteSavedJobMatch,
+  getAccountHistoryRestoreMessage,
   getLatestJobMatch,
   getSavedJobMatches,
   replaceSavedJobMatches,
@@ -95,7 +97,7 @@ const JOB_DESCRIPTION_MAX_HEIGHT = 420;
 type ActiveJobMatch = {
   id?: string;
   databaseId?: string;
-  syncStatus?: "synced" | "local-only";
+  syncStatus?: "synced" | "local-only" | "pending" | "failed";
   jobTitle: string;
   companyName: string;
   jobDescription: string;
@@ -124,7 +126,7 @@ export default function ATSMatcherPage() {
   );
   const storedActiveTarget = useSyncExternalStore(
     subscribeToStoredAnalysis,
-    readStoredActiveTarget,
+    () => readStoredActiveTarget(currentUserId),
     getServerSnapshot,
   );
   const userProfile = useMemo(
@@ -286,15 +288,19 @@ export default function ATSMatcherPage() {
           restoredMatches,
           ownerContext,
         );
+        if (!nextMatches) {
+          setHistorySyncMessage("Could not save restored job matches in this browser.");
+          return;
+        }
         const nextActiveMatch = readLatestJobMatch(ownerContext) ??
           nextMatches[0] ?? null;
 
         setSavedJobMatches(nextMatches);
         setActiveMatch(nextActiveMatch);
-        if (nextActiveMatch) {
-          persistLatestJobMatch(nextActiveMatch, ownerContext);
-        }
-        setHistorySyncMessage("Loaded recent job matches from your account.");
+        const didPersistLatest = nextActiveMatch
+          ? persistLatestJobMatch(nextActiveMatch, ownerContext)
+          : true;
+        setHistorySyncMessage(getAccountHistoryRestoreMessage(didPersistLatest));
       } catch {
         if (!isActive) {
           return;
@@ -371,6 +377,10 @@ export default function ATSMatcherPage() {
   }
 
   function handleAnalyzeMatch() {
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
     if (!userProfile) {
       setError("Upload and analyze your resume before matching a job description.");
       setActiveMatch(null);
@@ -425,17 +435,28 @@ export default function ATSMatcherPage() {
       analyzedAt,
     };
 
-    setActiveMatch(savedMatch);
-    setSavedJobMatches(saveJobMatch(savedMatch, {
-      currentUserId,
-    }));
-    persistLatestJobMatch(savedMatch, {
+    const nextMatches = saveJobMatch(savedMatch, {
       currentUserId,
     });
+    const didPersistLatest = persistLatestJobMatch(savedMatch, {
+      currentUserId,
+    });
+
+    if (!nextMatches || !didPersistLatest) {
+      setError("Could not save this match in your browser. Please try again.");
+      return;
+    }
+
+    setActiveMatch(savedMatch);
+    setSavedJobMatches(nextMatches);
     void persistJobMatchToDatabase(savedMatch);
   }
 
   function handleViewSavedMatch(match: SavedJobMatch) {
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
     setError("");
     setDeleteSyncMessage("");
 
@@ -450,17 +471,29 @@ export default function ATSMatcherPage() {
       return;
     }
 
-    setActiveMatch(match);
-    persistLatestJobMatch(match, {
+    if (!persistLatestJobMatch(match, {
       currentUserId,
-    });
+    })) {
+      setError("Could not update the active match in your browser. Please try again.");
+      return;
+    }
+    setActiveMatch(match);
   }
 
   function handleDeleteSavedMatch(id: string) {
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
     const matchToDelete = savedJobMatches.find((match) => match.id === id);
     const nextMatches = deleteSavedJobMatch(id, {
       currentUserId,
     });
+
+    if (!nextMatches) {
+      setDeleteSyncMessage("Could not update saved matches in your browser. Please try again.");
+      return;
+    }
 
     setSavedJobMatches(nextMatches);
     setDeleteSyncMessage("");
@@ -475,32 +508,49 @@ export default function ATSMatcherPage() {
     setActiveMatch(nextActiveMatch);
 
     if (nextActiveMatch) {
-      persistLatestJobMatch(nextActiveMatch, {
+      if (!persistLatestJobMatch(nextActiveMatch, {
         currentUserId,
-      });
+      })) {
+        setDeleteSyncMessage("Saved matches were updated, but the active match could not be updated in this browser.");
+      }
     } else {
-      clearLatestJobMatch();
+      if (!clearLatestJobMatch({ currentUserId })) {
+        setDeleteSyncMessage("Saved matches were updated, but the active match could not be cleared in this browser.");
+      }
     }
 
     void deletePersistedJobMatch(matchToDelete);
   }
 
   function handleClearHistory() {
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
     if (!window.confirm("Clear all saved job match history?")) {
       return;
     }
 
-    clearSavedJobMatches();
+    if (!clearSavedJobMatches({ currentUserId })) {
+      setDeleteSyncMessage("Could not clear saved matches in your browser. Please try again.");
+      return;
+    }
     setSavedJobMatches([]);
 
     if (activeMatch) {
-      persistLatestJobMatch(activeMatch, {
+      if (!persistLatestJobMatch(activeMatch, {
         currentUserId,
-      });
+      })) {
+        setDeleteSyncMessage("Saved matches were cleared, but the active match could not be updated in this browser.");
+      }
     }
   }
 
   function handleSetLatestJdAsActiveTarget() {
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
     if (!activeMatch) {
       setTargetActionMessage("Analyze or select a JD match first.");
       return;
@@ -524,9 +574,10 @@ export default function ATSMatcherPage() {
       careerField: targetRoleSetup?.careerField,
     });
 
-    setActiveTarget(target, {
-      ownerUserId: currentUserId ?? null,
-    });
+    if (!setActiveTarget(target, { ownerUserId: currentUserId })) {
+      setTargetActionMessage("Could not save Active Target in this browser. Please try again.");
+      return;
+    }
     setTargetActionMessage(
       activeTarget
         ? "Active Target replaced. Saved in this browser during beta."
@@ -537,21 +588,28 @@ export default function ATSMatcherPage() {
   function handleSetSuggestionAsActiveTarget(
     suggestion: ActiveTargetSuggestion,
   ) {
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
     if (suggestion.source === "latest_jd") {
       handleSetLatestJdAsActiveTarget();
       return;
     }
 
     if (suggestion.source === "profile_fit" && roleMatches[0]) {
-      setActiveTarget(
+      if (!setActiveTarget(
         createActiveTargetFromProfileFitRole({
           roleMatch: roleMatches[0],
           careerField: targetRoleSetup?.careerField,
         }),
         {
-          ownerUserId: currentUserId ?? null,
+          ownerUserId: currentUserId,
         },
-      );
+      )) {
+        setTargetActionMessage("Could not save Active Target in this browser. Please try again.");
+        return;
+      }
       setTargetActionMessage(
         "Closest Role Path set as Active Target. Saved in this browser during beta.",
       );
@@ -570,9 +628,10 @@ export default function ATSMatcherPage() {
         return;
       }
 
-      setActiveTarget(target, {
-        ownerUserId: currentUserId ?? null,
-      });
+      if (!setActiveTarget(target, { ownerUserId: currentUserId })) {
+        setTargetActionMessage("Could not save Active Target in this browser. Please try again.");
+        return;
+      }
       setTargetActionMessage(
         "Ultimate Goal set as Active Target. Saved in this browser during beta.",
       );
@@ -585,8 +644,25 @@ export default function ATSMatcherPage() {
   }
 
   function handleClearActiveTarget() {
-    clearActiveTarget();
+    if (!ensureBrowserWorkspaceWriteReady()) {
+      return;
+    }
+
+    if (!clearActiveTarget({ currentUserId })) {
+      setTargetActionMessage("Could not clear Active Target in this browser. Please try again.");
+      return;
+    }
     setTargetActionMessage("Active Target cleared from this browser.");
+  }
+
+  function ensureBrowserWorkspaceWriteReady(): boolean {
+    if (resolveBrowserWorkspaceWriteOwner(currentUserId).status === "ready") {
+      return true;
+    }
+
+    setError("Checking your account… Please try again in a moment.");
+    setTargetActionMessage("Checking your account… Please try again in a moment.");
+    return false;
   }
 
   async function handleCopyActiveTargetSummary() {
@@ -632,21 +708,30 @@ export default function ATSMatcherPage() {
           databaseId: saveResult.data.id,
         };
 
-        setSavedJobMatches(saveJobMatch(nextMatch, {
+        const savedMatches = saveJobMatch(nextMatch, {
           currentUserId,
-        }));
+        });
+        const didPersistLatest = persistLatestJobMatch(nextMatch, {
+          currentUserId,
+        });
+        const didWriteSyncStatus = writeCurrentJobMatchSyncStatus(nextStatus, {
+          currentUserId,
+        });
+
+        if (!savedMatches || !didPersistLatest || !didWriteSyncStatus) {
+          setHistorySyncMessage(
+            "Your account saved this job match, but its browser status could not be updated. Please refresh and try again.",
+          );
+          return;
+        }
+
+        setSavedJobMatches(savedMatches);
         setActiveMatch((currentMatch) => {
           if (currentMatch?.id !== match.id) {
             return currentMatch;
           }
 
           return nextMatch;
-        });
-        persistLatestJobMatch(nextMatch, {
-          currentUserId,
-        });
-        writeCurrentJobMatchSyncStatus(nextStatus, {
-          currentUserId,
         });
         setSyncStatus(nextStatus);
         return;
@@ -671,21 +756,28 @@ export default function ATSMatcherPage() {
       message: getLocalOnlySyncMessage(message),
     };
 
-    setSavedJobMatches(saveJobMatch(nextMatch, {
+    const savedMatches = saveJobMatch(nextMatch, {
       currentUserId,
-    }));
+    });
+    const didPersistLatest = persistLatestJobMatch(nextMatch, {
+      currentUserId,
+    });
+    const didWriteSyncStatus = writeCurrentJobMatchSyncStatus(nextStatus, {
+      currentUserId,
+    });
+
+    if (!savedMatches || !didPersistLatest || !didWriteSyncStatus) {
+      setHistorySyncMessage("Could not update the browser-local save state. Please try again.");
+      return;
+    }
+
+    setSavedJobMatches(savedMatches);
     setActiveMatch((currentMatch) => {
       if (currentMatch?.id !== match.id) {
         return currentMatch;
       }
 
       return nextMatch;
-    });
-    persistLatestJobMatch(nextMatch, {
-      currentUserId,
-    });
-    writeCurrentJobMatchSyncStatus(nextStatus, {
-      currentUserId,
     });
     setSyncStatus(nextStatus);
   }
@@ -1944,7 +2036,7 @@ function persistLatestJobMatch(
     currentUserId: string | null | undefined;
   },
 ) {
-  writeCurrentJobMatchSnapshot({
+  return writeCurrentJobMatchSnapshot({
     id: match.id,
     jobTitle: match.jobTitle,
     companyName: match.companyName,
@@ -1960,8 +2052,10 @@ function persistLatestJobMatch(
   }, ownerContext);
 }
 
-function clearLatestJobMatch() {
-  clearCurrentJobMatchSnapshot();
+function clearLatestJobMatch(
+  ownerContext: { currentUserId: string | null | undefined },
+) {
+  return clearCurrentJobMatchSnapshot(ownerContext);
 }
 
 function readJobMatchSyncStatus(
@@ -2110,8 +2204,10 @@ function readStoredAnalysis(
   });
 }
 
-function readStoredActiveTarget(): string | null {
-  return readActiveTargetStorageSnapshot();
+function readStoredActiveTarget(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveTargetStorageSnapshot({ currentUserId });
 }
 
 function getServerSnapshot(): null {
@@ -2275,7 +2371,10 @@ function isActiveTargetResumeContext(
 function isJobMatchSyncState(
   value: unknown,
 ): value is JobMatchSyncStatus["status"] {
-  return value === "synced" || value === "local-only";
+  return value === "synced" ||
+    value === "local-only" ||
+    value === "pending" ||
+    value === "failed";
 }
 
 function isUserProfile(value: unknown): value is UserProfile {

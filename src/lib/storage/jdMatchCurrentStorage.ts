@@ -4,6 +4,7 @@ import type { ResumeRewritePlan } from "@/intelligence/core/resumeRewrite";
 import type { ActiveTargetResumeContext } from "@/intelligence/target";
 import {
   readVisibleStorageValue,
+  removeOwnedStoragePartition,
   writeOwnedJsonStorageValue,
 } from "@/lib/storage/ownedSkillMintStorage";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
@@ -11,6 +12,8 @@ import type {
   BrowserOwnerContext,
   SkillMintStorageDescriptor,
 } from "@/lib/storage/skillMintStorageTypes";
+import { isUuidShapedIdentifier } from "@/lib/storage/skillMintStorageTypes";
+import { isSavedJobMatch } from "@/lib/storage/jdMatchHistory";
 
 export const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
 export const JD_MATCH_SYNC_STATUS_STORAGE_KEY =
@@ -24,7 +27,10 @@ export const JD_MATCH_STORAGE_DESCRIPTOR: SkillMintStorageDescriptor = {
   containsPersonalData: true,
   clearWithBrowserReset: true,
   exportable: true,
+  importable: true,
   exportPolicy: "json_value",
+  validateValue: isBrowserJobMatch,
+  prepareAnonymousImport: prepareAnonymousCurrentJobMatch,
   description:
     "Latest browser-local JD Match snapshot, tied to one resume context when available.",
 };
@@ -38,7 +44,10 @@ export const JD_MATCH_SYNC_STATUS_STORAGE_DESCRIPTOR:
     containsPersonalData: false,
     clearWithBrowserReset: true,
     exportable: true,
-    exportPolicy: "json_value",
+  importable: true,
+  exportPolicy: "json_value",
+  validateValue: isBrowserJobMatchSyncStatus,
+  prepareAnonymousImport: prepareAnonymousJobMatchSyncStatus,
     description:
       "Browser-local sync status for the latest JD Match account save.",
   };
@@ -46,7 +55,7 @@ export const JD_MATCH_SYNC_STATUS_STORAGE_DESCRIPTOR:
 export type BrowserJobMatch = {
   id?: string;
   databaseId?: string;
-  syncStatus?: "synced" | "local-only";
+  syncStatus?: "synced" | "local-only" | "pending" | "failed";
   jobTitle: string;
   companyName: string;
   jobDescription: string;
@@ -59,7 +68,7 @@ export type BrowserJobMatch = {
 };
 
 export type BrowserJobMatchSyncStatus = {
-  status: "synced" | "local-only";
+  status: "synced" | "local-only" | "pending" | "failed";
   message: string;
   syncedAt?: string;
   databaseId?: string;
@@ -88,20 +97,19 @@ export function writeCurrentJobMatchSnapshot(
   return didWrite;
 }
 
-export function clearCurrentJobMatchSnapshot(): boolean {
-  const storage = getBrowserStorage();
+export function clearCurrentJobMatchSnapshot(
+  options: BrowserOwnerContext = { currentUserId: null },
+): boolean {
+  const result = removeOwnedStoragePartition(
+    JD_MATCH_STORAGE_DESCRIPTOR,
+    options,
+  );
 
-  if (!storage) {
-    return false;
-  }
-
-  try {
-    storage.removeItem(JD_MATCH_STORAGE_KEY);
+  if (result.ok && result.changed) {
     notifySkillMintWorkspaceUpdated();
-    return true;
-  } catch {
-    return false;
   }
+
+  return result.ok;
 }
 
 export function readCurrentJobMatchSyncStatusSnapshot(
@@ -130,14 +138,149 @@ export function writeCurrentJobMatchSyncStatus(
   return didWrite;
 }
 
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
+export function isBrowserJobMatch(value: unknown): value is BrowserJobMatch {
+  if (!isRecord(value)) return false;
+
+  return isSavedJobMatch({
+    ...value,
+    id: typeof value.id === "string" ? value.id : "current-job-match",
+  });
+}
+
+export function isBrowserJobMatchSyncStatus(
+  value: unknown,
+): value is BrowserJobMatchSyncStatus {
+  if (!isRecord(value)) return false;
+
+  return isJobMatchSyncState(value.status) &&
+    typeof value.message === "string" &&
+    (value.syncedAt === undefined || (
+      typeof value.syncedAt === "string" &&
+      Number.isFinite(Date.parse(value.syncedAt))
+    )) &&
+    (value.databaseId === undefined || typeof value.databaseId === "string");
+}
+
+function isJobMatchSyncState(
+  value: unknown,
+): value is BrowserJobMatchSyncStatus["status"] {
+  return value === "synced" ||
+    value === "local-only" ||
+    value === "pending" ||
+    value === "failed";
+}
+
+export function prepareAnonymousCurrentJobMatch(
+  value: unknown,
+): { ok: true; value: BrowserJobMatch } | { ok: false; reason: string } {
+  if (!isBrowserJobMatch(value)) {
+    return { ok: false, reason: "JD Match snapshot is invalid." };
   }
 
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
+  const localId = getSafeLocalJobMatchId(value.id, value.databaseId);
+  return {
+    ok: true,
+    value: {
+      ...(localId ? { id: localId } : {}),
+      jobTitle: value.jobTitle,
+      companyName: value.companyName,
+      jobDescription: value.jobDescription,
+      result: value.result,
+      improvementPlan: value.improvementPlan ?? null,
+      rewritePlan: value.rewritePlan ?? null,
+      ...(value.roadmap === undefined ? {} : { roadmap: value.roadmap }),
+      ...(value.resumeContext === undefined
+        ? {}
+        : { resumeContext: value.resumeContext }),
+      analyzedAt: value.analyzedAt,
+      syncStatus: "local-only",
+    },
+  };
+}
+
+export function prepareAnonymousJobMatchSyncStatus(
+  value: unknown,
+): { ok: true; value: BrowserJobMatchSyncStatus } | { ok: false; reason: string } {
+  if (!isBrowserJobMatchSyncStatus(value)) {
+    return { ok: false, reason: "JD Match sync status is invalid." };
   }
+
+  return {
+    ok: true,
+    value: {
+      status: "local-only",
+      message: "Imported into this browser workspace. It is not saved to your account.",
+    },
+  };
+}
+
+export function detachDeletedCurrentJobMatchReference(
+  value: unknown,
+): { value: unknown; changed: boolean } {
+  if (!isBrowserJobMatch(value) || !hasSavedReportReference(value.databaseId)) {
+    return { value, changed: false };
+  }
+
+  const localId = getSafeLocalJobMatchId(value.id, value.databaseId);
+  return {
+    value: {
+      ...(localId ? { id: localId } : {}),
+      jobTitle: value.jobTitle,
+      companyName: value.companyName,
+      jobDescription: value.jobDescription,
+      result: value.result,
+      improvementPlan: value.improvementPlan ?? null,
+      rewritePlan: value.rewritePlan ?? null,
+      ...(value.roadmap === undefined ? {} : { roadmap: value.roadmap }),
+      ...(value.resumeContext === undefined
+        ? {}
+        : { resumeContext: value.resumeContext }),
+      analyzedAt: value.analyzedAt,
+      syncStatus: "local-only",
+    },
+    changed: true,
+  };
+}
+
+export function detachDeletedJobMatchSyncStatusReference(
+  value: unknown,
+): { value: unknown; changed: boolean } {
+  if (
+    !isBrowserJobMatchSyncStatus(value) ||
+    !hasSavedReportReference(value.databaseId)
+  ) {
+    return { value, changed: false };
+  }
+
+  return {
+    value: {
+      status: "local-only",
+      message: "Saved account reference was deleted; browser JD Match remains local.",
+    },
+    changed: true,
+  };
+}
+
+export function getSafeLocalJobMatchId(
+  id: unknown,
+  databaseId: unknown,
+): string | undefined {
+  if (
+    typeof id !== "string" ||
+    !id.trim() ||
+    id === databaseId ||
+    isUuidShapedIdentifier(id)
+  ) {
+    return undefined;
+  }
+
+  return id;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasSavedReportReference(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }

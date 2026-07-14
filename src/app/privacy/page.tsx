@@ -8,6 +8,7 @@ import {
   premiumPageStack,
   premiumSurface,
 } from "@/components/ui/premium";
+import { getPrivacyContact } from "@/config/privacyContact";
 
 const sections = [
   {
@@ -18,7 +19,7 @@ const sections = [
   {
     title: "Browser-local versus account-synced",
     body:
-      "Browser-local data stays in this browser. Account-synced data is stored through Supabase for signed-in users when account sync is configured and available.",
+      "Browser-local resume, JD, target, mission, setup, feedback, and preference state stays in this browser. Account-synced profile, saved-report, and feedback records use Supabase only for signed-in users when configured and available.",
   },
   {
     title: "Resume and JD processing",
@@ -33,21 +34,23 @@ const sections = [
   {
     title: "Exports and clearing",
     body:
-      "Browser export and account export are separate JSON files. Clearing browser data removes registered SkillMint keys from this browser only. It does not delete account records.",
+      "Browser export includes only registered values visible to the current browser owner; account export is a separate authenticated JSON collection. Neither is an atomic point-in-time snapshot or complete provider-history guarantee. A successful action means the browser download was requested, not that a file was saved. Clearing browser data removes registered SkillMint keys from this browser only and does not delete account records.",
   },
   {
     title: "Saved-report and account deletion",
     body:
-      "Delete saved reports removes synced resume analyses, JD matches, and career snapshots while preserving the account, profile, and feedback. Account deletion uses a server-only admin boundary and database cascades for account-owned product records.",
+      "Delete saved reports removes synced resume analyses, JD matches, and career snapshots while preserving the account, profile, and feedback. Account deletion uses a server-only admin boundary; its cascade behavior, including feedback deletion, requires the documented migration and operational verification.",
   },
   {
     title: "Current limitations",
     body:
-      "SkillMint does not claim full GDPR or DPDP certification, instant infrastructure-wide erasure, end-to-end encryption, or that data never leaves your device. Operational privacy contact ownership is still a beta-release blocker until a verified contact channel exists.",
+      "SkillMint does not claim GDPR or DPDP certification, instant infrastructure-wide erasure, end-to-end encryption, production readiness, or that data never leaves your device. Provider backup/log deletion and live account-deletion behavior are not yet operationally verified. A verified privacy/support contact is still a release blocker.",
   },
 ];
 
 export default function PrivacyPage() {
+  const privacyContact = getPrivacyContact();
+
   return (
     <>
       <Navbar />
@@ -87,6 +90,32 @@ export default function PrivacyPage() {
                 </p>
               </article>
             ))}
+          </section>
+
+          <section className={premiumSurface}>
+            <h2 className="text-2xl font-black text-slate-950">
+              Questions and contact
+            </h2>
+
+            {privacyContact.status === "configured" ? (
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Contact us at{" "}
+                <a
+                  href={privacyContact.href ?? undefined}
+                  className="font-bold text-emerald-800 underline underline-offset-4"
+                >
+                  {privacyContact.email}
+                </a>
+                . Code can validate this configuration format, but cannot prove
+                external ownership or monitoring of the address.
+              </p>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-amber-900">
+                A verified privacy/support contact is not currently published.
+                This remains a release blocker; no operational address has been
+                invented for the beta.
+              </p>
+            )}
           </section>
         </div>
       </main>

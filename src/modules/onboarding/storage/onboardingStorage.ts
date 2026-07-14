@@ -11,7 +11,9 @@ export const ONBOARDING_DISMISSED_STORAGE_DESCRIPTOR:
     containsPersonalData: false,
     clearWithBrowserReset: true,
     exportable: true,
+    importable: false,
     exportPolicy: "boolean_string",
+    validateValue: (value) => typeof value === "boolean",
     description:
       "Browser-local preference for hiding onboarding checklist prompts.",
   };

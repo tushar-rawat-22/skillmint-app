@@ -200,6 +200,17 @@ export interface Database {
           career_snapshots_deleted: number;
         }>;
       };
+      prepare_account_deletion: {
+        Args: { target_user_id: string };
+        Returns: Array<{
+          profiles_deleted: number;
+          resume_analyses_deleted: number;
+          job_matches_deleted: number;
+          career_snapshots_deleted: number;
+          beta_feedback_deleted: number;
+          verified_absent: boolean;
+        }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

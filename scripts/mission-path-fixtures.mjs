@@ -335,14 +335,15 @@ function assertStorageAdapter() {
     "Anonymous selected path should not become Account A state.",
   );
 
-  const anonymousSelectedPathEnvelope = JSON.parse(
+  const anonymousSelectedPathContainer = JSON.parse(
     window.localStorage.getItem(SELECTED_CAREER_PATH_STORAGE_KEY),
   );
 
   assert(
-    anonymousSelectedPathEnvelope.owner.kind === "anonymous" &&
-      anonymousSelectedPathEnvelope.value === "path:latest-jd",
-    "Selected path storage key should contain an anonymous owner envelope.",
+    anonymousSelectedPathContainer.format === "skillmint-owner-partitions" &&
+      anonymousSelectedPathContainer.partitions.anonymous.value ===
+        "path:latest-jd",
+    "Selected path storage key should contain an anonymous owner partition.",
   );
 
   assert(
@@ -361,8 +362,8 @@ function assertStorageAdapter() {
     "Account B should not read Account A selected path.",
   );
   assert(
-    getSelectedCareerPathId({ currentUserId: null }) === null,
-    "Signed-out state should not expose account-owned selected path.",
+    getSelectedCareerPathId({ currentUserId: null }) === "path:latest-jd",
+    "Signed-out state should retain its anonymous selected path without exposing the account partition.",
   );
 
   window.localStorage.setItem(

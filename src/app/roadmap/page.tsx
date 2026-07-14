@@ -160,7 +160,7 @@ export default function RoadmapPage() {
   );
   const storedActiveTarget = useSyncExternalStore(
     subscribeToStoredData,
-    readStoredActiveTarget,
+    () => readStoredActiveTarget(currentUserId),
     getServerSnapshot,
   );
   const storedMissionStatuses = useSyncExternalStore(
@@ -1138,8 +1138,10 @@ function readStoredSetup(
   });
 }
 
-function readStoredActiveTarget(): string | null {
-  return readActiveTargetStorageSnapshot();
+function readStoredActiveTarget(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveTargetStorageSnapshot({ currentUserId });
 }
 
 function readStoredMissionStatuses(

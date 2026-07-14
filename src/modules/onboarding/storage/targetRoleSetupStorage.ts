@@ -1,6 +1,7 @@
 import type { TargetRoleSetup } from "@/modules/onboarding/types";
 import {
   readVisibleStorageValue,
+  removeOwnedStoragePartition,
   writeOwnedJsonStorageValue,
 } from "@/lib/storage/ownedSkillMintStorage";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
@@ -19,7 +20,9 @@ export const TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR:
     containsPersonalData: true,
     clearWithBrowserReset: true,
     exportable: true,
+    importable: true,
     exportPolicy: "json_value",
+    validateValue: isTargetRoleSetup,
     description:
       "Browser-local target role setup used for career direction and recommendations.",
   };
@@ -64,22 +67,22 @@ export function saveTargetRoleSetup(
   }
 }
 
-export function clearTargetRoleSetup(): void {
-  const storage = getBrowserStorage();
+export function clearTargetRoleSetup(
+  options: BrowserOwnerContext = { currentUserId: null },
+): boolean {
+  const result = removeOwnedStoragePartition(
+    TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+    options,
+  );
 
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.removeItem(TARGET_ROLE_SETUP_STORAGE_KEY);
+  if (result.ok && result.changed) {
     notifySkillMintWorkspaceUpdated();
-  } catch {
-    return;
   }
+
+  return result.ok;
 }
 
-function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
+export function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
   if (!isRecord(value)) {
     return false;
   }
@@ -94,7 +97,8 @@ function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
     isPrimaryGoal(value.primaryGoal) &&
     isPreferredJobType(value.preferredJobType) &&
     isWeeklyTimeCommitment(value.weeklyTimeCommitment) &&
-    typeof value.updatedAt === "string"
+    typeof value.updatedAt === "string" &&
+    Number.isFinite(Date.parse(value.updatedAt))
   );
 }
 
@@ -156,16 +160,4 @@ function isNonEmptyString(value: unknown): value is string {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" &&
     !Array.isArray(value);
-}
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
 }

@@ -47,46 +47,52 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setError("");
     setMessage("");
 
-    if (mode === "login") {
-      const { error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
+    try {
+      if (mode === "login") {
+        const { error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
 
-      setIsSubmitting(false);
+        if (signInError) {
+          setError("Login could not be completed. Please try again.");
+          return;
+        }
 
-      if (signInError) {
-        setError(signInError.message);
+        router.push("/dashboard");
+        router.refresh();
         return;
       }
 
-      router.push("/dashboard");
-      router.refresh();
-      return;
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+
+      if (signUpError) {
+        setError("Account creation could not be completed. Please try again.");
+        return;
+      }
+
+      if (data.session) {
+        router.push("/settings/data?import=1");
+        router.refresh();
+        return;
+      }
+
+      setMessage(
+        "Account created. Check your email if confirmation is required, then use Data & privacy to import any anonymous browser workspace.",
+      );
+    } catch {
+      setError(
+        mode === "login"
+          ? "Login could not be completed. Please try again."
+          : "Account creation could not be completed. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-    });
-
-    setIsSubmitting(false);
-
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
-    }
-
-    if (data.session) {
-      router.push("/settings/data?import=1");
-      router.refresh();
-      return;
-    }
-
-    setMessage(
-      "Account created. Check your email if confirmation is required, then use Data & privacy to import any anonymous browser workspace.",
-    );
   }
 
   if (!configStatus.isConfigured) {

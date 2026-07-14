@@ -2,7 +2,10 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
+  useId,
+  type RefObject,
   type ReactNode,
 } from "react";
 
@@ -10,6 +13,7 @@ import {
   premiumDangerCta,
   premiumSecondaryCta,
 } from "@/components/ui/premium";
+import { startConfirmDialogAccessibilitySession } from "@/components/ui/confirmDialogAccessibility";
 
 type ConfirmDialogProps = {
   isOpen: boolean;
@@ -21,6 +25,7 @@ type ConfirmDialogProps = {
   confirmDisabled?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  initialFocusRef?: RefObject<HTMLElement | null>;
 };
 
 export default function ConfirmDialog({
@@ -33,66 +38,61 @@ export default function ConfirmDialog({
   confirmDisabled = false,
   onConfirm,
   onClose,
+  initialFocusRef,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const previousActiveElementRef = useRef<Element | null>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const isProcessingRef = useRef(isProcessing);
+  const initialFocusRefRef = useRef(initialFocusRef);
+  const titleId = useId();
+
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+    isProcessingRef.current = isProcessing;
+    initialFocusRefRef.current = initialFocusRef;
+  }, [initialFocusRef, isProcessing, onClose]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    previousActiveElementRef.current = document.activeElement;
-    const timeoutId = window.setTimeout(() => {
-      closeButtonRef.current?.focus();
-    }, 0);
+    const dialog = dialogRef.current;
+    if (!dialog) return;
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const focusableElements = dialogRef.current?.querySelectorAll<HTMLElement>(
-        "button, [href], input, textarea, select, [tabindex]:not([tabindex='-1'])",
-      );
-      const elements = focusableElements
-        ? Array.from(focusableElements).filter((element) => !element.hasAttribute("disabled"))
-        : [];
-      const firstElement = elements[0];
-      const lastElement = elements[elements.length - 1];
-
-      if (!firstElement || !lastElement) {
-        return;
-      }
-
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleKeyDown);
-      const previousActiveElement = previousActiveElementRef.current;
-
-      if (previousActiveElement instanceof HTMLElement) {
-        previousActiveElement.focus();
-      }
-    };
-  }, [isOpen, onClose]);
+    return startConfirmDialogAccessibilitySession({
+      dialog,
+      getCancelElement: () => cancelButtonRef.current,
+      getInitialFocusElement: () => initialFocusRefRef.current?.current ?? null,
+      previouslyActiveElement: document.activeElement,
+      getIsProcessing: () => isProcessingRef.current,
+      requestClose: () => onCloseRef.current(),
+      environment: {
+        addDocumentListener: (type, listener) => document.addEventListener(type, listener as EventListener),
+        removeDocumentListener: (type, listener) => document.removeEventListener(type, listener as EventListener),
+        getActiveElement: () => document.activeElement,
+        getBody: () => document.body,
+        getDocumentElement: () => document.documentElement,
+        getComputedStyle: (element) => window.getComputedStyle(element as unknown as Element),
+        schedule: (callback) => {
+          try {
+            return { kind: "frame", id: window.requestAnimationFrame(callback) };
+          } catch {
+            return { kind: "timer", id: window.setTimeout(callback, 0) };
+          }
+        },
+        cancelScheduled: (handle) => {
+          const scheduled = handle as { kind?: string; id?: number } | null;
+          if (scheduled?.kind === "frame" && typeof scheduled.id === "number") {
+            window.cancelAnimationFrame(scheduled.id);
+          } else if (scheduled?.kind === "timer" && typeof scheduled.id === "number") {
+            window.clearTimeout(scheduled.id);
+          }
+        },
+      },
+    });
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
@@ -107,22 +107,24 @@ export default function ConfirmDialog({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
+        aria-labelledby={titleId}
+        aria-busy={isProcessing}
+        tabIndex={-1}
         className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.2)]"
       >
         <div className="flex items-start justify-between gap-4">
           <h2
-            id="confirm-dialog-title"
+            id={titleId}
             className="text-2xl font-black"
           >
             {title}
           </h2>
 
           <button
-            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             disabled={isProcessing}
+            aria-label={`Close ${title}`}
             className="rounded-full border border-slate-200 px-3 py-1 text-sm font-bold text-slate-600 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Close
@@ -135,6 +137,7 @@ export default function ConfirmDialog({
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <button
+            ref={cancelButtonRef}
             type="button"
             onClick={onClose}
             disabled={isProcessing}

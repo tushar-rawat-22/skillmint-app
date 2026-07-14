@@ -314,7 +314,9 @@ export default function ResumePage() {
     }
 
     if (activeDatabaseId === deletedAnalysis.id) {
-      detachActiveResumeSyncStatus(deletedAnalysis.id);
+      detachActiveResumeSyncStatus(deletedAnalysis.id, {
+        currentUserId,
+      });
     }
 
     setDeleteCandidate(null);

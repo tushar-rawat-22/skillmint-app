@@ -29,6 +29,8 @@ pnpm-debug.log*
 
 # testing
 coverage/
+playwright-report/
+test-results/
 
 # TypeScript incremental build cache
 *.tsbuildinfo

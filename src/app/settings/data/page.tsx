@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect -- Owner-bound state is deliberately invalidated in effects when authentication/configuration context changes. */
+
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -20,25 +21,37 @@ import {
   premiumSurface,
   premiumWarningSurface,
 } from "@/components/ui/premium";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   buildBrowserDataExport,
   clearSkillMintBrowserData,
+  formatOtherWorkspaceSummary,
   getBrowserStorageSummary,
   getSkillMintStorageDescriptors,
-  hasAnonymousBrowserWorkspace,
   importAnonymousBrowserWorkspaceToAccount,
-  type BrowserStorageSummary,
+  removeSkillMintOwnerData,
 } from "@/lib/storage/skillMintStorageRegistry";
+import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import { detachDeletedSavedReportReferences } from "@/lib/storage/reportReferenceCleanup";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   buildCurrentUserAccountDataExport,
   deleteCurrentUserSavedReports,
   getCurrentUserAccountDataCounts,
-  type AccountDataCounts,
   type SavedReportsDeletionCounts,
 } from "@/modules/data-controls";
+import { parseAccountDeletionResponse } from "@/modules/data-controls/accountDeletionClientContract";
+import { requestJsonDownload } from "@/modules/data-controls/jsonDownload";
+import {
+  getAccountCountsPresentation,
+  getBrowserSummaryOwnerKey,
+  getVisibleBrowserSummaryState,
+  isCurrentOwnedRequest,
+  type AccountCountsLoadState,
+  type BrowserSummaryLoadState,
+  type OwnedRequestIdentity,
+  type TrustCenterOwnerKey,
+} from "@/modules/data-controls/trustCenterState";
 
 const ACCOUNT_DELETE_CONFIRMATION = "DELETE MY ACCOUNT";
 
@@ -62,54 +75,148 @@ type AsyncState<T> =
       error: string;
     };
 
-type AccountCountsState = {
-  ownerId: string | null;
-  value: AsyncState<AccountDataCounts>;
+type ActionNotice = {
+  status: "idle" | "loading" | "success" | "error";
+  message: string | null;
+  error: string | null;
 };
 
-const IDLE_ACCOUNT_COUNTS: AsyncState<AccountDataCounts> = {
+type AccountExportState = ActionNotice & {
+  ownerKey: TrustCenterOwnerKey | null;
+  contextEpoch: number;
+};
+
+type BrowserActionState = ActionNotice & {
+  ownerKey: TrustCenterOwnerKey | null;
+  contextEpoch: number;
+};
+
+type OwnedAsyncState<T> = AsyncState<T> & {
+  ownerKey: TrustCenterOwnerKey | null;
+  contextEpoch: number;
+};
+
+type LiveRequestContext = {
+  ownerKey: TrustCenterOwnerKey | null;
+  contextEpoch: number;
+  currentUserId: string | null | undefined;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+};
+
+const IDLE_NOTICE: ActionNotice = {
   status: "idle",
-  data: null,
   message: null,
   error: null,
 };
 
-const LOADING_ACCOUNT_COUNTS: AsyncState<AccountDataCounts> = {
-  status: "loading",
+const IDLE_BROWSER_SUMMARY: BrowserSummaryLoadState = {
+  ownerKey: null,
+  contextEpoch: 0,
+  status: "idle",
   data: null,
-  message: null,
+  error: null,
+};
+
+const IDLE_ACCOUNT_COUNTS: AccountCountsLoadState = {
+  ownerKey: null,
+  request: null,
+  status: "idle",
+  data: null,
   error: null,
 };
 
 export default function DataSettingsPage() {
-  const router = useRouter();
   const {
     user,
-    session,
     isConfigured,
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
-  const [browserSummaryVersion, setBrowserSummaryVersion] = useState(0);
+  const ownerKey = getBrowserSummaryOwnerKey(currentUserId);
+  const committedRequestContextRef = useRef<LiveRequestContext>({
+    ownerKey: null,
+    contextEpoch: 0,
+    currentUserId: undefined,
+    isAuthLoading: true,
+    isConfigured,
+  });
+  const previousContext = committedRequestContextRef.current;
+  const contextChanged = previousContext.ownerKey !== ownerKey ||
+    previousContext.isAuthLoading !== isAuthLoading ||
+    previousContext.isConfigured !== isConfigured;
+  const currentContextEpoch = contextChanged
+    ? previousContext.contextEpoch + 1
+    : previousContext.contextEpoch;
+  const liveRequestContextRef = useRef<LiveRequestContext>({
+    ownerKey: null,
+    contextEpoch: 0,
+    currentUserId: undefined,
+    isAuthLoading: true,
+    isConfigured,
+  });
+  useLayoutEffect(() => {
+    const committedContext: LiveRequestContext = {
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      currentUserId,
+      isAuthLoading,
+      isConfigured,
+    };
+    committedRequestContextRef.current = committedContext;
+    liveRequestContextRef.current = committedContext;
+  }, [
+    currentContextEpoch,
+    currentUserId,
+    isAuthLoading,
+    isConfigured,
+    ownerKey,
+  ]);
+
+  const [browserSummaryState, setBrowserSummaryState] =
+    useState<BrowserSummaryLoadState>(IDLE_BROWSER_SUMMARY);
+  const browserSummaryReloadRef = useRef<() => void>(() => undefined);
   const [accountCountsState, setAccountCountsState] =
-    useState<AccountCountsState>({
-      ownerId: null,
-      value: IDLE_ACCOUNT_COUNTS,
+    useState<AccountCountsLoadState>(IDLE_ACCOUNT_COUNTS);
+  const countRequestTokenRef = useRef(0);
+  const activeCountRequestRef = useRef<OwnedRequestIdentity | null>(null);
+  const [browserNotice, setBrowserNotice] =
+    useState<BrowserActionState>({
+      ownerKey: null,
+      contextEpoch: 0,
+      ...IDLE_NOTICE,
     });
-  const [browserMessage, setBrowserMessage] = useState<string | null>(null);
-  const [browserError, setBrowserError] = useState<string | null>(null);
+  const browserExportTokenRef = useRef(0);
+  const activeBrowserExportRef = useRef<OwnedRequestIdentity | null>(null);
+  const browserActionLockRef = useRef(false);
+  const [accountExportState, setAccountExportState] =
+    useState<AccountExportState>({
+      ownerKey: null,
+      contextEpoch: 0,
+      ...IDLE_NOTICE,
+    });
+  const accountExportTokenRef = useRef(0);
+  const activeAccountExportRef = useRef<OwnedRequestIdentity | null>(null);
+  const isTrustCenterMountedRef = useRef(true);
   const [showBrowserClearDialog, setShowBrowserClearDialog] = useState(false);
   const [showSavedReportsDialog, setShowSavedReportsDialog] = useState(false);
   const [showAccountDeleteDialog, setShowAccountDeleteDialog] = useState(false);
   const [savedReportsDeletion, setSavedReportsDeletion] =
-    useState<AsyncState<SavedReportsDeletionCounts>>({
+    useState<OwnedAsyncState<SavedReportsDeletionCounts>>({
+      ownerKey: null,
+      contextEpoch: 0,
       status: "idle",
       data: null,
       message: null,
       error: null,
     });
+  const savedReportsDeletionTokenRef = useRef(0);
+  const activeSavedReportsDeletionRef =
+    useRef<OwnedRequestIdentity | null>(null);
   const [accountDeletionState, setAccountDeletionState] =
-    useState<AsyncState<null>>({
+    useState<OwnedAsyncState<null>>({
+      ownerKey: null,
+      contextEpoch: 0,
       status: "idle",
       data: null,
       message: null,
@@ -117,242 +224,637 @@ export default function DataSettingsPage() {
     });
   const [accountDeleteConfirmation, setAccountDeleteConfirmation] =
     useState("");
-  const [importMessage, setImportMessage] = useState<string | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
+  const [accountDeletePassword, setAccountDeletePassword] = useState("");
+  const accountDeletePasswordValueRef = useRef("");
+  const accountDeleteConfirmationInputRef = useRef<HTMLInputElement>(null);
+  const accountDeletionTokenRef = useRef(0);
+  const activeAccountDeletionRef = useRef<OwnedRequestIdentity | null>(null);
   const [importDismissed, setImportDismissed] = useState(false);
 
-  void browserSummaryVersion;
-  const browserSummary: BrowserStorageSummary = getBrowserStorageSummary({
-    currentUserId,
-  });
-  const signedInUserId = user?.id ?? null;
-  const accountCounts = getVisibleAccountCounts({
-    accountCountsState,
-    isAuthLoading,
-    isConfigured,
-    userId: signedInUserId,
-  });
-  const shouldOfferImport = Boolean(
-    signedInUserId &&
-    !isAuthLoading &&
-    !importDismissed &&
-    hasAnonymousBrowserWorkspace()
-  );
-
   useEffect(() => {
-    if (!user?.id || isAuthLoading || !isConfigured) {
+    isTrustCenterMountedRef.current = true;
+    return () => {
+      isTrustCenterMountedRef.current = false;
+      activeCountRequestRef.current = null;
+      activeBrowserExportRef.current = null;
+      activeAccountExportRef.current = null;
+      activeSavedReportsDeletionRef.current = null;
+      activeAccountDeletionRef.current = null;
+      accountDeletePasswordValueRef.current = "";
+      browserSummaryReloadRef.current = () => undefined;
+    };
+  }, []);
+
+  const loadAccountCounts = useCallback(async () => {
+    const live = liveRequestContextRef.current;
+    if (
+      !live.ownerKey ||
+      live.isAuthLoading ||
+      !live.isConfigured ||
+      typeof live.currentUserId !== "string"
+    ) {
       return;
     }
 
-    let isMounted = true;
-    const requestOwnerId = user.id;
+    const request: OwnedRequestIdentity = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: countRequestTokenRef.current + 1,
+    };
+    countRequestTokenRef.current = request.requestToken;
+    activeCountRequestRef.current = request;
+    setAccountCountsState({
+      ownerKey: request.ownerKey,
+      request,
+      status: "loading",
+      data: null,
+      error: null,
+    });
 
-    void getCurrentUserAccountDataCounts()
-      .then((result) => {
-        if (!isMounted) {
-          return;
-        }
+    try {
+      const result = await getCurrentUserAccountDataCounts(live.currentUserId);
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeCountRequestRef.current,
+        )
+      ) return;
 
-        if (!result.ok) {
-          setAccountCountsState({
-            ownerId: requestOwnerId,
-            value: {
-              status: "error",
-              data: null,
-              message: null,
-              error: result.error,
-            },
-          });
-          return;
-        }
-
-        setAccountCountsState({
-          ownerId: requestOwnerId,
-          value: {
-            status: "success",
-            data: result.data,
-            message: "Account-synced data counts loaded.",
-            error: null,
-          },
-        });
-      })
-      .catch(() => {
-        if (!isMounted) {
-          return;
-        }
-
-        setAccountCountsState({
-          ownerId: requestOwnerId,
-          value: {
-            status: "error",
-            data: null,
-            message: null,
-            error: "Account data counts are unavailable right now.",
-          },
-        });
+      setAccountCountsState({
+        ownerKey: request.ownerKey,
+        request,
+        status: result.ok ? "ready" : "error",
+        data: result.ok ? result.data : null,
+        error: result.ok ? null : result.error.message,
       });
+    } catch {
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeCountRequestRef.current,
+        )
+      ) return;
+      setAccountCountsState({
+        ownerKey: request.ownerKey,
+        request,
+        status: "error",
+        data: null,
+        error: "Account data counts are unavailable right now.",
+      });
+    } finally {
+      if (
+        isTrustCenterMountedRef.current &&
+        isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeCountRequestRef.current,
+        )
+      ) {
+        activeCountRequestRef.current = null;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!ownerKey) {
+      setBrowserSummaryState(IDLE_BROWSER_SUMMARY);
+      browserSummaryReloadRef.current = () => undefined;
+      return;
+    }
+
+    let active = true;
+    const requestOwnerKey = ownerKey;
+    const requestContextEpoch = currentContextEpoch;
+    const requestUserId = currentUserId;
+    const loadSummary = () => {
+      try {
+        const data = getBrowserStorageSummary({
+          currentUserId: requestUserId,
+        });
+        if (!active) return;
+        setBrowserSummaryState({
+          ownerKey: requestOwnerKey,
+          contextEpoch: requestContextEpoch,
+          status: "ready",
+          data,
+          error: null,
+        });
+      } catch {
+        if (!active) return;
+        setBrowserSummaryState({
+          ownerKey: requestOwnerKey,
+          contextEpoch: requestContextEpoch,
+          status: "error",
+          data: null,
+          error: "Browser data status is unavailable right now.",
+        });
+      }
+    };
+
+    setBrowserSummaryState((current) =>
+      current.ownerKey === requestOwnerKey &&
+          current.contextEpoch === requestContextEpoch &&
+          current.status === "ready"
+        ? current
+        : {
+            ownerKey: requestOwnerKey,
+            contextEpoch: requestContextEpoch,
+            status: "loading",
+            data: null,
+            error: null,
+          }
+    );
+    browserSummaryReloadRef.current = loadSummary;
+    loadSummary();
+    const unsubscribe = subscribeToSkillMintWorkspaceUpdates(loadSummary);
 
     return () => {
-      isMounted = false;
+      active = false;
+      unsubscribe();
+      if (browserSummaryReloadRef.current === loadSummary) {
+        browserSummaryReloadRef.current = () => undefined;
+      }
     };
-  }, [isAuthLoading, isConfigured, user?.id]);
+  }, [currentContextEpoch, currentUserId, ownerKey]);
 
-  function refreshBrowserSummary() {
-    setBrowserSummaryVersion((currentVersion) => currentVersion + 1);
+  useEffect(() => {
+    activeCountRequestRef.current = null;
+    activeBrowserExportRef.current = null;
+    browserActionLockRef.current = false;
+    setBrowserNotice({
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      ...IDLE_NOTICE,
+    });
+    setAccountExportState({
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      ...IDLE_NOTICE,
+    });
+    activeSavedReportsDeletionRef.current = null;
+    activeAccountDeletionRef.current = null;
+    setSavedReportsDeletion({
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      status: "idle",
+      data: null,
+      message: null,
+      error: null,
+    });
+    setAccountDeletionState({
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      status: "idle",
+      data: null,
+      message: null,
+      error: null,
+    });
+    setImportDismissed(false);
+    setShowSavedReportsDialog(false);
+    setShowAccountDeleteDialog(false);
+    accountDeletePasswordValueRef.current = "";
+    setAccountDeletePassword("");
+    setAccountDeleteConfirmation("");
+
+    const live = liveRequestContextRef.current;
+    if (
+      live.ownerKey &&
+      !live.isAuthLoading &&
+      live.isConfigured &&
+      typeof live.currentUserId === "string"
+    ) {
+      void loadAccountCounts();
+    } else {
+      setAccountCountsState({
+        ownerKey: live.ownerKey,
+        request: null,
+        status: "idle",
+        data: null,
+        error: null,
+      });
+    }
+  }, [currentContextEpoch, loadAccountCounts, ownerKey]);
+
+  const browserPresentation = getVisibleBrowserSummaryState(
+    ownerKey,
+    currentContextEpoch,
+    browserSummaryState,
+  );
+  const accountCountsPresentation = getAccountCountsPresentation({
+    isAuthLoading,
+    isConfigured,
+    currentUserId,
+    currentOwnerKey: ownerKey,
+    currentContextEpoch,
+    state: accountCountsState,
+  });
+  const visibleBrowserNotice = browserNotice.ownerKey === ownerKey &&
+      browserNotice.contextEpoch === currentContextEpoch
+    ? browserNotice
+    : IDLE_NOTICE;
+  const visibleAccountExportState = accountExportState.ownerKey === ownerKey &&
+      accountExportState.contextEpoch === currentContextEpoch
+    ? accountExportState
+    : { ownerKey, contextEpoch: currentContextEpoch, ...IDLE_NOTICE };
+  const visibleSavedReportsDeletion =
+    savedReportsDeletion.ownerKey === ownerKey &&
+      savedReportsDeletion.contextEpoch === currentContextEpoch
+      ? savedReportsDeletion
+      : {
+          ownerKey,
+          contextEpoch: currentContextEpoch,
+          status: "idle" as const,
+          data: null,
+          message: null,
+          error: null,
+        };
+  const visibleAccountDeletionState =
+    accountDeletionState.ownerKey === ownerKey &&
+      accountDeletionState.contextEpoch === currentContextEpoch
+      ? accountDeletionState
+      : {
+          ownerKey,
+          contextEpoch: currentContextEpoch,
+          status: "idle" as const,
+          data: null,
+          message: null,
+          error: null,
+        };
+  const visibleShowSavedReportsDialog = showSavedReportsDialog &&
+    !contextChanged;
+  const visibleShowAccountDeleteDialog = showAccountDeleteDialog &&
+    !contextChanged;
+  const shouldOfferImport = Boolean(
+    typeof currentUserId === "string" &&
+    !isAuthLoading &&
+    !importDismissed &&
+    browserPresentation.status === "ready" &&
+    browserPresentation.summary.anonymousWorkspaceDataExists
+  );
+
+  function publishBrowserNotice(notice: ActionNotice) {
+    const live = liveRequestContextRef.current;
+    setBrowserNotice({
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      ...notice,
+    });
   }
 
   function handleBrowserExport() {
-    setBrowserMessage(null);
-    setBrowserError(null);
+    const live = liveRequestContextRef.current;
+    if (
+      browserActionLockRef.current ||
+      !live.ownerKey ||
+      !browserPresentation.canExport
+    ) return;
 
-    const result = buildBrowserDataExport({
-      currentUserId,
+    const request: OwnedRequestIdentity = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: browserExportTokenRef.current + 1,
+    };
+    browserExportTokenRef.current = request.requestToken;
+    activeBrowserExportRef.current = request;
+    browserActionLockRef.current = true;
+    publishBrowserNotice({
+      status: "loading",
+      message: "Preparing browser export…",
+      error: null,
     });
-
-    if (!result.ok) {
-      setBrowserError(result.error);
-      return;
+    try {
+      const result = buildBrowserDataExport({
+        currentUserId: live.currentUserId,
+      });
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeBrowserExportRef.current,
+        )
+      ) return;
+      if (!result.ok) {
+        publishBrowserNotice({
+          status: "error",
+          message: null,
+          error: result.error.message,
+        });
+        return;
+      }
+      const downloadResult = requestJsonDownload(result.fileName, result.json);
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeBrowserExportRef.current,
+        )
+      ) return;
+      if (!downloadResult.ok) {
+        publishBrowserNotice({
+          status: "error",
+          message: null,
+          error: downloadResult.error.message,
+        });
+        return;
+      }
+      publishBrowserNotice({
+        status: "success",
+        message: "Browser download was requested. Check your browser’s downloads.",
+        error: null,
+      });
+    } catch {
+      publishBrowserNotice({
+        status: "error",
+        message: null,
+        error: "Browser export could not be prepared right now.",
+      });
+    } finally {
+      browserActionLockRef.current = false;
+      if (
+        isTrustCenterMountedRef.current &&
+        isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeBrowserExportRef.current,
+        )
+      ) {
+        activeBrowserExportRef.current = null;
+      }
     }
-
-    downloadJson(result.fileName, result.json);
-    setBrowserMessage(
-      result.omitted.length
-        ? `Browser export created. ${result.omitted.length} item(s) were omitted because they were unavailable for this owner or corrupted.`
-        : "Browser export created.",
-    );
   }
 
   async function handleAccountExport() {
-    const ownerId = user?.id ?? null;
+    const live = liveRequestContextRef.current;
+    const activeRequest = activeAccountExportRef.current;
+    if (
+      !accountCountsPresentation.canExport ||
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string"
+    ) return;
+    if (activeRequest && isCurrentOwnedRequest(
+      activeRequest,
+      live,
+      activeRequest,
+    )) return;
 
-    setAccountCountsState({
-      ownerId,
-      value: {
-        ...accountCounts,
-        status: "loading",
-        error: null,
-        message: null,
-      },
+    const request: OwnedRequestIdentity = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: accountExportTokenRef.current + 1,
+    };
+    accountExportTokenRef.current = request.requestToken;
+    activeAccountExportRef.current = request;
+    setAccountExportState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      status: "loading",
+      message: "Preparing account export…",
+      error: null,
     });
 
-    const result = await buildCurrentUserAccountDataExport();
-
-    if (!result.ok) {
-      setAccountCountsState({
-        ownerId,
-        value: {
-          status: "error",
-          data: accountCounts.data,
-          message: null,
-          error: result.error,
-        },
+    try {
+      const result = await buildCurrentUserAccountDataExport({
+        expectedUserId: live.currentUserId,
       });
-      return;
-    }
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeAccountExportRef.current,
+        )
+      ) return;
+      if (!result.ok) {
+        setAccountExportState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: null,
+          error: result.error.message,
+        });
+        return;
+      }
 
-    downloadJson(result.data.fileName, result.data.json);
-    setAccountCountsState({
-      ownerId,
-      value: {
-        status: "success",
-        data: accountCounts.data ?? createEmptyAccountCounts(),
-        message: "Account export created.",
-        error: null,
-      },
-    });
+      const downloadResult = requestJsonDownload(
+        result.data.fileName,
+        result.data.json,
+      );
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeAccountExportRef.current,
+        )
+      ) return;
+      setAccountExportState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: downloadResult.ok ? "success" : "error",
+        message: downloadResult.ok
+          ? "Account download was requested. Check your browser’s downloads."
+          : null,
+        error: downloadResult.ok ? null : downloadResult.error.message,
+      });
+    } catch {
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeAccountExportRef.current,
+        )
+      ) return;
+      setAccountExportState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "error",
+        message: null,
+        error: "Account export could not be prepared right now.",
+      });
+    } finally {
+      if (
+        isTrustCenterMountedRef.current &&
+        isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeAccountExportRef.current,
+        )
+      ) {
+        activeAccountExportRef.current = null;
+      }
+    }
   }
 
   function handleImportAnonymousWorkspace() {
-    if (!user?.id) {
-      return;
-    }
-
-    setImportMessage(null);
-    setImportError(null);
-    const result = importAnonymousBrowserWorkspaceToAccount(user.id);
-
+    const live = liveRequestContextRef.current;
+    if (typeof live.currentUserId !== "string") return;
+    publishBrowserNotice({
+      status: "loading",
+      message: "Importing browser workspace…",
+      error: null,
+    });
+    const result = importAnonymousBrowserWorkspaceToAccount(live.currentUserId);
     if (!result.ok) {
-      setImportError(result.error);
-      refreshBrowserSummary();
+      publishBrowserNotice({
+        status: "error",
+        message: null,
+        error: result.error ?? "Browser workspace import failed.",
+      });
+      browserSummaryReloadRef.current();
       return;
     }
-
-    setImportMessage(
-      result.importedKeys.length
+    publishBrowserNotice({
+      status: "success",
+      message: result.importedKeys.length
         ? `Imported ${result.importedKeys.length} browser item(s) into this account workspace.`
         : "No anonymous browser items needed import.",
-    );
+      error: null,
+    });
     setImportDismissed(true);
-    refreshBrowserSummary();
+    browserSummaryReloadRef.current();
   }
 
   function handleClearBrowserData() {
-    setBrowserMessage(null);
-    setBrowserError(null);
+    publishBrowserNotice({
+      status: "loading",
+      message: "Clearing SkillMint browser data…",
+      error: null,
+    });
     const result = clearSkillMintBrowserData();
-
-    if (result.failedKeys.length) {
-      setBrowserError(
-        `Removed ${result.removed} item(s), but ${result.failedKeys.length} browser item(s) could not be cleared.`,
-      );
-    } else {
-      setBrowserMessage(
-        "SkillMint data was cleared from this browser. Account records were not deleted.",
-      );
-    }
-
+    publishBrowserNotice(result.failedKeys.length
+      ? {
+          status: "error",
+          message: null,
+          error: `Removed ${result.removed} item(s), but ${result.failedKeys.length} browser item(s) could not be cleared.`,
+        }
+      : {
+          status: "success",
+          message: "SkillMint data was cleared from this browser. Account records were not deleted.",
+          error: null,
+        });
     setShowBrowserClearDialog(false);
-    refreshBrowserSummary();
+    browserSummaryReloadRef.current();
   }
 
   async function handleDeleteSavedReports() {
+    const live = liveRequestContextRef.current;
+    if (!live.ownerKey || typeof live.currentUserId !== "string") return;
+    const activeRequest = activeSavedReportsDeletionRef.current;
+    if (activeRequest && isCurrentOwnedRequest(activeRequest, live, activeRequest)) {
+      return;
+    }
+
+    const request: OwnedRequestIdentity = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: savedReportsDeletionTokenRef.current + 1,
+    };
+    savedReportsDeletionTokenRef.current = request.requestToken;
+    activeSavedReportsDeletionRef.current = request;
     setSavedReportsDeletion({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
       status: "loading",
       data: null,
       message: null,
       error: null,
     });
 
-    const result = await deleteCurrentUserSavedReports();
+    try {
+      const result = await deleteCurrentUserSavedReports(live.currentUserId);
+      if (
+        !isTrustCenterMountedRef.current ||
+        !isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeSavedReportsDeletionRef.current,
+        )
+      ) return;
 
-    if (!result.ok) {
+      if (!result.ok) {
+        setSavedReportsDeletion({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          data: null,
+          message: null,
+          error: result.error.message,
+        });
+        return;
+      }
+
+      const cleanupResult = detachDeletedSavedReportReferences({
+        currentUserId: live.currentUserId,
+      });
       setSavedReportsDeletion({
-        status: "error",
-        data: null,
-        message: null,
-        error: result.error,
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "success",
+        data: result.data,
+        message: cleanupResult.failedKeys.length
+          ? "Saved reports were deleted from your account. Profile and feedback were preserved, but some local synced references could not be cleaned automatically."
+          : "Saved reports were deleted from your account. Profile and feedback were preserved.",
+        error: null,
       });
-      return;
-    }
-
-    detachDeletedSavedReportReferences();
-    setSavedReportsDeletion({
-      status: "success",
-      data: result.data,
-      message:
-        "Saved reports were deleted from your account. Profile and feedback were preserved.",
-      error: null,
-    });
-    setShowSavedReportsDialog(false);
-    refreshBrowserSummary();
-    const counts = await getCurrentUserAccountDataCounts();
-
-    if (counts.ok) {
-      setAccountCountsState({
-        ownerId: user?.id ?? null,
-        value: {
-          status: "success",
-          data: counts.data,
-          message: "Account-synced data counts refreshed.",
-          error: null,
-        },
-      });
+      setShowSavedReportsDialog(false);
+      browserSummaryReloadRef.current();
+      void loadAccountCounts();
+    } catch {
+      if (
+        isTrustCenterMountedRef.current &&
+        isCurrentOwnedRequest(
+          request,
+          liveRequestContextRef.current,
+          activeSavedReportsDeletionRef.current,
+        )
+      ) {
+        setSavedReportsDeletion({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          data: null,
+          message: null,
+          error: "Saved reports could not be deleted right now.",
+        });
+      }
+    } finally {
+      if (isSameOwnedRequest(activeSavedReportsDeletionRef.current, request)) {
+        activeSavedReportsDeletionRef.current = null;
+      }
     }
   }
 
   async function handleDeleteAccount() {
-    if (!session?.access_token) {
-      setAccountDeletionState({
+    const live = liveRequestContextRef.current;
+    const activeRequest = activeAccountDeletionRef.current;
+    if (activeRequest && isCurrentOwnedRequest(activeRequest, live, activeRequest)) {
+      return;
+    }
+
+    if (accountDeleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION) {
+      publishAccountDeletionState({
+        status: "error",
+        data: null,
+        message: null,
+        error: "Type DELETE MY ACCOUNT to confirm.",
+      });
+      return;
+    }
+
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      !user?.email ||
+      user.id !== live.currentUserId
+    ) {
+      publishAccountDeletionState({
         status: "error",
         data: null,
         message: null,
@@ -361,7 +863,29 @@ export default function DataSettingsPage() {
       return;
     }
 
+    if (!accountDeletePassword) {
+      publishAccountDeletionState({
+        status: "error",
+        data: null,
+        message: null,
+        error: "Enter your current password to reauthenticate.",
+      });
+      return;
+    }
+
+    const request: OwnedRequestIdentity = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: accountDeletionTokenRef.current + 1,
+    };
+    accountDeletionTokenRef.current = request.requestToken;
+    activeAccountDeletionRef.current = request;
+    const deletionOwnerId = live.currentUserId;
+    const deletionEmail = user.email;
+    const password = accountDeletePasswordValueRef.current;
     setAccountDeletionState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
       status: "loading",
       data: null,
       message: null,
@@ -369,56 +893,157 @@ export default function DataSettingsPage() {
     });
 
     try {
-      const response = await fetch("/api/account/delete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          confirmation: ACCOUNT_DELETE_CONFIRMATION,
-        }),
-      });
-      const payload = await response.json().catch(() => null);
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) {
+        if (isCurrentAccountDeletionRequest(request)) {
+          publishAccountDeletionState({
+            status: "error",
+            data: null,
+            message: null,
+            error: "Account reauthentication is unavailable right now.",
+          });
+        }
+        return;
+      }
 
-      if (!response.ok || !payload?.ok) {
-        setAccountDeletionState({
+      const reauthentication = await supabase.auth.signInWithPassword({
+        email: deletionEmail,
+        password,
+      });
+      clearAccountDeletePassword();
+
+      if (!isCurrentAccountDeletionRequest(request)) return;
+      if (
+        reauthentication.error ||
+        !reauthentication.data.session?.access_token ||
+        reauthentication.data.user?.id !== deletionOwnerId
+      ) {
+        publishAccountDeletionState({
           status: "error",
           data: null,
           message: null,
-          error: payload?.error ??
-            "Account deletion did not finish. Please try again.",
+          error: "Reauthentication failed. Check your current password and try again.",
         });
         return;
       }
 
-      const clearResult = clearSkillMintBrowserData();
-      const supabase = createSupabaseBrowserClient();
+      const accessToken = reauthentication.data.session.access_token;
+      let response: Response;
+      let payload: unknown;
 
-      await supabase?.auth.signOut();
+      try {
+        response = await fetch("/api/account/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            confirmation: accountDeleteConfirmation,
+          }),
+        });
+        payload = await response.json().catch(() => null);
+      } catch {
+        if (isCurrentAccountDeletionRequest(request)) {
+          publishAccountDeletionState({
+            status: "error",
+            data: null,
+            message: null,
+            error: "Account deletion did not finish. Your session and local data were kept.",
+          });
+        }
+        return;
+      }
+
+      const parsedResponse = parseAccountDeletionResponse(response.ok, payload);
+      if (!parsedResponse.ok) {
+        if (isCurrentAccountDeletionRequest(request)) {
+          publishAccountDeletionState({
+            status: "error",
+            data: null,
+            message: null,
+            error: parsedResponse.message,
+          });
+        }
+        return;
+      }
+
+      const ownerCleanupResult = removeSkillMintOwnerData({
+        currentUserId: deletionOwnerId,
+      });
+      if (!isCurrentAccountDeletionRequest(request)) return;
+
+      const cleanupWarnings = [
+        ...(ownerCleanupResult.failedKeys.length
+          ? ["Some browser data for the deleted account could not be removed automatically."]
+          : []),
+        "Automatic local sign-out was skipped so a different provider session could not be signed out by this old request. Review the currently active account and sign out manually before another person uses this browser.",
+      ];
+
       setAccountDeletionState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
         status: "success",
         data: null,
-        message: clearResult.failedKeys.length
-          ? "Your account was deleted. Some browser data could not be cleared automatically."
-          : "Your account was deleted and SkillMint data was cleared from this browser.",
+        message: "Account access was deleted. " +
+          `${cleanupWarnings.join(" ")} Anonymous and other-account browser workspaces were intentionally preserved.`,
         error: null,
       });
       setShowAccountDeleteDialog(false);
-      router.push("/privacy?accountDeleted=1");
-      router.refresh();
     } catch {
-      setAccountDeletionState({
-        status: "error",
-        data: null,
-        message: null,
-        error: "Account deletion did not finish. Your session and local data were kept.",
-      });
+      if (isCurrentAccountDeletionRequest(request)) {
+        publishAccountDeletionState({
+          status: "error",
+          data: null,
+          message: null,
+          error: "Account deletion did not finish. Your session and local data were kept.",
+        });
+      }
+    } finally {
+      clearAccountDeletePassword();
+      if (isSameOwnedRequest(activeAccountDeletionRef.current, request)) {
+        activeAccountDeletionRef.current = null;
+      }
     }
   }
 
+  function clearAccountDeletePassword() {
+    accountDeletePasswordValueRef.current = "";
+    setAccountDeletePassword("");
+  }
+
+  function isCurrentAccountDeletionRequest(
+    request: OwnedRequestIdentity,
+  ): boolean {
+    return isTrustCenterMountedRef.current && isCurrentOwnedRequest(
+      request,
+      liveRequestContextRef.current,
+      activeAccountDeletionRef.current,
+    );
+  }
+
+  function publishAccountDeletionState(state: AsyncState<null>) {
+    const live = liveRequestContextRef.current;
+    setAccountDeletionState({
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      ...state,
+    });
+  }
+
   const descriptors = getSkillMintStorageDescriptors();
-  const accountCountData = accountCounts.data;
+  const browserSummary = browserPresentation.summary;
+  const browserOverviewDetail = browserSummary
+    ? `${formatOtherWorkspaceSummary(
+        browserSummary.anonymousWorkspaceDataExists,
+        browserSummary.otherWorkspaceDataExists,
+      )} ${browserSummary.corruptedCount} unreadable item${
+        browserSummary.corruptedCount === 1 ? "" : "s"
+      }.`
+    : browserPresentation.overviewDetail;
+  const accountExportLoading = visibleAccountExportState.status === "loading";
+  const browserExportPreparing = visibleBrowserNotice.status === "loading" &&
+    visibleBrowserNotice.message === "Preparing browser export…";
 
   return (
     <DashboardLayout>
@@ -475,10 +1100,11 @@ export default function DataSettingsPage() {
           </section>
         )}
 
-        {(importMessage || importError || browserMessage || browserError) && (
+        {visibleBrowserNotice.status !== "idle" && (
           <StatusPanel
-            message={importMessage ?? browserMessage}
-            error={importError ?? browserError}
+            status={visibleBrowserNotice.status}
+            message={visibleBrowserNotice.message}
+            error={visibleBrowserNotice.error}
           />
         )}
 
@@ -490,21 +1116,21 @@ export default function DataSettingsPage() {
               : user
                 ? "Signed in"
                 : "Signed out"}
-            detail={user?.email ?? "Browser-local mode available."}
+            detail={isAuthLoading
+              ? "Checking account session."
+              : user?.email ?? "Browser-local mode available."}
           />
 
           <OverviewCard
             label="This browser"
-            value={`${browserSummary?.visibleCount ?? 0} visible item(s)`}
-            detail={`${browserSummary?.hiddenCount ?? 0} hidden for another owner; ${browserSummary?.corruptedCount ?? 0} corrupted.`}
+            value={browserPresentation.overviewValue}
+            detail={browserOverviewDetail}
           />
 
           <OverviewCard
             label="Account sync"
-            value={user ? "Available when Supabase responds" : "Sign in required"}
-            detail={accountCounts.status === "error"
-              ? accountCounts.error
-              : "Browser and account data stay separate."}
+            value={accountCountsPresentation.overviewValue}
+            detail="Browser and account data stay separate."
           />
         </section>
 
@@ -517,9 +1143,11 @@ export default function DataSettingsPage() {
 
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {descriptors.map((descriptor) => {
-              const summaryItem = browserSummary?.items.find((item) =>
-                item.descriptor.key === descriptor.key
-              );
+              const summaryItem = browserPresentation.status === "ready"
+                ? browserPresentation.summary.items.find((item) =>
+                    item.descriptor.key === descriptor.key
+                  )
+                : null;
 
               return (
                 <article
@@ -532,7 +1160,7 @@ export default function DataSettingsPage() {
                     </span>
 
                     <span className={premiumBadge}>
-                      {summaryItem?.status ?? "checking"}
+                      {summaryItem?.status ?? browserPresentation.descriptorStatus}
                     </span>
                   </div>
 
@@ -552,9 +1180,16 @@ export default function DataSettingsPage() {
             <button
               type="button"
               onClick={handleBrowserExport}
+              disabled={
+                !browserPresentation.canExport ||
+                visibleBrowserNotice.status === "loading"
+              }
+              aria-busy={browserExportPreparing}
               className={premiumSecondaryCta}
             >
-              Download browser data
+              {browserExportPreparing
+                ? "Preparing browser export…"
+                : "Download browser data"}
             </button>
 
             <button
@@ -572,40 +1207,40 @@ export default function DataSettingsPage() {
             eyebrow="Your SkillMint account"
             title="Account-synced data"
             body={user
-              ? "These counts come from your authenticated Supabase session and RLS-scoped account rows."
+              ? "These counts are requested through your authenticated account session. They are shown only when the request succeeds."
               : "Sign in to view, download, or delete account-synced data."}
           />
 
-          {user ? (
+          {accountCountsPresentation.status !== "signed_out" ? (
             <>
               <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <OverviewCard
                   label="Profile"
-                  value={(accountCountData?.profile ?? 0).toString()}
+                  value={accountCountsPresentation.countDisplay.profile}
                   detail="Preserved by Delete saved reports."
                 />
 
                 <OverviewCard
                   label="Resume analyses"
-                  value={(accountCountData?.resumeAnalyses ?? 0).toString()}
+                  value={accountCountsPresentation.countDisplay.resumeAnalyses}
                   detail="Deleted by Delete saved reports."
                 />
 
                 <OverviewCard
                   label="JD matches"
-                  value={(accountCountData?.jobMatches ?? 0).toString()}
+                  value={accountCountsPresentation.countDisplay.jobMatches}
                   detail="Deleted by Delete saved reports."
                 />
 
                 <OverviewCard
                   label="Career snapshots"
-                  value={(accountCountData?.careerSnapshots ?? 0).toString()}
+                  value={accountCountsPresentation.countDisplay.careerSnapshots}
                   detail="Deleted by Delete saved reports."
                 />
 
                 <OverviewCard
                   label="Feedback"
-                  value={(accountCountData?.betaFeedback ?? 0).toString()}
+                  value={accountCountsPresentation.countDisplay.betaFeedback}
                   detail="Preserved by Delete saved reports."
                 />
               </div>
@@ -614,9 +1249,13 @@ export default function DataSettingsPage() {
                 <button
                   type="button"
                   onClick={handleAccountExport}
+                  disabled={!accountCountsPresentation.canExport || accountExportLoading}
+                  aria-busy={accountExportLoading}
                   className={premiumSecondaryCta}
                 >
-                  Download account data
+                  {accountExportLoading
+                    ? "Preparing account export…"
+                    : "Download account data"}
                 </button>
 
                 <Link
@@ -652,16 +1291,20 @@ export default function DataSettingsPage() {
             </div>
           )}
 
-          {accountCounts.status === "error" && (
-            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-              {accountCounts.error}
-            </p>
+          {accountCountsPresentation.status === "error" && (
+            <StatusPanel
+              status="error"
+              message={null}
+              error={accountCountsPresentation.error}
+            />
           )}
 
-          {accountCounts.status === "success" && accountCounts.message && (
-            <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
-              {accountCounts.message}
-            </p>
+          {visibleAccountExportState.status !== "idle" && (
+            <StatusPanel
+              status={visibleAccountExportState.status}
+              message={visibleAccountExportState.message}
+              error={visibleAccountExportState.error}
+            />
           )}
         </section>
 
@@ -701,39 +1344,53 @@ export default function DataSettingsPage() {
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <DangerAction
               title="Delete saved reports"
-              body="Deletes synced resume analyses, JD matches, and career snapshots. Keeps your account, profile, feedback, and browser workspace."
+              body="Deletes synced resume analyses, JD matches, and career snapshots. Keeps your account, profile, and feedback; only broken synced browser references are detached."
               actionLabel="Delete saved reports"
-              disabled={!user || savedReportsDeletion.status === "loading"}
+              disabled={!user || visibleSavedReportsDeletion.status === "loading"}
               onClick={() => setShowSavedReportsDialog(true)}
             />
 
             <DangerAction
               title="Delete SkillMint account"
-              body="Deletes account access through the server admin boundary. Product rows cascade according to the verified database schema."
+              body="Requests account-access deletion through the server admin boundary. Live database cascades, feedback deletion, backups, and logs still require operational verification."
               actionLabel="Delete SkillMint account"
-              disabled={!user || accountDeletionState.status === "loading"}
-              onClick={() => setShowAccountDeleteDialog(true)}
+              disabled={!user || visibleAccountDeletionState.status === "loading"}
+              onClick={() => {
+                accountDeletePasswordValueRef.current = "";
+                setAccountDeletePassword("");
+                setAccountDeleteConfirmation("");
+                setShowAccountDeleteDialog(true);
+              }}
             />
           </div>
 
-          {savedReportsDeletion.status === "success" && (
-            <p className="mt-4 rounded-xl border border-emerald-200 bg-white p-3 text-sm leading-6 text-emerald-800">
-              {savedReportsDeletion.message} Resume analyses deleted:
-              {" "}{savedReportsDeletion.data.resumeAnalysesDeleted}; JD matches
-              deleted: {savedReportsDeletion.data.jobMatchesDeleted}; career
-              snapshots deleted: {savedReportsDeletion.data.careerSnapshotsDeleted}.
+          {visibleSavedReportsDeletion.status === "success" && (
+            <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-white p-3 text-sm leading-6 text-emerald-800">
+              {visibleSavedReportsDeletion.message} Resume analyses deleted:
+              {" "}{visibleSavedReportsDeletion.data.resumeAnalysesDeleted}; JD matches
+              deleted: {visibleSavedReportsDeletion.data.jobMatchesDeleted}; career
+              snapshots deleted: {visibleSavedReportsDeletion.data.careerSnapshotsDeleted}.
             </p>
           )}
 
-          {savedReportsDeletion.status === "error" && (
-            <p className="mt-4 rounded-xl border border-rose-200 bg-white p-3 text-sm leading-6 text-rose-800">
-              {savedReportsDeletion.error}
+          {visibleSavedReportsDeletion.status === "error" && (
+            <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-white p-3 text-sm leading-6 text-rose-800">
+              {visibleSavedReportsDeletion.error}
             </p>
           )}
 
-          {accountDeletionState.status === "error" && (
-            <p className="mt-4 rounded-xl border border-rose-200 bg-white p-3 text-sm leading-6 text-rose-800">
-              {accountDeletionState.error}
+          {visibleAccountDeletionState.status === "error" && (
+            <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-white p-3 text-sm leading-6 text-rose-800">
+              {visibleAccountDeletionState.error}
+            </p>
+          )}
+
+          {visibleAccountDeletionState.status === "success" && (
+            <p
+              role="status"
+              className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950"
+            >
+              {visibleAccountDeletionState.message}
             </p>
           )}
         </section>
@@ -746,21 +1403,22 @@ export default function DataSettingsPage() {
           onClose={() => setShowBrowserClearDialog(false)}
         >
           <p>
-            This removes SkillMint locally stored data from this browser,
-            including visible browser resume, JD, Active Target, mission,
-            setup, feedback, and preference state.
+            This removes the current local workspace, signed-out or unassigned
+            SkillMint workspace data, and other SkillMint account workspaces
+            stored in this browser. It includes browser resume, JD, Active Target,
+            mission, setup, feedback, and preference state.
           </p>
           <p className="mt-3 font-semibold">
-            It does not delete your SkillMint account or records saved to your
-            account.
+            It does not delete your SkillMint account or account-synced
+            records.
           </p>
         </ConfirmDialog>
 
         <ConfirmDialog
-          isOpen={showSavedReportsDialog}
+          isOpen={visibleShowSavedReportsDialog}
           title="Delete saved reports"
           confirmLabel="Delete saved reports"
-          isProcessing={savedReportsDeletion.status === "loading"}
+          isProcessing={visibleSavedReportsDeletion.status === "loading"}
           onConfirm={handleDeleteSavedReports}
           onClose={() => setShowSavedReportsDialog(false)}
         >
@@ -768,29 +1426,56 @@ export default function DataSettingsPage() {
             <li>Deletes synced resume analyses.</li>
             <li>Deletes synced JD matches.</li>
             <li>Deletes synced career snapshots.</li>
-            <li>Preserves your account, profile, feedback, and browser data.</li>
+            <li>Preserves your account, profile, feedback, and browser data except broken synced references.</li>
             <li>Detaches broken synced references from this browser.</li>
           </ul>
         </ConfirmDialog>
 
         <ConfirmDialog
-          isOpen={showAccountDeleteDialog}
+          isOpen={visibleShowAccountDeleteDialog}
           title="Delete SkillMint account"
           confirmLabel="Delete SkillMint account"
-          isProcessing={accountDeletionState.status === "loading"}
+          isProcessing={visibleAccountDeletionState.status === "loading"}
           confirmDisabled={
             accountDeleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION
           }
           onConfirm={handleDeleteAccount}
-          onClose={() => setShowAccountDeleteDialog(false)}
+          initialFocusRef={accountDeleteConfirmationInputRef}
+          onClose={() => {
+            clearAccountDeletePassword();
+            setAccountDeleteConfirmation("");
+            setShowAccountDeleteDialog(false);
+          }}
         >
           <ul className="list-disc space-y-2 pl-5">
-            <li>Account access will be removed.</li>
-            <li>Saved reports and profile data will be removed by cascade.</li>
-            <li>Account-owned feedback will be removed by cascade.</li>
-            <li>SkillMint data in this browser will be cleared after success.</li>
+            <li>Your current password is sent directly to the authentication provider for a fresh sign-in and is never sent to SkillMint’s deletion API.</li>
+            <li>SkillMint will request removal of account access through its server boundary.</li>
+            <li>Profile, saved-report, and feedback cascade behavior is declared in local schema files but is not yet verified against live infrastructure.</li>
+            <li>Only this account’s SkillMint browser partitions will be removed after success.</li>
+            <li>Anonymous and other-account browser workspaces will be preserved.</li>
+            <li>Automatic local sign-out is skipped after success; review the active account and sign out manually.</li>
+            <li>Provider backups and service logs may retain data under their own policies.</li>
             <li>This action cannot be undone through the UI.</li>
           </ul>
+
+          <label
+            htmlFor="account-delete-password"
+            className="mt-5 block text-sm font-bold text-slate-950"
+          >
+            Current password
+          </label>
+
+          <input
+            id="account-delete-password"
+            type="password"
+            autoComplete="current-password"
+            value={accountDeletePassword}
+            onChange={(event) => {
+              accountDeletePasswordValueRef.current = event.target.value;
+              setAccountDeletePassword(event.target.value);
+            }}
+            className="mt-2 w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-100"
+          />
 
           <label
             htmlFor="account-delete-confirmation"
@@ -800,6 +1485,7 @@ export default function DataSettingsPage() {
           </label>
 
           <input
+            ref={accountDeleteConfirmationInputRef}
             id="account-delete-confirmation"
             value={accountDeleteConfirmation}
             onChange={(event) => setAccountDeleteConfirmation(event.target.value)}
@@ -899,15 +1585,21 @@ function DangerAction({
 }
 
 function StatusPanel({
+  status,
   message,
   error,
 }: {
+  status: ActionNotice["status"];
   message: string | null;
   error: string | null;
 }) {
+  const content = error ?? message;
+  if (!content || status === "idle") return null;
+
   return (
     <section
-      role="status"
+      role={status === "error" ? "alert" : "status"}
+      aria-live={status === "error" ? "assertive" : "polite"}
       className={error ? premiumDangerSurface : premiumCompactSurface}
     >
       <p className="text-sm font-semibold">
@@ -917,50 +1609,12 @@ function StatusPanel({
   );
 }
 
-function createEmptyAccountCounts(): AccountDataCounts {
-  return {
-    profile: 0,
-    resumeAnalyses: 0,
-    jobMatches: 0,
-    careerSnapshots: 0,
-    betaFeedback: 0,
-  };
-}
-
-function getVisibleAccountCounts({
-  accountCountsState,
-  isAuthLoading,
-  isConfigured,
-  userId,
-}: {
-  accountCountsState: AccountCountsState;
-  isAuthLoading: boolean;
-  isConfigured: boolean;
-  userId: string | null;
-}): AsyncState<AccountDataCounts> {
-  if (!userId || !isConfigured || isAuthLoading) {
-    return IDLE_ACCOUNT_COUNTS;
-  }
-
-  if (accountCountsState.ownerId === userId) {
-    return accountCountsState.value;
-  }
-
-  return LOADING_ACCOUNT_COUNTS;
-}
-
-function downloadJson(fileName: string, json: string) {
-  const blob = new Blob([json], {
-    type: "application/json",
-  });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = fileName;
-  link.rel = "noopener";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+function isSameOwnedRequest(
+  left: OwnedRequestIdentity | null,
+  right: OwnedRequestIdentity,
+): boolean {
+  return left !== null &&
+    left.ownerKey === right.ownerKey &&
+    left.contextEpoch === right.contextEpoch &&
+    left.requestToken === right.requestToken;
 }
