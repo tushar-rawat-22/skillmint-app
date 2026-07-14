@@ -58,11 +58,15 @@ import {
   setActiveResumeReportFromSavedAnalysis,
 } from "@/modules/resume";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import {
+  JD_MATCH_STORAGE_DESCRIPTOR,
+} from "@/lib/storage/jdMatchCurrentStorage";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
-
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const RESUME_SYNC_STATUS_STORAGE_KEY = "skillmint:resume-sync-status";
-const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
+import {
+  ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
+  RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
+} from "@/modules/resume/services/activeResumeReportStorage";
 
 type LatestJobMatchSummary = {
   title: string;
@@ -78,32 +82,32 @@ type DashboardRestoreState = {
 };
 
 export default function DashboardPage() {
-  const storedResume = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredResume,
-    getServerSnapshot,
-  );
-  const storedResumeSyncStatus = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredResumeSyncStatus,
-    getServerSnapshot,
-  );
-  const storedJobMatch = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredJobMatch,
-    getServerSnapshot,
-  );
-  const storedActiveTarget = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredActiveTarget,
-    getServerSnapshot,
-  );
-  const data = useCareerData();
   const {
     user,
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const storedResume = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredResume(currentUserId),
+    getServerSnapshot,
+  );
+  const storedResumeSyncStatus = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredResumeSyncStatus(currentUserId),
+    getServerSnapshot,
+  );
+  const storedJobMatch = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredJobMatch(currentUserId),
+    getServerSnapshot,
+  );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredActiveTarget(currentUserId),
+    getServerSnapshot,
+  );
+  const data = useCareerData(currentUserId);
   const hasResumeAnalysis = useMemo(
     () => hasValidResume(storedResume),
     [storedResume],
@@ -302,6 +306,9 @@ export default function DashboardPage() {
 
       const restoreResult = setActiveResumeReportFromSavedAnalysis(
         result.data,
+        {
+          currentUserId,
+        },
       );
 
       if (!restoreResult.ok) {
@@ -662,36 +669,38 @@ function subscribeToStoredData(onStoreChange: () => void): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredResume(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+function readStoredResume(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredResumeSyncStatus(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_SYNC_STATUS_STORAGE_KEY) ?? null;
+function readStoredResumeSyncStatus(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredJobMatch(): string | null {
-  return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
+function readStoredJobMatch(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(JD_MATCH_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredActiveTarget(): string | null {
-  return readActiveTargetStorageSnapshot();
+function readStoredActiveTarget(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveTargetStorageSnapshot({ currentUserId });
 }
 
 function getServerSnapshot(): null {
   return null;
-}
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
 }
 
 function hasValidResume(storedValue: string | null): boolean {

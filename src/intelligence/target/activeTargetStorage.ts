@@ -1,4 +1,16 @@
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import {
+  readVisibleStorageValue,
+  readVisibleStoredValue,
+  removeOwnedStoragePartition,
+  writeOwnedStorageValue,
+} from "@/lib/storage/ownedSkillMintStorage";
+import type {
+  BrowserOwnerContext,
+  LegacyOwnerEnvelopeClassification,
+  SkillMintStorageDescriptor,
+} from "@/lib/storage/skillMintStorageTypes";
+import { normalizeAccountOwnerId } from "@/lib/storage/skillMintStorageTypes";
 
 import type {
   ActiveTarget,
@@ -8,92 +20,96 @@ import type {
 } from "./activeTargetContract";
 import {
   normalizeActiveTarget,
-  normalizeOptionalString,
 } from "./activeTargetSelection";
 
 export const ACTIVE_TARGET_STORAGE_KEY = "skillmint:active-target:v1";
 export const ACTIVE_TARGET_STORAGE_VERSION = 1;
 
-type ActiveTargetStorageEnvelope = {
-  version: typeof ACTIVE_TARGET_STORAGE_VERSION;
-  ownerUserId: string | null;
-  target: ActiveTarget;
+export const ACTIVE_TARGET_STORAGE_DESCRIPTOR: SkillMintStorageDescriptor = {
+  key: ACTIVE_TARGET_STORAGE_KEY,
+  version: ACTIVE_TARGET_STORAGE_VERSION,
+  category: "active_target",
+  ownerScope: "anonymous_or_account",
+  containsPersonalData: true,
+  clearWithBrowserReset: true,
+  exportable: true,
+  importable: true,
+  exportPolicy: "json_value",
+  validateValue: isActiveTarget,
+  classifyLegacyOwnerEnvelope: classifyActiveTargetLegacyEnvelope,
+  description:
+    "Browser-local Active Target focus layer with owner isolation.",
 };
 
 type ActiveTargetParseOptions = {
-  currentUserId?: string | null;
+  currentUserId?: string | null | undefined;
 };
 
 type ActiveTargetSetOptions = {
-  ownerUserId?: string | null;
+  ownerUserId?: string | null | undefined;
 };
 
 export function getActiveTarget(
   options: ActiveTargetParseOptions = {},
 ): ActiveTarget | null {
-  return parseActiveTarget(readActiveTargetStorageSnapshot(), options);
+  const storedValue = readVisibleStorageValue(
+    ACTIVE_TARGET_STORAGE_DESCRIPTOR,
+    toBrowserOwnerContext(options),
+  );
+
+  if (!storedValue) return null;
+
+  try {
+    const value = JSON.parse(storedValue);
+    return isActiveTarget(value) ? normalizeActiveTarget(value) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function setActiveTarget(
   target: ActiveTarget,
   options: ActiveTargetSetOptions = {},
 ): boolean {
-  const storage = getBrowserStorage();
+  const result = writeOwnedStorageValue(
+    ACTIVE_TARGET_STORAGE_DESCRIPTOR,
+    normalizeActiveTarget(target),
+    toBrowserOwnerContext(options),
+  );
 
-  if (!storage) {
-    return false;
-  }
-
-  try {
-    const envelope: ActiveTargetStorageEnvelope = {
-      version: ACTIVE_TARGET_STORAGE_VERSION,
-      ownerUserId: normalizeOwnerUserId(options.ownerUserId),
-      target: normalizeActiveTarget(target),
-    };
-
-    storage.setItem(
-      ACTIVE_TARGET_STORAGE_KEY,
-      JSON.stringify(envelope),
-    );
+  if (result.ok) {
     notifySkillMintWorkspaceUpdated();
-    return true;
-  } catch {
-    return false;
   }
+
+  return result.ok && result.changed;
 }
 
-export function clearActiveTarget(): boolean {
-  const storage = getBrowserStorage();
+export function clearActiveTarget(
+  options: ActiveTargetParseOptions = {},
+): boolean {
+  const result = removeOwnedStoragePartition(
+    ACTIVE_TARGET_STORAGE_DESCRIPTOR,
+    toBrowserOwnerContext(options),
+  );
 
-  if (!storage) {
-    return false;
-  }
-
-  try {
-    storage.removeItem(ACTIVE_TARGET_STORAGE_KEY);
+  if (result.ok && result.changed) {
     notifySkillMintWorkspaceUpdated();
-    return true;
-  } catch {
-    return false;
   }
+
+  return result.ok && result.changed;
 }
 
 export function getActiveTargetStatus(): ActiveTargetStatus {
   return getActiveTarget() ? "active" : "none";
 }
 
-export function readActiveTargetStorageSnapshot(): string | null {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return null;
-  }
-
-  try {
-    return storage.getItem(ACTIVE_TARGET_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+export function readActiveTargetStorageSnapshot(
+  options: ActiveTargetParseOptions = {},
+): string | null {
+  return readVisibleStorageValue(
+    ACTIVE_TARGET_STORAGE_DESCRIPTOR,
+    toBrowserOwnerContext(options),
+  );
 }
 
 export function parseActiveTarget(
@@ -105,78 +121,51 @@ export function parseActiveTarget(
   }
 
   try {
-    const parsedValue = JSON.parse(storedValue);
-
-    const envelope = parseStorageEnvelope(parsedValue);
-
-    if (!envelope) {
-      return null;
-    }
-
-    if (!isVisibleForCurrentUser(envelope.ownerUserId, options)) {
-      return null;
-    }
-
-    return normalizeActiveTarget(envelope.target);
+    const result = readVisibleStoredValue(
+      storedValue,
+      ACTIVE_TARGET_STORAGE_DESCRIPTOR,
+      toBrowserOwnerContext(options),
+    );
+    if (result.status !== "visible" || !result.serializedValue) return null;
+    const value = JSON.parse(result.serializedValue);
+    return isActiveTarget(value) ? normalizeActiveTarget(value) : null;
   } catch {
     return null;
   }
 }
 
-function parseStorageEnvelope(
+function classifyActiveTargetLegacyEnvelope(
   value: unknown,
-): ActiveTargetStorageEnvelope | null {
-  if (isStorageEnvelope(value)) {
-    return value;
+): LegacyOwnerEnvelopeClassification {
+  if (!isRecord(value) || !("ownerUserId" in value) && !("target" in value)) {
+    return { status: "not_applicable" };
   }
-
-  if (isActiveTarget(value)) {
-    return {
-      version: ACTIVE_TARGET_STORAGE_VERSION,
-      ownerUserId: null,
-      target: value,
-    };
+  if (!Object.keys(value).every((key) =>
+    ["version", "ownerUserId", "target"].includes(key)
+  )) {
+    return { status: "invalid" };
   }
-
-  return null;
-}
-
-function isStorageEnvelope(
-  value: unknown,
-): value is ActiveTargetStorageEnvelope {
-  if (!isRecord(value)) {
-    return false;
-  }
-
   if (value.version !== ACTIVE_TARGET_STORAGE_VERSION) {
-    return false;
+    return typeof value.version === "number"
+      ? { status: "unsupported_version" }
+      : { status: "invalid" };
   }
-
-  if (!(value.ownerUserId === null || isString(value.ownerUserId))) {
-    return false;
-  }
-
-  return isActiveTarget(value.target);
+  const owner = value.ownerUserId === null
+    ? { kind: "anonymous" as const }
+    : (() => {
+        const userId = normalizeAccountOwnerId(value.ownerUserId);
+        return userId ? { kind: "account" as const, userId } : null;
+      })();
+  if (!owner || !isActiveTarget(value.target)) return { status: "invalid" };
+  return {
+    status: "valid",
+    owner,
+    value: value.target,
+    updatedAt: value.target.updatedAt,
+  };
 }
 
-function isVisibleForCurrentUser(
-  ownerUserId: string | null,
-  options: ActiveTargetParseOptions,
-): boolean {
-  if (!("currentUserId" in options)) {
-    return ownerUserId === null;
-  }
-
-  if (options.currentUserId === undefined) {
-    return false;
-  }
-
-  const currentUserId = normalizeOwnerUserId(options.currentUserId);
-
-  return ownerUserId === currentUserId;
-}
-
-function isActiveTarget(value: unknown): value is ActiveTarget {
+export function isActiveTarget(value: unknown): value is ActiveTarget {
   if (!isRecord(value)) {
     return false;
   }
@@ -280,18 +269,6 @@ function isActiveTargetStatus(value: unknown): value is ActiveTargetStatus {
     value === "needs_resume_analysis";
 }
 
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" &&
     !Array.isArray(value);
@@ -320,13 +297,29 @@ function isNumber(value: unknown): value is number {
 }
 
 function isIsoDateString(value: unknown): value is string {
-  return typeof value === "string" && Number.isFinite(Date.parse(value));
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
+  ) {
+    return false;
+  }
+
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString() === value;
 }
 
 function isOptionalIsoDateString(value: unknown): boolean {
   return value === undefined || isIsoDateString(value);
 }
 
-function normalizeOwnerUserId(value: string | null | undefined): string | null {
-  return normalizeOptionalString(value ?? undefined, 160) ?? null;
+function toBrowserOwnerContext(
+  options: ActiveTargetParseOptions | ActiveTargetSetOptions,
+): BrowserOwnerContext {
+  return {
+    currentUserId: "ownerUserId" in options
+      ? options.ownerUserId
+      : "currentUserId" in options
+        ? options.currentUserId
+        : null,
+  };
 }

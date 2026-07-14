@@ -10,8 +10,10 @@ import {
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import ProofConfidenceExplainer from "@/components/dashboard/ProofConfidenceExplainer";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   premiumCompactSurface,
+  premiumDangerCta,
   premiumEyebrow,
   premiumHeroSurface,
   premiumInsetSurface,
@@ -34,10 +36,12 @@ import {
 } from "@/modules/activation";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
-  ACTIVE_RESUME_ANALYSIS_STORAGE_KEY,
+  deleteCurrentUserResumeAnalysis,
+  detachActiveResumeSyncStatus,
   listCurrentUserResumeAnalyses,
+  readActiveResumeReportSnapshot,
+  readResumeSyncStatusSnapshot,
   type PersistentResumeAnalysis,
-  RESUME_SYNC_STATUS_STORAGE_KEY,
   type ResumeSyncStatus,
   setActiveResumeReportFromSavedAnalysis,
 } from "@/modules/resume";
@@ -64,6 +68,12 @@ type ResumeHistoryState = {
 
 type RestoreState = {
   status: "idle" | "success" | "error";
+  message: string | null;
+  activeId: string | null;
+};
+
+type DeleteSavedAnalysisState = {
+  status: "idle" | "loading" | "success" | "error";
   message: string | null;
   activeId: string | null;
 };
@@ -100,14 +110,20 @@ const LINK_LABELS = {
 >;
 
 export default function ResumePage() {
+  const {
+    user,
+    isConfigured,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredAnalysis,
-    readStoredAnalysis,
+    () => readStoredAnalysis(currentUserId),
     getServerSnapshot,
   );
   const storedSyncStatus = useSyncExternalStore(
     subscribeToStoredAnalysis,
-    readStoredSyncStatus,
+    () => readStoredSyncStatus(currentUserId),
     getServerSnapshot,
   );
   const analysis = useMemo(
@@ -118,11 +134,6 @@ export default function ResumePage() {
     () => parseStoredSyncStatus(storedSyncStatus),
     [storedSyncStatus],
   );
-  const {
-    user,
-    isConfigured,
-    isLoading: isAuthLoading,
-  } = useAuthSession();
   const userId = user?.id ?? null;
   const [resumeHistoryState, setResumeHistoryState] =
     useState<ResumeHistoryState>({
@@ -136,6 +147,13 @@ export default function ResumePage() {
     message: null,
     activeId: null,
   });
+  const [deleteState, setDeleteState] = useState<DeleteSavedAnalysisState>({
+    status: "idle",
+    message: null,
+    activeId: null,
+  });
+  const [deleteCandidate, setDeleteCandidate] =
+    useState<PersistentResumeAnalysis | null>(null);
   const [showExtractedText, setShowExtractedText] = useState(false);
   const [showFullExtractedText, setShowFullExtractedText] =
     useState(false);
@@ -224,7 +242,9 @@ export default function ResumePage() {
   }, [isAuthLoading, isConfigured, userId]);
 
   function handleSetActiveReport(resumeAnalysis: PersistentResumeAnalysis) {
-    const result = setActiveResumeReportFromSavedAnalysis(resumeAnalysis);
+    const result = setActiveResumeReportFromSavedAnalysis(resumeAnalysis, {
+      currentUserId,
+    });
 
     if (!result.ok) {
       setRestoreState({
@@ -256,6 +276,56 @@ export default function ResumePage() {
     }
 
     handleSetActiveReport(latestSavedAnalysis);
+  }
+
+  async function handleDeleteSavedAnalysis() {
+    if (!deleteCandidate || deleteState.status === "loading") {
+      return;
+    }
+
+    const deletedAnalysis = deleteCandidate;
+
+    setDeleteState({
+      status: "loading",
+      message: "Deleting saved resume analysis from your account.",
+      activeId: deletedAnalysis.id,
+    });
+
+    const previousItems = resumeHistoryState.items;
+
+    setResumeHistoryState((currentState) => ({
+      ...currentState,
+      items: currentState.items.filter((item) => item.id !== deletedAnalysis.id),
+    }));
+
+    const result = await deleteCurrentUserResumeAnalysis(deletedAnalysis.id);
+
+    if (!result.ok) {
+      setResumeHistoryState((currentState) => ({
+        ...currentState,
+        items: previousItems,
+      }));
+      setDeleteState({
+        status: "error",
+        message: result.error,
+        activeId: deletedAnalysis.id,
+      });
+      return;
+    }
+
+    if (activeDatabaseId === deletedAnalysis.id) {
+      detachActiveResumeSyncStatus(deletedAnalysis.id, {
+        currentUserId,
+      });
+    }
+
+    setDeleteCandidate(null);
+    setDeleteState({
+      status: "success",
+      message:
+        "Saved resume analysis deleted from your account. The browser active report was preserved.",
+      activeId: deletedAnalysis.id,
+    });
   }
 
   if (!activeAnalysis) {
@@ -298,14 +368,23 @@ export default function ResumePage() {
 
           <SavedResumeAnalysesSection
             activeDatabaseId={activeDatabaseId}
+            deleteState={deleteState}
             historyState={resumeHistoryState}
             isAuthLoading={isAuthLoading}
             isConfigured={isConfigured}
             isSignedIn={Boolean(userId)}
+            onDeleteSaved={setDeleteCandidate}
             onRestoreLatest={handleRestoreLatestSavedReport}
             onSetActive={handleSetActiveReport}
             restoreState={restoreState}
             showRestoreLatestAction
+          />
+
+          <DeleteSavedAnalysisDialog
+            candidate={deleteCandidate}
+            isLoading={deleteState.status === "loading"}
+            onClose={() => setDeleteCandidate(null)}
+            onConfirm={handleDeleteSavedAnalysis}
           />
         </div>
       </DashboardLayout>
@@ -381,10 +460,12 @@ export default function ResumePage() {
 
         <SavedResumeAnalysesSection
           activeDatabaseId={activeDatabaseId}
+          deleteState={deleteState}
           historyState={resumeHistoryState}
           isAuthLoading={isAuthLoading}
           isConfigured={isConfigured}
           isSignedIn={Boolean(userId)}
+          onDeleteSaved={setDeleteCandidate}
           onRestoreLatest={handleRestoreLatestSavedReport}
           onSetActive={handleSetActiveReport}
           restoreState={restoreState}
@@ -518,6 +599,13 @@ export default function ResumePage() {
             </>
           )}
         </section>
+
+        <DeleteSavedAnalysisDialog
+          candidate={deleteCandidate}
+          isLoading={deleteState.status === "loading"}
+          onClose={() => setDeleteCandidate(null)}
+          onConfirm={handleDeleteSavedAnalysis}
+        />
       </section>
     </DashboardLayout>
   );
@@ -550,10 +638,12 @@ type ResumeSyncStatusCardProps = {
 
 type SavedResumeAnalysesSectionProps = {
   activeDatabaseId: string | null;
+  deleteState: DeleteSavedAnalysisState;
   historyState: ResumeHistoryState;
   isAuthLoading: boolean;
   isConfigured: boolean;
   isSignedIn: boolean;
+  onDeleteSaved: (resumeAnalysis: PersistentResumeAnalysis) => void;
   onRestoreLatest: () => void;
   onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
   restoreState: RestoreState;
@@ -562,10 +652,12 @@ type SavedResumeAnalysesSectionProps = {
 
 function SavedResumeAnalysesSection({
   activeDatabaseId,
+  deleteState,
   historyState,
   isAuthLoading,
   isConfigured,
   isSignedIn,
+  onDeleteSaved,
   onRestoreLatest,
   onSetActive,
   restoreState,
@@ -643,6 +735,20 @@ function SavedResumeAnalysesSection({
         </p>
       )}
 
+      {deleteState.message && (
+        <p
+          className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${
+            deleteState.status === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : deleteState.status === "error"
+                ? "border-rose-200 bg-rose-50 text-rose-800"
+                : "border-slate-200 bg-slate-50 text-slate-700"
+          }`}
+        >
+          {deleteState.message}
+        </p>
+      )}
+
       {historyItems.length > 0 && (
         <>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -672,6 +778,8 @@ function SavedResumeAnalysesSection({
                   latestNonActiveId,
                   resumeAnalysisId: resumeAnalysis.id,
                 })}
+                deleteState={deleteState}
+                onDeleteSaved={onDeleteSaved}
                 onSetActive={onSetActive}
                 resumeAnalysis={resumeAnalysis}
                 restoreState={restoreState}
@@ -780,6 +888,8 @@ function getResumeHistoryPresentation({
 type SavedResumeAnalysisCardProps = {
   activeDatabaseId: string | null;
   badgeLabel: "Current active report" | "Latest saved" | "Saved";
+  deleteState: DeleteSavedAnalysisState;
+  onDeleteSaved: (resumeAnalysis: PersistentResumeAnalysis) => void;
   onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
   resumeAnalysis: PersistentResumeAnalysis;
   restoreState: RestoreState;
@@ -788,6 +898,8 @@ type SavedResumeAnalysisCardProps = {
 function SavedResumeAnalysisCard({
   activeDatabaseId,
   badgeLabel,
+  deleteState,
+  onDeleteSaved,
   onSetActive,
   resumeAnalysis,
   restoreState,
@@ -797,6 +909,9 @@ function SavedResumeAnalysisCard({
     : null;
   const isActive = activeDatabaseId === resumeAnalysis.id;
   const isCurrentRestoreTarget = restoreState.activeId === resumeAnalysis.id;
+  const isDeleting =
+    deleteState.status === "loading" &&
+    deleteState.activeId === resumeAnalysis.id;
   const topProfileFitRole = userProfile
     ? calculateRoleMatches(userProfile)[0]?.role ?? "Not enough role signals"
     : "Missing report data";
@@ -871,8 +986,58 @@ function SavedResumeAnalysisCard({
             Restore failed
           </span>
         )}
+
+        <button
+          type="button"
+          onClick={() => onDeleteSaved(resumeAnalysis)}
+          disabled={isDeleting}
+          className={`${premiumDangerCta} px-4 py-2.5 text-sm`}
+        >
+          {isDeleting ? "Deleting..." : "Delete saved analysis"}
+        </button>
       </div>
     </article>
+  );
+}
+
+function DeleteSavedAnalysisDialog({
+  candidate,
+  isLoading,
+  onClose,
+  onConfirm,
+}: {
+  candidate: PersistentResumeAnalysis | null;
+  isLoading: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <ConfirmDialog
+      isOpen={Boolean(candidate)}
+      title="Delete saved resume analysis"
+      confirmLabel="Delete saved analysis"
+      isProcessing={isLoading}
+      onClose={onClose}
+      onConfirm={onConfirm}
+    >
+      <p>
+        This deletes this saved resume analysis from your SkillMint account.
+        It does not delete your account, feedback, or unrelated saved records.
+      </p>
+
+      {candidate && (
+        <p className="mt-3 break-words rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-950">
+          {candidate.fileName || "Untitled resume"} - analyzed{" "}
+          {formatAnalyzedDate(candidate.createdAt)}
+        </p>
+      )}
+
+      <p className="mt-3">
+        If this saved analysis is referenced by the current browser report,
+        SkillMint will detach only that broken synced reference and keep the
+        browser report local.
+      </p>
+    </ConfirmDialog>
   );
 }
 
@@ -1630,31 +1795,24 @@ function subscribeToStoredAnalysis(
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredAnalysis(): string | null {
-  return getBrowserStorage()?.getItem(
-    ACTIVE_RESUME_ANALYSIS_STORAGE_KEY,
-  ) ?? null;
+function readStoredAnalysis(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveResumeReportSnapshot({
+    currentUserId,
+  });
 }
 
-function readStoredSyncStatus(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_SYNC_STATUS_STORAGE_KEY) ??
-    null;
+function readStoredSyncStatus(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readResumeSyncStatusSnapshot({
+    currentUserId,
+  });
 }
 
 function getServerSnapshot(): null {
   return null;
-}
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
 }
 
 function parseStoredAnalysis(

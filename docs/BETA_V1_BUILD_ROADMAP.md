@@ -1,6 +1,6 @@
 # SkillMint Beta v1 Build Roadmap
 
-**Status:** Locked roadmap for Beta v1 completion; Block 4 is the current block under final release audit
+**Status:** Locked roadmap for Beta v1 completion; Block 5 engineering CLOSED AND FROZEN on July 13, 2026 after authorized isolated live-security proof. Beta release remains blocked pending production rollout and external privacy-contact verification.
 **Timeline:** Realistic 5-6 weeks; conservative 7-8 weeks  
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
 
@@ -62,7 +62,7 @@ Dependencies: Blocks 1 and 2 must remain intact.
 
 ### 4. Active Target + JD Workflow
 
-Status: Current block.
+Status: Completed and frozen; preservation fixtures remain required.
 
 Purpose: Add one browser-local Active Target focus layer so users can focus ATS/JD workflow, dashboard target summary, mission priority, and roadmap emphasis without changing scores.
 
@@ -72,9 +72,11 @@ Out of scope: score boosts, scoring math changes, fake JD scores for non-JD targ
 
 Dependencies: Blocks 1-3 must remain intact.
 
-Block 4 is complete only after the final independent release audit passes. Block 5 is next, but Data Controls + Trust Center is not implemented in Block 4.
+Block 4 remains subject to its independent audit. Block 5 adds data controls without changing Block 4 score, ownership, or freshness contracts.
 
 ### 5. Data Controls + Trust Center
+
+Status: 5.1 Browser Data Safety, 5.2 Export and Trust Center Reliability, and 5.3 Deletion, Database, Privacy, and Release Safety are CLOSED AND FROZEN. The authorized isolated project passed exact catalog, least-privilege RLS, export, recent-auth, real-route deletion, stale-token, concurrency, hard-delete, and cleanup gates. Production was not contacted. Production schema rollout, monitored privacy/support contact, legal review, provider backup/log retention proof, and operational ownership remain beta-release blockers.
 
 Purpose: Make storage, privacy, delete controls, account state, browser-only state, and trust copy clear and honest.
 
@@ -131,3 +133,4 @@ Dependencies: Blocks 1-6 must remain intact.
 - Active report powers this browser dashboard.
 - Clear workspace is browser-only.
 - Delete must not be faked.
+- Data controls must not mutate Career IQ, Proof Confidence, ATS/JD scoring, mission scoring, or Active Target freshness.

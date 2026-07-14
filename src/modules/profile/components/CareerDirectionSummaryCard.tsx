@@ -3,20 +3,31 @@
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   getTargetRoleSetup,
-  TARGET_ROLE_SETUP_STORAGE_KEY,
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
 } from "@/modules/onboarding/storage/targetRoleSetupStorage";
 import type { TargetRoleSetup } from "@/modules/onboarding/types";
 
 export default function CareerDirectionSummaryCard() {
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const storedSetupVersion = useSyncExternalStore(
     subscribeToSkillMintWorkspaceUpdates,
-    readStoredSetupVersion,
+    () => readStoredSetupVersion(currentUserId),
     getServerSnapshot,
   );
-  const setup = storedSetupVersion ? getTargetRoleSetup() : null;
+  const setup = storedSetupVersion
+    ? getTargetRoleSetup({
+        currentUserId,
+      })
+    : null;
   const signals = getCareerDirectionSignals(setup);
 
   return (
@@ -97,16 +108,12 @@ function getCareerDirectionSignals(setup: TargetRoleSetup | null): Array<{
   ];
 }
 
-function readStoredSetupVersion(): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage.getItem(TARGET_ROLE_SETUP_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+function readStoredSetupVersion(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
 function getServerSnapshot(): null {

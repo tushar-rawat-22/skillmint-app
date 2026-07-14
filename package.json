@@ -7,7 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "smoke:production": "node scripts/smoke-production.mjs"
+    "smoke:production": "node scripts/smoke-production.mjs",
+    "test:e2e:chromium": "playwright test --project=chromium --grep-invert @block53",
+    "test:e2e:firefox": "playwright test --project=firefox --grep @critical --grep-invert @block53",
+    "test:e2e:webkit": "playwright test --project=webkit --grep @critical --grep-invert @block53",
+    "test:e2e:cross-browser": "npm run test:e2e:firefox && npm run test:e2e:webkit",
+    "test:e2e:closure": "npm run test:e2e:chromium && npm run test:e2e:cross-browser",
+    "test:e2e:race": "playwright test --project=chromium --grep @race --repeat-each=3",
+    "test:block-5-3:fixtures": "node scripts/block-5-3-fixtures.mjs",
+    "test:block-5-3:chromium": "playwright test e2e/account-deletion.spec.ts --project=chromium --workers=1 --retries=0",
+    "test:block-5-3:cross-browser": "playwright test e2e/account-deletion.spec.ts --project=firefox --grep @critical --workers=1 --retries=0 && playwright test e2e/account-deletion.spec.ts --project=webkit --grep @critical --workers=1 --retries=0",
+    "test:block-5-3:offline": "npm run test:block-5-3:fixtures && npm run test:block-5-3:chromium && npm run test:block-5-3:cross-browser",
+    "test:block-5-3:release-readiness": "node scripts/block-5-3-release-readiness.mjs --diagnostic"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -19,12 +30,15 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "pg": "8.16.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,35 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   premiumDangerCta,
 } from "@/components/ui/premium";
 import { clearSkillMintWorkspace } from "@/lib/storage/clearSkillMintWorkspace";
 
-const CONFIRM_CLEAR_WORKSPACE_MESSAGE =
-  "This clears the active browser workspace only. Your account and synced history are not deleted. Continue?";
-
 export default function ClearWorkspaceCard() {
-  const router = useRouter();
   const [message, setMessage] = useState("");
+  const [hasClearError, setHasClearError] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   function handleClearWorkspace() {
-    if (!window.confirm(CONFIRM_CLEAR_WORKSPACE_MESSAGE)) {
-      return;
-    }
-
     setIsClearing(true);
-    clearSkillMintWorkspace();
-    setMessage(
-      "Active workspace cleared from this browser. Your account and synced history were not deleted.",
-    );
+    const result = clearSkillMintWorkspace();
+    setHasClearError(result.failedKeys.length > 0);
+    setMessage(result.failedKeys.length
+      ? `Removed ${result.removed} browser item(s), but ${result.failedKeys.length} item(s) could not be cleared. Your account was not deleted.`
+      : "SkillMint data cleared from this browser. Your account and synced records were not deleted.");
 
-    window.setTimeout(() => {
-      router.push("/dashboard");
-    }, 600);
+    setIsClearing(false);
+    setIsDialogOpen(false);
   }
 
   return (
@@ -39,29 +33,51 @@ export default function ClearWorkspaceCard() {
       </p>
 
       <h2 className="mt-3 text-xl font-bold">
-        Clear active workspace
+        Clear SkillMint data from this browser
       </h2>
 
       <p className="mt-3 text-sm leading-6">
-        Clears the active browser workspace: active resume analysis, JD
-        matches, roadmap state, beta feedback, and upgrade interest saved in
-        this browser. This does not delete your account or synced history.
+        Removes the current local workspace, signed-out or unassigned
+        SkillMint workspace data, and other SkillMint account workspaces stored
+        in this browser.
+        This does not delete your account or account-synced records.
       </p>
 
       <button
         type="button"
-        onClick={handleClearWorkspace}
+        onClick={() => setIsDialogOpen(true)}
         disabled={isClearing}
         className={`${premiumDangerCta} mt-5`}
       >
-        {isClearing ? "Clearing..." : "Clear active workspace"}
+        {isClearing ? "Clearing..." : "Clear browser data"}
       </button>
 
       {message && (
-        <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
+        <p
+          role={hasClearError ? "alert" : "status"}
+          className={hasClearError
+            ? "mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900"
+            : "mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800"}
+        >
           {message}
         </p>
       )}
+
+      <ConfirmDialog
+        isOpen={isDialogOpen}
+        title="Clear SkillMint data from this browser"
+        confirmLabel="Clear browser data"
+        isProcessing={isClearing}
+        onConfirm={handleClearWorkspace}
+        onClose={() => setIsDialogOpen(false)}
+      >
+        <p>
+          This removes the current local workspace, signed-out or unassigned
+          SkillMint workspace data, and other SkillMint account workspaces
+          stored in this browser. It does not delete your SkillMint account or
+          account-synced records.
+        </p>
+      </ConfirmDialog>
     </article>
   );
 }

@@ -38,8 +38,8 @@ import type {
 } from "@/intelligence/missions";
 import {
   isMissionStatus,
-  MISSION_STATUS_STORAGE_KEY,
-  SELECTED_CAREER_PATH_STORAGE_KEY,
+  MISSION_STATUS_STORAGE_DESCRIPTOR,
+  SELECTED_CAREER_PATH_STORAGE_DESCRIPTOR,
   setMissionStatus,
   setSelectedCareerPathId,
 } from "@/intelligence/missions";
@@ -70,10 +70,17 @@ import {
 } from "@/modules/activation";
 import { updateCurrentUserJobMatchRoadmap } from "@/modules/jobMatch";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
-import { TARGET_ROLE_SETUP_STORAGE_KEY } from "@/modules/onboarding/storage/targetRoleSetupStorage";
-
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
+import {
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+} from "@/modules/onboarding/storage/targetRoleSetupStorage";
+import {
+  readActiveResumeReportSnapshot,
+} from "@/modules/resume/services/activeResumeReportStorage";
+import {
+  readCurrentJobMatchSnapshot,
+  writeCurrentJobMatchSnapshot,
+} from "@/lib/storage/jdMatchCurrentStorage";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 
 type LatestJobMatch = {
   id?: string;
@@ -131,42 +138,42 @@ const USER_SELECTABLE_STATUSES: Array<{
 ];
 
 export default function RoadmapPage() {
-  const storedAnalysis = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredAnalysis,
-    getServerSnapshot,
-  );
-  const storedJobMatch = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredJobMatch,
-    getServerSnapshot,
-  );
-  const storedSetup = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredSetup,
-    getServerSnapshot,
-  );
-  const storedActiveTarget = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredActiveTarget,
-    getServerSnapshot,
-  );
-  const storedMissionStatuses = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredMissionStatuses,
-    getServerSnapshot,
-  );
-  const selectedPathId = useSyncExternalStore(
-    subscribeToStoredData,
-    readStoredSelectedPath,
-    getServerSnapshot,
-  );
-  const data = useCareerData();
   const {
     user,
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const storedAnalysis = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredAnalysis(currentUserId),
+    getServerSnapshot,
+  );
+  const storedJobMatch = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredJobMatch(currentUserId),
+    getServerSnapshot,
+  );
+  const storedSetup = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredSetup(currentUserId),
+    getServerSnapshot,
+  );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredActiveTarget(currentUserId),
+    getServerSnapshot,
+  );
+  const storedMissionStatuses = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredMissionStatuses(currentUserId),
+    getServerSnapshot,
+  );
+  const selectedPathId = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredSelectedPath(currentUserId),
+    getServerSnapshot,
+  );
+  const data = useCareerData(currentUserId);
   const analysisContext = useMemo(
     () => getStoredAnalysisContext(storedAnalysis),
     [storedAnalysis],
@@ -313,7 +320,9 @@ export default function RoadmapPage() {
     const generatedRoadmap = legacyRoadmap;
     let isActive = true;
     const timeoutId = window.setTimeout(() => {
-      persistLatestJobMatchRoadmap(generatedRoadmap);
+      persistLatestJobMatchRoadmap(generatedRoadmap, {
+        currentUserId,
+      });
       void syncRoadmapToDatabase();
     }, 0);
 
@@ -347,7 +356,9 @@ export default function RoadmapPage() {
           return;
         }
 
-        persistLatestJobMatchRoadmap(generatedRoadmap);
+        persistLatestJobMatchRoadmap(generatedRoadmap, {
+          currentUserId,
+        });
         setRoadmapSyncState({
           status: "synced",
           message: "Roadmap synced to your account.",
@@ -369,10 +380,12 @@ export default function RoadmapPage() {
       isActive = false;
       window.clearTimeout(timeoutId);
     };
-  }, [latestDatabaseMatchId, legacyRoadmap]);
+  }, [currentUserId, latestDatabaseMatchId, legacyRoadmap]);
 
   function handleSelectPath(pathId: string) {
-    setSelectedCareerPathId(pathId);
+    setSelectedCareerPathId(pathId, {
+      currentUserId,
+    });
     notifySkillMintWorkspaceUpdated();
   }
 
@@ -384,7 +397,9 @@ export default function RoadmapPage() {
       return;
     }
 
-    setMissionStatus(missionId, status);
+    setMissionStatus(missionId, status, {
+      currentUserId,
+    });
     notifySkillMintWorkspaceUpdated();
   }
 
@@ -1099,45 +1114,69 @@ function subscribeToStoredData(onStoreChange: () => void): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredAnalysis(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+function readStoredAnalysis(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveResumeReportSnapshot({
+    currentUserId,
+  });
 }
 
-function readStoredJobMatch(): string | null {
-  return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
+function readStoredJobMatch(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readCurrentJobMatchSnapshot({
+    currentUserId,
+  });
 }
 
-function readStoredSetup(): string | null {
-  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
+function readStoredSetup(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredActiveTarget(): string | null {
-  return readActiveTargetStorageSnapshot();
+function readStoredActiveTarget(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveTargetStorageSnapshot({ currentUserId });
 }
 
-function readStoredMissionStatuses(): string | null {
-  return getBrowserStorage()?.getItem(MISSION_STATUS_STORAGE_KEY) ?? null;
+function readStoredMissionStatuses(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(MISSION_STATUS_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredSelectedPath(): string | null {
-  return getBrowserStorage()?.getItem(SELECTED_CAREER_PATH_STORAGE_KEY) ??
-    null;
-}
+function readStoredSelectedPath(
+  currentUserId: string | null | undefined,
+): string | null {
+  const storedValue = readVisibleStorageValue(
+    SELECTED_CAREER_PATH_STORAGE_DESCRIPTOR,
+    {
+      currentUserId,
+    },
+  );
 
-function getServerSnapshot(): null {
-  return null;
-}
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
+  if (!storedValue) {
     return null;
   }
 
   try {
-    return window.localStorage;
+    const parsedValue = JSON.parse(storedValue);
+
+    return typeof parsedValue === "string" ? parsedValue : storedValue;
   } catch {
-    return null;
+    return storedValue;
   }
+}
+
+function getServerSnapshot(): null {
+  return null;
 }
 
 function getStoredAnalysisContext(
@@ -1394,16 +1433,15 @@ function getRoadmapRoleContext(
   return setupSource?.targetRole;
 }
 
-function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
+function persistLatestJobMatchRoadmap(
+  roadmap: CareerRoadmap,
+  ownerContext: {
+    currentUserId: string | null | undefined;
+  },
+): void {
+  const storedJobMatch = readCurrentJobMatchSnapshot(ownerContext);
 
   try {
-    const storedJobMatch = storage.getItem(JD_MATCH_STORAGE_KEY);
-
     if (!storedJobMatch) {
       return;
     }
@@ -1414,17 +1452,49 @@ function persistLatestJobMatchRoadmap(roadmap: CareerRoadmap): void {
       return;
     }
 
-    storage.setItem(
-      JD_MATCH_STORAGE_KEY,
-      JSON.stringify({
-        ...parsedJobMatch,
-        roadmap,
-      }),
-    );
-    notifySkillMintWorkspaceUpdated();
+    if (!isJobDescriptionMatchResult(parsedJobMatch.result)) {
+      return;
+    }
+
+    writeCurrentJobMatchSnapshot({
+      id: isString(parsedJobMatch.id) ? parsedJobMatch.id : undefined,
+      databaseId: isString(parsedJobMatch.databaseId)
+        ? parsedJobMatch.databaseId
+        : undefined,
+      syncStatus: isJobMatchSyncStatus(parsedJobMatch.syncStatus)
+        ? parsedJobMatch.syncStatus
+        : undefined,
+      jobTitle: isString(parsedJobMatch.jobTitle)
+        ? parsedJobMatch.jobTitle
+        : "Untitled Role",
+      companyName: isString(parsedJobMatch.companyName)
+        ? parsedJobMatch.companyName
+        : "Unknown Company",
+      jobDescription: isString(parsedJobMatch.jobDescription)
+        ? parsedJobMatch.jobDescription
+        : "",
+      result: parsedJobMatch.result,
+      improvementPlan: isResumeImprovementPlan(parsedJobMatch.improvementPlan)
+        ? parsedJobMatch.improvementPlan
+        : null,
+      rewritePlan: isResumeRewritePlan(parsedJobMatch.rewritePlan)
+        ? parsedJobMatch.rewritePlan
+        : null,
+      roadmap,
+      resumeContext: isActiveTargetResumeContext(parsedJobMatch.resumeContext)
+        ? parsedJobMatch.resumeContext
+        : undefined,
+      analyzedAt: isString(parsedJobMatch.analyzedAt)
+        ? parsedJobMatch.analyzedAt
+        : new Date().toISOString(),
+    }, ownerContext);
   } catch {
     return;
   }
+}
+
+function isJobMatchSyncStatus(value: unknown): value is "synced" | "local-only" {
+  return value === "synced" || value === "local-only";
 }
 
 function getRoadmapLocalOnlyMessage(error: string): string {

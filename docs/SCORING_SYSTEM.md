@@ -70,6 +70,8 @@ Final score:
 Career IQ = clamp(round(weightedScoreAfterCaps), 0, 100)
 ```
 
+Data-control operations (browser export/clear, saved-report deletion, and account deletion) do not alter this formula, Career IQ, Proof Confidence, ATS/JD calculations, or mission completion scoring. They remove or export stored records only.
+
 Implementation lives in:
 
 - `src/intelligence/scoring/scoreContract.ts`

@@ -1,4 +1,22 @@
-const ONBOARDING_DISMISSED_STORAGE_KEY = "skillmint:onboarding-dismissed";
+import type { SkillMintStorageDescriptor } from "@/lib/storage/skillMintStorageTypes";
+
+export const ONBOARDING_DISMISSED_STORAGE_KEY =
+  "skillmint:onboarding-dismissed";
+export const ONBOARDING_DISMISSED_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: ONBOARDING_DISMISSED_STORAGE_KEY,
+    version: 1,
+    category: "onboarding",
+    ownerScope: "global_preference",
+    containsPersonalData: false,
+    clearWithBrowserReset: true,
+    exportable: true,
+    importable: false,
+    exportPolicy: "boolean_string",
+    validateValue: (value) => typeof value === "boolean",
+    description:
+      "Browser-local preference for hiding onboarding checklist prompts.",
+  };
 
 export function getOnboardingDismissed(): boolean {
   const storage = getBrowserStorage();

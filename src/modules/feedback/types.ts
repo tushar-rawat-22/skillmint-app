@@ -29,9 +29,45 @@ export interface LocalBetaFeedback extends SubmitFeedbackInput {
   id: string;
   createdAt: string;
   syncStatus: "local-only";
-  syncError?: string;
+  syncError?: PersistedAccountFailureCode;
 }
+
+export type AccountFeedbackFailureCode =
+  | "invalid_input"
+  | "not_configured"
+  | "not_authenticated"
+  | "account_changed"
+  | "network_failure"
+  | "permission_denied"
+  | "schema_unavailable"
+  | "invalid_response"
+  | "unknown";
+
+export type LocalFeedbackFailureCode =
+  | "invalid_input"
+  | "owner_unresolved"
+  | "storage_unavailable"
+  | "storage_read_failed"
+  | "storage_corrupted"
+  | "storage_write_failed"
+  | "id_generation_failed"
+  | "unknown";
+
+export type FeedbackFailureCode =
+  | AccountFeedbackFailureCode
+  | LocalFeedbackFailureCode;
+
+export type PersistedAccountFailureCode = Exclude<
+  AccountFeedbackFailureCode,
+  "invalid_input"
+>;
+
+export type FeedbackFailure = {
+  code: FeedbackFailureCode;
+  message: string;
+  retryable: boolean;
+};
 
 export type RepositoryResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: string };
+  | { ok: false; error: FeedbackFailure };

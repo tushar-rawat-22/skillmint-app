@@ -9,12 +9,19 @@ import {
   premiumSecondaryCta,
 } from "@/components/ui/premium";
 import { ROUTES } from "@/constants/routes";
+import {
+  readCurrentJobMatchSnapshot,
+} from "@/lib/storage/jdMatchCurrentStorage";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import type { CareerLoopStage } from "@/modules/activation/types";
-
-const TARGET_ROLE_SETUP_STORAGE_KEY = "skillmint:target-role-setup";
-const RESUME_ANALYSIS_STORAGE_KEY = "skillmint:resume-analysis";
-const JD_MATCH_STORAGE_KEY = "skillmint:jd-match";
+import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
+import {
+  TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+} from "@/modules/onboarding/storage/targetRoleSetupStorage";
+import {
+  readActiveResumeReportSnapshot,
+} from "@/modules/resume/services/activeResumeReportStorage";
 
 type CareerLoopProgress = {
   hasSetup: boolean;
@@ -40,19 +47,24 @@ export default function NextBestActionPanel({
   className = "",
 }: NextBestActionPanelProps) {
   const pathname = usePathname();
+  const {
+    user,
+    isLoading: isAuthLoading,
+  } = useAuthSession();
+  const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const storedSetup = useSyncExternalStore(
     subscribeToStoredData,
-    readStoredSetup,
+    () => readStoredSetup(currentUserId),
     getServerSnapshot,
   );
   const storedResume = useSyncExternalStore(
     subscribeToStoredData,
-    readStoredResume,
+    () => readStoredResume(currentUserId),
     getServerSnapshot,
   );
   const storedJobMatch = useSyncExternalStore(
     subscribeToStoredData,
-    readStoredJobMatch,
+    () => readStoredJobMatch(currentUserId),
     getServerSnapshot,
   );
   const progress = useMemo<CareerLoopProgress>(() => ({
@@ -162,34 +174,33 @@ function subscribeToStoredData(onStoreChange: () => void): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
-function readStoredSetup(): string | null {
-  return getBrowserStorage()?.getItem(TARGET_ROLE_SETUP_STORAGE_KEY) ?? null;
+function readStoredSetup(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
 }
 
-function readStoredResume(): string | null {
-  return getBrowserStorage()?.getItem(RESUME_ANALYSIS_STORAGE_KEY) ?? null;
+function readStoredResume(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveResumeReportSnapshot({
+    currentUserId,
+  });
 }
 
-function readStoredJobMatch(): string | null {
-  return getBrowserStorage()?.getItem(JD_MATCH_STORAGE_KEY) ?? null;
+function readStoredJobMatch(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readCurrentJobMatchSnapshot({
+    currentUserId,
+  });
 }
 
 function getServerSnapshot(): null {
   return null;
 }
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
 function hasValidSetup(storedValue: string | null): boolean {
   const parsedValue = parseRecord(storedValue);
 

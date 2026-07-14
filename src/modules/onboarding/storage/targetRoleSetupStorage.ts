@@ -1,18 +1,43 @@
 import type { TargetRoleSetup } from "@/modules/onboarding/types";
+import {
+  readVisibleStorageValue,
+  removeOwnedStoragePartition,
+  writeOwnedJsonStorageValue,
+} from "@/lib/storage/ownedSkillMintStorage";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
+import type {
+  BrowserOwnerContext,
+  SkillMintStorageDescriptor,
+} from "@/lib/storage/skillMintStorageTypes";
 
 export const TARGET_ROLE_SETUP_STORAGE_KEY = "skillmint:target-role-setup";
+export const TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: TARGET_ROLE_SETUP_STORAGE_KEY,
+    version: 1,
+    category: "onboarding",
+    ownerScope: "anonymous_or_account",
+    containsPersonalData: true,
+    clearWithBrowserReset: true,
+    exportable: true,
+    importable: true,
+    exportPolicy: "json_value",
+    validateValue: isTargetRoleSetup,
+    description:
+      "Browser-local target role setup used for career direction and recommendations.",
+  };
 
-export function getTargetRoleSetup(): TargetRoleSetup | null {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return null;
-  }
+export function getTargetRoleSetup(
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): TargetRoleSetup | null {
+  const storedValue = readVisibleStorageValue(
+    TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+    options,
+  );
 
   try {
-    const storedValue = storage.getItem(TARGET_ROLE_SETUP_STORAGE_KEY);
-
     if (!storedValue) {
       return null;
     }
@@ -25,37 +50,39 @@ export function getTargetRoleSetup(): TargetRoleSetup | null {
   }
 }
 
-export function saveTargetRoleSetup(setup: TargetRoleSetup): void {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(TARGET_ROLE_SETUP_STORAGE_KEY, JSON.stringify(setup));
+export function saveTargetRoleSetup(
+  setup: TargetRoleSetup,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): void {
+  if (
+    writeOwnedJsonStorageValue(
+      TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+      setup,
+      options,
+    )
+  ) {
     notifySkillMintWorkspaceUpdated();
-  } catch {
-    return;
   }
 }
 
-export function clearTargetRoleSetup(): void {
-  const storage = getBrowserStorage();
+export function clearTargetRoleSetup(
+  options: BrowserOwnerContext = { currentUserId: null },
+): boolean {
+  const result = removeOwnedStoragePartition(
+    TARGET_ROLE_SETUP_STORAGE_DESCRIPTOR,
+    options,
+  );
 
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.removeItem(TARGET_ROLE_SETUP_STORAGE_KEY);
+  if (result.ok && result.changed) {
     notifySkillMintWorkspaceUpdated();
-  } catch {
-    return;
   }
+
+  return result.ok;
 }
 
-function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
+export function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
   if (!isRecord(value)) {
     return false;
   }
@@ -70,7 +97,8 @@ function isTargetRoleSetup(value: unknown): value is TargetRoleSetup {
     isPrimaryGoal(value.primaryGoal) &&
     isPreferredJobType(value.preferredJobType) &&
     isWeeklyTimeCommitment(value.weeklyTimeCommitment) &&
-    typeof value.updatedAt === "string"
+    typeof value.updatedAt === "string" &&
+    Number.isFinite(Date.parse(value.updatedAt))
   );
 }
 
@@ -132,16 +160,4 @@ function isNonEmptyString(value: unknown): value is string {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" &&
     !Array.isArray(value);
-}
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
 }

@@ -128,6 +128,37 @@ export async function listCurrentUserResumeAnalyses(
   };
 }
 
+export async function deleteCurrentUserResumeAnalysis(
+  id: string,
+): Promise<RepositoryResult<{ id: string }>> {
+  const authResult = await getCurrentAuthUser();
+
+  if (!authResult.ok) {
+    return authResult;
+  }
+
+  const { supabase, user } = authResult.data;
+  const { error } = await supabase
+    .from("resume_analyses")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: getDatabaseErrorMessage(error.message),
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      id,
+    },
+  };
+}
+
 async function getCurrentAuthUser(): Promise<
   RepositoryResult<{
     supabase: NonNullable<ReturnType<typeof createSupabaseBrowserClient>>;

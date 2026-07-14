@@ -3,21 +3,72 @@ import {
   type MissionStatus,
   type MissionStatusMap,
 } from "./missionContract";
+import {
+  readVisibleStorageValue,
+  writeOwnedJsonStorageValue,
+  writeOwnedStringStorageValue,
+} from "@/lib/storage/ownedSkillMintStorage";
+import type {
+  BrowserOwnerContext,
+  SkillMintStorageDescriptor,
+} from "@/lib/storage/skillMintStorageTypes";
 
 export const MISSION_STATUS_STORAGE_KEY = "skillmint:mission-status:v1";
 export const SELECTED_CAREER_PATH_STORAGE_KEY =
   "skillmint:selected-career-path:v1";
 
-export function getMissionStatusMap(): MissionStatusMap {
-  const storage = getBrowserStorage();
+export const MISSION_STATUS_STORAGE_DESCRIPTOR: SkillMintStorageDescriptor = {
+  key: MISSION_STATUS_STORAGE_KEY,
+  version: 1,
+  category: "mission",
+  ownerScope: "anonymous_or_account",
+  containsPersonalData: true,
+  clearWithBrowserReset: true,
+  exportable: true,
+  importable: true,
+  exportPolicy: "json_value",
+  validateValue: isMissionStatusMap,
+  description:
+    "Browser-local mission status map; it does not verify proof or change scores.",
+};
 
-  if (!storage) {
-    return {};
-  }
+export const SELECTED_CAREER_PATH_STORAGE_DESCRIPTOR:
+  SkillMintStorageDescriptor = {
+    key: SELECTED_CAREER_PATH_STORAGE_KEY,
+    version: 1,
+    category: "mission",
+    ownerScope: "anonymous_or_account",
+    containsPersonalData: true,
+    clearWithBrowserReset: true,
+    exportable: true,
+    importable: true,
+    exportPolicy: "string_value",
+    validateValue: isSelectedCareerPathId,
+    description:
+      "Browser-local selected career path ID used for roadmap display.",
+};
+
+export function isMissionStatusMap(value: unknown): value is MissionStatusMap {
+  return isRecord(value) && Object.entries(value).every(
+    ([missionId, status]) => missionId.trim().length > 0 && isMissionStatus(status),
+  );
+}
+
+export function isSelectedCareerPathId(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+export function getMissionStatusMap(
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): MissionStatusMap {
+  const storedValue = readVisibleStorageValue(
+    MISSION_STATUS_STORAGE_DESCRIPTOR,
+    options,
+  );
 
   try {
-    const storedValue = storage.getItem(MISSION_STATUS_STORAGE_KEY);
-
     if (!storedValue) {
       return {};
     }
@@ -38,76 +89,77 @@ export function getMissionStatusMap(): MissionStatusMap {
   }
 }
 
-export function setMissionStatusMap(statusMap: MissionStatusMap): boolean {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return false;
-  }
-
-  try {
-    storage.setItem(MISSION_STATUS_STORAGE_KEY, JSON.stringify(statusMap));
-    return true;
-  } catch {
-    return false;
-  }
+export function setMissionStatusMap(
+  statusMap: MissionStatusMap,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): boolean {
+  return writeOwnedJsonStorageValue(
+    MISSION_STATUS_STORAGE_DESCRIPTOR,
+    statusMap,
+    options,
+  );
 }
 
-export function getMissionStatus(missionId: string): MissionStatus | null {
-  return getMissionStatusMap()[missionId] ?? null;
+export function getMissionStatus(
+  missionId: string,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): MissionStatus | null {
+  return getMissionStatusMap(options)[missionId] ?? null;
 }
 
 export function setMissionStatus(
   missionId: string,
   status: MissionStatus,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
 ): boolean {
   const nextStatusMap = {
-    ...getMissionStatusMap(),
+    ...getMissionStatusMap(options),
     [missionId]: status,
   };
 
-  return setMissionStatusMap(nextStatusMap);
+  return setMissionStatusMap(nextStatusMap, options);
 }
 
-export function getSelectedCareerPathId(): string | null {
-  const storage = getBrowserStorage();
+export function getSelectedCareerPathId(
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): string | null {
+  const storedValue = readVisibleStorageValue(
+    SELECTED_CAREER_PATH_STORAGE_DESCRIPTOR,
+    options,
+  );
 
-  if (!storage) {
+  if (!storedValue) {
     return null;
   }
 
   try {
-    return storage.getItem(SELECTED_CAREER_PATH_STORAGE_KEY);
+    const parsedValue = JSON.parse(storedValue);
+
+    return typeof parsedValue === "string" ? parsedValue : storedValue;
   } catch {
-    return null;
+    return storedValue;
   }
 }
 
-export function setSelectedCareerPathId(pathId: string): boolean {
-  const storage = getBrowserStorage();
-
-  if (!storage) {
-    return false;
-  }
-
-  try {
-    storage.setItem(SELECTED_CAREER_PATH_STORAGE_KEY, pathId);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function getBrowserStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
+export function setSelectedCareerPathId(
+  pathId: string,
+  options: BrowserOwnerContext = {
+    currentUserId: null,
+  },
+): boolean {
+  return writeOwnedStringStorageValue(
+    SELECTED_CAREER_PATH_STORAGE_DESCRIPTOR,
+    pathId,
+    options,
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
