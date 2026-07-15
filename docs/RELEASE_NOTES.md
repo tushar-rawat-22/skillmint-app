@@ -1,5 +1,13 @@
 # SkillMint Release Notes
 
+## Unreleased — Documentation alignment
+
+- Block 5 is merged into `main` through feature commit `5a8364b25f3f0ae657f55a9a354158d6181f1083` and merge commit `3cb5e28050cf93e42e53405f0f2be9d12e756e27`.
+- Blocks 1–5 are complete and frozen. Their behavior, evidence identities, and non-claims remain unchanged.
+- The one-to-two-day Brand & Domain Decision Gate is the approved pre-Block-6 sequence. It is not Block 6, does not renumber the roadmap, and defers domain activation to Block 7.
+- Added a current project-status entry point and aligned roadmap, TODO, deployment, maintainer, and onboarding documentation with the merged repository.
+- This documentation pass changes no application behavior and implies no production rollout, public-beta authorization, selected public name, selected domain, or domain activation.
+
 ## Block 5 engineering closure — July 13, 2026
 
 Block 5 engineering is **CLOSED AND FROZEN**. The exact v1→v4 bootstrap was applied to an authorized initially empty isolated project, the normalized deployed catalog matched, and a two-account run proved least-privilege grants/RLS, A/B isolation, production export boundaries, real password AMR and refresh behavior, the actual local deletion route, explicit hard Auth deletion, stale-token denial, concurrent-write containment, and exact cleanup. The final regression recorded 107 passed, 0 failed, 0 skipped, 0 retries, and 0 flakes.

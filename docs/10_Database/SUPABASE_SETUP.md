@@ -1,6 +1,6 @@
 # Supabase Setup
 
-**Status:** Sprint 6.5 job intelligence persistence
+**Status:** Current local setup and schema-order reference. Sprint 6 notes below are historical implementation context.
 
 Sprint 6.1 added Supabase dependencies, client utilities, environment placeholders, and schema documentation. Sprint 6.3 added the SQL schema file and basic profile persistence. Sprint 6.4 saves resume analyses for signed-in users. Sprint 6.5 saves job match intelligence for signed-in users.
 
@@ -109,7 +109,7 @@ V4 enforces the observed least-privilege browser operation matrix, active-Auth-u
 
 ---
 
-## Sprint 6.5 Behavior
+## Historical Sprint 6.5 behavior
 
 - Supabase packages are installed.
 - Browser and server client utilities exist.
@@ -127,9 +127,11 @@ V4 enforces the observed least-privilege browser operation matrix, active-Auth-u
 
 ---
 
-## Later Sprint 6 Work
+## Historical Sprint 6 planning note
 
-Next units should add:
+The following units were planned at Sprint 6.5 and were completed or superseded later. They are not current next steps:
 
 - Sprint 6.6 user account dashboard.
 - Sprint 6 QA freeze.
+
+Current rollout status is governed by [Project Status](../PROJECT_STATUS.md), [Block 5 Closure](../BLOCK_5_CLOSURE.md), and [Deployment Safety Guide](../DEPLOYMENT.md). The v1→v4 schema sequence was verified only on the authorized isolated project; production rollout remains blocked pending separate approval, inventory, rollback, and verification.

@@ -26,9 +26,9 @@ SkillMint should not feel:
 
 ## Theme Direction
 
-Long term, SkillMint should move toward a light-first premium career report direction. Do not migrate the whole app to light theme during this block.
+The Block 1 decision below is current: preserve the implemented light-first premium career report system. Bounded refinement is allowed, but a broad theme replacement or visual redesign requires explicit approval.
 
-Near-term dark theme rules:
+The following dark-theme notes preserve the pre-Block-1 direction and are historical, not current implementation guidance:
 
 - Reduce tacky glow-heavy treatments in core report areas.
 - Use restrained accent colors.

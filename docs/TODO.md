@@ -1,520 +1,123 @@
-# SkillMint Execution Roadmap
+# SkillMint TODO
+
+**Status:** Current work index
+**Authority:** [Project Status](PROJECT_STATUS.md) and [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md)
+
+This file distinguishes current work from completed, blocked, deferred, and historical work. It is not a second roadmap and does not reopen frozen blocks.
+
+## 1. Current authoritative status
 
-**Version:** 1.0
+- Blocks 1–5 are complete and frozen.
+- Block 6, Privacy-safe Analytics + Founder Dashboard, has not started.
+- Block 7, Beta Launch Readiness, has not started.
+- Public beta is not authorized.
+- Production rollout is blocked pending an approved production migration/rollback process and post-rollout verification.
+- Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
+- Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
+
+## 2. Completed and frozen
+
+- [x] Block 1: Premium Product UI System.
+- [x] Block 2: Scoring Calibration + Truth Engine.
+- [x] Block 3: Mission Execution + Career Path Engine.
+- [x] Block 4: Active Target + JD Workflow, including stale-JD and browser-owner hardening.
+- [x] Block 5.1: Browser Data Safety.
+- [x] Block 5.2: Export and Trust Center Reliability.
+- [x] Block 5.3: Deletion, Database, Privacy, and Release Safety on the authorized isolated project.
+- [x] Account saved-report deletion for resume analyses, JD matches, and career snapshots.
+- [x] Protected backend account-deletion route with recent-authentication, least-privilege, stale-token, race, and cleanup evidence.
+
+Preserve the scoring, proof, mission, Active Target, owner-partition, export, clearing, saved-report deletion, and account-deletion contracts recorded in the frozen documents.
+
+## 3. Immediate next steps
+
+- [x] Align repository documentation to the merged Block 5 checkpoint.
+- [ ] Complete the one-to-two-day Brand & Domain Decision Gate.
+- [ ] Create the bounded public-brand foundation only after a name and domain are selected.
+- [ ] Re-run frozen Block 1–5 preservation checks for that public-brand change.
+- [ ] Merge and synchronize the public-brand layer.
+- [ ] Begin Block 6 only after the gate and preservation checks close.
+
+## 4. Brand & Domain Gate
+
+- [ ] Generate an initial shortlist.
+- [ ] Select three finalists.
+- [ ] Review domain availability and basic competitor, confusion, pronunciation, spelling, and trademark risk.
+- [ ] Select one public name.
+- [ ] Select one backup name.
+- [ ] Reserve one usable domain.
+
+The selected public name, backup, and domain are `Pending`. Reservation does not activate the domain. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+
+## 5. Minimal public-brand foundation
+
+- [ ] Add centralized public-brand configuration on a bounded branch.
+- [ ] Change user-facing brand surfaces only.
+- [ ] Preserve `skillmint:*` storage keys, TypeScript identifiers, repository/package names, environment-variable names, database/schema/function names, fixtures, commits, and frozen evidence.
+- [ ] Preserve the premium light-first UI, responsive behavior, and accessibility.
+- [ ] Confirm no scoring, mission, Active Target, ownership, export, deletion, schema, storage, auth, DNS, or production behavior changed.
+
+## 6. Block 6: Privacy-safe Analytics + Founder Dashboard
+
+- [ ] Define the minimum founder questions and event/data contract before implementation.
+- [ ] Apply privacy, minimization, ownership, and retention review to every proposed event.
+- [ ] Implement product-health visibility without exposing resume content, pasted JDs, credentials, or unnecessary personal data.
+- [ ] Keep analytics separate from public product claims and from all scoring logic.
+- [ ] Define QA for event correctness, duplication, consent/copy where required, and failure behavior.
+- [ ] Evaluate privacy-safe aggregate `mission_started` and `mission_completed` events only after approving an event contract, minimization and retention rules, idempotency/duplication design, privacy review, and QA.
+
+Mission events must not contain resume text, private mission content, email, raw identity, credentials, or tokens. They must not manipulate scores, treat a click as proof, or claim verified completion. Mission completion remains self-progress; evidence and scores change only after evidence changes and re-analysis detects them. This evaluation does not approve a provider, schema, transport, user-level reporting, public analytics, or account mission persistence.
+
+Block 6 must not become a public analytics surface and must not overclaim beta readiness.
+
+## 7. Block 7 and production blockers
+
+- [ ] Inventory the actual production schema before any migration.
+- [ ] Approve accountable ownership, backup/recovery, rollback, incident, and monitoring plans.
+- [ ] Apply and exactly verify the locked schema sequence under production authorization.
+- [ ] Verify server/public environment separation and absence of secrets from browser output.
+- [ ] Verify and monitor the privacy/support contact; do not publish an invented address.
+- [ ] Coordinate Vercel production branch, custom-domain mapping, Preview versus Production variables, `NEXT_PUBLIC_APP_URL`, allowed origins, Supabase Site URL, redirect allowlists, password-reset links, canonical URLs, and deletion-origin behavior.
+- [ ] Run authorized production auth, resume, export, saved-report deletion, account-deletion, and smoke checks with a rollback path.
+- [ ] Review provider backup/log retention claims and obtain legal review before making compliance or erasure promises.
+- [ ] Complete final accessibility, responsive, copy, onboarding, and launch/no-launch review.
+
+Domain activation belongs here, not in the Brand & Domain Gate. Public beta remains blocked until the release gate is explicitly approved.
+
+## 8. Deferred until after Beta v1
+
+- [ ] Payments, checkout, entitlements, subscriptions, and hard paywalls.
+- [ ] AI chat or a generic career coach layer.
+- [ ] Job board, scraping, auto-apply, or multi-job tracking expansion.
+- [ ] External GitHub, LinkedIn, LeetCode, portfolio, or certificate verification.
+- [ ] Backend mission-state persistence. It remains deferred and is not part of Block 6 unless separately approved.
+- [ ] Account-level Active Target persistence and broader saved-JD workflow.
+- [ ] Public proof profiles, recruiter products, and institution dashboards.
+- [ ] Career score history beyond the current saved-analysis/active-report contract.
+- [ ] Evaluate a future scoring-calibration set and versioned score update only after consented beta feedback and reviewer-labeled resume cases exist; preserve historical report semantics and do not silently replace the frozen Beta v1 scoring contract.
+- [ ] Evaluate Proof Engine v2 and stronger proof-source validation after Beta v1; evidence candidates remain unverified unless an explicit external-validation contract is implemented and tested.
+- [ ] True PNG/image export for Shareable Snapshot if later justified without risky dependency or bundle impact.
+- [ ] Salary calibration before presenting salary as a core trusted metric.
+
+## 9. Historical roadmap and completed sprint notes
 
-**Status:** Active
+The original architecture-to-launch phases and Sprint 5–7/RC-1A–RC-1E checklists are historical execution records. Git history and release documents preserve the detailed chronology. They must not be read as open tasks.
 
-**Current Phase:** Beta Freeze QA → Closed Beta Preparation
+Historical milestones include:
 
----
+- Architecture Freeze v1.0;
+- Resume Intelligence Freeze v1.1;
+- Account Persistence Freeze v1.2;
+- Sprint 7 onboarding, beta UX, feedback, deployment preparation, activation, visual direction, password recovery, proof-aware scoring, doctrine, and hierarchy work;
+- RC-1A explainability, RC-1B role/roadmap clarity, RC-1C/D workspace/mobile state, and RC-1E closeout;
+- Phase 2A explicit saved-analysis restore and active-report selection;
+- Blocks 1–5 and the final Block 5 repaired-runtime closure.
 
-# Purpose
+Historical decisions still worth preserving:
 
-This document defines the execution roadmap for SkillMint.
-
-It is **not** a backlog.
-
-It is the master implementation plan that takes SkillMint from architecture to public launch.
-
-Every task should directly contribute to shipping the product.
-
-Tasks should only be added if they support an approved product objective.
-
----
-
-# Product Trust + Beta Readiness TODOs
-
-- [x] Establish independent authority for the isolated Block 5 test project and block the production project before contact.
-- [x] Harden v4 to exact observed table operations, active-user owner policies, and a service-role-only account-deletion preparation RPC.
-- [x] Apply/verify v1→v4 on the isolated project and prove exact catalog definitions, RLS isolation, stale-token rejection, concurrent-write containment, and disposable Account A/B deletion in one guarded run.
-
-- [ ] Build a scoring calibration set for Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, role match, and JD Match.
-- [ ] Recalibrate `career-iq-v2-beta` after beta feedback and reviewer-labeled resumes.
-- [ ] Plan an optional scoring-version migration path if future persisted reports need versioned score history.
-- [x] Provide account-level saved-report deletion for resume analyses, JD matches, and career snapshots through the owner-bound RPC.
-- [x] Use truthful saved-report deletion confirmation that does not imply account deletion.
-- [x] Complete the independent Block 5 adversarial engineering review and automated DC-01–DC-40 reconciliation; retained manual/AT limitations are explicit non-claims.
-- [x] Verify isolated-live database schema, RLS, indexes, recent auth, deletion races/cascades, account-owned feedback deletion, and disposable account deletion.
-- [ ] Roll out the locked schema sequence to production under an approved production migration and rollback plan.
-- [ ] Document provider backup/log deletion and retention only after verification; do not promise immediate infrastructure-wide erasure.
-- [ ] Establish and verify a privacy/support contact before beta release; do not fabricate one in product copy.
-- [ ] Assign operational ownership for production account deletion and incident/rollback handling.
-- [ ] Create a founder analytics dashboard for the 50-user beta.
-- [ ] Add score history only after active report and saved analysis semantics are stable.
-- [ ] Plan the future light-first premium report migration.
-- [ ] Export Shareable Snapshot as an image-style PNG/card later without compromising bundle size or adding risky dependencies.
-- [ ] Complete a future light-token migration if raw Tailwind class strings become difficult to maintain.
-- [ ] Keep auth recovery edge states aligned with the premium light auth experience as copy and states evolve.
-- [ ] Calibrate salary estimates before exposing them as a core report metric.
-- [ ] Evaluate external proof verification later without calling evidence candidates verified today.
-- [ ] Add stronger proof-source validation in Proof Engine v2.
-- [x] Add local Mission Execution state and Career Path Engine for Beta v1 Block 3.
-- [ ] Add backend mission persistence only after trust/data-control decisions are ready.
-- [ ] Add mission completion analytics only after Beta v1 Complete and privacy review.
-- [x] Add browser-local Active Target workflow in Block 4 without confusing Profile-fit roles with Latest JD Match.
-- [x] Add stale JD Match safeguards so stored JD scores are tied to their resume-analysis context.
-- [ ] Add saved JD history only after the single Active Target workflow is validated.
-- [ ] Add account-level Active Target persistence only after Data Controls + Trust Center decisions are ready.
-
----
-
-# Overall Roadmap
-
-```text
-Architecture Freeze
-
-↓
-
-Project Foundation
-
-↓
-
-Authentication
-
-↓
-
-Resume Pipeline
-
-↓
-
-Career Intelligence Engine
-
-↓
-
-Dashboard
-
-↓
-
-Growth System
-
-↓
-
-Public Sharing
-
-↓
-
-Private Beta
-
-↓
-
-Public Launch
-```
-
----
-
-# Phase 0 — Architecture Freeze
-
-## Objective
-
-Freeze the technical direction of SkillMint.
-
-### Deliverables
-
-- [x] Constitution
-- [x] Product Requirements
-- [x] UX Architecture
-- [x] UI Design System
-- [x] Engineering Architecture
-- [x] Database Architecture
-- [x] AI Architecture
-- [x] API Architecture
-- [x] Repository Documentation
-
-**Exit Criteria**
-
-Architecture Version 1.0 approved.
-
----
-
-# Phase 1 — Project Foundation
-
-## Objective
-
-Create a production-ready development environment.
-
-### Deliverables
-
-- [ ] Initialize Next.js project
-- [ ] Configure TypeScript
-- [ ] Configure Tailwind CSS
-- [ ] Install shadcn/ui
-- [ ] Configure ESLint
-- [ ] Configure Prettier
-- [ ] Setup environment variables
-- [ ] Connect Supabase
-- [ ] Configure GitHub repository
-- [ ] Configure deployment pipeline
-
-**Exit Criteria**
-
-Application runs locally and deploys successfully.
-
----
-
-# Phase 2 — Authentication
-
-## Objective
-
-Allow users to securely create and access accounts.
-
-### Deliverables
-
-- [ ] Sign Up
-- [ ] Login
-- [ ] Logout
-- [ ] Session Management
-- [ ] Protected Routes
-- [ ] User Profile Initialization
-
-**Exit Criteria**
-
-Users can securely authenticate and access protected pages.
-
----
-
-# Phase 3 — Resume Pipeline
-
-## Objective
-
-Convert uploaded resumes into structured career data.
-
-### Deliverables
-
-- [ ] Resume Upload
-- [ ] Storage Integration
-- [ ] Resume Parsing
-- [ ] Resume Versioning
-- [ ] Parsing Validation
-- [ ] Structured Career Profile Generation
-
-**Exit Criteria**
-
-Users receive a validated Career Profile from an uploaded resume.
-
----
-
-# Phase 4 — Career Intelligence
-
-## Objective
-
-Generate explainable Career Assessments.
-
-### Deliverables
-
-- [ ] Career IQ
-- [ ] ATS Compatibility
-- [ ] Recruiter Confidence
-- [ ] Salary Intelligence
-- [ ] Career DNA
-- [ ] Career Momentum
-- [ ] Career Risk
-- [ ] Career Potential
-
-**Exit Criteria**
-
-Every Career Assessment is deterministic, explainable and stored historically.
-
----
-
-# Phase 5 — Recommendations
-
-## Objective
-
-Convert intelligence into action.
-
-### Deliverables
-
-- [ ] Decision Engine
-- [ ] Recommendation Engine
-- [ ] Recommendation Ranking
-- [ ] Recommendation Lifecycle
-- [ ] Confidence Indicators
-
-**Exit Criteria**
-
-Every user receives prioritised, evidence-based recommendations.
-
----
-
-# Phase 6 — Dashboard
-
-## Objective
-
-Build the Career Operating System interface.
-
-### Deliverables
-
-- [ ] Dashboard Layout
-- [ ] Career IQ Card
-- [ ] Recruiter Confidence Card
-- [ ] Salary Intelligence Card
-- [ ] Career DNA Card
-- [ ] Momentum Card
-- [ ] Mission Panel
-- [ ] Recommendation Panel
-- [ ] Progress Timeline
-
-**Exit Criteria**
-
-Users can understand their current career state within one minute.
-
----
-
-# Phase 7 — Growth System
-
-## Objective
-
-Encourage continuous improvement.
-
-### Deliverables
-
-- [ ] Missions
-- [ ] Achievements
-- [ ] Streaks
-- [ ] Progress Tracking
-- [ ] Milestones
-
-**Exit Criteria**
-
-Users are rewarded for measurable career progress.
-
----
-
-# Phase 8 — Sharing
-
-## Objective
-
-Enable users to showcase achievements.
-
-### Deliverables
-
-- [ ] Public Career Cards
-- [ ] Share Links
-- [ ] Social Preview Images
-- [ ] Privacy Controls
-
-**Exit Criteria**
-
-Users can confidently share career achievements online.
-
----
-
-# Phase 9 — Private Beta
-
-## Objective
-
-Validate the product with real users.
-
-### Deliverables
-
-- [ ] Internal Testing
-- [ ] Bug Fixes
-- [ ] Performance Optimisation
-- [ ] User Feedback Collection
-- [ ] Analytics
-
-**Exit Criteria**
-
-Core workflows validated by early adopters.
-
----
-
-# Phase 10 — Public Launch
-
-## Objective
-
-Release SkillMint publicly.
-
-### Deliverables
-
-- [ ] Production Deployment
-- [ ] Monitoring
-- [ ] Error Tracking
-- [ ] Marketing Website
-- [ ] Launch Campaign
-
-**Exit Criteria**
-
-SkillMint is publicly accessible and stable.
-
----
-
-# Development Rules
-
-Every feature follows the same lifecycle.
-
-```text
-Design
-
-↓
-
-Implement
-
-↓
-
-Test
-
-↓
-
-Review
-
-↓
-
-Merge
-
-↓
-
-Deploy
-```
-
-No feature skips a stage.
-
----
-
-# Success Metrics
-
-The MVP is successful when:
-
-- A new user can create an account.
-- Upload a resume.
-- Receive a Career Assessment.
-- Understand their strengths and weaknesses.
-- Receive actionable recommendations.
-- Begin improving through missions.
-- Share progress publicly.
-
-If these outcomes are achieved, SkillMint delivers on its core promise.
-
----
-
-# Current Status
-
-Architecture: ✅ Complete
-
-Implementation: Production beta build active
-
-Current target:
-
-**Beta freeze QA → closed beta launch**
-
----
-
-# Locked SkillMint Beta Hierarchy
-
-```text
-Resume Reality
--> Profile-fit Roles
--> Active Target
--> Proof Confidence
--> Career IQ
--> Latest JD Match
--> Roadmap / Missions
--> Re-score Loop
-```
-
-Future work must not confuse Profile-fit Roles with Latest JD Match.
-
-Profile-fit Roles are general role suggestions from the resume. Latest JD Match is the user's fit against one specific pasted job description. Active Target should prefer the latest JD when present.
-
----
-
-# Sprint Status Update
-
-Sprint 5 Resume Intelligence: Frozen
-
-Next major focus:
-
-Sprint 6 — Authentication, Database, Persistent Profiles
-
-Sprint 6.1 Supabase Foundation: Completed
-
-Sprint 6.2 Auth Screens + Session Flow: Completed
-
-Sprint 6.3 Profile Persistence Foundation: Completed
-
-Sprint 6.4 Save Resume Analysis to Database: Completed
-
-Sprint 6.5 Persist ATS Matches, Rewrite Plans, and Roadmaps: Completed
-
-Sprint 6.6 User Account Dashboard + Sprint 6 QA Freeze: Completed
-
-Sprint 6 Account Persistence: Complete
-
-Sprint 7.1 Onboarding Foundation and First-Run Experience: Completed
-
-Sprint 7.2 Guided Target Role Setup: Completed
-
-Sprint 7.3 Beta Landing/App Entry Polish: Completed
-
-Sprint 7.4 Real Supabase Setup + Live Account Testing: Completed
-
-Sprint 7.5 Beta UI QA + Visual Polish: Completed
-
-Sprint 7.5D Visual System + Motion Polish: Completed
-
-Sprint 7.6A Feedback System Foundation: Completed
-
-Sprint 7.6B Run Feedback SQL + Live Feedback Test: Completed
-
-Sprint 7.6C Deployment Prep + Production Checklist: Completed
-
-Sprint 7.6E Production QA Fixes + Flow Clarity: Completed
-
-Sprint 7.7 Beta UX Simplification + Landing Flow: Completed
-
-Sprint 7.8 Activation Funnel + Upgrade Interest + Documentation: Completed
-
-Sprint 7.9 Beta Freeze QA + UX Regression Fixes: Completed
-
-Sprint 7.10 Premium Visual Redesign + Founder Appeal Pass: Completed
-
-Sprint 7.10B Visual Cohesion + Shareable Trust Fixes: Completed
-
-Sprint 7.10C Password Recovery + Proof Engine Direction: Completed
-
-Sprint 7.11 Proof-Aware Scoring MVP + Conversion UX Cleanup: Completed
-
-Sprint 7.11F SkillMint Doctrine + Hierarchy Lock: Completed
-
-RC-1A — Explainability + First-Time Clarity: Completed
-
-- Landing differentiation
-- Setup guidance
-- Free beta clarity
-- Proof Confidence explanation
-- Score guide
-- Upload processing feedback
-
-RC-1B — Role Reasoning + Roadmap Actionability: Completed
-
-- Profile-fit role reasoning
-- Roadmap priority / effort / impact labels
-- Dashboard mission clarity
-- Latest JD vs Profile-fit role clarity
-
-RC-1C/D — Workspace State + Mobile/Empty QA: Completed
-
-- Active workspace state handling
-- Clear active workspace control
-- No stale dashboard metrics after local data is cleared
-- Saved-analysis empty state clarity
-- Mobile responsiveness
-- Empty states
-- Dashboard readability
-- Roadmap readability
-- Copy consistency
-- Feedback button check
-
-RC-1E — Final Beta Closeout: Completed
-
-- Future work: real user feedback
-- Future work: analytics/events
-- Future work: resume history restore/select
-- Future work: stronger onboarding
-- Future work: portfolio/GitHub proof integrations
-- Future work: payments/pricing later
-- Future work: advanced AI roadmap later
-
-Next:
-
-Beta freeze QA, then beta freeze tag
+- deterministic scoring before AI reasoning;
+- no fake proof, deletion, privacy, or launch claims;
+- saved account history is not automatically the browser's active report;
+- clear workspace is browser-only;
+- mission status and Active Target never manipulate scores;
+- production operations require separate authorization and evidence.

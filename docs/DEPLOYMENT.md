@@ -4,6 +4,24 @@ SkillMint is a Next.js application preparing for a production beta rollout. Bloc
 
 `BETA_RELEASE_READINESS=BLOCKED_PENDING_PRODUCTION_ROLLOUT_AND_EXTERNAL_PRIVACY_CONTACT`
 
+## Brand and domain boundary
+
+The approved pre-Block-6 Brand & Domain Decision Gate may select a public name and reserve a usable domain. Selection and reservation are not activation and do not authorize production changes.
+
+The gate must not change DNS, Vercel configuration, Supabase configuration, authentication, trusted origins, schema, storage, or deployed environment variables. Custom-domain activation belongs to Block 7 and requires an independently approved rollout.
+
+During Block 7, review Preview and Production scopes independently and coordinate all of the following as one rollout boundary:
+
+- Vercel production branch and domain mapping;
+- `NEXT_PUBLIC_APP_URL` and allowed origins;
+- Supabase Site URL and redirect allowlists;
+- password-reset links and canonical URLs;
+- verified and monitored privacy/support email;
+- authentication and account-deletion origin smoke tests;
+- monitoring and rollback.
+
+Reserving a domain does not make any of these settings safe or complete. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+
 ## Deployment target and remote-push boundary
 
 Vercel is the preferred deployment target, but a Git-connected host may create preview deployments from branch pushes. Before any remote branch push, independently review the actual Git/Vercel project linkage, deployment protection, preview access, ignored-build settings, and environment-variable scopes. Unknown remote deployment behavior blocks remote push readiness even when a local commit is safe.
