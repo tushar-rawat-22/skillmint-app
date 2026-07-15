@@ -1,12 +1,14 @@
 # SkillMint Beta v1 Build Roadmap
 
 **Status:** Locked roadmap for Beta v1 completion; Block 5 engineering CLOSED AND FROZEN on July 13, 2026 after authorized isolated live-security proof. Beta release remains blocked pending production rollout and external privacy-contact verification.
-**Timeline:** Realistic 5-6 weeks; conservative 7-8 weeks  
+**Historical original Beta v1 planning estimate:** Realistic 5-6 weeks; conservative 7-8 weeks. This is not a current launch date or a new estimate.
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
+
+**Sequencing amendment:** A one-to-two-day Pre-Block-6 Brand & Domain Decision Gate is approved after this documentation alignment. It is not an eighth block and does not change the seven-block numbering.
 
 ## Current State
 
-SkillMint already has resume upload, active browser report state, saved resume analyses, dashboard restore, Career IQ, Proof Confidence, Harsh Truth, Profile-fit roles, Latest JD Match, mission execution, roadmap display, account status, and browser-only clear workspace controls.
+SkillMint already has resume upload; deterministic, proof-aware scoring; active browser report state; saved resume analyses and dashboard restore; Career IQ, Proof Confidence, and Harsh Truth; Profile-fit roles and Latest JD Match; mission execution and Career Path; Active Target and JD freshness controls; owner-aware browser partitions; the Trust Center; browser and account exports; saved-report deletion; browser-only clear workspace; and protected backend account deletion.
 
 Beta v1 is now about making the product trustworthy enough for students, freshers, and early-career users to accept direct scoring, proof gaps, and career guidance without mistaking signals for guarantees.
 
@@ -26,9 +28,22 @@ Every future block must preserve previous block outputs. No block should collaps
 6. Analytics + Founder Dashboard
 7. Beta Launch Readiness
 
+Current status:
+
+| Sequence | Status |
+| --- | --- |
+| Blocks 1-3 | Complete and frozen |
+| Block 4 | Complete, hardened, merged, and frozen |
+| Block 5 | Complete, verified, merged, synchronized, and frozen |
+| Pre-Block-6 Brand & Domain Decision Gate | Approved next sequence; not a block |
+| Block 6 | Not started |
+| Block 7 | Not started |
+
 ## Block Purposes And Boundaries
 
 ### 1. Premium Product UI System
+
+Status: Complete and preserved.
 
 Purpose: Make SkillMint feel premium, minimal, light-toned, trustworthy, and screenshot-friendly without changing product logic.
 
@@ -84,7 +99,33 @@ Out of scope: fake delete, fake privacy controls, destructive account actions wi
 
 Dependencies: Blocks 1-4 must remain intact.
 
+## Pre-Block-6 Brand & Domain Decision Gate
+
+**Status:** Approved sequencing amendment recorded after Blocks 1-5 were completed. This is not Block 6 and does not renumber the roadmap.
+
+**Duration:** One focused working day, with a second day only if availability or risk screening requires it.
+
+**Purpose:** Select one public name, one backup, and one usable domain before public labels, founder-facing presentation, launch documents, support identity, metadata, and external communications accumulate naming debt. The public name and domain are currently pending. This product sequencing choice is not a technical dependency for analytics.
+
+Block 6 event IDs, event schema names, persistent identifiers, storage contracts, and data keys must remain brand-neutral. Illustrative event IDs such as `resume_analysis_completed`, `active_target_created`, `jd_match_completed`, `mission_started`, and `mission_completed` are examples only, not an approved event taxonomy. This gate does not authorize an analytics provider, schema, event list, persistence model, or implementation.
+
+Sequence:
+
+1. Create an initial shortlist and select three finalists.
+2. Review domain availability plus basic competitor, confusion, pronunciation, spelling, and trademark risk.
+3. Select one public name and one backup.
+4. Reserve a usable domain.
+5. Create a bounded public-brand foundation branch with centralized public-brand configuration.
+6. Change user-facing brand surfaces only.
+7. Preserve internal SkillMint identifiers, including browser keys, TypeScript/database names, repository/package names, schemas, fixtures, commits, and frozen evidence.
+8. Re-run frozen Block 1-5 preservation checks, merge, and synchronize the public-brand layer.
+9. Begin Block 6.
+
+The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+
 ### 6. Analytics + Founder Dashboard
+
+Status: Not started.
 
 Purpose: Give the founder safe product-health visibility for beta readiness and learning.
 
@@ -93,6 +134,8 @@ Out of scope: exposing private user data, adding public analytics surfaces, or u
 Dependencies: Blocks 1-5 must remain intact.
 
 ### 7. Beta Launch Readiness
+
+Status: Not started.
 
 Purpose: Final QA, smoke testing, copy review, onboarding readiness, and launch/no-launch decision.
 

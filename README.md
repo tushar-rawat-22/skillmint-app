@@ -1,262 +1,127 @@
 # SkillMint
 
-> **The Career Operating System**
+SkillMint is a proof-aware Career Operating System for students, freshers, job seekers, and early-career users. It turns resume evidence and one optional job description into role direction, trust-aware scores, a focused target, and practical missions.
 
-SkillMint is an AI-powered Career Operating System that helps students and professionals understand where they are in their careers, what they should do next, and how to maximize their long-term career growth.
+The product hierarchy is:
 
-Unlike traditional resume analyzers, SkillMint is designed as a continuous career intelligence platform. A resume is only the starting point—not the product.
+```text
+Resume Reality
+-> Profile-fit Roles
+-> Active Target
+-> Proof Confidence
+-> Career IQ
+-> Latest JD Match
+-> Roadmap / Missions
+-> Re-analysis and Re-score
+```
 
-## Beta Quickstart
+Start with [Project Status](docs/PROJECT_STATUS.md) for the current project state, audited implementation baseline, frozen boundaries, release blockers, and next approved work.
 
-SkillMint is a Next.js career cockpit for resume intelligence, JD matching, roadmaps, account persistence, and beta feedback.
+## Current state
 
-Local setup:
+Blocks 1–5 of the Beta v1 roadmap are complete and frozen:
+
+1. Premium Product UI System
+2. Scoring Calibration + Truth Engine
+3. Mission Execution + Career Path Engine
+4. Active Target + JD Workflow
+5. Data Controls + Trust Center
+
+Block 6, Privacy-safe Analytics + Founder Dashboard, has not started. Block 7, Beta Launch Readiness, has not started. Public beta is not currently authorized.
+
+The current release blocker is production rollout plus externally verified, monitored privacy/support contact operations. Block 5 was verified against an authorized isolated Supabase project; that evidence does not prove production rollout or legal readiness. See [Block 5 Closure](docs/BLOCK_5_CLOSURE.md).
+
+Before Block 6, the approved one-to-two-day [Brand & Domain Decision Gate](docs/BRAND_DOMAIN_GATE.md) selects a public name and reserves a domain. It does not activate a domain or authorize production changes.
+
+## Implemented product surfaces
+
+Current source and routes support:
+
+- email/password signup, login, password recovery, and browser-first fallback;
+- career setup and account-aware profile state;
+- PDF, DOCX, and TXT resume upload and text extraction;
+- active browser reports and account-saved resume analysis history;
+- deterministic Career IQ, Proof Confidence, ATS Readiness, Recruiter Confidence, and Profile-fit Roles;
+- one-description Latest JD Match with improvement and rewrite guidance;
+- browser-local Active Target, mission status, and three-path 30/60/90 roadmap;
+- beta feedback with account persistence or owner-scoped browser fallback;
+- owner-scoped browser storage, browser/account JSON export, browser clearing, saved-report deletion, and protected backend account deletion;
+- a Trust Center at `/settings/data` and current technical privacy notice at `/privacy`.
+
+Important limits:
+
+- Career IQ is not a hiring probability or job guarantee.
+- Proof Confidence uses evidence candidates; it is not third-party verification.
+- Active Target and mission completion do not change scores.
+- Saved analysis is account history; the active report powers the current browser dashboard.
+- Clear workspace is browser-only. Account deletion is a separate backend operation.
+- External proof scanning, payment, AI chat, job-board expansion, analytics, and production rollout are not current implemented capabilities.
+
+## Stack
+
+- Next.js 16 App Router, React 19, and TypeScript
+- Tailwind CSS 4
+- Supabase Auth and PostgreSQL access through `@supabase/ssr` and `@supabase/supabase-js`
+- `pdf-parse` and `mammoth` for resume text extraction
+- ESLint, deterministic Node fixture scripts, and Playwright across Chromium, Firefox, and WebKit projects
+
+## Repository structure
+
+```text
+src/app/              pages and API routes
+src/components/       presentation components
+src/modules/          feature orchestration, repositories, hooks, and UI
+src/intelligence/     scoring, proof, missions, paths, targets, and career logic
+src/lib/parser/       resume parsing
+src/lib/pdf/          extraction utility
+src/lib/storage/      owner-scoped browser storage and registry
+src/lib/supabase/     Supabase clients and generated database types
+scripts/              deterministic fixtures and release diagnostics
+e2e/                  Playwright behavior and accessibility coverage
+supabase/             ordered SQL schema files
+docs/                 current contracts, frozen evidence, and historical plans
+```
+
+Dependency direction for new work:
+
+```text
+UI -> Modules -> Intelligence -> Parser/PDF utilities
+```
+
+Keep scoring, resume parsing, data ownership, and other business rules out of React presentation components.
+
+## Local setup
+
+Requirements: a supported Node.js/npm environment and a local env file.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Required environment variables:
+The core browser-first product can load without Supabase configuration. Account sync and account deletion require the documented environment and schema setup. Do not place real values in committed files.
 
-```text
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-```
-
-Production build:
+Verification depends on the type of change. For source or configuration changes:
 
 ```bash
+npm run lint
 npm run build
 ```
 
-Deployment and beta QA notes:
+For documentation-only changes and work touching frozen contracts, follow the proportional verification rules in [AGENTS.md](AGENTS.md). Run production smoke tests only against an explicitly authorized deployment; the script contacts the configured URL.
 
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Beta QA Checklist](docs/BETA_QA_CHECKLIST.md)
+## Documentation
 
----
+- [Current project status](docs/PROJECT_STATUS.md)
+- [Beta v1 build roadmap](docs/BETA_V1_BUILD_ROADMAP.md)
+- [Brand & Domain Decision Gate](docs/BRAND_DOMAIN_GATE.md)
+- [Block 5 engineering closure](docs/BLOCK_5_CLOSURE.md)
+- [Deployment safety guide](docs/DEPLOYMENT.md)
+- [Documentation map](docs/README.md)
 
-# Vision
+Historical architecture and planning documents remain in the repository for chronology. They do not override current source, tests, schemas, frozen Block 1–5 contracts, or the status entry point above.
 
-Our mission is to remove uncertainty from career growth.
+## License
 
-Every user should be able to answer three questions at any point in their professional journey:
-
-- Where am I today?
-- What should I do next?
-- How close am I to my career goal?
-
-SkillMint transforms fragmented career information into a structured, explainable, and actionable growth system.
-
----
-
-# Core Philosophy
-
-SkillMint is built around a few non-negotiable principles:
-
-- Career growth over resume optimization
-- Explainable intelligence over black-box AI
-- Honest feedback over false motivation
-- Deterministic calculations before LLM reasoning
-- Long-term retention over one-time analysis
-
-Artificial Intelligence is a tool.
-
-Career Intelligence is the product.
-
----
-
-# Product Overview
-
-SkillMint combines multiple career intelligence engines into one platform.
-
-Current capabilities include:
-
-- Resume Analysis
-- Career Profile Management
-- Career IQ
-- ATS Compatibility
-- Recruiter Confidence
-- Salary Intelligence
-- Career DNA
-- Career Momentum
-- Career Risk
-- Career Potential
-- AI Recommendations
-- Growth Missions
-- Career Progress Tracking
-- Public Career Cards
-
----
-
-# High-Level Architecture
-
-```text
-                   User
-
-                     │
-
-             Next.js Frontend
-
-                     │
-
-              Business API
-
-                     │
-
-         Career Intelligence Layer
-
-                     │
-
-      Deterministic Engines + AI
-
-                     │
-
-             Supabase Platform
-
-       PostgreSQL • Auth • Storage
-```
-
----
-
-# Technology Stack
-
-## Frontend
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Framer Motion
-- Recharts
-
-## Backend
-
-- Supabase
-- PostgreSQL
-- Edge Functions
-
-## AI Platform
-
-- LLM Abstraction Layer
-- Resume Parsing
-- Career Intelligence Engine
-- Recommendation Engine
-- Decision Engine
-
----
-
-# Repository Structure
-
-```
-skillmint-app/
-
-docs/
-app/
-components/
-hooks/
-lib/
-services/
-store/
-styles/
-supabase/
-tests/
-types/
-utils/
-public/
-scripts/
-```
-
-The `docs` directory contains the complete product, UX, engineering, database, AI, and API architecture.
-
----
-
-# Documentation
-
-| Document | Purpose |
-|----------|---------|
-| Constitution | Company vision and principles |
-| PRS | Product requirements |
-| UX | User experience architecture |
-| UI | Design system |
-| ENG-001 | Engineering architecture |
-| DB-001 | Database architecture |
-| AI-001 | Intelligence architecture |
-| API-001 | API architecture |
-
-All implementation should follow these documents.
-
----
-
-# Current Development Phase
-
-Current Status:
-
-**Architecture Freeze v1.0**
-
-Completed:
-
-- Product Vision
-- UX Architecture
-- UI Design System
-- Engineering Architecture
-- Database Architecture
-- AI Architecture
-- API Architecture
-
-Next Phase:
-
-Implementation
-
----
-
-# Engineering Principles
-
-Every contribution should follow these rules:
-
-- Simplicity before complexity.
-- One responsibility per module.
-- Explainable business logic.
-- No duplicated logic.
-- Feature-first architecture.
-- Testable code.
-- Scalable by default.
-
----
-
-# Long-Term Roadmap
-
-Phase 1
-
-- Career Operating System MVP
-
-Phase 2
-
-- Recruiter Workspace
-
-Phase 3
-
-- University Dashboard
-
-Phase 4
-
-- Company Hiring Portal
-
-Phase 5
-
-- Public Career API
-
----
-
-# License
-
-This repository is currently private.
-
-All rights reserved.
-
----
-
-# Built With
-
-❤️ by the SkillMint team.
+See [LICENSE](LICENSE).

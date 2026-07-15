@@ -1,5 +1,7 @@
 # SkillMint Beta v1 Launch Roadmap
 
+> **Historical launch framing.** This file preserves the original controlled-beta plan and success metrics. Current block status and sequencing live in [Project Status](PROJECT_STATUS.md) and [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md). Blocks 1–5 are complete and frozen; the Brand & Domain Decision Gate is next; Blocks 6–7 have not started; public beta is not authorized.
+
 ## Position
 
 This is a controlled beta plan, not a full public launch. Do not invite users until Beta v1 Complete unless the founder explicitly changes strategy. Do not expand features if the core journey fails.
@@ -60,12 +62,10 @@ Do not expand features if the core journey fails. Fix trust, explanation, upload
 
 Mission Execution and Career Path Engine should make next steps clearer without gamifying the product. Marked done is not verification, and mission progress must not be presented as a score boost.
 
-## Next Build Blocks
+## Current sequence
 
-- Premium Product UI System.
-- Scoring Calibration + Truth Engine.
-- Mission Execution System.
-- Active Target + JD Workflow.
-- Data Controls + Trust Center.
-- Analytics + Founder Dashboard.
-- Beta Launch Readiness.
+- Blocks 1–5: complete and frozen.
+- Pre-Block-6 Brand & Domain Decision Gate: approved next sequence; not a roadmap block.
+- Block 6, Analytics + Founder Dashboard: not started.
+- Block 7, Beta Launch Readiness: not started.
+- Production rollout and verified privacy/support contact operations: release blockers.
