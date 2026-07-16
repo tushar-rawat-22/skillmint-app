@@ -4,6 +4,8 @@
 
 The Block 5 engineering gate is **CLOSED AND FROZEN**. An independently authorized isolated Supabase test project passed the exact four-file bootstrap, normalized catalog comparison, two-account least-privilege lifecycle, production export boundary, recent-auth/refresh, real local route, hard Auth deletion, stale-token and concurrent-write containment, and exact cleanup. Production was not contacted; production rollout and external operational release gates remain blocked.
 
+The destructive isolated live-security lifecycle used only run-owned disposable accounts created for the authorized test run; no production or real-user account was used.
+
 ## Status and automated baseline
 
 Automated Block 5.2.8 browser closure uses the local synthetic Playwright harness described below. Separate isolated-live evidence proves the database/provider lifecycle but does not turn synthetic UI cases into manual QA. No row below is marked manually passed. WebKit is not Safari certification, and automated accessibility structure is not real screen-reader speech certification.
