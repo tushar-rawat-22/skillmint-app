@@ -1,64 +1,74 @@
 # SkillMint Documentation Map
 
-Start with [Project Status](PROJECT_STATUS.md). It records the current project state, audited implementation baseline, frozen boundaries, release blocker, approved Brand & Domain Gate, and question-specific authority model. Repository-wide engineering instructions are in [AGENTS.md](../AGENTS.md), and the current privacy notice is in [Privacy Notice](PRIVACY_NOTICE.md).
+SkillMint's documentation spans current contracts, frozen verification records, operational guidance, and older planning material. Start with the current-state documents below rather than treating every historical `Approved` or `Frozen` label as present implementation authority.
 
-The repository contains documents written at different stages. A document's original `Draft`, `Approved`, or `Frozen` label describes its historical lifecycle; it does not automatically make that document the current implementation authority.
+## Start here
 
-## Current execution authorities
+- [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and next approved sequence.
+- [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is the locked execution roadmap and preservation boundary.
+- [TODO](TODO.md) distinguishes current, blocked, deferred, completed, and historical work.
+- [Repository engineering instructions](../AGENTS.md) define the operational rules for changes.
 
-- [Project Status](PROJECT_STATUS.md): current-state entry point.
-- [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md): seven-block execution sequence and preservation rules.
-- [TODO](TODO.md): active, blocked, deferred, and historical work index.
-- [Deployment Safety Guide](DEPLOYMENT.md): deployment and rollout boundary.
-- [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md): approved pre-Block-6 sequence.
-- [Release Notes](RELEASE_NOTES.md): chronological repository release record.
+Implementation, tests, schemas, and frozen current contracts override legacy speculative architecture documents when the question is what the application ships today. Durable founder decisions and the locked roadmap remain the authority for approved product direction; source code alone does not silently cancel them.
 
-## Frozen contracts and evidence
+## Current product contracts
 
 - [Scoring System](SCORING_SYSTEM.md)
 - [Mission System](MISSION_SYSTEM.md)
 - [Career Path Engine](CAREER_PATH_ENGINE.md)
 - [Active Target Workflow](ACTIVE_TARGET_WORKFLOW.md)
 - [JD Workflow](JD_WORKFLOW.md)
+- [Premium UX Direction](PREMIUM_UX_DIRECTION.md)
+- [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md)
+
+These documents preserve the separation between Profile-fit Roles and Latest JD Match, score truth and focus, mission progress and evidence, and the current light-first UI direction.
+
+## Data, privacy and security contracts
+
+- [Data Map](DATA_MAP.md)
 - [Data Controls](DATA_CONTROLS.md)
 - [Data Export](DATA_EXPORT.md)
-- [Data Map](DATA_MAP.md)
-- [Account Deletion](ACCOUNT_DELETION.md)
 - [Trust Center](TRUST_CENTER.md)
+- [Account Deletion](ACCOUNT_DELETION.md)
+- [Privacy Notice](PRIVACY_NOTICE.md)
 - [Block 5.3 Implementation](BLOCK_5_3_IMPLEMENTATION.md)
+
+These contracts distinguish browser data from account data, owner partitions from shared browser state, browser clearing from authenticated deletion, and isolated engineering proof from production operations.
+
+## Testing and frozen evidence
+
 - [Block 5 Closure](BLOCK_5_CLOSURE.md)
 - [Block 5 QA Reconciliation](QA_DATA_CONTROLS.md)
+- [Scoring QA](QA_SCORING_TRUTH_ENGINE.md)
+- [Mission Execution QA](QA_MISSION_EXECUTION.md)
+- [Active Target QA](QA_ACTIVE_TARGET.md)
+- [Premium UI QA](QA_PREMIUM_UI.md)
+- [Phase 2A QA](QA_PHASE_2A.md)
+- [RC-1E QA](QA_RC1E.md)
+- [Beta QA Checklist](BETA_QA_CHECKLIST.md)
+- [Beta Freeze Criteria](BETA_FREEZE_CRITERIA.md)
 
-Do not rewrite frozen identities, hashes, run IDs, test counts, verdicts, or historical branch/commit references.
+Frozen evidence must not be casually rewritten. Preserve recorded identities, commits, hashes, run IDs, counts, scopes, and verdicts. Fixture-bound documentation may also contain wording required by deterministic checks; update it only with the relevant contract and fixture review.
 
-## QA and release checklists
+## Deployment and operations
 
-Files prefixed `QA_`, plus `BETA_QA_CHECKLIST.md`, `BETA_FREEZE_CRITERIA.md`, and `BETA_TESTER_SCRIPT.md`, describe their named scope. They prove only the checks they record. A local or isolated pass does not imply production or public-beta readiness.
+- [Deployment Safety Guide](DEPLOYMENT.md)
+- [Project Status](PROJECT_STATUS.md)
+- [Release Notes](RELEASE_NOTES.md)
+- [Changelog](CHANGELOG.md)
+- [Beta Tester Script](BETA_TESTER_SCRIPT.md), currently a draft rather than outreach authorization
 
-## Foundational product and strategy
+Local builds, isolated Supabase verification, browser-test passes, or a Vercel deployment do not independently authorize public beta or prove production readiness. Follow the release blockers and explicit authorization boundaries in the current status and deployment documents.
 
-`00_Company`, `00_Vision`, `01_Product`, `10_Business`, `10_Product`, and compatible founder-approved direction and decision records preserve the constitution, vision, business strategy, and enduring product principles. When they have not been superseded, they may constrain current product intent. They do not prove implementation and must be reconciled with frozen contracts, current execution authorities, and later durable founder decisions.
+## Historical planning documents
 
-A conversation-only founder decision must be recorded durably in the repository before it directs implementation.
+The directories below preserve useful chronology, assumptions, and product rationale:
 
-## Historical or superseded implementation plans
+- `00_Company`, `00_Vision`, and `01_Product`
+- `03_UX` and `04_UI`
+- `05_Architecture`, `06_Database`, `07_API`, and `08_AI`
+- `09_Development`, `10_Business`, `10_Database`, and `10_Product`
+- `99_Releases`
+- older phase, public-beta, and release planning documents not listed as current contracts above
 
-Older UX and UI plans, engineering architecture, database, API, AI, sprint, release, and launch materials preserve chronology and rationale. This includes relevant material in `03_UX`, `04_UI`, `05_Architecture`, `06_Database`, `07_API`, `08_AI`, and `99_Releases`, plus phase-specific files where later contracts superseded them. Check current implementation and the approved roadmap before using them. An original `Approved` or `Frozen` label does not itself authorize new work.
-
-Examples of non-current architecture-era assumptions include server-only scoring, a large public API, public career cards, Career Momentum/Risk/Forecast engines, notification systems, payments, recruiter/university products, and mission completion directly updating Career IQ. Do not implement or claim them solely because an early document names them.
-
-## Question-specific authority
-
-- For implementation truth, use fetched Git chronology, current source, tests, schemas and configuration, and implementation contracts. Code does not decide strategy; tests cover only exercised behavior; build or deployment does not prove launch readiness.
-- For a frozen result, use its SHA-pinned closure, QA, and contract evidence without rewriting historical identities, combining separate test layers, or implying old temporary artifacts still exist.
-- For current product intent, use durable founder decisions, current approved roadmap and decision documents, and compatible unsuperseded constitution, vision, strategy, and product requirements. Product documents do not prove implementation.
-- For chronology and rationale, use clearly classified historical material; it does not grant current authorization.
-- When sources conflict, identify the question, record the contradiction, preserve frozen contracts, and document a founder decision if sequencing remains unresolved. See [Project Status](PROJECT_STATUS.md) for the full model.
-
-## Documentation maintenance
-
-- Update current authorities when current implementation or approved sequencing changes.
-- Preserve historical documents when chronology is valuable and their classification is clear.
-- Add a targeted supersession note when a historical file would otherwise misdirect current execution.
-- Use relative repository links and exact routes, modules, contracts, and commits when they improve traceability.
-- Keep planned work labeled planned, blocked, historical, or aspirational.
+Historical documents remain for context and should not be treated as shipped functionality. In particular, older dark-cockpit design direction, speculative AI and API architecture, payments, public career products, employer or institution surfaces, and launch plans do not override current implementation, frozen Blocks 1–5, or [Project Status](PROJECT_STATUS.md).

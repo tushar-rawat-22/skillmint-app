@@ -1,5 +1,7 @@
 # SkillMint Beta Tester Script
 
+> **Status: Draft outreach script only.** Public or external beta outreach is not authorized until the release blockers in [PROJECT_STATUS.md](PROJECT_STATUS.md) and [DEPLOYMENT.md](DEPLOYMENT.md) are closed.
+
 ## Message To Send Testers
 
 Hey, I am testing SkillMint with a small group before inviting more users. It is a proof-aware career operating system for students and freshers. It reads your resume, shows where your profile stands, what roles fit your current signals, what proof is missing, and what to fix next.
