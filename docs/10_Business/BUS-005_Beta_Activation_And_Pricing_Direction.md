@@ -1,5 +1,7 @@
 # SkillMint Beta Activation and Pricing Direction
 
+> **Status: Historical planning document.** The free beta is not currently active or authorized. Current release authority is defined by [PROJECT_STATUS.md](../PROJECT_STATUS.md), [BETA_V1_BUILD_ROADMAP.md](../BETA_V1_BUILD_ROADMAP.md) and [DEPLOYMENT.md](../DEPLOYMENT.md).
+
 ## Purpose
 
 Sprint 7.8 adds activation signals without adding payments or paid access.

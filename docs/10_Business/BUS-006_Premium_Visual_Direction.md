@@ -1,5 +1,7 @@
 # SkillMint Premium Visual Direction
 
+> **Status: Historical visual direction.** Its dark-cockpit guidance is superseded by the current light-first system in [PREMIUM_UX_DIRECTION.md](../PREMIUM_UX_DIRECTION.md) and [AGENTS.md](../../AGENTS.md).
+
 ## Purpose
 
 Sprint 7.10 exists to make SkillMint feel beta-ready from a trust and founder-appeal standpoint.
