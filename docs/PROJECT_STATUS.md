@@ -66,6 +66,8 @@ Production schema inventory and rollout, environment/origin coordination, operat
 
 ## Approved next sequence
 
+**Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. Block 6 may proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
+
 1. Documentation alignment, completed by this update.
 2. Run the [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 3. Select one public name and one backup; reserve a usable domain.
