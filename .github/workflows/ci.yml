@@ -71,3 +71,4 @@ jobs:
           node scripts/mission-path-fixtures.mjs
           node scripts/scoring-truth-fixtures.mjs
           node scripts/trust-center-reliability-fixtures.mjs
+          node scripts/analytics-contract-fixtures.mjs
