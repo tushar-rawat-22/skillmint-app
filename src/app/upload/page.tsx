@@ -20,6 +20,13 @@ import {
   writeActiveResumeReport,
   writeResumeSyncStatus,
 } from "@/modules/resume";
+import {
+  fireAndForgetAnalytics,
+  getAnalyticsDurationBucket,
+  getAnalyticsFileType,
+  getBrowserAnalyticsRuntime,
+  getResumeAnalyticsErrorCode,
+} from "@/platform/analytics";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -28,6 +35,10 @@ export default function UploadPage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isAuthLoading,
+    hasAccount: Boolean(user),
+  });
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +56,11 @@ export default function UploadPage() {
   async function analyzeSelectedResume() {
     if (!file || loading) return;
 
+    const startedAt = Date.now();
+    const fileType = getAnalyticsFileType(file);
+    fireAndForgetAnalytics(() => analytics.resumeAnalysisStarted({
+      file_type: fileType,
+    }));
     setError(null);
 
     setLoading(true);
@@ -67,6 +83,11 @@ export default function UploadPage() {
 
       router.push("/resume");
     } catch (error) {
+      fireAndForgetAnalytics(() => analytics.resumeAnalysisFailed({
+        file_type: fileType,
+        error_code: getResumeAnalyticsErrorCode(error),
+        duration_bucket: getAnalyticsDurationBucket(startedAt, Date.now()),
+      }));
       setError(
         error instanceof Error
           ? error.message

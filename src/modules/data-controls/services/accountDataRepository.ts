@@ -46,7 +46,7 @@ type AdapterResponse = {
 export type AccountDataExportQueryAdapter = {
   getAuthenticatedUserId: () => Promise<AdapterResponse>;
   getExactCount: (input: {
-    tableName: keyof Database["public"]["Tables"];
+    tableName: AccountOwnedTableName;
     ownerColumn: "id" | "user_id";
     expectedUserId: string;
   }) => Promise<AdapterResponse>;
@@ -741,7 +741,7 @@ async function confirmSupabaseIdentity(
 
 async function getCount(
   supabase: SupabaseBrowserClient,
-  tableName: keyof Database["public"]["Tables"],
+  tableName: AccountOwnedTableName,
   ownerColumn: "id" | "user_id",
   ownerValue: string,
 ): Promise<RepositoryResult<number>> {
@@ -760,7 +760,7 @@ async function getCount(
 
 async function getExactSupabaseCount(
   supabase: SupabaseBrowserClient,
-  tableName: keyof Database["public"]["Tables"],
+  tableName: AccountOwnedTableName,
   expectedUserId: string,
 ) {
   if (tableName === "profiles") {
@@ -775,6 +775,11 @@ async function getExactSupabaseCount(
     .select("id", { count: "exact", head: true })
     .eq("user_id", expectedUserId);
 }
+
+type AccountOwnedTableName = Exclude<
+  keyof Database["public"]["Tables"],
+  "analytics_events"
+>;
 
 function reconcileCounts(
   preCount: number,

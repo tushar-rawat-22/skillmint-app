@@ -20,6 +20,7 @@ Implementation, tests, schemas, and frozen current contracts override legacy spe
 - [JD Workflow](JD_WORKFLOW.md)
 - [Premium UX Direction](PREMIUM_UX_DIRECTION.md)
 - [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md)
+- [Privacy-safe Analytics Collection](ANALYTICS.md)
 
 These documents preserve the separation between Profile-fit Roles and Latest JD Match, score truth and focus, mission progress and evidence, and the current light-first UI direction.
 

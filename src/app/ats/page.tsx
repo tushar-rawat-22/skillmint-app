@@ -90,6 +90,11 @@ import { getTargetRoleSetup } from "@/modules/onboarding/storage/targetRoleSetup
 import {
   readActiveResumeReportSnapshot,
 } from "@/modules/resume/services/activeResumeReportStorage";
+import {
+  fireAndForgetAnalytics,
+  getAnalyticsDurationBucket,
+  getBrowserAnalyticsRuntime,
+} from "@/platform/analytics";
 const MIN_JOB_DESCRIPTION_LENGTH = 80;
 const JOB_DESCRIPTION_MIN_HEIGHT = 140;
 const JOB_DESCRIPTION_MAX_HEIGHT = 420;
@@ -119,6 +124,10 @@ export default function ATSMatcherPage() {
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
   const userId = user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isAuthLoading,
+    hasAccount: Boolean(user),
+  });
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredAnalysis,
     () => readStoredAnalysis(currentUserId),
@@ -400,6 +409,8 @@ export default function ATSMatcherPage() {
     setError("");
     setDeleteSyncMessage("");
     setHistorySyncMessage("");
+    const startedAt = Date.now();
+    fireAndForgetAnalytics(() => analytics.jdMatchStarted());
 
     const result = analyzeJobDescriptionMatch(
       userProfile,
@@ -443,10 +454,21 @@ export default function ATSMatcherPage() {
     });
 
     if (!nextMatches || !didPersistLatest) {
+      fireAndForgetAnalytics(() => analytics.productOperationFailed(
+        "jd_match",
+        {
+          operation: "jd_match",
+          error_code: "storage_write_failed",
+          duration_bucket: getAnalyticsDurationBucket(startedAt, Date.now()),
+        },
+      ));
       setError("Could not save this match in your browser. Please try again.");
       return;
     }
 
+    fireAndForgetAnalytics(() => analytics.jdMatchCompleted({
+      duration_bucket: getAnalyticsDurationBucket(startedAt, Date.now()),
+    }));
     setActiveMatch(savedMatch);
     setSavedJobMatches(nextMatches);
     void persistJobMatchToDatabase(savedMatch);
@@ -575,9 +597,20 @@ export default function ATSMatcherPage() {
     });
 
     if (!setActiveTarget(target, { ownerUserId: currentUserId })) {
+      fireAndForgetAnalytics(() => analytics.productOperationFailed(
+        "jd_match",
+        {
+          operation: "active_target_selection",
+          error_code: "storage_write_failed",
+        },
+      ));
       setTargetActionMessage("Could not save Active Target in this browser. Please try again.");
       return;
     }
+    fireAndForgetAnalytics(() => analytics.activeTargetSelected({
+      target_source: "latest_jd",
+      selection_kind: activeTarget ? "replaced" : "created",
+    }));
     setTargetActionMessage(
       activeTarget
         ? "Active Target replaced. Saved in this browser during beta."
@@ -607,9 +640,20 @@ export default function ATSMatcherPage() {
           ownerUserId: currentUserId,
         },
       )) {
+        fireAndForgetAnalytics(() => analytics.productOperationFailed(
+          "jd_match",
+          {
+            operation: "active_target_selection",
+            error_code: "storage_write_failed",
+          },
+        ));
         setTargetActionMessage("Could not save Active Target in this browser. Please try again.");
         return;
       }
+      fireAndForgetAnalytics(() => analytics.activeTargetSelected({
+        target_source: "profile_fit",
+        selection_kind: activeTarget ? "replaced" : "created",
+      }));
       setTargetActionMessage(
         "Closest Role Path set as Active Target. Saved in this browser during beta.",
       );
@@ -629,9 +673,20 @@ export default function ATSMatcherPage() {
       }
 
       if (!setActiveTarget(target, { ownerUserId: currentUserId })) {
+        fireAndForgetAnalytics(() => analytics.productOperationFailed(
+          "jd_match",
+          {
+            operation: "active_target_selection",
+            error_code: "storage_write_failed",
+          },
+        ));
         setTargetActionMessage("Could not save Active Target in this browser. Please try again.");
         return;
       }
+      fireAndForgetAnalytics(() => analytics.activeTargetSelected({
+        target_source: "ultimate_goal",
+        selection_kind: activeTarget ? "replaced" : "created",
+      }));
       setTargetActionMessage(
         "Ultimate Goal set as Active Target. Saved in this browser during beta.",
       );
@@ -648,9 +703,22 @@ export default function ATSMatcherPage() {
       return;
     }
 
+    const priorTargetSource = activeTarget?.source;
     if (!clearActiveTarget({ currentUserId })) {
+      fireAndForgetAnalytics(() => analytics.productOperationFailed(
+        "jd_match",
+        {
+          operation: "active_target_clear",
+          error_code: "storage_write_failed",
+        },
+      ));
       setTargetActionMessage("Could not clear Active Target in this browser. Please try again.");
       return;
+    }
+    if (priorTargetSource) {
+      fireAndForgetAnalytics(() => analytics.activeTargetCleared({
+        prior_target_source: priorTargetSource,
+      }));
     }
     setTargetActionMessage("Active Target cleared from this browser.");
   }

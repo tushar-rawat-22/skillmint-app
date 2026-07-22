@@ -36,7 +36,7 @@ Current status:
 | Block 4 | Complete, hardened, merged, and frozen |
 | Block 5 | Complete, verified, merged, synchronized, and frozen |
 | Pre-Block-6 Brand & Domain Decision Gate | Approved next sequence; not a block |
-| Block 6 | Not started |
+| Block 6 | In progress; Block 6.1 local collection engineering implemented, pending independent review |
 | Block 7 | Not started |
 
 ## Block Purposes And Boundaries
@@ -125,7 +125,7 @@ The gate is not a full rebrand or visual redesign. It does not authorize product
 
 ### 6. Analytics + Founder Dashboard
 
-Status: Not started.
+Status: In progress. The Block 6.1 privacy-safe contract and local collection implementation exist in the repository, pending independent review. Production schema rollout, live collection, founder aggregation/dashboard, operational monitoring, and Block 6 closure are not complete.
 
 Purpose: Give the founder safe product-health visibility for beta readiness and learning.
 

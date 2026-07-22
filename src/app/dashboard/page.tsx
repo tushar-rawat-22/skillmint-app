@@ -67,6 +67,10 @@ import {
   ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
   RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
 } from "@/modules/resume/services/activeResumeReportStorage";
+import {
+  fireAndForgetAnalytics,
+  getBrowserAnalyticsRuntime,
+} from "@/platform/analytics";
 
 type LatestJobMatchSummary = {
   title: string;
@@ -87,6 +91,10 @@ export default function DashboardPage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isAuthLoading,
+    hasAccount: Boolean(user),
+  });
   const storedResume = useSyncExternalStore(
     subscribeToStoredData,
     () => readStoredResume(currentUserId),
@@ -312,6 +320,13 @@ export default function DashboardPage() {
       );
 
       if (!restoreResult.ok) {
+        fireAndForgetAnalytics(() => analytics.productOperationFailed(
+          "dashboard",
+          {
+            operation: "analysis_restore",
+            error_code: "storage_write_failed",
+          },
+        ));
         setDashboardRestoreState({
           status: "error",
           message: restoreResult.error,
@@ -319,6 +334,9 @@ export default function DashboardPage() {
         return;
       }
 
+      fireAndForgetAnalytics(() => analytics.analysisRestored("dashboard", {
+        restore_kind: "latest",
+      }));
       setDashboardRestoreState({
         status: "success",
         message: "Latest saved analysis is now this browser's active dashboard report.",

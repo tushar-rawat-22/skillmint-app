@@ -39,6 +39,11 @@ import type {
   RepositoryResult,
   PersistedBetaFeedback,
 } from "@/modules/feedback/types";
+import {
+  fireAndForgetAnalytics,
+  getAnalyticsSourceScreen,
+  getBrowserAnalyticsRuntime,
+} from "@/platform/analytics";
 
 type FeedbackStatusTone = "idle" | "loading" | "success" | "warning" | "error";
 type FeedbackStatus = {
@@ -82,6 +87,11 @@ export default function FeedbackWidget() {
   const { user, isLoading: isAuthLoading } = useAuthSession();
   const pathname = usePathname();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isAuthLoading,
+    hasAccount: Boolean(user),
+  });
+  const analyticsSourceScreen = getAnalyticsSourceScreen(pathname);
   const ownerContext = getFeedbackOwnerContext(currentUserId);
   const ownerKey = ownerContext?.ownerKey ?? null;
   const accountUserId = ownerContext?.accountUserId ?? null;
@@ -217,7 +227,12 @@ export default function FeedbackWidget() {
           normalized.data,
           { currentUserId: null },
         );
-        publishLocalResult(request, localResult, true);
+        publishLocalResult(
+          request,
+          localResult,
+          true,
+          normalized.data.feedbackType,
+        );
         return;
       }
 
@@ -229,6 +244,13 @@ export default function FeedbackWidget() {
       }
 
       if (accountResult.ok) {
+        fireAndForgetAnalytics(() => analytics.feedbackPersisted(
+          analyticsSourceScreen,
+          {
+            persistence_path: "account",
+            feedback_type: normalized.data.feedbackType,
+          },
+        ));
         if (isCurrentFeedbackRequest(
           request,
           liveContextRef.current,
@@ -253,8 +275,20 @@ export default function FeedbackWidget() {
         { currentUserId: startingUserId },
         persistedCode,
       );
-      publishLocalResult(request, localResult, false);
+      publishLocalResult(
+        request,
+        localResult,
+        false,
+        normalized.data.feedbackType,
+      );
     } catch {
+      fireAndForgetAnalytics(() => analytics.productOperationFailed(
+        analyticsSourceScreen,
+        {
+          operation: "feedback_persistence",
+          error_code: "storage_write_failed",
+        },
+      ));
       if (isCurrentFeedbackRequest(
         request,
         liveContextRef.current,
@@ -280,6 +314,7 @@ export default function FeedbackWidget() {
     request: FeedbackRequestIdentity,
     result: ReturnType<typeof saveFeedbackLocally>,
     signedOut: boolean,
+    persistedFeedbackType: FeedbackType,
   ) {
     if (!isCurrentFeedbackRequest(
       request,
@@ -288,6 +323,13 @@ export default function FeedbackWidget() {
     )) return;
 
     if (result.ok) {
+      fireAndForgetAnalytics(() => analytics.feedbackPersisted(
+        analyticsSourceScreen,
+        {
+          persistence_path: signedOut ? "browser" : "browser_fallback",
+          feedback_type: persistedFeedbackType,
+        },
+      ));
       setMessage("");
       setStatus({
         ownerKey: request.ownerKey,
@@ -300,6 +342,13 @@ export default function FeedbackWidget() {
       return;
     }
 
+    fireAndForgetAnalytics(() => analytics.productOperationFailed(
+      analyticsSourceScreen,
+      {
+        operation: "feedback_persistence",
+        error_code: "storage_write_failed",
+      },
+    ));
     setStatus({
       ownerKey: request.ownerKey,
       contextEpoch: request.contextEpoch,

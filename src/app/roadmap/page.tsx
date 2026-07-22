@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -81,6 +82,10 @@ import {
   writeCurrentJobMatchSnapshot,
 } from "@/lib/storage/jdMatchCurrentStorage";
 import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
+import {
+  fireAndForgetAnalytics,
+  getBrowserAnalyticsRuntime,
+} from "@/platform/analytics";
 
 type LatestJobMatch = {
   id?: string;
@@ -143,6 +148,11 @@ export default function RoadmapPage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isAuthLoading,
+    hasAccount: Boolean(user),
+  });
+  const didEmitRoadmapReached = useRef(false);
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredData,
     () => readStoredAnalysis(currentUserId),
@@ -313,6 +323,22 @@ export default function RoadmapPage() {
   const latestDatabaseMatchId = latestJobMatch?.databaseId ?? null;
 
   useEffect(() => {
+    if (
+      isAuthLoading ||
+      didEmitRoadmapReached.current ||
+      !selectedTrack ||
+      selectedTrack.status !== "available"
+    ) {
+      return;
+    }
+
+    didEmitRoadmapReached.current = true;
+    fireAndForgetAnalytics(() => analytics.roadmapReached({
+      path_source: selectedTrack.source,
+    }));
+  }, [analytics, isAuthLoading, selectedTrack]);
+
+  useEffect(() => {
     if (!legacyRoadmap) {
       return;
     }
@@ -397,10 +423,37 @@ export default function RoadmapPage() {
       return;
     }
 
-    setMissionStatus(missionId, status, {
+    const mission = careerPathResult?.tracks
+      .flatMap((track) => track.phases)
+      .flatMap((phase) => phase.missions)
+      .find((candidate) => candidate.id === missionId);
+    const priorStatus = mission?.status;
+    const didPersist = setMissionStatus(missionId, status, {
       currentUserId,
     });
     notifySkillMintWorkspaceUpdated();
+
+    if (!didPersist) {
+      fireAndForgetAnalytics(() => analytics.productOperationFailed(
+        "roadmap",
+        {
+          operation: "mission_status",
+          error_code: "storage_write_failed",
+        },
+      ));
+      return;
+    }
+
+    if (!mission || priorStatus === status) return;
+    const properties = {
+      mission_category: mission.category,
+      path_source: mission.sourcePath ?? "global",
+    } as const;
+    if (status === "started") {
+      fireAndForgetAnalytics(() => analytics.missionStarted(properties));
+    } else if (status === "done_by_user") {
+      fireAndForgetAnalytics(() => analytics.missionMarkedDone(properties));
+    }
   }
 
   async function handleCopy(key: string, value: string) {

@@ -20,6 +20,10 @@ import {
   getCurrentUserProfile,
   upsertCurrentUserProfile,
 } from "@/modules/profile/services/profileRepository";
+import {
+  fireAndForgetAnalytics,
+  getBrowserAnalyticsRuntime,
+} from "@/platform/analytics";
 
 type TargetRoleSetupFormState = Omit<TargetRoleSetup, "updatedAt"> & {
   careerField: NonNullable<TargetRoleSetup["careerField"]>;
@@ -88,6 +92,10 @@ const WEEKLY_TIME_OPTIONS = [
 export default function TargetRoleSetupForm() {
   const { user, isConfigured, isLoading } = useAuthSession();
   const currentUserId = isLoading ? undefined : user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isLoading,
+    hasAccount: Boolean(user),
+  });
   const [form, setForm] = useState<TargetRoleSetupFormState>(DEFAULT_FORM);
   const [savedSetup, setSavedSetup] = useState<TargetRoleSetup | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -135,6 +143,9 @@ export default function TargetRoleSetupForm() {
       updatedAt: new Date().toISOString(),
     };
 
+    fireAndForgetAnalytics(() => analytics.careerSetupStarted({
+      setup_mode: savedSetup ? "edit" : "create",
+    }));
     setIsSaving(true);
     setError("");
     saveTargetRoleSetup(nextSetup, {

@@ -189,6 +189,45 @@ export interface Database {
         };
         Relationships: [];
       };
+      analytics_events: {
+        Row: {
+          event_id: string;
+          event_name: string;
+          event_version: number;
+          occurred_at: string;
+          received_at: string;
+          environment: string;
+          build_id: string;
+          source_screen: string;
+          owner_mode: string;
+          properties: Json;
+        };
+        Insert: {
+          event_id: string;
+          event_name: string;
+          event_version: number;
+          occurred_at: string;
+          received_at?: string;
+          environment: string;
+          build_id: string;
+          source_screen: string;
+          owner_mode: string;
+          properties: Json;
+        };
+        Update: {
+          event_id?: string;
+          event_name?: string;
+          event_version?: number;
+          occurred_at?: string;
+          received_at?: string;
+          environment?: string;
+          build_id?: string;
+          source_screen?: string;
+          owner_mode?: string;
+          properties?: Json;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
