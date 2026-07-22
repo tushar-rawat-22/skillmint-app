@@ -1,8 +1,8 @@
 # Privacy-safe Analytics Collection
 
-**Status:** Block 6.1 local engineering is implemented in the repository and pending independent review. Block 6 remains in progress.
+**Status:** Block 6.1 is merged and frozen pending rollout. The Block 6.2 repository-only aggregation/dashboard implementation exists and remains pending final independent review. Block 6 overall remains in progress.
 
-The repository contains a first-party, privacy-minimized collection path for aggregate product-health events. It is not a production-operation claim: the analytics migration has not been applied to any Supabase project, live collection is not enabled or verified, operational monitoring does not exist, and the Founder Dashboard is deferred to Block 6.2.
+The repository contains a first-party, privacy-minimized collection path and a protected founder-only aggregate Product Event Health dashboard. This is not a production-operation claim: neither analytics migration has been applied, the founder UUID was not configured, no WAF rule or purge schedule was configured, no analytics collection flag was enabled, no live service was contacted, and no deployment or production rollout occurred.
 
 ## Activation
 
@@ -28,7 +28,7 @@ The version 1 taxonomy is closed to these names:
 - `feedback_persisted`
 - `product_operation_failed`
 
-The taxonomy has no resume-analysis success event. Block 6.1 does not invent one; whether a low-cardinality success event is needed is a Block 6.2 contract-review item.
+The frozen taxonomy has no resume-analysis-success event, and Block 6.2 deliberately adds none. Resume success cannot be inferred by subtracting failure events from start events because event attempts, retries, failures, and window boundaries do not establish a one-to-one outcome set. This is a closed Block 6.2 decision, not an unresolved contract question.
 
 ## Privacy contract
 
@@ -63,11 +63,33 @@ The table constrains every envelope enum, the current event version, build-ID sh
 
 No migration command was run and no live Supabase project was contacted by Block 6.1.
 
+## Founder aggregation and authorization
+
+`supabase/schema_v6_analytics_aggregation.sql` is an ordered, unapplied migration after V5. Both functions use plain `CREATE FUNCTION`, intentionally aborting the transaction if either function already exists unexpectedly instead of preserving an unknown owner or ACL. The aggregate function accepts only `24h`, `7d`, or `30d`, runs with `SECURITY DEFINER`, an empty `search_path`, and a two-second statement timeout, and returns one exact versioned aggregate row. Its one database `as_of` instant is aligned to millisecond precision. Database-generated `received_at` uses closed-open `[window_start, as_of)` windows of exact elapsed 24, 168, or 720 hours—not calendar-day boundaries. The browser cannot provide an environment, date, dimension, identifier, ordering, or limit; the API supplies only the current server-canonical environment.
+
+The function returns fixed event-name counts, the approved operation/error-code matrix, approved feedback persistence-path counts, total events, last received event time, and events overdue for the exact elapsed 1,080-hour deletion threshold. It cannot return raw events, raw event timestamps, or excluded dimensions. Function execution is revoked from `public`, `anon`, and `authenticated` and granted only to `service_role`; V5's absence of direct `SELECT` access remains unchanged, and `service_role` receives no table `SELECT` grant.
+
+`public.purge_expired_analytics_events()` selects event IDs strictly older than the exact elapsed 1,080-hour threshold in deterministic `received_at, event_id` order, deletes at most 10,000 selected rows per invocation, and returns only the deleted count. If more than 10,000 events are overdue, repeated scheduled runs may be needed. Execution is revoked from `public`, `anon`, `authenticated`, and `service_role`; it is not called or scheduled. Any future `pg_cron` scheduling requires separate explicit authorization, rollout, monitoring, and rollback planning.
+
+The unlinked `/founder/analytics` page is isolated from ordinary user navigation and the feedback workflow. It sends its current browser Auth access token only to the same-origin `GET /api/founder/analytics/summary` endpoint. The API requires one exact Bearer header, verifies the token with Supabase Auth `getUser(token)`, and compares the authentic Auth UUID with the one valid server-only `ANALYTICS_FOUNDER_USER_ID` configuration value. A missing, malformed, or invalid configured UUID disables the dashboard. There is no email allowlist, metadata role, hardcoded UUID, authorization table, or identity field in analytics. The configured UUID is authorization configuration only and remains completely outside analytics data and responses.
+
+The API has two process-local fixed-window backstops: a coarse global allowance of 60 syntactically valid Bearer requests per 60 seconds before Auth, followed after authentic founder authorization by a separate ten aggregate requests per 60 seconds and at most one query in flight. Neither limiter stores a token, UUID, IP address, account identifier, or derived identifier. This is defense in depth, not distributed enforcement: serverless instances do not share counters or query locks. A configured Vercel WAF rule remains a mandatory activation prerequisite. There is no automatic dashboard refresh, automatic retry, or analytics export.
+
+## Approved observed event ratios
+
+The server validates the RPC result as one exact `founder_analytics_summary.v1` DTO before calculating three ratios in TypeScript:
+
+1. `resume_analysis_failed / resume_analysis_started`;
+2. `jd_match_completed / jd_match_started`;
+3. feedback-persistence `product_operation_failed` events divided by `feedback_persisted +` feedback-persistence failure events.
+
+Each result returns its numerator, denominator, and ratio. A zero denominator produces `null`; ratios are not capped at 100%. These are observed event ratios, not person-level outcomes or conversion rates. Retries, duplicates at the action level, failures spanning a window boundary, and different event attempt counts can affect them. The contract does not calculate a mission completion ratio, does not infer resume success, and exposes no owner mode, source screen, build ID, duration, file type, target source, path source, mission category, or feedback type.
+
 ## Metric limitations
 
 `owner_mode` records client-observed resolved Auth presence. It is not server-authenticated identity proof, cannot be correlated to an account, and a crafted direct request can claim either allowed owner-mode enum. `source_screen` and `properties` are strictly allowlisted, but they still originate from the instrumented client.
 
-This schema cannot calculate unique-user or active-user metrics, retention, cohorts, per-user conversion, or session funnels. It initially supports only bounded event counts and aggregate event rates whose definitions and denominators must be approved separately. Event totals must never be described as people or users.
+Events are not people. The schema has no identity analytics and cannot calculate unique people, active-account metrics, person-level retention, cohorts, sessions, or person-level funnels. It supports only fixed aggregate event counts and the three approved observed event ratios. Event totals must never be described as people or accounts.
 
 `occurred_at` is client supplied and is only client occurrence context, not authoritative operational chronology. Database-generated `received_at` must drive any future ingestion-window metric.
 
@@ -89,7 +111,7 @@ This schema cannot calculate unique-user or active-user metrics, retention, coho
 | `feedback_persisted` | Current approved source screen | Account insert, signed-out browser save, or account fallback browser save succeeds | Feedback type enum and actual persistence path enum | Resolved Auth presence only | Existing request identity prevents duplicate concurrent submissions | Implemented |
 | `product_operation_failed` | Relevant approved source screen | Selected real storage/persistence boundaries fail after valid actions | Fixed operation and error enums, optional duration bucket | Resolved Auth presence only | Invalid/aborted actions emit none; failure event itself is best effort | Implemented |
 
-Every approved Block 6.1 event has a trustworthy existing transition and is implemented. No approved event is intentionally unwired. The absent resume-analysis success event is not approved and therefore remains a Block 6.2 contract-review question rather than an implementation gap.
+Every approved Block 6.1 event has a trustworthy existing transition and is implemented. No approved event is intentionally unwired. The absent resume-analysis-success event remains deliberately absent and cannot be inferred from the existing event counts.
 
 ## Failure isolation and test boundary
 
@@ -97,8 +119,14 @@ Analytics calls are fire-and-forget. They are never awaited to authorize navigat
 
 Offline fixtures cover the HTTP request contract, timeout, non-2xx behavior, strict validation, server canonicalization, fixed repository errors, idempotency, privacy keys, server-only imports, and SQL/RLS/grant constraints. Playwright route interception covers anonymous and account owner modes, exact representative event counts, invalid-action suppression, content exclusion, absence of analytics-caused anonymous Auth lookup, and product continuation after transport failure. These checks do not prove live collection, production schema state, operational monitoring, retention operations, privacy law compliance, or production readiness.
 
+## Block 6.2 verification boundary
+
+Offline fixtures cover founder configuration, strict Bearer and query parsing, authentic and non-founder identities, the exact shared HTTP response parser, fixed headers/errors, all windows using only the server environment, both process-local limiter tiers, concurrency, exact DTO validation, ratio rules, forbidden output fields, fail-closed V6 creation, millisecond/exact-hour boundaries, bounded purge SQL and privileges, and byte-for-byte preservation of V5. Playwright interception covers the isolated page's loading, signed-out, unauthorized, disabled, rate-limited, unavailable, empty, and ready presentation states, malformed-response failure, absent ordinary navigation/feedback, keyboard-accessible window controls, and responsive aggregate tables. Interception proves presentation behavior only; it does not prove server authorization, live database behavior, or production enforcement.
+
+No migration was run, no environment value changed, no live collection occurred, no Supabase or Vercel service was contacted, and no deployment occurred during Block 6.2 implementation.
+
 ## Rollout blockers
 
-Collection must remain disabled until separately approved work covers exact production schema inventory and rollout; abuse and rate controls; retention and deletion operations; monitoring and alerting; metric definitions and denominator rules; founder authorization and dashboard access; incident response and rollback; privacy and support operational review; and live verification.
+Collection must remain disabled until separately approved work covers exact production schema inventory and ordered rollout; distributed abuse controls including Vercel WAF; authorized retention scheduling; monitoring and alerting; founder configuration; incident response and rollback; privacy and support operational review; and live verification.
 
-The Founder Dashboard, aggregate query contract, and Block 6 closure are not part of Block 6.1. No public analytics page or fake metrics exist. Block 6 remains in progress, and Block 6.1 remains pending final independent review.
+The Founder Dashboard remains an unlinked protected internal surface, not a public analytics page. Block 6 remains in progress; Block 6.1 is merged and frozen pending rollout, while Block 6.2 remains pending final independent terminal review. No production-readiness claim is made.

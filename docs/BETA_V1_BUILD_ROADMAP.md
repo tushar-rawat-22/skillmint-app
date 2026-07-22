@@ -36,7 +36,7 @@ Current status:
 | Block 4 | Complete, hardened, merged, and frozen |
 | Block 5 | Complete, verified, merged, synchronized, and frozen |
 | Pre-Block-6 Brand & Domain Decision Gate | Approved next sequence; not a block |
-| Block 6 | In progress; Block 6.1 local collection engineering implemented, pending independent review |
+| Block 6 | In progress; Block 6.1 merged and frozen pending rollout; Block 6.2 repository-only implementation pending final independent review |
 | Block 7 | Not started |
 
 ## Block Purposes And Boundaries
@@ -125,7 +125,7 @@ The gate is not a full rebrand or visual redesign. It does not authorize product
 
 ### 6. Analytics + Founder Dashboard
 
-Status: In progress. The Block 6.1 privacy-safe contract and local collection implementation exist in the repository, pending independent review. Production schema rollout, live collection, founder aggregation/dashboard, operational monitoring, and Block 6 closure are not complete.
+Status: In progress. Block 6.1 is merged and frozen pending rollout and is not pending another repository engineering review. The Block 6.2 current-environment aggregation and isolated protected founder dashboard exist only in the repository and remain pending final independent review. Events are never people, and the implementation adds no identity, unique-person, retention, cohort, or session analytics. Windows use exact elapsed 24/168/720-hour `received_at` boundaries, and the unapplied purge contract uses an exact 1,080-hour threshold with at most 10,000 deletions per invocation. Production migration, live collection, founder UUID configuration, mandatory Vercel WAF enforcement, authorized `pg_cron` scheduling, operational monitoring, and Block 6 closure are not complete. No live service was contacted and no deployment occurred.
 
 Purpose: Give the founder safe product-health visibility for beta readiness and learning.
 
