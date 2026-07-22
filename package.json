@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "fixtures:analytics": "node scripts/analytics-contract-fixtures.mjs",
+    "fixtures:analytics-runtime": "node scripts/analytics-runtime-fixtures.mjs",
+    "test:e2e:analytics": "playwright test e2e/analytics.spec.ts --workers=1 --retries=0",
     "smoke:production": "node scripts/smoke-production.mjs",
     "test:e2e:chromium": "playwright test --project=chromium --grep-invert @block53",
     "test:e2e:firefox": "playwright test --project=firefox --grep @critical --grep-invert @block53",

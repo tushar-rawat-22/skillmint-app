@@ -796,9 +796,13 @@ test("memory sink snapshots are defensive, fresh, and immutable", async () => {
   assert.throws(() => { first[0].properties.setup_mode = "edit"; }, TypeError);
 });
 
-test("analytics foundation source contains no network, storage, provider, timer, or logging APIs", () => {
-  const sourceFiles = fs.readdirSync(analyticsRoot)
-    .filter((name) => name.endsWith(".ts"))
+test("contract and emitter foundation remains free of network, storage, provider, timer, and logging APIs", () => {
+  const sourceFiles = [
+    "eventContract.ts",
+    "eventValidation.ts",
+    "emitter.ts",
+    "sink.ts",
+  ]
     .map((name) => fs.readFileSync(path.join(analyticsRoot, name), "utf8"))
     .join("\n");
   const forbiddenPatterns = [
@@ -850,7 +854,7 @@ test("the production analytics index excludes testing utilities", () => {
   assert.equal("MemoryAnalyticsSink" in analytics, false);
 });
 
-test("product architecture roots do not import the contract-only analytics foundation", () => {
+test("client instrumentation uses only the centralized analytics public entry point", () => {
   const roots = [
     path.join(repoRoot, "src/app"),
     path.join(repoRoot, "src/components"),
@@ -862,9 +866,80 @@ test("product architecture roots do not import the contract-only analytics found
     for (const filename of walkFiles(root)) {
       if (!/\.(?:ts|tsx)$/.test(filename)) continue;
       const source = fs.readFileSync(filename, "utf8");
-      assert.equal(source.includes("platform/analytics"), false, filename);
+      if (!source.trimStart().startsWith('"use client"')) continue;
+      for (const match of source.matchAll(/from\s+["'](@\/platform\/analytics[^"']*)["']/g)) {
+        assert.equal(match[1], "@/platform/analytics", filename);
+      }
+      assert.equal(source.includes("analyticsEventRepository"), false, filename);
     }
   }
+});
+
+test("collection rollout gates and bounded-ingestion source ordering remain fail-closed", () => {
+  const runtimeSource = fs.readFileSync(path.join(analyticsRoot, "runtime.ts"), "utf8");
+  assert.match(
+    runtimeSource,
+    /process\.env\.NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED === "true"/,
+  );
+  const browserRuntime = runtimeSource.slice(
+    runtimeSource.indexOf("export function getBrowserAnalyticsRuntime"),
+    runtimeSource.indexOf("export function fireAndForgetAnalytics"),
+  );
+  const browserGate = browserRuntime.indexOf("if (!browserAnalyticsCollectionEnabled)");
+  assert.ok(browserGate >= 0);
+  for (const laterOperation of [
+    "browserRuntimes.get",
+    "createAnalyticsRuntime",
+    "globalThis.crypto.randomUUID",
+    "createHttpAnalyticsSink",
+  ]) {
+    assert.ok(browserGate < browserRuntime.indexOf(laterOperation), laterOperation);
+  }
+
+  const routeSource = fs.readFileSync(
+    path.join(repoRoot, "src/app/api/analytics/events/route.ts"),
+    "utf8",
+  );
+  assert.match(
+    routeSource,
+    /enabled: process\.env\.ANALYTICS_COLLECTION_ENABLED === "true"/,
+  );
+
+  const handlerSource = fs.readFileSync(
+    path.join(repoRoot, "src/app/api/analytics/events/handler.ts"),
+    "utf8",
+  );
+  assert.equal(handlerSource.includes("request.text()"), false);
+  const methodCheck = handlerSource.indexOf('request.method !== "POST"');
+  const originCheck = handlerSource.indexOf("isSameOriginRequest(request)");
+  const mediaCheck = handlerSource.indexOf("isJsonContentType");
+  const serverGate = handlerSource.indexOf("if (!dependencies.enabled)");
+  const lengthCheck = handlerSource.indexOf('headers.get("content-length")');
+  const bodyRead = handlerSource.indexOf("readBoundedBody(request)");
+  assert.ok(methodCheck < originCheck);
+  assert.ok(originCheck < mediaCheck);
+  assert.ok(mediaCheck < serverGate);
+  assert.ok(serverGate < lengthCheck);
+  assert.ok(lengthCheck < bodyRead);
+
+  const repositorySource = fs.readFileSync(
+    path.join(repoRoot, "src/modules/analytics/services/analyticsEventRepository.ts"),
+    "utf8",
+  );
+  const topLevelPersist = repositorySource.slice(
+    repositorySource.indexOf("export async function persistAnalyticsEvent"),
+  );
+  const repositoryGate = topLevelPersist.indexOf("if (!isServerAnalyticsCollectionEnabled())");
+  const adminConstruction = topLevelPersist.indexOf("createSupabaseAdminClient()");
+  const repositoryConstruction = topLevelPersist.indexOf("createAnalyticsEventRepository");
+  const repositoryPersist = topLevelPersist.indexOf("repository.persist(event)");
+  assert.ok(repositoryGate < adminConstruction);
+  assert.ok(adminConstruction < repositoryConstruction);
+  assert.ok(repositoryConstruction < repositoryPersist);
+
+  const playwrightSource = fs.readFileSync(path.join(repoRoot, "playwright.config.ts"), "utf8");
+  assert.match(playwrightSource, /NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED: "true"/);
+  assert.equal(/(?:^|\n)\s*ANALYTICS_COLLECTION_ENABLED:/.test(playwrightSource), false);
 });
 
 function walkFiles(root) {

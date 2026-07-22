@@ -28,6 +28,7 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "synthetic-playwright-publishable-key",
       NEXT_PUBLIC_APP_URL: appOrigin,
+      NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED: "true",
     },
   },
   projects: [

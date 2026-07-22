@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** July 15, 2026
+**Last updated:** July 22, 2026
 
 **Implementation baseline audited:** `3cb5e28050cf93e42e53405f0f2be9d12e756e27`
 
@@ -42,7 +42,7 @@ Resume Reality
 | Block 4: Active Target + JD Workflow | Complete, hardened, merged, and frozen | Target focus, owner isolation, and JD freshness remain locked |
 | Block 5: Data Controls + Trust Center | Complete, verified, merged, synchronized, and frozen | Isolated engineering proof; no production claim |
 | Pre-Block-6 Brand & Domain Decision Gate | Approved next sequence | One to two focused working days; not a roadmap block |
-| Block 6: Privacy-safe Analytics + Founder Dashboard | Not started | Founder product-health visibility without exposing private user data |
+| Block 6: Privacy-safe Analytics + Founder Dashboard | In progress; Block 6.1 local collection engineering implemented, pending independent review | Repository-only collection without private user data; no live rollout or dashboard |
 | Block 7: Beta Launch Readiness | Not started | Production rollout, final QA, operations, and launch/no-launch decision |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
@@ -50,6 +50,8 @@ Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 Block 5 merge commit: `3cb5e28050cf93e42e53405f0f2be9d12e756e27`
 
 Blocks 1–5 are frozen. Future work may extend the product only while preserving their behavior, evidence, identities, and non-claims.
+
+Block 6 is in progress. The privacy-safe analytics contract and local collection implementation exist in the repository. Production schema rollout, live collection, founder aggregation/dashboard, operational monitoring, and Block 6 closure are not complete. See [Privacy-safe Analytics Collection](ANALYTICS.md).
 
 ## Release boundary
 

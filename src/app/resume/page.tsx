@@ -45,6 +45,10 @@ import {
   type ResumeSyncStatus,
   setActiveResumeReportFromSavedAnalysis,
 } from "@/modules/resume";
+import {
+  fireAndForgetAnalytics,
+  getBrowserAnalyticsRuntime,
+} from "@/platform/analytics";
 
 type ResumeAnalysisView = Omit<
   ResumeAnalysisResult,
@@ -116,6 +120,10 @@ export default function ResumePage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const analytics = getBrowserAnalyticsRuntime({
+    isAuthResolved: !isAuthLoading,
+    hasAccount: Boolean(user),
+  });
   const storedAnalysis = useSyncExternalStore(
     subscribeToStoredAnalysis,
     () => readStoredAnalysis(currentUserId),
@@ -241,12 +249,22 @@ export default function ResumePage() {
     };
   }, [isAuthLoading, isConfigured, userId]);
 
-  function handleSetActiveReport(resumeAnalysis: PersistentResumeAnalysis) {
+  function handleSetActiveReport(
+    resumeAnalysis: PersistentResumeAnalysis,
+    restoreKind: "latest" | "selected" = "selected",
+  ) {
     const result = setActiveResumeReportFromSavedAnalysis(resumeAnalysis, {
       currentUserId,
     });
 
     if (!result.ok) {
+      fireAndForgetAnalytics(() => analytics.productOperationFailed(
+        "resume_report",
+        {
+          operation: "analysis_restore",
+          error_code: "storage_write_failed",
+        },
+      ));
       setRestoreState({
         status: "error",
         message: result.error,
@@ -255,6 +273,9 @@ export default function ResumePage() {
       return;
     }
 
+    fireAndForgetAnalytics(() => analytics.analysisRestored("resume_report", {
+      restore_kind: restoreKind,
+    }));
     setRestoreState({
       status: "success",
       message:
@@ -275,7 +296,7 @@ export default function ResumePage() {
       return;
     }
 
-    handleSetActiveReport(latestSavedAnalysis);
+    handleSetActiveReport(latestSavedAnalysis, "latest");
   }
 
   async function handleDeleteSavedAnalysis() {
