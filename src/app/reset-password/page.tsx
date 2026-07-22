@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   premiumInput,
@@ -10,21 +10,34 @@ import {
   premiumSecondaryCta,
 } from "@/components/ui/premium";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { getSupabaseConfigStatus } from "@/lib/supabase/config";
+import { usePasswordRecovery } from "@/modules/auth/hooks/usePasswordRecovery";
 
 const MIN_PASSWORD_LENGTH = 6;
+const INVALID_LINK_MESSAGE =
+  "This password reset link is invalid or has expired.";
+const UPDATE_FAILURE_MESSAGE =
+  "We could not update your password. Please try again or request a new reset link.";
+const UPDATE_SUCCESS_MESSAGE =
+  "Password updated. You can continue to SkillMint.";
 
 export default function ResetPasswordPage() {
-  const configStatus = useMemo(() => getSupabaseConfigStatus(), []);
+  const {
+    status,
+    isSubmitting,
+    updatePassword,
+  } = usePasswordRecovery();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const isReady = status === "ready";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!isReady || isSubmitting) {
+      return;
+    }
 
     const validationError = getPasswordValidationError(
       newPassword,
@@ -37,32 +50,23 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const supabase = createSupabaseBrowserClient();
-
-    if (!configStatus.isConfigured || !supabase) {
-      setError(configStatus.message);
-      setMessage("");
-      return;
-    }
-
-    setIsSubmitting(true);
     setError("");
     setMessage("");
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
+    const result = await updatePassword(newPassword);
 
-    setIsSubmitting(false);
+    if (result === "ignored") {
+      return;
+    }
 
-    if (updateError) {
-      setError(updateError.message);
+    if (result === "failure") {
+      setError(UPDATE_FAILURE_MESSAGE);
       return;
     }
 
     setNewPassword("");
     setConfirmPassword("");
-    setMessage("Password updated. You can continue to SkillMint.");
+    setMessage(UPDATE_SUCCESS_MESSAGE);
   }
 
   return (
@@ -75,12 +79,37 @@ export default function ResetPasswordPage() {
         onSubmit={handleSubmit}
         className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
       >
+        {status === "checking" && (
+          <p
+            role="status"
+            className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700"
+          >
+            Verifying your reset link...
+          </p>
+        )}
+
+        {status === "invalid" && (
+          <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+            <p role="alert">
+              {INVALID_LINK_MESSAGE}
+            </p>
+
+            <Link
+              href="/forgot-password"
+              className="mt-3 inline-flex font-semibold text-rose-800 underline decoration-rose-300 underline-offset-4 transition hover:text-rose-950"
+            >
+              Request a new reset link
+            </Link>
+          </div>
+        )}
+
         <PasswordField
           id="new-password"
           label="New password"
           value={newPassword}
           autoComplete="new-password"
           onChange={setNewPassword}
+          disabled={!isReady || isSubmitting}
         />
 
         <div className="mt-4">
@@ -90,6 +119,7 @@ export default function ResetPasswordPage() {
             value={confirmPassword}
             autoComplete="new-password"
             onChange={setConfirmPassword}
+            disabled={!isReady || isSubmitting}
           />
         </div>
 
@@ -105,36 +135,32 @@ export default function ResetPasswordPage() {
           </p>
         )}
 
-        {!configStatus.isConfigured && (
-          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
-            {configStatus.message}
-          </p>
-        )}
-
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={!isReady || isSubmitting}
           className={`${premiumPrimaryCta} mt-5 w-full`}
         >
           {isSubmitting ? "Updating..." : "Update password"}
         </button>
       </form>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Link
-          href="/login"
-          className={premiumSecondaryCta}
-        >
-          Log in
-        </Link>
+      {isReady && (
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/login"
+            className={premiumSecondaryCta}
+          >
+            Log in
+          </Link>
 
-        <Link
-          href="/dashboard"
-          className={premiumSecondaryCta}
-        >
-          Continue to SkillMint
-        </Link>
-      </div>
+          <Link
+            href="/dashboard"
+            className={premiumSecondaryCta}
+          >
+            Continue to SkillMint
+          </Link>
+        </div>
+      )}
     </AuthPageShell>
   );
 }
@@ -145,6 +171,7 @@ type PasswordFieldProps = {
   value: string;
   autoComplete: string;
   onChange: (value: string) => void;
+  disabled: boolean;
 };
 
 function PasswordField({
@@ -153,6 +180,7 @@ function PasswordField({
   value,
   autoComplete,
   onChange,
+  disabled,
 }: PasswordFieldProps) {
   return (
     <div>
@@ -167,6 +195,7 @@ function PasswordField({
         id={id}
         type="password"
         autoComplete={autoComplete}
+        disabled={disabled}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={`mt-2 ${premiumInput}`}

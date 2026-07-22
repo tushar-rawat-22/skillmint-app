@@ -13,6 +13,10 @@ export const ACCOUNT_B = {
   name: "Account B",
 };
 export const SYNTHETIC_PASSWORD = "synthetic-password";
+export const SYNTHETIC_RECOVERY_CODE =
+  "synthetic-recovery-code";
+export const SYNTHETIC_RECOVERY_VERIFIER =
+  "synthetic-recovery-verifier";
 const CREATED_AT = "2026-01-02T03:04:05.000Z";
 
 type Account = typeof ACCOUNT_A;
@@ -38,6 +42,8 @@ export class SyntheticProvider {
   readonly requests: RequestRecord[] = [];
   readonly unexpectedRequests: string[] = [];
   loginMode: ProviderMode = "success";
+  recoveryExchangeMode: ProviderMode = "success";
+  passwordUpdateMode: ProviderMode = "success";
   countMode: "success" | "reject" = "success";
   feedbackMode: ProviderMode = "success";
   savedReportsMode: ProviderMode = "success";
@@ -45,6 +51,7 @@ export class SyntheticProvider {
   private gates = new Map<string, Deferred[]>();
   private failures = new Map<string, number>();
   private authUserOverrides: string[] = [];
+  private usedRecoveryCodes = new Set<string>();
 
   async install(context: BrowserContext) {
     await context.route("**/*", async (route) => {
@@ -76,7 +83,7 @@ export class SyntheticProvider {
     this.authUserOverrides.push(accountId);
   }
 
-  count(kind: string, accountId?: string): number {
+  count(kind: string, accountId?: string | null): number {
     return this.requests.filter((request) =>
       request.kind === kind && (accountId === undefined || request.accountId === accountId)
     ).length;
@@ -99,16 +106,80 @@ export class SyntheticProvider {
     if (url.pathname === "/auth/v1/token") {
       const grant = url.searchParams.get("grant_type");
       const body = parseJson(request.postData());
-      const account = grant === "refresh_token"
-        ? accountForRefreshToken(body.refresh_token)
-        : accountForEmail(body.email);
-      const kind = grant === "refresh_token" ? "auth:refresh" : "auth:login";
+
+      if (grant === "pkce") {
+        const authCode =
+          typeof body.auth_code === "string"
+            ? body.auth_code
+            : "";
+
+        const codeVerifier =
+          typeof body.code_verifier === "string"
+            ? body.code_verifier
+            : "";
+
+        const account =
+          authCode === SYNTHETIC_RECOVERY_CODE &&
+          codeVerifier === SYNTHETIC_RECOVERY_VERIFIER &&
+          !this.usedRecoveryCodes.has(authCode)
+            ? ACCOUNT_A
+            : null;
+
+        const kind = "auth:recovery-exchange";
+
+        this.record(kind, account?.id ?? null, url);
+        await this.releaseGate(kind);
+
+        if (this.recoveryExchangeMode === "abort") {
+          await route.abort("connectionfailed");
+          return;
+        }
+
+        if (
+          this.recoveryExchangeMode === "reject" ||
+          !account
+        ) {
+          await json(route, 400, {
+            error: "invalid_grant",
+            error_code: "otp_expired",
+            error_description:
+              "RAW_SYNTHETIC_RECOVERY_PROVIDER_SECRET",
+            msg: "RAW_SYNTHETIC_RECOVERY_PROVIDER_SECRET",
+          });
+          return;
+        }
+
+        if (this.recoveryExchangeMode === "malformed") {
+          await json(route, 200, {
+            access_token: "malformed",
+          });
+          return;
+        }
+
+        this.usedRecoveryCodes.add(authCode);
+
+        await json(route, 200, createSession(account));
+        return;
+      }
+
+      const account =
+        grant === "refresh_token"
+          ? accountForRefreshToken(body.refresh_token)
+          : accountForEmail(body.email);
+
+      const kind =
+        grant === "refresh_token"
+          ? "auth:refresh"
+          : "auth:login";
+
       this.record(kind, account?.id ?? null, url);
       await this.releaseGate(kind);
+
       if (this.loginMode === "abort") {
         await route.abort("connectionfailed");
         return;
       }
+
       if (this.loginMode === "reject" || !account) {
         await json(route, 400, {
           error: "invalid_grant",
@@ -117,20 +188,80 @@ export class SyntheticProvider {
         });
         return;
       }
+
       await json(route, 200, createSession(account));
       return;
     }
 
-    const bearerAccount = accountFromAuthorization(request.headers().authorization);
-    if (url.pathname === "/auth/v1/user") {
-      const overrideId = this.authUserOverrides.shift();
-      const account = overrideId ? accountForId(overrideId) : bearerAccount;
-      this.record("auth:user", account?.id ?? null, url);
-      await this.releaseGate("auth:user");
-      if (!account) {
-        await json(route, 401, { message: "Synthetic session missing" });
+    const bearerAccount = accountFromAuthorization(
+      request.headers().authorization,
+    );
+
+    if (
+      url.pathname === "/auth/v1/user" &&
+      request.method() === "PUT"
+    ) {
+      const body = parseJson(request.postData());
+      const account = bearerAccount;
+      const kind = "auth:update-user";
+
+      this.record(kind, account?.id ?? null, url);
+      await this.releaseGate(kind);
+
+      if (this.passwordUpdateMode === "abort") {
+        await route.abort("connectionfailed");
         return;
       }
+
+      if (!account) {
+        await json(route, 401, {
+          message: "Synthetic session missing",
+        });
+        return;
+      }
+
+      if (
+        this.passwordUpdateMode === "reject" ||
+        typeof body.password !== "string" ||
+        body.password.length < 6
+      ) {
+        await json(route, 422, {
+          error_code: "weak_password",
+          msg: "RAW_SYNTHETIC_PASSWORD_UPDATE_SECRET",
+        });
+        return;
+      }
+
+      if (this.passwordUpdateMode === "malformed") {
+        await json(route, 200, {
+          id: "malformed",
+        });
+        return;
+      }
+
+      await json(route, 200, createUser(account));
+      return;
+    }
+
+    if (
+      url.pathname === "/auth/v1/user" &&
+      request.method() === "GET"
+    ) {
+      const overrideId = this.authUserOverrides.shift();
+      const account = overrideId
+        ? accountForId(overrideId)
+        : bearerAccount;
+
+      this.record("auth:user", account?.id ?? null, url);
+      await this.releaseGate("auth:user");
+
+      if (!account) {
+        await json(route, 401, {
+          message: "Synthetic session missing",
+        });
+        return;
+      }
+
       await json(route, 200, createUser(account));
       return;
     }
@@ -370,7 +501,7 @@ function corsHeaders() {
   return {
     "access-control-allow-origin": APP_ORIGIN,
     "access-control-allow-headers": "authorization, apikey, content-type, prefer, x-client-info, x-supabase-api-version",
-    "access-control-allow-methods": "GET, HEAD, POST, DELETE, OPTIONS",
+    "access-control-allow-methods": "GET, HEAD, POST, PUT, DELETE, OPTIONS",
     "access-control-expose-headers": "content-range",
     "content-type": "application/json",
   };
