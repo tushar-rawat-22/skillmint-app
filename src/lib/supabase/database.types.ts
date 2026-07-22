@@ -231,6 +231,13 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      get_founder_analytics_summary: {
+        Args: {
+          requested_window: string;
+          canonical_environment: string;
+        };
+        Returns: Array<{ summary: Json }>;
+      };
       delete_current_user_saved_reports: {
         Args: Record<string, never>;
         Returns: Array<{
@@ -249,6 +256,10 @@ export interface Database {
           beta_feedback_deleted: number;
           verified_absent: boolean;
         }>;
+      };
+      purge_expired_analytics_events: {
+        Args: Record<string, never>;
+        Returns: Array<{ deleted_count: number }>;
       };
     };
     Enums: Record<string, never>;

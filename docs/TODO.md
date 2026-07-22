@@ -8,7 +8,7 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 ## 1. Current authoritative status
 
 - Blocks 1–5 are complete and frozen.
-- Block 6, Privacy-safe Analytics + Founder Dashboard, has not started.
+- Block 6 is in progress. Block 6.1 is merged and frozen pending rollout; Block 6.2 exists only as a repository implementation and remains pending final independent review.
 - Block 7, Beta Launch Readiness, has not started.
 - Public beta is not authorized.
 - Production rollout is blocked pending an approved production migration/rollback process and post-rollout verification.
@@ -36,7 +36,7 @@ Preserve the scoring, proof, mission, Active Target, owner-partition, export, cl
 - [ ] Create the bounded public-brand foundation only after a name and domain are selected.
 - [ ] Re-run frozen Block 1–5 preservation checks for that public-brand change.
 - [ ] Merge and synchronize the public-brand layer.
-- [ ] Begin Block 6 only after the gate and preservation checks close.
+- [x] Begin Block 6 under the recorded founder sequencing override while the Brand & Domain Gate remains paused.
 
 ## 4. Brand & Domain Gate
 
@@ -59,16 +59,23 @@ The selected public name, backup, and domain are `Pending`. Reservation does not
 
 ## 6. Block 6: Privacy-safe Analytics + Founder Dashboard
 
-- [ ] Define the minimum founder questions and event/data contract before implementation.
-- [ ] Apply privacy, minimization, ownership, and retention review to every proposed event.
-- [ ] Implement product-health visibility without exposing resume content, pasted JDs, credentials, or unnecessary personal data.
-- [ ] Keep analytics separate from public product claims and from all scoring logic.
-- [ ] Define QA for event correctness, duplication, consent/copy where required, and failure behavior.
+- [x] Define and implement the frozen privacy-minimized Block 6.1 event/data contract locally.
+- [x] Apply privacy, minimization, ownership, and exact 1,080-hour deletion-threshold review to the repository contracts.
+- [x] Implement current-environment aggregate product-event visibility without identity analytics, resume content, pasted JDs, credentials, unique people, cohorts, sessions, or person-level retention.
+- [x] Protect the unlinked, user-navigation/feedback-isolated founder dashboard with one server-only configured Auth UUID that remains authorization configuration, not analytics data.
+- [x] Define exactly three observed event ratios, including zero-denominator and uncapped behavior; do not add mission completion or inferred resume-success ratios.
+- [x] Keep analytics separate from public product claims and all scoring, mission, Active Target, ownership, export, deletion, and password-recovery behavior.
+- [x] Add deterministic exact HTTP parser, two-tier limiter, exact DTO, fail-closed SQL, millisecond/exact-hour, bounded-purge, privilege, ratio, privacy, and cross-browser presentation coverage.
+- [ ] Complete final independent terminal review of Block 6.2; Block 6.1 is already merged and frozen pending rollout.
+- [ ] Inventory and authorize the ordered V5/V6 production rollout with rollback and monitoring.
+- [ ] Configure distributed Vercel WAF enforcement; the coarse 60-per-minute pre-Auth allowance and separate ten-per-minute founder limiter/one-query lock are process-local only.
+- [ ] Separately authorize and implement `pg_cron` scheduling for the exact 1,080-hour purge contract; each run deletes at most 10,000 overdue events, so repeated runs may be needed. It is currently unapplied, uncallable by API roles, and unscheduled.
+- [ ] Configure the founder Auth UUID and enable collection only as part of an authorized rollout.
 - [ ] Evaluate privacy-safe aggregate `mission_started` and `mission_completed` events only after approving an event contract, minimization and retention rules, idempotency/duplication design, privacy review, and QA.
 
 Mission events must not contain resume text, private mission content, email, raw identity, credentials, or tokens. They must not manipulate scores, treat a click as proof, or claim verified completion. Mission completion remains self-progress; evidence and scores change only after evidence changes and re-analysis detects them. This evaluation does not approve a provider, schema, transport, user-level reporting, public analytics, or account mission persistence.
 
-Block 6 must not become a public analytics surface and must not overclaim beta readiness.
+Block 6 must not become a public analytics surface and must not overclaim beta readiness. Plain V6 `CREATE FUNCTION` declarations intentionally fail if either function exists unexpectedly. The aggregate `as_of` is millisecond-aligned; windows use exact elapsed 24/168/720 hours, not calendar days. No migration or environment change occurred; the founder UUID and WAF were not configured, no purge schedule was added, no collection flag was enabled, no live service was contacted, and no deployment or production rollout occurred.
 
 ## 7. Block 7 and production blockers
 
