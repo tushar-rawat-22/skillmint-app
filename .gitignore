@@ -27,6 +27,9 @@ pnpm-debug.log*
 # vercel
 .vercel/
 
+# local Supabase CLI metadata
+supabase/.temp/
+
 # testing
 coverage/
 playwright-report/

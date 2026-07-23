@@ -8,7 +8,10 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 ## 1. Current authoritative status
 
 - Blocks 1–5 are complete and frozen.
-- Block 6 is in progress. Block 6.1 is merged and frozen pending rollout; Block 6.2 exists only as a repository implementation and remains pending final independent review.
+- Block 6 is in progress. Block 6.1 and Block 6.2 are merged and frozen pending rollout, and Block 6.2 passed independent review.
+- The fail-closed application code deployed automatically from `main`; V5 and V6 remain unapplied and analytics remains disabled.
+- `skillmint-block6-test` is `ACTIVE_HEALTHY`, contains no Production copy, and is the next isolated verification target.
+- Preview and Production share the same two public Supabase variables, so Preview is not an isolated database environment.
 - Block 7, Beta Launch Readiness, has not started.
 - Public beta is not authorized.
 - Production rollout is blocked pending an approved production migration/rollback process and post-rollout verification.
@@ -31,12 +34,11 @@ Preserve the scoring, proof, mission, Active Target, owner-partition, export, cl
 
 ## 3. Immediate next steps
 
-- [x] Align repository documentation to the merged Block 5 checkpoint.
-- [ ] Complete the one-to-two-day Brand & Domain Decision Gate.
-- [ ] Create the bounded public-brand foundation only after a name and domain are selected.
-- [ ] Re-run frozen Block 1–5 preservation checks for that public-brand change.
-- [ ] Merge and synchronize the public-brand layer.
-- [x] Begin Block 6 under the recorded founder sequencing override while the Brand & Domain Gate remains paused.
+- [ ] Review and merge the rollout-foundation repository work.
+- [ ] Perform the separately authorized local reset and isolated hosted V1–V6 migration/security verification.
+- [ ] Prove the Production V1–V4 catalog and migration-history baseline before any Production action.
+- [ ] Prepare WAF, founder authorization, retention, monitoring, and kill switches before separately authorizing Production V5 and V6.
+- [ ] Keep the Brand & Domain Gate paused by founder decision while Block 6 proceeds; complete it before external beta.
 
 ## 4. Brand & Domain Gate
 
@@ -66,16 +68,20 @@ The selected public name, backup, and domain are `Pending`. Reservation does not
 - [x] Define exactly three observed event ratios, including zero-denominator and uncapped behavior; do not add mission completion or inferred resume-success ratios.
 - [x] Keep analytics separate from public product claims and all scoring, mission, Active Target, ownership, export, deletion, and password-recovery behavior.
 - [x] Add deterministic exact HTTP parser, two-tier limiter, exact DTO, fail-closed SQL, millisecond/exact-hour, bounded-purge, privilege, ratio, privacy, and cross-browser presentation coverage.
-- [ ] Complete final independent terminal review of Block 6.2; Block 6.1 is already merged and frozen pending rollout.
-- [ ] Inventory and authorize the ordered V5/V6 production rollout with rollback and monitoring.
+- [x] Complete the independent terminal review of Block 6.2.
+- [x] Merge and freeze Block 6.2 pending rollout.
+- [ ] Run the separately authorized isolated V1–V6 migration and live-security verification gate.
+- [ ] Prove the Production V1–V4 baseline catalog before any migration-history repair.
+- [ ] Authorize the separate Production V5/V6 rollout with rollback and monitoring.
 - [ ] Configure distributed Vercel WAF enforcement; the coarse 60-per-minute pre-Auth allowance and separate ten-per-minute founder limiter/one-query lock are process-local only.
 - [ ] Separately authorize and implement `pg_cron` scheduling for the exact 1,080-hour purge contract; each run deletes at most 10,000 overdue events, so repeated runs may be needed. It is currently unapplied, uncallable by API roles, and unscheduled.
 - [ ] Configure the founder Auth UUID and enable collection only as part of an authorized rollout.
-- [ ] Evaluate privacy-safe aggregate `mission_started` and `mission_completed` events only after approving an event contract, minimization and retention rules, idempotency/duplication design, privacy review, and QA.
 
-Mission events must not contain resume text, private mission content, email, raw identity, credentials, or tokens. They must not manipulate scores, treat a click as proof, or claim verified completion. Mission completion remains self-progress; evidence and scores change only after evidence changes and re-analysis detects them. This evaluation does not approve a provider, schema, transport, user-level reporting, public analytics, or account mission persistence.
+The frozen taxonomy already contains `mission_started` and `mission_marked_done`. No new mission event, mission-completion ratio, inferred proof, or taxonomy change is approved. These events must not manipulate scores, treat a click as proof, or claim verified completion. Mission completion remains self-progress; evidence and scores change only after evidence changes and re-analysis detects them.
 
-Block 6 must not become a public analytics surface and must not overclaim beta readiness. Plain V6 `CREATE FUNCTION` declarations intentionally fail if either function exists unexpectedly. The aggregate `as_of` is millisecond-aligned; windows use exact elapsed 24/168/720 hours, not calendar days. No migration or environment change occurred; the founder UUID and WAF were not configured, no purge schedule was added, no collection flag was enabled, no live service was contacted, and no deployment or production rollout occurred.
+Block 6 must not become a public analytics surface and must not overclaim beta readiness. Plain V6 `CREATE FUNCTION` declarations intentionally fail if either function exists unexpectedly. The aggregate `as_of` is millisecond-aligned; windows use exact elapsed 24/168/720 hours, not calendar days.
+
+The automatic fail-closed application deployment did not apply a migration or activate analytics. The founder UUID, WAF rule, and purge schedule are unconfigured. No Production database or setting was changed. See the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## 7. Block 7 and production blockers
 

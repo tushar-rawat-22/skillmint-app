@@ -74,3 +74,4 @@ jobs:
           node scripts/analytics-contract-fixtures.mjs
           node scripts/analytics-runtime-fixtures.mjs
           node scripts/analytics-dashboard-fixtures.mjs
+          node scripts/block6-rollout-foundation-fixtures.mjs

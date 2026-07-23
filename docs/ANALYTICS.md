@@ -1,8 +1,10 @@
 # Privacy-safe Analytics Collection
 
-**Status:** Block 6.1 is merged and frozen pending rollout. The Block 6.2 repository-only aggregation/dashboard implementation exists and remains pending final independent review. Block 6 overall remains in progress.
+**Status:** Block 6.1 and Block 6.2 are merged and frozen pending rollout. Block 6.2 passed independent review. Block 6 overall remains in progress.
 
-The repository contains a first-party, privacy-minimized collection path and a protected founder-only aggregate Product Event Health dashboard. This is not a production-operation claim: neither analytics migration has been applied, the founder UUID was not configured, no WAF rule or purge schedule was configured, no analytics collection flag was enabled, no live service was contacted, and no deployment or production rollout occurred.
+The repository contains a first-party, privacy-minimized collection path and a protected founder-only aggregate Product Event Health dashboard. The fail-closed application code was automatically deployed from `main`. That deployment did not apply V5 or V6, enable collection, configure the founder UUID, add a WAF rule, or schedule retention.
+
+The isolated `skillmint-block6-test` project exists with status `ACTIVE_HEALTHY`. Production was not copied or altered. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. The next gate is isolated migration and live-security verification, not Production activation.
 
 ## Activation
 
@@ -57,7 +59,7 @@ The route discards browser-provided `environment` and `build_id`. Environment co
 
 ## Database boundary
 
-`supabase/schema_v5_analytics_events.sql` is an ordered, unapplied repository migration. It defines only `event_id`, `event_name`, `event_version`, `occurred_at`, server `received_at`, `environment`, `build_id`, `source_screen`, `owner_mode`, and `properties`.
+`supabase/schema_v5_analytics_events.sql` is the source for the byte-identical timestamped V5 migration. Both remain unapplied. V5 defines only `event_id`, `event_name`, `event_version`, `occurred_at`, server `received_at`, `environment`, `build_id`, `source_screen`, `owner_mode`, and `properties`.
 
 The table constrains every envelope enum, the current event version, build-ID shape/length, JSON object shape, and property size. Its operational indexes use database-generated `received_at`: descending receipt time, event name plus descending receipt time, and environment plus descending receipt time. Row Level Security is enabled and forced. All table access is revoked from `public`, `anon`, and `authenticated`; only `service_role` receives insert. There is no browser policy, account foreign key, read/list repository, public view, dashboard query function, or retention job.
 
@@ -65,7 +67,9 @@ No migration command was run and no live Supabase project was contacted by Block
 
 ## Founder aggregation and authorization
 
-`supabase/schema_v6_analytics_aggregation.sql` is an ordered, unapplied migration after V5. Both functions use plain `CREATE FUNCTION`, intentionally aborting the transaction if either function already exists unexpectedly instead of preserving an unknown owner or ACL. The aggregate function accepts only `24h`, `7d`, or `30d`, runs with `SECURITY DEFINER`, an empty `search_path`, and a two-second statement timeout, and returns one exact versioned aggregate row. Its one database `as_of` instant is aligned to millisecond precision. Database-generated `received_at` uses closed-open `[window_start, as_of)` windows of exact elapsed 24, 168, or 720 hours—not calendar-day boundaries. The browser cannot provide an environment, date, dimension, identifier, ordering, or limit; the API supplies only the current server-canonical environment.
+`supabase/schema_v6_analytics_aggregation.sql` is the source for the byte-identical timestamped V6 migration after V5. Both remain unapplied. The functions use plain `CREATE FUNCTION`, intentionally aborting the transaction if either function already exists unexpectedly instead of preserving an unknown owner or ACL.
+
+The aggregate function accepts only `24h`, `7d`, or `30d`, runs with `SECURITY DEFINER`, an empty `search_path`, and a two-second statement timeout, and returns one exact versioned aggregate row. Its one database `as_of` instant is aligned to millisecond precision. Database-generated `received_at` uses closed-open `[window_start, as_of)` windows of exact elapsed 24, 168, or 720 hours—not calendar-day boundaries. The browser cannot provide an environment, date, dimension, identifier, ordering, or limit; the API supplies only the current server-canonical environment.
 
 The function returns fixed event-name counts, the approved operation/error-code matrix, approved feedback persistence-path counts, total events, last received event time, and events overdue for the exact elapsed 1,080-hour deletion threshold. It cannot return raw events, raw event timestamps, or excluded dimensions. Function execution is revoked from `public`, `anon`, and `authenticated` and granted only to `service_role`; V5's absence of direct `SELECT` access remains unchanged, and `service_role` receives no table `SELECT` grant.
 
@@ -123,10 +127,10 @@ Offline fixtures cover the HTTP request contract, timeout, non-2xx behavior, str
 
 Offline fixtures cover founder configuration, strict Bearer and query parsing, authentic and non-founder identities, the exact shared HTTP response parser, fixed headers/errors, all windows using only the server environment, both process-local limiter tiers, concurrency, exact DTO validation, ratio rules, forbidden output fields, fail-closed V6 creation, millisecond/exact-hour boundaries, bounded purge SQL and privileges, and byte-for-byte preservation of V5. Playwright interception covers the isolated page's loading, signed-out, unauthorized, disabled, rate-limited, unavailable, empty, and ready presentation states, malformed-response failure, absent ordinary navigation/feedback, keyboard-accessible window controls, and responsive aggregate tables. Interception proves presentation behavior only; it does not prove server authorization, live database behavior, or production enforcement.
 
-No migration was run, no environment value changed, no live collection occurred, no Supabase or Vercel service was contacted, and no deployment occurred during Block 6.2 implementation.
+No migration was run, no environment value changed, no live collection occurred, and no Supabase or Vercel service was contacted during Block 6.2 implementation. The later automatic code deployment remained fail-closed.
 
 ## Rollout blockers
 
-Collection must remain disabled until separately approved work covers exact production schema inventory and ordered rollout; distributed abuse controls including Vercel WAF; authorized retention scheduling; monitoring and alerting; founder configuration; incident response and rollback; privacy and support operational review; and live verification.
+Collection must remain disabled until separately approved work covers isolated V1–V6 verification, exact Production schema inventory and ordered rollout, distributed abuse controls including Vercel WAF, retention scheduling, monitoring, founder configuration, incident response, privacy and support operations, and live verification.
 
-The Founder Dashboard remains an unlinked protected internal surface, not a public analytics page. Block 6 remains in progress; Block 6.1 is merged and frozen pending rollout, while Block 6.2 remains pending final independent terminal review. No production-readiness claim is made.
+The Founder Dashboard remains an unlinked protected internal surface, not a public analytics page. A passing isolated gate will not prove Production behavior. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md); no Production readiness or database rollout is claimed.

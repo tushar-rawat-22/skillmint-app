@@ -1,10 +1,10 @@
 # SkillMint Project Status
 
-**Last updated:** July 22, 2026
+**Last updated:** July 23, 2026
 
-**Implementation baseline audited:** `3cb5e28050cf93e42e53405f0f2be9d12e756e27`
+**Rollout-foundation base:** `516412cb89b637d9ff2cf4400cd46d56c3648638`
 
-This is the current-state entry point for the founder, maintainers, developers, and future AI sessions. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
+This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
 ## Repository context
 
@@ -41,8 +41,8 @@ Resume Reality
 | Block 3: Mission Execution + Career Path Engine | Complete and frozen | Missions do not manipulate scores |
 | Block 4: Active Target + JD Workflow | Complete, hardened, merged, and frozen | Target focus, owner isolation, and JD freshness remain locked |
 | Block 5: Data Controls + Trust Center | Complete, verified, merged, synchronized, and frozen | Isolated engineering proof; no production claim |
-| Pre-Block-6 Brand & Domain Decision Gate | Approved next sequence | One to two focused working days; not a roadmap block |
-| Block 6: Privacy-safe Analytics + Founder Dashboard | In progress; Block 6.1 merged and frozen pending rollout; Block 6.2 repository-only implementation pending final independent review | Repository-only event collection and protected aggregate visibility; no live rollout |
+| Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
+| Block 6: Privacy-safe Analytics + Founder Dashboard | In progress; Block 6.1 and Block 6.2 merged and frozen pending rollout | Fail-closed code deployed automatically; database rollout and activation remain pending |
 | Block 7: Beta Launch Readiness | Not started | Production rollout, final QA, operations, and launch/no-launch decision |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
@@ -51,7 +51,11 @@ Block 5 merge commit: `3cb5e28050cf93e42e53405f0f2be9d12e756e27`
 
 Blocks 1–5 are frozen. Future work may extend the product only while preserving their behavior, evidence, identities, and non-claims.
 
-Block 6 is in progress. Block 6.1 is merged and frozen pending rollout; it is not pending another repository engineering review. The Block 6.2 protected founder aggregation/dashboard implementation exists only in the repository and remains pending final independent review. Counts describe events, never people: there is no identity analytics, unique-person, retention, cohort, or session contract. Both migrations remain unapplied; the founder UUID, WAF, purge schedule, and analytics collection flags remain unconfigured or disabled; no live service was contacted and no deployment or production rollout occurred. See [Privacy-safe Analytics Collection](ANALYTICS.md).
+Block 6 is in progress. Block 6.1 and Block 6.2 are merged and frozen pending rollout, and Block 6.2 passed independent review. The fail-closed application code was automatically deployed from `main`; that code deployment did not apply V5 or V6 and did not activate analytics.
+
+The isolated Supabase project `skillmint-block6-test` exists with status `ACTIVE_HEALTHY`. Production was not copied or altered. Analytics remains disabled, and the founder UUID, Vercel WAF rule, and retention schedule remain unconfigured.
+
+Vercel Preview and Production currently share the same two public Supabase variables. Preview is therefore not an isolated database environment. The next gate is isolated V1–V6 migration and live-security verification, not Production activation. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## Release boundary
 
@@ -66,18 +70,19 @@ Production rollout
 
 Production schema inventory and rollout, environment/origin coordination, operational ownership, incident and rollback handling, legal review, and provider backup/log retention claims remain outside the verified repository closure. A Vercel deployment or successful build does not by itself satisfy this boundary.
 
+The automatic fail-closed deployment is not a Production database rollout claim. V5 and V6 remain unapplied, and no collection flag is enabled.
+
 ## Approved next sequence
 
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. Block 6 may proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
-1. Documentation alignment, completed by this update.
-2. Run the [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
-3. Select one public name and one backup; reserve a usable domain.
-4. Add a bounded, centralized public-brand layer that changes user-facing surfaces only.
-5. Preserve internal SkillMint identifiers and rerun Block 1–5 preservation checks.
-6. Merge and synchronize that layer.
-7. Begin Block 6.
-8. Defer domain activation and production auth/origin changes to Block 7.
+1. Review and merge rollout-foundation repository work.
+2. Perform local and isolated hosted V1–V6 migration/security verification.
+3. Prove the Production V1–V4 catalog and migration-history baseline.
+4. Prepare WAF, founder authorization, retention, monitoring, and kill switches.
+5. Separately authorize Production V5 and V6.
+6. Enable server persistence, then browser delivery, only after those gates.
+7. Finish public branding and domain work before external beta.
 
 The public name, backup name, and domain are all pending. The gate does not authorize production, DNS, Supabase, Vercel, authentication, schema, storage, repository, or package changes.
 
@@ -107,5 +112,6 @@ Use the evidence relevant to the question instead of one universal ranking:
 - [Trust Center](TRUST_CENTER.md)
 - [Block 5 Closure](BLOCK_5_CLOSURE.md)
 - [Deployment Safety Guide](DEPLOYMENT.md)
+- [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Documentation Map](README.md)

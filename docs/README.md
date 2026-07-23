@@ -21,6 +21,7 @@ Implementation, tests, schemas, and frozen current contracts override legacy spe
 - [Premium UX Direction](PREMIUM_UX_DIRECTION.md)
 - [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md)
 - [Privacy-safe Analytics Collection](ANALYTICS.md)
+- [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
 
 These documents preserve the separation between Profile-fit Roles and Latest JD Match, score truth and focus, mission progress and evidence, and the current light-first UI direction.
 
@@ -54,6 +55,7 @@ Frozen evidence must not be casually rewritten. Preserve recorded identities, co
 ## Deployment and operations
 
 - [Deployment Safety Guide](DEPLOYMENT.md)
+- [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
 - [Project Status](PROJECT_STATUS.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Changelog](CHANGELOG.md)
