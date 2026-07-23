@@ -9,8 +9,8 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 
 - Blocks 1–5 are complete and frozen.
 - Block 6 is in progress. Block 6.1 and Block 6.2 are merged and frozen pending rollout, and Block 6.2 passed independent review.
-- The fail-closed application code deployed automatically from `main`; V5 and V6 remain unapplied and analytics remains disabled.
-- `skillmint-block6-test` is `ACTIVE_HEALTHY`, contains no Production copy, and is the next isolated verification target.
+- The fail-closed application code deployed automatically from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
+- `skillmint-block6-test` is `ACTIVE_HEALTHY`, contains no Production copy, and has V1–V6 applied. V7 repairs the live `service_role` raw SELECT defect.
 - Preview and Production share the same two public Supabase variables, so Preview is not an isolated database environment.
 - Block 7, Beta Launch Readiness, has not started.
 - Public beta is not authorized.
@@ -35,9 +35,9 @@ Preserve the scoring, proof, mission, Active Target, owner-partition, export, cl
 ## 3. Immediate next steps
 
 - [ ] Review and merge the rollout-foundation repository work.
-- [ ] Perform the separately authorized local reset and isolated hosted V1–V6 migration/security verification.
+- [ ] Apply V7 to the isolated project under separate authorization and repeat catalog, ACL, raw-row, and RPC verification.
 - [ ] Prove the Production V1–V4 catalog and migration-history baseline before any Production action.
-- [ ] Prepare WAF, founder authorization, retention, monitoring, and kill switches before separately authorizing Production V5 and V6.
+- [ ] Prepare WAF, founder authorization, retention, monitoring, and kill switches before separately authorizing Production V5–V7.
 - [ ] Keep the Brand & Domain Gate paused by founder decision while Block 6 proceeds; complete it before external beta.
 
 ## 4. Brand & Domain Gate
@@ -70,9 +70,9 @@ The selected public name, backup, and domain are `Pending`. Reservation does not
 - [x] Add deterministic exact HTTP parser, two-tier limiter, exact DTO, fail-closed SQL, millisecond/exact-hour, bounded-purge, privilege, ratio, privacy, and cross-browser presentation coverage.
 - [x] Complete the independent terminal review of Block 6.2.
 - [x] Merge and freeze Block 6.2 pending rollout.
-- [ ] Run the separately authorized isolated V1–V6 migration and live-security verification gate.
+- [ ] Run the separately authorized isolated V7 migration and repeated live-security verification gate.
 - [ ] Prove the Production V1–V4 baseline catalog before any migration-history repair.
-- [ ] Authorize the separate Production V5/V6 rollout with rollback and monitoring.
+- [ ] Authorize the separate Production V5–V7 rollout with rollback and monitoring.
 - [ ] Configure distributed Vercel WAF enforcement; the coarse 60-per-minute pre-Auth allowance and separate ten-per-minute founder limiter/one-query lock are process-local only.
 - [ ] Separately authorize and implement `pg_cron` scheduling for the exact 1,080-hour purge contract; each run deletes at most 10,000 overdue events, so repeated runs may be needed. It is currently unapplied, uncallable by API roles, and unscheduled.
 - [ ] Configure the founder Auth UUID and enable collection only as part of an authorized rollout.

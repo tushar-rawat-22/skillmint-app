@@ -121,13 +121,13 @@ Historical sequence:
 8. Re-run frozen Block 1-5 preservation checks, merge, and synchronize the public-brand layer.
 9. Begin Block 6.
 
-The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. Block 6 remains active, and isolated V1–V6 verification is the next engineering gate. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. Block 6 remains active, and isolated V7 ACL verification is the next engineering gate. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
 ### 6. Analytics + Founder Dashboard
 
-Status: In progress. Independent review of Block 6.2 passed, so both Block 6 repository implementations are merged and frozen until rollout. The fail-closed code was automatically deployed from `main`, but V5 and V6 remain unapplied and analytics remains disabled.
+Status: In progress. Independent review of Block 6.2 passed, so both Block 6 repository implementations are merged and frozen until rollout. The fail-closed code was automatically deployed from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
 
-The `skillmint-block6-test` project is `ACTIVE_HEALTHY` and contains no Production copy. The next gate is isolated V1–V6 migration and security verification. Production migration, founder UUID configuration, mandatory Vercel WAF enforcement, retention scheduling, monitoring, and Block 6 closure are incomplete.
+The `skillmint-block6-test` project is `ACTIVE_HEALTHY`, contains no Production copy, and has V1–V6 applied. Live verification exposed inherited `service_role` raw SELECT access. The next gate is isolated V7 application and repeated security verification. Production migration, founder UUID configuration, mandatory Vercel WAF enforcement, retention scheduling, monitoring, and Block 6 closure are incomplete.
 
 Preview and Production currently share two public Supabase variables, so Preview is not an isolated database environment. Events are never people, and the implementation adds no identity, unique-person, active-user, retention, cohort, or session analytics. Windows use exact elapsed 24/168/720-hour `received_at` boundaries. The unapplied purge contract uses an exact 1,080-hour threshold with at most 10,000 deletions per invocation.
 

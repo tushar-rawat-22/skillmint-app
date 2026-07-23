@@ -53,9 +53,9 @@ Blocks 1–5 are frozen. Future work may extend the product only while preservin
 
 Block 6 is in progress. Block 6.1 and Block 6.2 are merged and frozen pending rollout, and Block 6.2 passed independent review. The fail-closed application code was automatically deployed from `main`; that code deployment did not apply V5 or V6 and did not activate analytics.
 
-The isolated Supabase project `skillmint-block6-test` exists with status `ACTIVE_HEALTHY`. Production was not copied or altered. Analytics remains disabled, and the founder UUID, Vercel WAF rule, and retention schedule remain unconfigured.
+The isolated Supabase project `skillmint-block6-test` exists with status `ACTIVE_HEALTHY`. V1–V6 were applied there, and live PostgREST verification found that `service_role` retained raw table `SELECT` despite the intended INSERT-only contract. V7 is the additive ACL repair; V1–V6 remain immutable. Production was not copied or altered. Analytics remains disabled, and the founder UUID, Vercel WAF rule, and retention schedule remain unconfigured.
 
-Vercel Preview and Production currently share the same two public Supabase variables. Preview is therefore not an isolated database environment. The next gate is isolated V1–V6 migration and live-security verification, not Production activation. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
+Vercel Preview and Production currently share the same two public Supabase variables. Preview is therefore not an isolated database environment. The next gate is separately authorized isolated V7 application and repeated live-security verification, not Production activation. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## Release boundary
 
@@ -70,17 +70,17 @@ Production rollout
 
 Production schema inventory and rollout, environment/origin coordination, operational ownership, incident and rollback handling, legal review, and provider backup/log retention claims remain outside the verified repository closure. A Vercel deployment or successful build does not by itself satisfy this boundary.
 
-The automatic fail-closed deployment is not a Production database rollout claim. V5 and V6 remain unapplied, and no collection flag is enabled.
+The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied, and no collection flag is enabled.
 
 ## Approved next sequence
 
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. Block 6 may proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
 1. Review and merge rollout-foundation repository work.
-2. Perform local and isolated hosted V1–V6 migration/security verification.
+2. Apply V7 to the isolated V1–V6 project and repeat catalog, ACL, raw-row, and RPC verification.
 3. Prove the Production V1–V4 catalog and migration-history baseline.
 4. Prepare WAF, founder authorization, retention, monitoring, and kill switches.
-5. Separately authorize Production V5 and V6.
+5. Separately authorize Production V5, V6, and V7.
 6. Enable server persistence, then browser delivery, only after those gates.
 7. Finish public branding and domain work before external beta.
 

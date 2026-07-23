@@ -1,6 +1,6 @@
 # SkillMint Deployment Safety Guide
 
-SkillMint is preparing for a production beta rollout. The fail-closed Block 6.2 code was automatically deployed from `main`, but V5 and V6 remain unapplied and analytics remains disabled. This guide is an operator checklist, not a Production readiness claim.
+SkillMint is preparing for a production beta rollout. The fail-closed Block 6.2 code was automatically deployed from `main`, but Production V5–V7 remain unapplied and analytics remains disabled. This guide is an operator checklist, not a Production readiness claim.
 
 Beta release readiness remains blocked pending Production rollout and an externally verified, monitored privacy/support contact.
 
@@ -30,7 +30,7 @@ Vercel is the preferred deployment target, but a Git-connected host may create p
 
 Preview and Production currently share the same two public Supabase variables. Preview is therefore connected to the Production backend and must not be used for destructive, migration, or isolated-security testing. Separating those variables requires a later controlled Vercel change.
 
-The `skillmint-block6-test` Supabase project is `ACTIVE_HEALTHY`, contains no Production copy, and is not connected to the Vercel project. Its responsibility is the separately authorized V1–V6 bootstrap and live-security gate. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
+The `skillmint-block6-test` Supabase project is `ACTIVE_HEALTHY`, contains no Production copy, has V1–V6 applied, and is not connected to the Vercel project. Its next responsibility is the separately authorized V7 repair and repeated live-security gate. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
 
 ## Public browser variables
 
@@ -78,7 +78,7 @@ SkillMint has no configured seed dataset. The generic `https://supabase.com/docs
 
 - Vercel Production uses Supabase `skillmint-beta`. This repository pass authorizes no migration or setting change.
 - Vercel Preview currently shares Production's two public Supabase variables. It is not an isolated database environment.
-- Supabase `skillmint-block6-test` has no Production data and no Vercel connection. Use it only for the separately authorized bootstrap and security gate.
+- Supabase `skillmint-block6-test` has no Production data and no Vercel connection. Use it only for the separately authorized V7 repair and security gate.
 
 ## Production schema rollout
 
@@ -90,14 +90,15 @@ For an empty isolated environment, the committed forward order is:
 4. `supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql`
 5. `supabase/migrations/20260723000500_schema_v5_analytics_events.sql`
 6. `supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql`
+7. `supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql`
 
-The timestamped files are byte-identical to the six source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. Later corrections require a separately reviewed forward migration; do not edit and replay an applied file.
+The timestamped files are byte-identical to the seven source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. V1–V6 remain unchanged; later corrections require a separately reviewed forward migration.
 
-This repository evidence does not show that the committed V1–V6 chain has executed successfully. The outer `BEGIN`/`COMMIT` wrappers in V4–V6 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
+The isolated project has V1–V6 applied, but its live result is not Production proof. The outer `BEGIN`/`COMMIT` wrappers in V4–V7 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
 
 Production V1–V4 are baseline candidates, not trusted migration history. Exact history and normalized catalog proof must cover tables, columns, constraints, indexes, RLS, grants, functions, triggers, owners, ACLs, and search paths before marking them applied.
 
-Migration repair changes history only and executes no SQL. A Production dry-run must show only V5 and V6 before authorization, and those migrations must be applied and verified separately. Isolated verification is not Production proof. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
+Migration repair changes history only and executes no SQL. A Production dry-run must show only V5, V6, and V7 before authorization, and those migrations must be applied and verified separately. V7 removes inherited/default `service_role` table access and restores INSERT only; it does not enable analytics. Isolated verification is not Production proof. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## Vercel deployment checklist
 

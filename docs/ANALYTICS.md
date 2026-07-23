@@ -4,13 +4,13 @@
 
 The repository contains a first-party, privacy-minimized collection path and a protected founder-only aggregate Product Event Health dashboard. The fail-closed application code was automatically deployed from `main`. That deployment did not apply V5 or V6, enable collection, configure the founder UUID, add a WAF rule, or schedule retention.
 
-The isolated `skillmint-block6-test` project exists with status `ACTIVE_HEALTHY`. Production was not copied or altered. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. The next gate is isolated migration and live-security verification, not Production activation.
+The isolated `skillmint-block6-test` project exists with status `ACTIVE_HEALTHY` and has V1–V6 applied. Live verification found that `service_role` retained raw table `SELECT`; V7 is the forward ACL repair. Production was not copied or altered. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. The next gate is separately authorized isolated V7 application and repeated live-security verification, not Production activation.
 
 ## Activation
 
 Browser delivery and server persistence are independently default-off. Browser delivery is eligible only when the public build-time value `NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED` is exactly `"true"`; changing it requires a rebuild. Server persistence is eligible only when the server runtime value `ANALYTICS_COLLECTION_ENABLED` is exactly `"true"`. Both exact values are necessary for the future collection path, but both flags alone do not authorize rollout.
 
-When the public flag is absent, the browser performs no analytics POST. When the server flag is absent, a direct valid endpoint request receives the fixed `not_configured` response before its body is read and cannot reach Supabase. No environment file, Vercel setting, or Supabase setting was changed. The analytics migration remains unapplied, and collection remains disabled.
+When the public flag is absent, the browser performs no analytics POST. When the server flag is absent, a direct valid endpoint request receives the fixed `not_configured` response before its body is read and cannot reach Supabase. No environment file, Vercel setting, or Production Supabase setting was changed. Collection remains disabled.
 
 ## Approved event taxonomy
 
@@ -59,21 +59,23 @@ The route discards browser-provided `environment` and `build_id`. Environment co
 
 ## Database boundary
 
-`supabase/schema_v5_analytics_events.sql` is the source for the byte-identical timestamped V5 migration. Both remain unapplied. V5 defines only `event_id`, `event_name`, `event_version`, `occurred_at`, server `received_at`, `environment`, `build_id`, `source_screen`, `owner_mode`, and `properties`.
+`supabase/schema_v5_analytics_events.sql` is the source for the byte-identical timestamped V5 migration. V5 defines only `event_id`, `event_name`, `event_version`, `occurred_at`, server `received_at`, `environment`, `build_id`, `source_screen`, `owner_mode`, and `properties`.
 
-The table constrains every envelope enum, the current event version, build-ID shape/length, JSON object shape, and property size. Its operational indexes use database-generated `received_at`: descending receipt time, event name plus descending receipt time, and environment plus descending receipt time. Row Level Security is enabled and forced. All table access is revoked from `public`, `anon`, and `authenticated`; only `service_role` receives insert. There is no browser policy, account foreign key, read/list repository, public view, dashboard query function, or retention job.
+The table constrains every envelope enum, the current event version, build-ID shape/length, JSON object shape, and property size. Its operational indexes use database-generated `received_at`: descending receipt time, event name plus descending receipt time, and environment plus descending receipt time. Row Level Security is enabled and forced. V5 revokes table access from `public`, `anon`, and `authenticated` and grants INSERT to `service_role`, but it does not revoke pre-existing `service_role` privileges. There is no browser policy, account foreign key, read/list repository, public view, dashboard query function, or retention job.
 
 No migration command was run and no live Supabase project was contacted by Block 6.1.
 
 ## Founder aggregation and authorization
 
-`supabase/schema_v6_analytics_aggregation.sql` is the source for the byte-identical timestamped V6 migration after V5. Both remain unapplied. The functions use plain `CREATE FUNCTION`, intentionally aborting the transaction if either function already exists unexpectedly instead of preserving an unknown owner or ACL.
+`supabase/schema_v6_analytics_aggregation.sql` is the source for the byte-identical timestamped V6 migration after V5. The functions use plain `CREATE FUNCTION`, intentionally aborting the transaction if either function already exists unexpectedly instead of preserving an unknown owner or ACL.
 
 The aggregate function accepts only `24h`, `7d`, or `30d`, runs with `SECURITY DEFINER`, an empty `search_path`, and a two-second statement timeout, and returns one exact versioned aggregate row. Its one database `as_of` instant is aligned to millisecond precision. Database-generated `received_at` uses closed-open `[window_start, as_of)` windows of exact elapsed 24, 168, or 720 hours—not calendar-day boundaries. The browser cannot provide an environment, date, dimension, identifier, ordering, or limit; the API supplies only the current server-canonical environment.
 
-The function returns fixed event-name counts, the approved operation/error-code matrix, approved feedback persistence-path counts, total events, last received event time, and events overdue for the exact elapsed 1,080-hour deletion threshold. It cannot return raw events, raw event timestamps, or excluded dimensions. Function execution is revoked from `public`, `anon`, and `authenticated` and granted only to `service_role`; V5's absence of direct `SELECT` access remains unchanged, and `service_role` receives no table `SELECT` grant.
+The function returns fixed event-name counts, the approved operation/error-code matrix, approved feedback persistence-path counts, total events, last received event time, and events overdue for the exact elapsed 1,080-hour deletion threshold. It cannot return raw events, raw event timestamps, or excluded dimensions. Function execution is revoked from `public`, `anon`, and `authenticated` and granted only to `service_role`. That function grant does not grant raw table access or remove a pre-existing table privilege.
 
 `public.purge_expired_analytics_events()` selects event IDs strictly older than the exact elapsed 1,080-hour threshold in deterministic `received_at, event_id` order, deletes at most 10,000 selected rows per invocation, and returns only the deleted count. If more than 10,000 events are overdue, repeated scheduled runs may be needed. Execution is revoked from `public`, `anon`, `authenticated`, and `service_role`; it is not called or scheduled. Any future `pg_cron` scheduling requires separate explicit authorization, rollout, monitoring, and rollback planning.
+
+`supabase/schema_v7_analytics_acl_hardening.sql` is the byte-identical source for the forward V7 migration. It removes inherited or default table and column privileges from every API role, then restores table-level INSERT only to `service_role`. Raw table access and aggregate RPC execution are separate privileges: V7 does not change either function, and the purge function remains unavailable to every API role. This repair does not enable analytics. Production V5–V7 remain unapplied and require separate authorization; the applied V1–V6 history is immutable.
 
 The unlinked `/founder/analytics` page is isolated from ordinary user navigation and the feedback workflow. It sends its current browser Auth access token only to the same-origin `GET /api/founder/analytics/summary` endpoint. The API requires one exact Bearer header, verifies the token with Supabase Auth `getUser(token)`, and compares the authentic Auth UUID with the one valid server-only `ANALYTICS_FOUNDER_USER_ID` configuration value. A missing, malformed, or invalid configured UUID disables the dashboard. There is no email allowlist, metadata role, hardcoded UUID, authorization table, or identity field in analytics. The configured UUID is authorization configuration only and remains completely outside analytics data and responses.
 
@@ -131,6 +133,6 @@ No migration was run, no environment value changed, no live collection occurred,
 
 ## Rollout blockers
 
-Collection must remain disabled until separately approved work covers isolated V1–V6 verification, exact Production schema inventory and ordered rollout, distributed abuse controls including Vercel WAF, retention scheduling, monitoring, founder configuration, incident response, privacy and support operations, and live verification.
+Collection must remain disabled until separately approved work covers isolated V7 verification, exact Production schema inventory and ordered rollout, distributed abuse controls including Vercel WAF, retention scheduling, monitoring, founder configuration, incident response, privacy and support operations, and live verification.
 
 The Founder Dashboard remains an unlinked protected internal surface, not a public analytics page. A passing isolated gate will not prove Production behavior. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md); no Production readiness or database rollout is claimed.
