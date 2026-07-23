@@ -7,6 +7,14 @@ import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const ts = require("typescript");
+const supabase = require("@supabase/supabase-js");
+const {
+  AuthApiError,
+  AuthInvalidJwtError,
+  AuthRetryableFetchError,
+  AuthUnknownError,
+  CustomAuthError,
+} = supabase;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(dirname, "..");
 const originalResolveFilename = Module._resolveFilename;
@@ -49,6 +57,13 @@ const {
 const { handleFounderAnalyticsSummaryGet } = require(path.join(repoRoot, "src/app/api/founder/analytics/summary/handler.ts"));
 const { getFounderAnalyticsConfiguration } = require(path.join(repoRoot, "src/config/founderAnalytics.ts"));
 const eventContract = require(path.join(repoRoot, "src/platform/analytics/eventContract.ts"));
+const {
+  authenticateFounderAnalyticsToken,
+  classifyFounderAnalyticsAuthError,
+} = require(path.join(
+  repoRoot,
+  "src/modules/analytics/services/founderAnalyticsServer.ts",
+));
 
 const FOUNDER_ID = "10000000-0000-4000-8000-000000000001";
 const OTHER_ID = "20000000-0000-4000-8000-000000000002";
@@ -313,6 +328,35 @@ test("disabled dashboard and exact Bearer parsing return fixed responses", async
 });
 
 test("invalid and non-founder tokens consume only coarse allowance", async () => {
+  for (const rejectedToken of [
+    new AuthApiError("fixture rejected token", 401, "bad_jwt"),
+    new AuthInvalidJwtError("fixture invalid JWT"),
+    new CustomAuthError(
+      "fixture invalid JWT code",
+      "FixtureAuthError",
+      400,
+      "invalid_jwt",
+    ),
+  ]) {
+    assert.equal(
+      classifyFounderAnalyticsAuthError(rejectedToken),
+      "not_authenticated",
+    );
+  }
+
+  for (const providerFailure of [
+    new AuthApiError("fixture provider rejection", 401, undefined),
+    new AuthApiError("fixture provider failure", 500, "unexpected_failure"),
+    new AuthRetryableFetchError("fixture network unavailable", 503),
+    new AuthUnknownError("fixture unknown failure", new Error("fixture cause")),
+    new Error("fixture runtime failure"),
+  ]) {
+    assert.equal(
+      classifyFounderAnalyticsAuthError(providerFailure),
+      "temporarily_unavailable",
+    );
+  }
+
   let preAuthCalls = 0;
   let founderCalls = 0;
   const shared = {
@@ -331,6 +375,81 @@ test("invalid and non-founder tokens consume only coarse allowance", async () =>
   assert.equal(other.status, 403);
   assert.deepEqual(await responseBody(other), { ok: false, code: "not_authorized" });
   assert.deepEqual([preAuthCalls, founderCalls], [2, 0]);
+});
+
+test("returned and thrown Auth failures use the same exact classification", async () => {
+  const originalCreateClient = supabase.createClient;
+  const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const originalKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  async function authenticateWith(getUser) {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://fixture.example";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "fixture-key";
+    supabase.createClient = () => ({ auth: { getUser } });
+    return authenticateFounderAnalyticsToken(TOKEN);
+  }
+
+  try {
+    for (const error of [
+      new AuthApiError("fixture rejected token", 401, "bad_jwt"),
+      new AuthInvalidJwtError("fixture invalid JWT"),
+    ]) {
+      assert.deepEqual(
+        await authenticateWith(async () => ({
+          data: { user: null },
+          error,
+        })),
+        { ok: false, code: "not_authenticated" },
+      );
+      assert.deepEqual(
+        await authenticateWith(async () => {
+          throw error;
+        }),
+        { ok: false, code: "not_authenticated" },
+      );
+    }
+
+    for (const error of [
+      new AuthApiError("fixture provider rejection", 401, undefined),
+      new AuthApiError("fixture provider failure", 500, "unexpected_failure"),
+      new AuthRetryableFetchError("fixture network unavailable", 503),
+      new AuthUnknownError("fixture unknown failure", new Error("fixture cause")),
+    ]) {
+      assert.deepEqual(
+        await authenticateWith(async () => ({
+          data: { user: null },
+          error,
+        })),
+        { ok: false, code: "temporarily_unavailable" },
+      );
+      assert.deepEqual(
+        await authenticateWith(async () => {
+          throw error;
+        }),
+        { ok: false, code: "temporarily_unavailable" },
+      );
+    }
+
+    assert.deepEqual(
+      await authenticateWith(async () => ({
+        data: { user: null },
+        error: null,
+      })),
+      { ok: false, code: "not_authenticated" },
+    );
+  } finally {
+    supabase.createClient = originalCreateClient;
+    if (originalUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
+    }
+    if (originalKey === undefined) {
+      delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    } else {
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = originalKey;
+    }
+  }
 });
 
 test("fixed public service failures never expose provider details", async () => {

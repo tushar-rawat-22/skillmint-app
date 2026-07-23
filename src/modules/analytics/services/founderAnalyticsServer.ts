@@ -1,6 +1,11 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  isAuthApiError,
+  isAuthError,
+  isAuthRetryableFetchError,
+} from "@supabase/supabase-js";
 
 import {
   createSupabaseAdminClient,
@@ -11,6 +16,27 @@ import type { Database } from "@/lib/supabase/database.types";
 import type { FounderAnalyticsWindow } from "@/modules/analytics/founderDashboardContract";
 import type { AnalyticsEnvironment } from "@/platform/analytics/eventContract";
 
+export function classifyFounderAnalyticsAuthError(
+  error: unknown,
+): "not_authenticated" | "temporarily_unavailable" {
+  if (isAuthRetryableFetchError(error)) {
+    return "temporarily_unavailable";
+  }
+
+  if (isAuthApiError(error) && error.code === "bad_jwt") {
+    return "not_authenticated";
+  }
+
+  if (
+    isAuthError(error) &&
+    (error.code === "invalid_jwt" || error.name === "AuthInvalidJwtError")
+  ) {
+    return "not_authenticated";
+  }
+
+  return "temporarily_unavailable";
+}
+
 export async function authenticateFounderAnalyticsToken(token: string) {
   const config = getSupabasePublicConfig();
   if (!config) return { ok: false as const, code: "not_configured" as const };
@@ -20,12 +46,21 @@ export async function authenticateFounderAnalyticsToken(token: string) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
     const { data, error } = await client.auth.getUser(token);
-    if (error || !data.user) {
+    if (error) {
+      return {
+        ok: false as const,
+        code: classifyFounderAnalyticsAuthError(error),
+      };
+    }
+    if (!data.user) {
       return { ok: false as const, code: "not_authenticated" as const };
     }
     return { ok: true as const, userId: data.user.id };
-  } catch {
-    return { ok: false as const, code: "temporarily_unavailable" as const };
+  } catch (error) {
+    return {
+      ok: false as const,
+      code: classifyFounderAnalyticsAuthError(error),
+    };
   }
 }
 
