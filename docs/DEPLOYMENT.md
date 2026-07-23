@@ -1,8 +1,8 @@
 # SkillMint Deployment Safety Guide
 
-SkillMint is a Next.js application preparing for a production beta rollout. Block 5 engineering was verified only against the authorized isolated Supabase project. Production has not received the final Block 5 schema rollout, so this guide is an operator checklist rather than a production-readiness claim.
+SkillMint is preparing for a production beta rollout. The fail-closed Block 6.2 code was automatically deployed from `main`, but V5 and V6 remain unapplied and analytics remains disabled. This guide is an operator checklist, not a Production readiness claim.
 
-`BETA_RELEASE_READINESS=BLOCKED_PENDING_PRODUCTION_ROLLOUT_AND_EXTERNAL_PRIVACY_CONTACT`
+Beta release readiness remains blocked pending Production rollout and an externally verified, monitored privacy/support contact.
 
 ## Brand and domain boundary
 
@@ -26,7 +26,9 @@ Reserving a domain does not make any of these settings safe or complete. See [Br
 
 Vercel is the preferred deployment target, but a Git-connected host may create preview deployments from branch pushes. Before any remote branch push, independently review the actual Git/Vercel project linkage, deployment protection, preview access, ignored-build settings, and environment-variable scopes. Unknown remote deployment behavior blocks remote push readiness even when a local commit is safe.
 
-Preview and Production scopes must be reviewed separately. Preview must not silently inherit production Supabase credentials, and the account-deletion route must not become reachable against an unintended or unmigrated database. npm package exclusion through `.npmignore` controls `npm pack` contents only; it does not prove that a Vercel build or preview excludes a repository file or environment variable.
+Preview and Production currently share the same two public Supabase variables. Preview is therefore connected to the Production backend and must not be used for destructive, migration, or isolated-security testing. Separating those variables requires a later controlled Vercel change.
+
+The `skillmint-block6-test` Supabase project is `ACTIVE_HEALTHY`, contains no Production copy, and is not connected to the Vercel project. Its responsibility is the separately authorized V1–V6 bootstrap and live-security gate. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
 
 ## Public browser variables
 
@@ -37,19 +39,26 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=
 ```
 
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` is a legacy alias used only where compatibility still requires it. Prefer the publishable-key name for current configuration. Public keys are still environment-specific and must point only to the intended environment.
+
+The public analytics flag is build-time configuration. It must remain absent or disabled until server persistence, founder authorization, WAF, retention, and monitoring gates are complete. Enabling it requires a rebuild.
 
 ## Trusted server-runtime variables
 
 ```text
 SUPABASE_SECRET_KEY=
+ANALYTICS_COLLECTION_ENABLED=
+ANALYTICS_FOUNDER_USER_ID=
 ```
 
 `SUPABASE_SECRET_KEY` is server-only. It must never use a `NEXT_PUBLIC_` prefix, enter browser bundles, appear in logs or test artifacts, or be exposed to client code. It is required only by trusted server functionality that needs administrative authority, including the protected account-deletion route. Scope and protect it independently for each deployment environment.
 
 Do not configure the account-deletion route in a Preview environment unless that preview is protected, explicitly authorized, and connected to an appropriately migrated nonproduction Supabase project.
+
+`ANALYTICS_COLLECTION_ENABLED` controls server persistence and defaults off. `ANALYTICS_FOUNDER_USER_ID` is authorization configuration for the protected founder route. Both are server-only, independently scoped, and forbidden from browser output.
 
 ## Operator-only database configuration
 
@@ -57,26 +66,43 @@ Do not configure the account-deletion route in a Preview environment unless that
 SUPABASE_DB_URL=
 ```
 
-`SUPABASE_DB_URL` is for controlled migration and isolated live-verification tooling. It is not a browser variable, is not ordinarily required by the deployed Next.js runtime, and must not enter client bundles or ordinary preview environments. Load it only into a sanitized operator process after validating the authorized project reference and blocking the production reference.
+`SUPABASE_DB_URL` is for controlled migration and isolated live-verification tooling. It is operator-only, is not required by the deployed Next.js runtime, and must not enter client bundles, server-runtime configuration, or ordinary Preview environments.
+
+Load database credentials only into a sanitized disposable operator process after the local target guard validates the isolated project identity. The guard does not prove connection or schema safety. Never commit project refs, database passwords, access tokens, connection strings, or Supabase CLI link metadata.
+
+SkillMint has no configured seed dataset. The generic `https://supabase.com/docs/...` URL in `supabase/config.toml` is a documentation link, not a hosted project endpoint.
+
+## Environment responsibilities
+
+- Vercel Production uses Supabase `skillmint-beta`. This repository pass authorizes no migration or setting change.
+- Vercel Preview currently shares Production's two public Supabase variables. It is not an isolated database environment.
+- Supabase `skillmint-block6-test` has no Production data and no Vercel connection. Use it only for the separately authorized bootstrap and security gate.
 
 ## Production schema rollout
 
-For a new empty environment, the locked forward-only order is:
+For an empty isolated environment, the committed forward order is:
 
-1. `supabase/schema_v1.sql`
-2. `supabase/schema_v2_feedback.sql`
-3. `supabase/schema_v3_data_controls.sql`
-4. `supabase/schema_v4_account_deletion_security.sql`
+1. `supabase/migrations/20260723000100_schema_v1.sql`
+2. `supabase/migrations/20260723000200_schema_v2_feedback.sql`
+3. `supabase/migrations/20260723000300_schema_v3_data_controls.sql`
+4. `supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql`
+5. `supabase/migrations/20260723000500_schema_v5_analytics_events.sql`
+6. `supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql`
 
-The applied SQL files are immutable evidence. Later corrections require a separately reviewed forward-fix SQL file; do not edit and replay an applied file. Isolated-project catalog verification is not production rollout proof.
+The timestamped files are byte-identical to the six source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. Later corrections require a separately reviewed forward migration; do not edit and replay an applied file.
 
-Production rollout requires explicit approval, current-schema inventory, backup and recovery planning, accountable ownership, rollback planning, secret/environment review, transactional application where supported, exact post-application catalog verification, monitoring, and an incident path. Production has not been migrated or verified for the final Block 5 sequence.
+This repository evidence does not show that the committed V1–V6 chain has executed successfully. The outer `BEGIN`/`COMMIT` wrappers in V4–V6 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
+
+Production V1–V4 are baseline candidates, not trusted migration history. Exact history and normalized catalog proof must cover tables, columns, constraints, indexes, RLS, grants, functions, triggers, owners, ACLs, and search paths before marking them applied.
+
+Migration repair changes history only and executes no SQL. A Production dry-run must show only V5 and V6 before authorization, and those migrations must be applied and verified separately. Isolated verification is not Production proof. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## Vercel deployment checklist
 
 - Confirm the intended Git repository, branch behavior, and project linkage.
 - Confirm Preview and Production variable names and scopes without exposing values.
-- Prove Preview does not receive production Supabase variables.
+- Record the current shared Preview/Production public Supabase variables and block database-affecting Preview tests.
+- Separate Preview variables only through an approved Vercel change with a nonproduction target.
 - Confirm deployment protection and preview access before a branch push.
 - Confirm the framework preset and build command use the locked source and lockfile.
 - Apply and verify the approved database rollout before enabling privileged deletion functionality.

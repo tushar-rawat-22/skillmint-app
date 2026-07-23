@@ -4,7 +4,7 @@
 **Historical original Beta v1 planning estimate:** Realistic 5-6 weeks; conservative 7-8 weeks. This is not a current launch date or a new estimate.
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
 
-**Sequencing amendment:** A one-to-two-day Pre-Block-6 Brand & Domain Decision Gate is approved after this documentation alignment. It is not an eighth block and does not change the seven-block numbering.
+**Sequencing history:** A one-to-two-day Pre-Block-6 Brand & Domain Decision Gate was approved after the Block 5 documentation alignment. The founder later paused it so internal Block 6 work could proceed. It remains required before external beta, is not an eighth block, and does not change the seven-block numbering.
 
 ## Current State
 
@@ -35,8 +35,8 @@ Current status:
 | Blocks 1-3 | Complete and frozen |
 | Block 4 | Complete, hardened, merged, and frozen |
 | Block 5 | Complete, verified, merged, synchronized, and frozen |
-| Pre-Block-6 Brand & Domain Decision Gate | Approved next sequence; not a block |
-| Block 6 | In progress; Block 6.1 merged and frozen pending rollout; Block 6.2 repository-only implementation pending final independent review |
+| Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; required before external beta |
+| Block 6 | In progress; Block 6.1 and Block 6.2 merged and frozen pending rollout; isolated rollout verification is next |
 | Block 7 | Not started |
 
 ## Block Purposes And Boundaries
@@ -101,15 +101,15 @@ Dependencies: Blocks 1-4 must remain intact.
 
 ## Pre-Block-6 Brand & Domain Decision Gate
 
-**Status:** Approved sequencing amendment recorded after Blocks 1-5 were completed. This is not Block 6 and does not renumber the roadmap.
+**Status:** Paused by founder decision and still required before external beta. This is not Block 6 and does not renumber the roadmap.
 
 **Duration:** One focused working day, with a second day only if availability or risk screening requires it.
 
-**Purpose:** Select one public name, one backup, and one usable domain before public labels, founder-facing presentation, launch documents, support identity, metadata, and external communications accumulate naming debt. The public name and domain are currently pending. This product sequencing choice is not a technical dependency for analytics.
+**Historical purpose:** Select one public name, one backup, and one usable domain before public labels, founder-facing presentation, launch documents, support identity, metadata, and external communications accumulate naming debt. The public name and domain remain pending. This rationale is preserved as historical sequencing, but the gate is not the next engineering task and is not a technical dependency for the active Block 6 work.
 
-Block 6 event IDs, event schema names, persistent identifiers, storage contracts, and data keys must remain brand-neutral. Illustrative event IDs such as `resume_analysis_completed`, `active_target_created`, `jd_match_completed`, `mission_started`, and `mission_completed` are examples only, not an approved event taxonomy. This gate does not authorize an analytics provider, schema, event list, persistence model, or implementation.
+Block 6 event IDs, event schema names, persistent identifiers, storage contracts, and data keys remain brand-neutral. The frozen taxonomy includes `mission_started` and `mission_marked_done`; it does not include `mission_completed`. This gate does not authorize an analytics provider, taxonomy change, persistence model, or implementation.
 
-Sequence:
+Historical sequence:
 
 1. Create an initial shortlist and select three finalists.
 2. Review domain availability plus basic competitor, confusion, pronunciation, spelling, and trademark risk.
@@ -121,11 +121,15 @@ Sequence:
 8. Re-run frozen Block 1-5 preservation checks, merge, and synchronize the public-brand layer.
 9. Begin Block 6.
 
-The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. Block 6 remains active, and isolated V1–V6 verification is the next engineering gate. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
 ### 6. Analytics + Founder Dashboard
 
-Status: In progress. Block 6.1 is merged and frozen pending rollout and is not pending another repository engineering review. The Block 6.2 current-environment aggregation and isolated protected founder dashboard exist only in the repository and remain pending final independent review. Events are never people, and the implementation adds no identity, unique-person, retention, cohort, or session analytics. Windows use exact elapsed 24/168/720-hour `received_at` boundaries, and the unapplied purge contract uses an exact 1,080-hour threshold with at most 10,000 deletions per invocation. Production migration, live collection, founder UUID configuration, mandatory Vercel WAF enforcement, authorized `pg_cron` scheduling, operational monitoring, and Block 6 closure are not complete. No live service was contacted and no deployment occurred.
+Status: In progress. Independent review of Block 6.2 passed, so both Block 6 repository implementations are merged and frozen until rollout. The fail-closed code was automatically deployed from `main`, but V5 and V6 remain unapplied and analytics remains disabled.
+
+The `skillmint-block6-test` project is `ACTIVE_HEALTHY` and contains no Production copy. The next gate is isolated V1–V6 migration and security verification. Production migration, founder UUID configuration, mandatory Vercel WAF enforcement, retention scheduling, monitoring, and Block 6 closure are incomplete.
+
+Preview and Production currently share two public Supabase variables, so Preview is not an isolated database environment. Events are never people, and the implementation adds no identity, unique-person, active-user, retention, cohort, or session analytics. Windows use exact elapsed 24/168/720-hour `received_at` boundaries. The unapplied purge contract uses an exact 1,080-hour threshold with at most 10,000 deletions per invocation.
 
 Purpose: Give the founder safe product-health visibility for beta readiness and learning.
 

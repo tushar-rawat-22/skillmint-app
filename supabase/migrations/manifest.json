@@ -1,0 +1,72 @@
+{
+  "contract_version": "skillmint.block6.migration_manifest.v1",
+  "generated_for": {
+    "empty_isolated_project": {
+      "apply_in_order": [
+        "20260723000100",
+        "20260723000200",
+        "20260723000300",
+        "20260723000400",
+        "20260723000500",
+        "20260723000600"
+      ]
+    },
+    "production": {
+      "catalog_proof_required_before_marking_applied": [
+        "20260723000100",
+        "20260723000200",
+        "20260723000300",
+        "20260723000400"
+      ],
+      "pending_execution": [
+        "20260723000500",
+        "20260723000600"
+      ],
+      "migration_history_repair": "history_only_no_sql_execution"
+    }
+  },
+  "ordered_migrations": [
+    {
+      "version": "20260723000100",
+      "source_path": "supabase/schema_v1.sql",
+      "migration_path": "supabase/migrations/20260723000100_schema_v1.sql",
+      "sha256": "af7a9a7314b699d1e38fe6998bc382489a33532315f188d77d0f8f739b5357e5",
+      "rollout_classification": "existing_production_baseline_requires_catalog_proof"
+    },
+    {
+      "version": "20260723000200",
+      "source_path": "supabase/schema_v2_feedback.sql",
+      "migration_path": "supabase/migrations/20260723000200_schema_v2_feedback.sql",
+      "sha256": "213fae232e106ff82cd6e300fc27507d77a612dd8c5f128bd91601f114f33701",
+      "rollout_classification": "existing_production_baseline_requires_catalog_proof"
+    },
+    {
+      "version": "20260723000300",
+      "source_path": "supabase/schema_v3_data_controls.sql",
+      "migration_path": "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
+      "sha256": "a130483eac5ffafdbf293b3938e18dabea57a0e36c7d8617fb8bc448ae042959",
+      "rollout_classification": "existing_production_baseline_requires_catalog_proof"
+    },
+    {
+      "version": "20260723000400",
+      "source_path": "supabase/schema_v4_account_deletion_security.sql",
+      "migration_path": "supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql",
+      "sha256": "3ff175e86b79516ee896578d01b6b64fb747aa2b371187fa63f8225c09807587",
+      "rollout_classification": "existing_production_baseline_requires_catalog_proof"
+    },
+    {
+      "version": "20260723000500",
+      "source_path": "supabase/schema_v5_analytics_events.sql",
+      "migration_path": "supabase/migrations/20260723000500_schema_v5_analytics_events.sql",
+      "sha256": "15498e432dcac694af1adc696e3f824d72e184b9f96827f3e4610e66397332b2",
+      "rollout_classification": "pending_analytics_ingestion"
+    },
+    {
+      "version": "20260723000600",
+      "source_path": "supabase/schema_v6_analytics_aggregation.sql",
+      "migration_path": "supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql",
+      "sha256": "e46fabd2cf149f9bf97d4af18add4b125e8176fc577c162fa6b8f6dc385feba5",
+      "rollout_classification": "pending_founder_aggregation"
+    }
+  ]
+}
