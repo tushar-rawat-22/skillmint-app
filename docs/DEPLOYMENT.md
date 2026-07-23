@@ -4,13 +4,15 @@ SkillMint is preparing for a production beta rollout. The fail-closed Block 6.2 
 
 Beta release readiness remains blocked pending Production rollout and an externally verified, monitored privacy/support contact.
 
+<!-- Frozen Block 5 preservation marker: BETA_RELEASE_READINESS=BLOCKED_PENDING_PRODUCTION_ROLLOUT_AND_EXTERNAL_PRIVACY_CONTACT -->
+
 ## Brand and domain boundary
 
 The approved pre-Block-6 Brand & Domain Decision Gate may select a public name and reserve a usable domain. Selection and reservation are not activation and do not authorize production changes.
 
 The gate must not change DNS, Vercel configuration, Supabase configuration, authentication, trusted origins, schema, storage, or deployed environment variables. Custom-domain activation belongs to Block 7 and requires an independently approved rollout.
 
-During Block 7, review Preview and Production scopes independently and coordinate all of the following as one rollout boundary:
+During Block 7, Preview and Production scopes must be reviewed separately, and the following must be coordinated as one rollout boundary:
 
 - Vercel production branch and domain mapping;
 - `NEXT_PUBLIC_APP_URL` and allowed origins;
@@ -122,4 +124,4 @@ Migration repair changes history only and executes no SQL. A Production dry-run 
 
 Application rollback and database recovery are separate decisions. Redeploying an earlier application build does not reverse a database migration. Do not roll back additive security schema casually; use the approved recovery or forward-fix plan.
 
-This guide does not claim production migration, beta readiness, production readiness, legal compliance, provider backup/log deletion, universal JWT invalidation, Safari certification, complete screen-reader certification, or permanent OS download-save proof. A verified and monitored external privacy/support contact remains required before beta release.
+This guide does not claim production migration, beta readiness, production readiness, legal compliance, provider backup/log deletion, universal JWT invalidation, Safari certification, complete screen-reader certification, or permanent OS download-save proof. An externally verified privacy/support contact remains a release blocker until ownership and monitoring are confirmed.
