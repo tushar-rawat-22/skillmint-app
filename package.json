@@ -10,6 +10,7 @@
     "fixtures:analytics": "node scripts/analytics-contract-fixtures.mjs",
     "fixtures:analytics-runtime": "node scripts/analytics-runtime-fixtures.mjs",
     "fixtures:analytics-dashboard": "node scripts/analytics-dashboard-fixtures.mjs",
+    "fixtures:analytics-acl": "node scripts/analytics-acl-fixtures.mjs",
     "fixtures:block6-rollout-foundation": "node scripts/block6-rollout-foundation-fixtures.mjs",
     "test:e2e:analytics": "playwright test e2e/analytics.spec.ts --workers=1 --retries=0",
     "test:e2e:founder-analytics": "playwright test e2e/founder-analytics.spec.ts --workers=1 --retries=0",

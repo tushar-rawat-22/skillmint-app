@@ -64,6 +64,8 @@ const rolloutFoundationPaths = [
   "docs/README.md",
   "docs/TODO.md",
   "package.json",
+  "scripts/analytics-acl-catalog-verify.sql",
+  "scripts/analytics-acl-fixtures.mjs",
   "scripts/block6-rollout-foundation-fixtures.mjs",
   "scripts/block6-target-guard.mjs",
   "supabase/config.toml",
@@ -73,12 +75,14 @@ const rolloutFoundationPaths = [
   "supabase/schema_v4_account_deletion_security.sql",
   "supabase/schema_v5_analytics_events.sql",
   "supabase/schema_v6_analytics_aggregation.sql",
+  "supabase/schema_v7_analytics_acl_hardening.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
   "supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql",
   "supabase/migrations/20260723000500_schema_v5_analytics_events.sql",
   "supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql",
+  "supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -125,6 +129,13 @@ const migrations = [
     hash: "e46fabd2cf149f9bf97d4af18add4b125e8176fc577c162fa6b8f6dc385feba5",
     classification: "pending_founder_aggregation",
   },
+  {
+    version: "20260723000700",
+    source: "supabase/schema_v7_analytics_acl_hardening.sql",
+    migration: "supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql",
+    hash: "46f5606f45599d5955081d677a3f6bc51474fc0750a7daad87963b6bf9855b4c",
+    classification: "pending_analytics_acl_hardening",
+  },
 ];
 
 for (const item of migrations) {
@@ -141,7 +152,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered six SQL files",
+  "migration directory must contain the exact ordered seven SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -174,7 +185,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 6, "manifest must contain six migrations");
+equal(manifest.ordered_migrations.length, 7, "manifest must contain seven migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -191,6 +202,7 @@ manifest.ordered_migrations.forEach((entry, index) => {
 });
 equal(manifest.ordered_migrations[4].version, migrations[4].version, "V5 must follow V4");
 equal(manifest.ordered_migrations[5].version, migrations[5].version, "V6 must follow V5");
+equal(manifest.ordered_migrations[6].version, migrations[6].version, "V7 must follow V6");
 
 const config = text("supabase/config.toml");
 check(config.startsWith("# Generated with Supabase CLI 2.109.1 for local and migration tooling."), "config provenance missing");
@@ -354,7 +366,7 @@ for (const [pattern, claim] of [
   [/Block 6\.1 and Block 6\.2 are merged and frozen pending rollout/i, "Block 6.1/6.2 merged and frozen"],
   [/fail-closed[^.]*automatically deployed|automatically deployed[^.]*fail-closed/i, "fail-closed automatic deployment"],
   [/skillmint-block6-test[^.]*ACTIVE_HEALTHY|ACTIVE_HEALTHY[^.]*skillmint-block6-test/i, "isolated project state"],
-  [/V5 and V6 remain unapplied/i, "V5/V6 unapplied"],
+  [/Production V5(?:,|–) V6(?:,|, and|–) V7 remain unapplied/i, "Production V5/V6/V7 unapplied"],
   [/analytics remains disabled/i, "analytics disabled"],
   [/founder UUID[^.]*WAF[^.]*retention[^.]*unconfigured/i, "founder/WAF/retention unconfigured"],
   [/Preview and Production[^.]*share[^.]*two public Supabase variables/i, "Preview/Production shared backend"],
@@ -411,15 +423,20 @@ for (const path of currentDocs) {
 
 const packageJson = JSON.parse(text("package.json"));
 equal(
+  packageJson.scripts["fixtures:analytics-acl"],
+  "node scripts/analytics-acl-fixtures.mjs",
+  "package analytics ACL fixture script is missing",
+);
+equal(
   packageJson.scripts["fixtures:block6-rollout-foundation"],
   "node scripts/block6-rollout-foundation-fixtures.mjs",
   "package fixture script is missing",
 );
 check(
-  /node scripts\/analytics-dashboard-fixtures\.mjs\s+node scripts\/block6-rollout-foundation-fixtures\.mjs/.test(
+  /node scripts\/analytics-dashboard-fixtures\.mjs\s+node scripts\/analytics-acl-fixtures\.mjs\s+node scripts\/block6-rollout-foundation-fixtures\.mjs/.test(
     text(".github/workflows/ci.yml"),
   ),
-  "CI fixture is not immediately after the analytics dashboard fixture",
+  "analytics ACL and rollout fixtures are not ordered after the analytics dashboard fixture",
 );
 
 process.stdout.write(`PASS durable rollout-foundation content contracts passed (${assertionCount} assertions)\n`);
