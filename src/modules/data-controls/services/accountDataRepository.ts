@@ -41,6 +41,7 @@ type SavedReportsRpcRow = {
 type AdapterResponse = {
   data: unknown;
   error: unknown | null;
+  status?: number;
 };
 
 export type AccountDataExportQueryAdapter = {
@@ -357,11 +358,11 @@ export async function deleteCurrentUserSavedReports(
 
   if (!authResult.ok) return authResult;
 
-  const { data, error } = await authResult.data.supabase.rpc(
+  const { data, error, status } = await authResult.data.supabase.rpc(
     "delete_current_user_saved_reports",
   );
 
-  if (error) return providerFailure(error);
+  if (error) return providerFailure(error, status);
 
   const finalIdentity = await confirmSupabaseIdentity(
     authResult.data.supabase,
@@ -415,20 +416,20 @@ function createSupabaseAccountExportAdapter(
       };
     },
     async getExactCount(input) {
-      const { count, error } = await getExactSupabaseCount(
+      const { count, error, status } = await getExactSupabaseCount(
         supabase,
         input.tableName,
         input.expectedUserId,
       );
-      return { data: count, error };
+      return { data: count, error, status };
     },
     async getProfileRows(input) {
-      const { data, error } = await supabase
+      const { data, error, status } = await supabase
         .from("profiles")
         .select(input.selectedColumns)
         .eq("id", input.expectedUserId)
         .limit(input.limit);
-      return { data, error };
+      return { data, error, status };
     },
     async getKeysetPage(input) {
       let query = supabase
@@ -440,8 +441,8 @@ function createSupabaseAccountExportAdapter(
 
       if (input.cursor) query = query.gt("id", input.cursor);
 
-      const { data, error } = await query;
-      return { data, error };
+      const { data, error, status } = await query;
+      return { data, error, status };
     },
   };
 }
@@ -468,7 +469,7 @@ async function collectProfileTable(
   );
   if (!responseResult.ok) return responseResult;
   const response = responseResult.data;
-  if (response.error) return providerFailure(response.error);
+  if (response.error) return providerFailure(response.error, response.status);
   if (!Array.isArray(response.data)) return failure("invalid_response");
   if (response.data.length > 1) return failure("cardinality_violation");
 
@@ -543,7 +544,7 @@ async function collectKeysetTable<T>(
     if (!responseResult.ok) return responseResult;
     const response = responseResult.data;
 
-    if (response.error) return providerFailure(response.error);
+    if (response.error) return providerFailure(response.error, response.status);
     if (!Array.isArray(response.data)) return failure("invalid_response");
     if (response.data.length > limits.pageSize) return failure("invalid_response");
 
@@ -661,7 +662,7 @@ async function getAdapterCount(
   );
   if (!responseResult.ok) return responseResult;
   const response = responseResult.data;
-  if (response.error) return providerFailure(response.error);
+  if (response.error) return providerFailure(response.error, response.status);
   if (!isValidCount(response.data)) return failure("invalid_response");
   return { ok: true, data: response.data };
 }
@@ -747,13 +748,13 @@ async function getCount(
 ): Promise<RepositoryResult<number>> {
   const expectedOwnerColumn = tableName === "profiles" ? "id" : "user_id";
   if (ownerColumn !== expectedOwnerColumn) return failure("invalid_response");
-  const { count, error } = await getExactSupabaseCount(
+  const { count, error, status } = await getExactSupabaseCount(
     supabase,
     tableName,
     ownerValue,
   );
 
-  if (error) return providerFailure(error);
+  if (error) return providerFailure(error, status);
   if (!isValidCount(count)) return failure("invalid_response");
   return { ok: true, data: count };
 }
@@ -867,7 +868,9 @@ async function safeAdapterCall(
 function isAdapterResponse(value: unknown): value is AdapterResponse {
   return isRecord(value) &&
     Object.prototype.hasOwnProperty.call(value, "data") &&
-    Object.prototype.hasOwnProperty.call(value, "error");
+    Object.prototype.hasOwnProperty.call(value, "error") &&
+    (!Object.prototype.hasOwnProperty.call(value, "status") ||
+      typeof value.status === "number");
 }
 
 function recordResourceUse(
@@ -949,47 +952,66 @@ function isValidCount(value: unknown): value is number {
     value >= 0;
 }
 
-function providerFailure(error: unknown): RepositoryResult<never> {
-  return failure(getProviderErrorCode(error));
+function providerFailure(
+  error: unknown,
+  responseStatus?: number,
+): RepositoryResult<never> {
+  return failure(getProviderErrorCode(error, responseStatus));
 }
 
-function getProviderErrorCode(error: unknown): AccountDataErrorCode {
-  if (!isRecord(error)) return "unknown";
-
-  const status = typeof error.status === "number" ? error.status : null;
-  const code = typeof error.code === "string" ? error.code.toLowerCase() : "";
-  const name = typeof error.name === "string" ? error.name.toLowerCase() : "";
-  const message = typeof error.message === "string"
-    ? error.message.toLowerCase()
+function getProviderErrorCode(
+  error: unknown,
+  responseStatus?: number,
+): AccountDataErrorCode {
+  const providerError = isRecord(error) ? error : null;
+  const errorStatus = providerError?.status;
+  const status = isUsableProviderStatus(responseStatus)
+    ? responseStatus
+    : isUsableProviderStatus(errorStatus)
+    ? errorStatus
+    : null;
+  const code = typeof providerError?.code === "string"
+    ? providerError.code.toLowerCase()
+    : "";
+  const name = typeof providerError?.name === "string"
+    ? providerError.name.toLowerCase()
+    : "";
+  const message = typeof providerError?.message === "string"
+    ? providerError.message.toLowerCase()
     : "";
 
-  if (
-    status === 401 ||
-    code === "28000" ||
-    name.includes("authsessionmissing") ||
-    message.includes("auth session missing") ||
-    message.includes("jwt expired")
-  ) {
-    return "not_authenticated";
-  }
-  if (status === 403 || message.includes("row-level security") ||
-    message.includes("permission denied")) {
-    return "permission_denied";
-  }
-  if (
-    code === "42p01" ||
-    code === "pgrst205" ||
-    message.includes("schema cache") ||
-    message.includes("does not exist") ||
-    message.includes("could not find")
-  ) {
-    return "schema_unavailable";
-  }
+  if (status === 401) return "not_authenticated";
+  if (status === 403) return "permission_denied";
   if (
     status === 0 ||
     status === 408 ||
     status === 429 ||
-    (status !== null && status >= 500) ||
+    (status !== null && status >= 500)
+  ) return "network_failure";
+
+  if (code === "28000") return "not_authenticated";
+  if (
+    code === "42p01" ||
+    code === "pgrst205"
+  ) {
+    return "schema_unavailable";
+  }
+
+  if (
+    name.includes("authsessionmissing") ||
+    message.includes("auth session missing") ||
+    message.includes("jwt expired")
+  ) return "not_authenticated";
+  if (
+    message.includes("row-level security") ||
+    message.includes("permission denied")
+  ) return "permission_denied";
+  if (
+    message.includes("schema cache") ||
+    message.includes("does not exist") ||
+    message.includes("could not find")
+  ) return "schema_unavailable";
+  if (
     message.includes("network") ||
     message.includes("fetch") ||
     message.includes("timeout")
@@ -997,6 +1019,12 @@ function getProviderErrorCode(error: unknown): AccountDataErrorCode {
     return "network_failure";
   }
   return "unknown";
+}
+
+function isUsableProviderStatus(value: unknown): value is number {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0;
 }
 
 function failure<T = never>(code: AccountDataErrorCode): RepositoryResult<T> {

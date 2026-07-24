@@ -82,7 +82,11 @@ test("count failure renders unavailable while a later account export remains eli
   await login(page, ACCOUNT_A);
   provider.countMode = "reject";
   await page.goto("/settings/data");
-  await expect(page.getByRole("alert").filter({ hasText: /could not be completed/i })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Account data could not be reached. Please try again.",
+    }),
+  ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Unavailable").first()).toBeVisible();
   provider.countMode = "success";
   const button = page.getByRole("button", { name: "Download account data" });
