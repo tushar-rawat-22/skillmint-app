@@ -1,8 +1,8 @@
 # SkillMint Project Status
 
-**Last updated:** July 23, 2026
+**Last updated:** July 24, 2026
 
-**Rollout-foundation base:** `516412cb89b637d9ff2cf4400cd46d56c3648638`
+**Block 6 and post-Block-6 maintenance baseline:** `dd1614b4ac6619afd9320fb62378d0bdbc671255`
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
@@ -42,8 +42,8 @@ Resume Reality
 | Block 4: Active Target + JD Workflow | Complete, hardened, merged, and frozen | Target focus, owner isolation, and JD freshness remain locked |
 | Block 5: Data Controls + Trust Center | Complete, verified, merged, synchronized, and frozen | Isolated engineering proof; no production claim |
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
-| Block 6: Privacy-safe Analytics + Founder Dashboard | In progress; Block 6.1 and Block 6.2 merged and frozen pending rollout | Fail-closed code deployed automatically; database rollout and activation remain pending |
-| Block 7: Beta Launch Readiness | Not started | Production rollout, final QA, operations, and launch/no-launch decision |
+| Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
+| Block 7: Beta Launch Readiness | Not started at this reconciliation baseline | Block 7.1 resume owner isolation is the next planned engineering workstream within the broader launch-readiness contract |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -51,15 +51,15 @@ Block 5 merge commit: `3cb5e28050cf93e42e53405f0f2be9d12e756e27`
 
 Blocks 1–5 are frozen. Future work may extend the product only while preserving their behavior, evidence, identities, and non-claims.
 
-Block 6 is in progress. Block 6.1 and Block 6.2 are merged and frozen pending rollout, and Block 6.2 passed independent review. The fail-closed application code was automatically deployed from `main`; that code deployment did not apply V5 or V6 and did not activate analytics.
+Block 6 engineering implementation and isolated verification are complete. The isolated hosted migration and ACL verification passed, including the V7 additive ACL repair, and the isolated live-security gate passed. These results do not prove Production behavior or authorize Production rollout.
 
-The isolated Supabase project `skillmint-block6-test` exists with status `ACTIVE_HEALTHY`. V1–V6 were applied there, and live PostgREST verification found that `service_role` retained raw table `SELECT` despite the intended INSERT-only contract. V7 is the additive ACL repair; V1–V6 remain immutable. Production was not copied or altered. Analytics remains disabled, and the founder UUID, Vercel WAF rule, and retention schedule remain unconfigured.
+Post-Block-6 maintenance completed the founder invalid-token repair and the data-control provider-status and account-reauthentication repairs. PostCSS CVE-2026-45623 / GHSA-6g55-p6wh-862q was patched. As verified on July 24, 2026, GitHub reported zero open Dependabot alerts; this is a dated observation, not a permanent guarantee.
 
-Vercel Preview and Production currently share the same two public Supabase variables. Preview is therefore not an isolated database environment. The next gate is separately authorized isolated V7 application and repeated live-security verification, not Production activation. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
+Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## Release boundary
 
-Public beta is not currently authorized. Block 5 passed isolated engineering verification, but production rollout was not performed by that closure.
+Public beta is not currently authorized. Blocks 5 and 6 passed their applicable isolated engineering gates, but those results are not Production rollout or Production-readiness evidence.
 
 The current release blocker is:
 
@@ -74,10 +74,10 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 
 ## Approved next sequence
 
-**Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. Block 6 may proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
+**Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
-1. Review and merge rollout-foundation repository work.
-2. Apply V7 to the isolated V1–V6 project and repeat catalog, ACL, raw-row, and RPC verification.
+1. Begin Block 7.1 with a deterministic resume owner-isolation reproducer; do not assume the suspected account-switch race is a confirmed defect.
+2. Keep later Block 7 ordering evidence-driven while preserving its full launch-readiness scope.
 3. Prove the Production V1–V4 catalog and migration-history baseline.
 4. Prepare WAF, founder authorization, retention, monitoring, and kill switches.
 5. Separately authorize Production V5, V6, and V7.

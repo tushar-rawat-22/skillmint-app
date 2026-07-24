@@ -2,11 +2,13 @@
 
 ## 1. Purpose and current state
 
-This runbook controls the later Block 6 database and analytics rollout. It does not authorize a hosted change.
+This runbook remains the operating reference for a future explicitly authorized Production database and analytics rollout. It does not authorize a hosted change and is not obsolete.
 
-Block 6.1 and Block 6.2 are merged and frozen pending rollout. Block 6.2 passed independent review. The fail-closed application code was automatically deployed from `main`, but Production V5–V7 remain unapplied. No Production database or setting was changed during the repository-foundation pass.
+The Block 6 engineering foundation and isolated verification are complete. The fail-closed application code was automatically deployed from `main`, but this runbook has not been executed against Production. Production V5–V7 remain unapplied, and Production rollout remains pending authorization.
 
-The isolated `skillmint-block6-test` project exists with status `ACTIVE_HEALTHY` and has V1–V6 applied. Live PostgREST verification denied raw reads to browser roles but found that `service_role` retained raw SELECT. V7 is the additive ACL repair. Apply it only under a separately authorized live-security gate before considering Production.
+The isolated hosted project has V1–V7 applied. Migration, catalog, ACL, raw-row, RPC, retention, and application live-security verification passed after the additive V7 ACL repair. That evidence does not prove Production state or activation.
+
+Earlier repository-foundation documentation recorded that “Block 6.1 and Block 6.2 are merged and frozen pending rollout.” That intermediate status is preserved only as chronology and is superseded by the completed engineering and isolated-verification status above.
 
 ## 2. What remains disabled
 
@@ -19,7 +21,7 @@ Keep `ANALYTICS_COLLECTION_ENABLED` and `NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLE
 | Environment | Application | Database responsibility |
 | --- | --- | --- |
 | Production | Vercel Production | Supabase `skillmint-beta`; no migration or setting change is authorized by this repository pass |
-| Isolated | No Vercel project connection | Supabase `skillmint-block6-test`; contains no Production data, has V1–V6 applied, and awaits V7 and repeated live-security verification |
+| Isolated | No Vercel project connection | Supabase `skillmint-block6-test`; contains no Production data, has V1–V7 applied, and passed the isolated live-security gate |
 | Preview | Vercel Preview | Currently shares Production's two public Supabase variables, so it is not an isolated database environment |
 
 Do not use Preview for destructive or migration testing. Separating Preview variables is a later controlled Vercel change.
@@ -58,9 +60,9 @@ Run `scripts/block6-target-guard.mjs` against the fresh private inventory before
 
 `db push --dry-run` reports which migrations would be selected and their order. It does not execute or fully validate migration SQL. A successful dry-run is not permission to push.
 
-### Separately authorized hosted procedure
+### Completed isolated hosted procedure
 
-Under a separately approved live-verification gate:
+The following procedure was completed under a separately approved isolated live-verification gate. It is preserved as the repeatable evidence boundary and must not be rerun against any hosted project without new authorization:
 
 1. Bind and link only `skillmint-block6-test` non-interactively from the disposable workdir.
 2. Inspect the migration list before any push.
@@ -153,9 +155,9 @@ Prefer flag shutdown, route blocking, and reviewed forward fixes. Do not modify 
 
 ## 17. Evidence and closure checklist
 
-- [ ] Disposable workdir and private inventory provenance recorded without secret values.
-- [ ] Target guard passed for the isolated project before link.
-- [ ] Isolated V1–V6 prefix and V7 dry-run, application, catalog, RLS, ACL, raw-row denial, RPC, and purge evidence reviewed.
+- [x] Disposable workdir and private inventory provenance recorded without secret values.
+- [x] Target guard passed for the isolated project before link.
+- [x] Isolated V1–V6 prefix and V7 dry-run, application, catalog, RLS, ACL, raw-row denial, RPC, and purge evidence reviewed.
 - [ ] Production V1–V4 history and normalized catalog match exactly before any history repair.
 - [ ] Production dry-run shows only V5, V6, and V7.
 - [ ] V5 applied and verified separately from V6.
@@ -165,7 +167,7 @@ Prefer flag shutdown, route blocking, and reviewed forward fixes. Do not modify 
 - [ ] Founder UUID configured server-side and the empty dashboard verified.
 - [ ] Bounded retention schedule configured, monitored, and tested.
 - [ ] Server persistence enabled and ingestion verified before browser delivery.
-- [ ] Browser delivery enabled with a rebuild and observed before Block 6 closure.
+- [ ] Browser delivery enabled with a rebuild and observed before Production activation approval.
 - [ ] Kill switches, monitoring ownership, incident path, and evidence location recorded.
 
-Isolated verification is not Production proof. Close Block 6 only after the separately authorized Production rollout and observation period meet every applicable gate.
+The Block 6 engineering foundation and isolated verification are complete. This checklist is not proof that Production rollout occurred: the runbook has not been executed against Production, and Production rollout and activation remain pending separate authorization and every applicable gate.

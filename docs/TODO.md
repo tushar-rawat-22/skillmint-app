@@ -8,13 +8,13 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 ## 1. Current authoritative status
 
 - Blocks 1–5 are complete and frozen.
-- Block 6 is in progress. Block 6.1 and Block 6.2 are merged and frozen pending rollout, and Block 6.2 passed independent review.
+- Block 6 engineering implementation and isolated verification are complete.
 - The fail-closed application code deployed automatically from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
-- `skillmint-block6-test` is `ACTIVE_HEALTHY`, contains no Production copy, and has V1–V6 applied. V7 repairs the live `service_role` raw SELECT defect.
+- The isolated hosted project contains no Production copy, has V1–V7 applied, and passed migration, ACL, and live-security verification after V7 repaired inherited `service_role` raw SELECT access.
 - Preview and Production share the same two public Supabase variables, so Preview is not an isolated database environment.
-- Block 7, Beta Launch Readiness, has not started.
+- Block 7, Beta Launch Readiness, had not started at the July 24, 2026 reconciliation baseline. Block 7.1 resume owner isolation is the next planned engineering workstream.
 - Public beta is not authorized.
-- Production rollout is blocked pending an approved production migration/rollback process and post-rollout verification.
+- Production activation is deferred. Rollout remains blocked pending an approved Production migration/rollback process and post-rollout verification.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
 - Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
 
@@ -27,18 +27,26 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - [x] Block 5.1: Browser Data Safety.
 - [x] Block 5.2: Export and Trust Center Reliability.
 - [x] Block 5.3: Deletion, Database, Privacy, and Release Safety on the authorized isolated project.
+- [x] Block 6: Privacy-safe analytics and founder dashboard engineering implementation and isolated verification.
 - [x] Account saved-report deletion for resume analyses, JD matches, and career snapshots.
 - [x] Protected backend account-deletion route with recent-authentication, least-privilege, stale-token, race, and cleanup evidence.
 
 Preserve the scoring, proof, mission, Active Target, owner-partition, export, clearing, saved-report deletion, and account-deletion contracts recorded in the frozen documents.
 
-## 3. Immediate next steps
+## 3. Block 7.1 ordered queue
 
-- [ ] Review and merge the rollout-foundation repository work.
-- [ ] Apply V7 to the isolated project under separate authorization and repeat catalog, ACL, raw-row, and RPC verification.
-- [ ] Prove the Production V1–V4 catalog and migration-history baseline before any Production action.
-- [ ] Prepare WAF, founder authorization, retention, monitoring, and kill switches before separately authorizing Production V5–V7.
-- [ ] Keep the Brand & Domain Gate paused by founder decision while Block 6 proceeds; complete it before external beta.
+**Issue status:** suspected risk — not yet reproduced
+
+1. [ ] Create a deterministic owner-isolation reproducer.
+2. [ ] Confirm or reject the suspected stale-operation path.
+3. [ ] Perform the minimum product repair only if confirmed.
+4. [ ] Run targeted Chromium, Firefox, and WebKit verification.
+5. [ ] Run repeated race coverage if concurrency behavior changes.
+6. [ ] Run regression verification proportionate to the changed scope.
+7. [ ] Document confirmed findings, decisions, and limitations.
+8. [ ] Publish through a reviewed pull request.
+
+Block 7.1 investigates resume upload, extraction, analysis, browser publication, account persistence, and delayed completion across account changes. It is not expected to resolve all broader release blockers or satisfy the complete Block 7 launch-readiness gate.
 
 ## 4. Brand & Domain Gate
 
@@ -61,6 +69,8 @@ The selected public name, backup, and domain are `Pending`. Reservation does not
 
 ## 6. Block 6: Privacy-safe Analytics + Founder Dashboard
 
+Engineering implementation and isolated verification are complete. Unchecked items below are deferred Production activation work, not unfinished repository implementation.
+
 - [x] Define and implement the frozen privacy-minimized Block 6.1 event/data contract locally.
 - [x] Apply privacy, minimization, ownership, and exact 1,080-hour deletion-threshold review to the repository contracts.
 - [x] Implement current-environment aggregate product-event visibility without identity analytics, resume content, pasted JDs, credentials, unique people, cohorts, sessions, or person-level retention.
@@ -70,7 +80,7 @@ The selected public name, backup, and domain are `Pending`. Reservation does not
 - [x] Add deterministic exact HTTP parser, two-tier limiter, exact DTO, fail-closed SQL, millisecond/exact-hour, bounded-purge, privilege, ratio, privacy, and cross-browser presentation coverage.
 - [x] Complete the independent terminal review of Block 6.2.
 - [x] Merge and freeze Block 6.2 pending rollout.
-- [ ] Run the separately authorized isolated V7 migration and repeated live-security verification gate.
+- [x] Run the separately authorized isolated V7 migration and repeated live-security verification gate.
 - [ ] Prove the Production V1–V4 baseline catalog before any migration-history repair.
 - [ ] Authorize the separate Production V5–V7 rollout with rollback and monitoring.
 - [ ] Configure distributed Vercel WAF enforcement; the coarse 60-per-minute pre-Auth allowance and separate ten-per-minute founder limiter/one-query lock are process-local only.
@@ -81,7 +91,7 @@ The frozen taxonomy already contains `mission_started` and `mission_marked_done`
 
 Block 6 must not become a public analytics surface and must not overclaim beta readiness. Plain V6 `CREATE FUNCTION` declarations intentionally fail if either function exists unexpectedly. The aggregate `as_of` is millisecond-aligned; windows use exact elapsed 24/168/720 hours, not calendar days.
 
-The automatic fail-closed application deployment did not apply a migration or activate analytics. The founder UUID, WAF rule, and purge schedule are unconfigured. No Production database or setting was changed. See the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
+The automatic fail-closed application deployment did not apply a Production migration or activate analytics. Persistent Production founder configuration, the WAF rule, and the purge schedule are unconfigured. No Production database or setting was changed. These activation tasks remain deferred and do not reopen the completed Block 6 engineering and isolated-verification status. See the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## 7. Block 7 and production blockers
 
@@ -96,6 +106,17 @@ The automatic fail-closed application deployment did not apply a migration or ac
 - [ ] Complete final accessibility, responsive, copy, onboarding, and launch/no-launch review.
 
 Domain activation belongs here, not in the Brand & Domain Gate. Public beta remains blocked until the release gate is explicitly approved.
+
+The retained release-blocker register is:
+
+- `privacy_contact_missing`
+- `production_schema_rollout_pending`
+- `external_privacy_contact_ownership_unverified`
+- `legal_review_unresolved`
+- `provider_backup_log_retention_unverified`
+- `operational_ownership_unresolved`
+
+Block 7.1 is not expected to resolve all of these broader release blockers.
 
 ## 8. Deferred until after Beta v1
 

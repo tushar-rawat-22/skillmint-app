@@ -36,8 +36,8 @@ Current status:
 | Block 4 | Complete, hardened, merged, and frozen |
 | Block 5 | Complete, verified, merged, synchronized, and frozen |
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; required before external beta |
-| Block 6 | In progress; Block 6.1 and Block 6.2 merged and frozen pending rollout; isolated rollout verification is next |
-| Block 7 | Not started |
+| Block 6 | Engineering implementation and isolated verification complete; Production activation deferred |
+| Block 7 | Not started at the July 24, 2026 reconciliation baseline; Block 7.1 planned next |
 
 ## Block Purposes And Boundaries
 
@@ -105,7 +105,7 @@ Dependencies: Blocks 1-4 must remain intact.
 
 **Duration:** One focused working day, with a second day only if availability or risk screening requires it.
 
-**Historical purpose:** Select one public name, one backup, and one usable domain before public labels, founder-facing presentation, launch documents, support identity, metadata, and external communications accumulate naming debt. The public name and domain remain pending. This rationale is preserved as historical sequencing, but the gate is not the next engineering task and is not a technical dependency for the active Block 6 work.
+**Historical purpose:** Select one public name, one backup, and one usable domain before public labels, founder-facing presentation, launch documents, support identity, metadata, and external communications accumulate naming debt. The public name and domain remain pending. This rationale is preserved as historical sequencing, but the gate is not the next engineering task and was not a technical dependency for the completed Block 6 engineering work.
 
 Block 6 event IDs, event schema names, persistent identifiers, storage contracts, and data keys remain brand-neutral. The frozen taxonomy includes `mission_started` and `mission_marked_done`; it does not include `mission_completed`. This gate does not authorize an analytics provider, taxonomy change, persistence model, or implementation.
 
@@ -121,13 +121,13 @@ Historical sequence:
 8. Re-run frozen Block 1-5 preservation checks, merge, and synchronize the public-brand layer.
 9. Begin Block 6.
 
-The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. Block 6 remains active, and isolated V7 ACL verification is the next engineering gate. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+The gate is not a full rebrand or visual redesign. It does not authorize production, DNS, Vercel, Supabase, authentication, schema, storage, repository, or package changes. Domain activation and production configuration belong to Block 7. Block 6 engineering and isolated verification are complete; Production activation remains deferred. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
 ### 6. Analytics + Founder Dashboard
 
-Status: In progress. Independent review of Block 6.2 passed, so both Block 6 repository implementations are merged and frozen until rollout. The fail-closed code was automatically deployed from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
+Status: Engineering implementation and isolated verification complete. The fail-closed code was automatically deployed from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
 
-The `skillmint-block6-test` project is `ACTIVE_HEALTHY`, contains no Production copy, and has V1–V6 applied. Live verification exposed inherited `service_role` raw SELECT access. The next gate is isolated V7 application and repeated security verification. Production migration, founder UUID configuration, mandatory Vercel WAF enforcement, retention scheduling, monitoring, and Block 6 closure are incomplete.
+The isolated hosted project contains no Production copy and has V1–V7 applied. Migration, ACL, and live-security verification passed after V7 repaired inherited `service_role` raw SELECT access. Production migration, persistent founder UUID configuration, mandatory Vercel WAF enforcement, retention scheduling, monitoring, legal approval, and operational ownership approval remain deferred.
 
 Preview and Production currently share two public Supabase variables, so Preview is not an isolated database environment. Events are never people, and the implementation adds no identity, unique-person, active-user, retention, cohort, or session analytics. Windows use exact elapsed 24/168/720-hour `received_at` boundaries. The unapplied purge contract uses an exact 1,080-hour threshold with at most 10,000 deletions per invocation.
 
@@ -146,6 +146,14 @@ Purpose: Final QA, smoke testing, copy review, onboarding readiness, and launch/
 Out of scope: overclaiming launch readiness, adding major new features, payments, AI chat, or job board.
 
 Dependencies: Blocks 1-6 must remain intact.
+
+#### Block 7.1 execution note — July 24, 2026
+
+Block 7.1 — Resume owner isolation and stale-operation safety — is the next planned engineering workstream. Block 7 implementation had not started at this reconciliation baseline.
+
+Block 7.1 investigates resume upload, extraction, analysis, browser publication, account persistence, and delayed completion across account changes. The account-switch issue is a suspected risk, not a confirmed defect. Work begins with a deterministic red reproducer, and no product repair is authorized before the risk is reproduced. A test that passes unexpectedly does not prove the suspected defect exists.
+
+Later Block 7 ordering remains evidence-driven. Block 7.1 does not satisfy the complete Block 7 launch-readiness gate; the original Block 7 scope above remains authoritative.
 
 ## Global Constraints Before Beta v1 Complete
 

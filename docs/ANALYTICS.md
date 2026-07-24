@@ -1,10 +1,10 @@
 # Privacy-safe Analytics Collection
 
-**Status:** Block 6.1 and Block 6.2 are merged and frozen pending rollout. Block 6.2 passed independent review. Block 6 overall remains in progress.
+**Status:** Block 6 engineering implementation and isolated verification are complete. Production activation is deferred.
 
-The repository contains a first-party, privacy-minimized collection path and a protected founder-only aggregate Product Event Health dashboard. The fail-closed application code was automatically deployed from `main`. That deployment did not apply V5 or V6, enable collection, configure the founder UUID, add a WAF rule, or schedule retention.
+The repository contains a first-party, privacy-minimized collection path and a protected founder-only aggregate Product Event Health dashboard. The fail-closed application code was automatically deployed from `main`. That deployment did not apply V5–V7 to Production, enable collection, configure the persistent Production founder UUID, add a WAF rule, or schedule retention.
 
-The isolated `skillmint-block6-test` project exists with status `ACTIVE_HEALTHY` and has V1–V6 applied. Live verification found that `service_role` retained raw table `SELECT`; V7 is the forward ACL repair. Production was not copied or altered. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. The next gate is separately authorized isolated V7 application and repeated live-security verification, not Production activation.
+The isolated hosted V1–V7 migration and ACL verification passed, including the V7 forward repair of inherited `service_role` raw-table access. The isolated live-security gate also passed. Production was not copied or altered. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. Isolated verification does not prove Production readiness or authorize Production activation.
 
 ## Activation
 
@@ -75,7 +75,7 @@ The function returns fixed event-name counts, the approved operation/error-code 
 
 `public.purge_expired_analytics_events()` selects event IDs strictly older than the exact elapsed 1,080-hour threshold in deterministic `received_at, event_id` order, deletes at most 10,000 selected rows per invocation, and returns only the deleted count. If more than 10,000 events are overdue, repeated scheduled runs may be needed. Execution is revoked from `public`, `anon`, `authenticated`, and `service_role`; it is not called or scheduled. Any future `pg_cron` scheduling requires separate explicit authorization, rollout, monitoring, and rollback planning.
 
-`supabase/schema_v7_analytics_acl_hardening.sql` is the byte-identical source for the forward V7 migration. It removes inherited or default table and column privileges from every API role, then restores table-level INSERT only to `service_role`. Raw table access and aggregate RPC execution are separate privileges: V7 does not change either function, and the purge function remains unavailable to every API role. This repair does not enable analytics. Production V5–V7 remain unapplied and require separate authorization; the applied V1–V6 history is immutable.
+`supabase/schema_v7_analytics_acl_hardening.sql` is the byte-identical source for the forward V7 migration. It removes inherited or default table and column privileges from every API role, then restores table-level INSERT only to `service_role`. Raw table access and aggregate RPC execution are separate privileges: V7 does not change either function, and the purge function remains unavailable to every API role. This repair does not enable analytics. Production V5–V7 remain unapplied and require separate authorization; the isolated V1–V7 history is immutable.
 
 The unlinked `/founder/analytics` page is isolated from ordinary user navigation and the feedback workflow. It sends its current browser Auth access token only to the same-origin `GET /api/founder/analytics/summary` endpoint. The API requires one exact Bearer header, verifies the token with Supabase Auth `getUser(token)`, and compares the authentic Auth UUID with the one valid server-only `ANALYTICS_FOUNDER_USER_ID` configuration value. Supabase-rejected JWTs return the fixed `401 not_authenticated` response, while genuine Auth transport or provider failures return the fixed `503 temporarily_unavailable` response.
 
@@ -135,6 +135,6 @@ No migration was run, no environment value changed, no live collection occurred,
 
 ## Rollout blockers
 
-Collection must remain disabled until separately approved work covers isolated V7 verification, exact Production schema inventory and ordered rollout, distributed abuse controls including Vercel WAF, retention scheduling, monitoring, founder configuration, incident response, privacy and support operations, and live verification.
+Collection must remain disabled until separately approved work covers exact Production schema inventory and ordered rollout, distributed abuse controls including Vercel WAF, retention scheduling, monitoring, persistent Production founder configuration, incident response, privacy and support operations, legal approval, operational ownership approval, and live Production verification.
 
-The Founder Dashboard remains an unlinked protected internal surface, not a public analytics page. A passing isolated gate will not prove Production behavior. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md); no Production readiness or database rollout is claimed.
+The Founder Dashboard remains an unlinked protected internal surface, not a public analytics page. The passing isolated gate does not prove Production behavior. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md) for any future explicitly authorized Production rollout; no Production readiness, Production database rollout, or activation is claimed.

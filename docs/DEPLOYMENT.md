@@ -30,7 +30,7 @@ Vercel is the preferred deployment target, but a Git-connected host may create p
 
 Preview and Production currently share the same two public Supabase variables. Preview is therefore connected to the Production backend and must not be used for destructive, migration, or isolated-security testing. Separating those variables requires a later controlled Vercel change.
 
-The `skillmint-block6-test` Supabase project is `ACTIVE_HEALTHY`, contains no Production copy, has V1–V6 applied, and is not connected to the Vercel project. Its next responsibility is the separately authorized V7 repair and repeated live-security gate. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
+During Block 6 isolated verification, the `skillmint-block6-test` Supabase project reported `ACTIVE_HEALTHY`, received V1–V7, and passed the isolated ACL and live-security checks. This is a historical verification observation, not a current-health guarantee. The project contains no Production copy and is not connected to the Vercel project. It remains a test and evidence environment; its result neither authorizes nor proves Production rollout. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
 
 ## Public browser variables
 
@@ -78,7 +78,7 @@ SkillMint has no configured seed dataset. The generic `https://supabase.com/docs
 
 - Vercel Production uses Supabase `skillmint-beta`. This repository pass authorizes no migration or setting change.
 - Vercel Preview currently shares Production's two public Supabase variables. It is not an isolated database environment.
-- Supabase `skillmint-block6-test` has no Production data and no Vercel connection. Use it only for the separately authorized V7 repair and security gate.
+- Supabase `skillmint-block6-test` received V1–V7 during Block 6 isolated verification, has no Production data, and has no Vercel connection. Retain it only as a test and evidence environment unless a future hosted operation receives separate authorization.
 
 ## Production schema rollout
 
@@ -94,7 +94,7 @@ For an empty isolated environment, the committed forward order is:
 
 The timestamped files are byte-identical to the seven source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. V1–V6 remain unchanged; later corrections require a separately reviewed forward migration.
 
-The isolated project has V1–V6 applied, but its live result is not Production proof. The outer `BEGIN`/`COMMIT` wrappers in V4–V7 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
+The isolated project received V1–V7 during Block 6 verification, and its ACL and live-security checks passed. This result is not Production proof. The outer `BEGIN`/`COMMIT` wrappers in V4–V7 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
 
 Production V1–V4 are baseline candidates, not trusted migration history. Exact history and normalized catalog proof must cover tables, columns, constraints, indexes, RLS, grants, functions, triggers, owners, ACLs, and search paths before marking them applied.
 
