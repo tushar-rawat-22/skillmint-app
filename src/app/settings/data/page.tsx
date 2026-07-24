@@ -33,7 +33,9 @@ import {
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import { detachDeletedSavedReportReferences } from "@/lib/storage/reportReferenceCleanup";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseAccountReauthenticationClient,
+} from "@/lib/supabase/client";
 import {
   buildCurrentUserAccountDataExport,
   deleteCurrentUserSavedReports,
@@ -892,8 +894,11 @@ export default function DataSettingsPage() {
       error: null,
     });
 
+    const reauthenticationClient =
+      createSupabaseAccountReauthenticationClient();
+
     try {
-      const supabase = createSupabaseBrowserClient();
+      const supabase = reauthenticationClient;
       if (!supabase) {
         if (isCurrentAccountDeletionRequest(request)) {
           publishAccountDeletionState({
@@ -1004,6 +1009,7 @@ export default function DataSettingsPage() {
       if (isSameOwnedRequest(activeAccountDeletionRef.current, request)) {
         activeAccountDeletionRef.current = null;
       }
+      await reauthenticationClient?.auth.dispose();
     }
   }
 
