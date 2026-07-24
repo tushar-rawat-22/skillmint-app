@@ -26,7 +26,7 @@ I also wanted to keep general profile fit separate from one real job description
 - **Provides distinct data controls:** browser export and Clear workspace cover registered browser data; account export and saved-report deletion operate on authenticated account data; protected account deletion is a separate backend operation.
 - **Explains those boundaries in the Trust Center:** `/settings/data` presents browser and account controls, while `/privacy` provides the current technical privacy notice.
 - **Collects structured beta feedback:** feedback uses authenticated account persistence when available and an owner-scoped browser fallback otherwise.
-- **Contains a privacy-safe analytics collection runtime:** approved low-cardinality product events can use a non-blocking same-origin repository path without user/session identifiers or private resume, JD, mission, feedback, score, or proof content. The migration is repository-only; live collection and the Founder Dashboard are not operational.
+- **Contains a privacy-safe analytics collection runtime:** approved low-cardinality product events can use a non-blocking same-origin repository path without user/session identifiers or private resume, JD, mission, feedback, score, or proof content. Isolated migration and security verification are complete, but Production rollout and analytics activation have not occurred.
 
 ## Product flow
 
@@ -63,7 +63,7 @@ Protected administrative operation
 Privacy-safe analytics observation
   -> typed, non-blocking browser helpers
   -> strict same-origin server ingestion and canonicalization
-  -> server-only insert contract (repository migration not rolled out)
+  -> server-only insert contract (not rolled out to Production)
 ```
 
 App Router pages compose feature modules and, in some places, pure intelligence or storage contracts directly. Business rules live in `src/intelligence`, `src/modules`, and `src/lib`, rather than inside presentation components.
@@ -138,11 +138,13 @@ Playwright is an additional browser-testing layer with Chromium, Firefox, and We
 
 - Blocks 1–5 are implemented and frozen for engineering preservation.
 - GitHub CI and `main` branch protection are active; the required repository check is the `quality` job.
-- Block 6 is in progress. Its privacy-safe contract and local collection implementation exist in the repository, pending independent review; production schema rollout, live collection, founder aggregation/dashboard, operational monitoring, and Block 6 closure are not complete.
-- Block 7 release readiness has not been completed, and public beta is not authorized.
+- Block 6 implementation and isolated verification are complete. The isolated hosted migration and ACL checks and the live-security gate passed; these results do not prove Production behavior.
+- Production schema rollout and analytics activation have not occurred, and analytics collection remains disabled.
+- The broader Block 7 launch-readiness gate is incomplete. Block 7.1 resume owner isolation is the next planned engineering workstream; its account-switch concern is a suspected risk, not a confirmed defect.
+- Public beta is not authorized.
 - Final public branding remains deferred to the approved Brand & Domain Decision Gate.
 - Preview and Production backend separation remains a release concern.
-- Production schema rollout, operational account deletion, and verified privacy/support readiness still require closure.
+- Legal review, verified privacy/support operations, provider backup/log-retention evidence, and accountable Production operations remain unresolved.
 
 Current authority and release boundaries are recorded in [Project Status](docs/PROJECT_STATUS.md), [Privacy-safe Analytics Collection](docs/ANALYTICS.md), the [Beta v1 Build Roadmap](docs/BETA_V1_BUILD_ROADMAP.md), the [Deployment Safety Guide](docs/DEPLOYMENT.md), and the [documentation map](docs/README.md).
 
