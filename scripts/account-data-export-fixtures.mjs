@@ -339,6 +339,26 @@ test("one table query failure returns only fixed safe error copy", async () => {
   assert.equal(JSON.stringify(result).includes(RAW_PROVIDER_FAILURE), false);
 });
 
+test("opaque provider error plus response status 503 maps to network_failure", async () => {
+  const result = await build(createOpaqueCountFailureAdapter(503));
+  assertSafeProviderFailure(result, "network_failure");
+});
+
+test("opaque provider error plus response status 429 maps to network_failure", async () => {
+  const result = await build(createOpaqueCountFailureAdapter(429));
+  assertSafeProviderFailure(result, "network_failure");
+});
+
+test("opaque provider error plus response status 403 maps to permission_denied", async () => {
+  const result = await build(createOpaqueCountFailureAdapter(403));
+  assertSafeProviderFailure(result, "permission_denied");
+});
+
+test("opaque provider error without meaningful response status remains unknown", async () => {
+  const result = await build(createOpaqueCountFailureAdapter());
+  assertSafeProviderFailure(result, "unknown");
+});
+
 test("identity adapter synchronous throw resolves to a safe failure", async () => {
   const adapter = createAdapter();
   adapter.getAuthenticatedUserId = () => {
@@ -781,6 +801,24 @@ function createAdapter(input = {}) {
   };
 }
 
+function createOpaqueCountFailureAdapter(status) {
+  const adapter = createAdapter();
+  adapter.getExactCount = async () => {
+    const response = {
+      data: null,
+      error: {
+        code: "opaque-provider-code",
+        details: RAW_PROVIDER_FAILURE,
+        hint: RAW_PROVIDER_FAILURE,
+        message: RAW_PROVIDER_FAILURE,
+      },
+    };
+    if (status !== undefined) response.status = status;
+    return response;
+  };
+  return adapter;
+}
+
 function parseSuccess(result) {
   assert.equal(result.ok, true, result.ok ? "" : result.error.message);
   return JSON.parse(result.data.json);
@@ -798,6 +836,11 @@ function assertSafeThrownFailure(result, code) {
   assertFailure(result, code);
   assert.equal(JSON.stringify(result).includes(RAW_PROVIDER_FAILURE), false);
   assert.equal(JSON.stringify(result).toLowerCase().includes("stack"), false);
+}
+
+function assertSafeProviderFailure(result, code) {
+  assertFailure(result, code);
+  assert.equal(JSON.stringify(result).includes(RAW_PROVIDER_FAILURE), false);
 }
 
 function createProfile(overrides = {}) {

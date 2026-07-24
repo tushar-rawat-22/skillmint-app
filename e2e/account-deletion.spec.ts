@@ -147,8 +147,17 @@ test("@block53 Account A to B during reauthentication suppresses deletion and st
   await confirmButton(page).click();
   await provider.waitFor("auth:login", 2, ACCOUNT_A.id);
   await switchAccount(context, ACCOUNT_B);
+  const heldReauthenticationResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === "POST" &&
+      url.pathname === "/auth/v1/token" &&
+      url.searchParams.get("grant_type") === "password";
+  });
   gate.release();
-  await expect(page.getByText(ACCOUNT_B.email)).toBeVisible();
+  const reauthenticationResponse = await heldReauthenticationResponse;
+  expect(reauthenticationResponse.status()).toBe(200);
+  await expect(page.getByText(ACCOUNT_B.email, { exact: true })).toBeVisible();
+  await expect(page.getByText(ACCOUNT_A.email, { exact: true })).toHaveCount(0);
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.getByText(/Account access was deleted/)).toHaveCount(0);
   expect(deletionRequests).toBe(0);
