@@ -17,6 +17,7 @@ import {
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
 import {
   saveCurrentUserResumeAnalysis,
+  type SaveResumeAnalysisResult,
   writeActiveResumeReport,
   writeResumeSyncStatus,
 } from "@/modules/resume";
@@ -27,6 +28,9 @@ import {
   getBrowserAnalyticsRuntime,
   getResumeAnalyticsErrorCode,
 } from "@/platform/analytics";
+
+const STALE_RESUME_OPERATION_MESSAGE =
+  "Your account changed while this resume was being analyzed. The stale result was discarded. Please analyze the resume again.";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -54,40 +58,63 @@ export default function UploadPage() {
   }
 
   async function analyzeSelectedResume() {
-    if (!file || loading) return;
+    if (
+      !file ||
+      loading ||
+      currentUserId === undefined
+    ) {
+      return;
+    }
 
+    const operationUserId = currentUserId;
     const startedAt = Date.now();
     const fileType = getAnalyticsFileType(file);
+
     fireAndForgetAnalytics(() => analytics.resumeAnalysisStarted({
       file_type: fileType,
     }));
-    setError(null);
 
+    setError(null);
     setLoading(true);
 
     try {
       const result = await runResumeAnalysis(file);
 
-      const didSaveBrowserReport = writeActiveResumeReport(result, {
-        currentUserId,
-      });
+      const saveResult =
+        await saveResumeAnalysisForOperation(
+          result,
+          operationUserId,
+        );
+
+      const didSaveBrowserReport =
+        writeActiveResumeReport(result, {
+          currentUserId: operationUserId,
+        });
 
       if (!didSaveBrowserReport) {
         throw new Error(
           "Could not save this analysis in browser storage. Please try again.",
         );
       }
+
       notifySkillMintWorkspaceUpdated();
 
-      await persistResumeSyncStatus(result, currentUserId);
+      writeResumeSyncStatusForSaveResult(
+        saveResult,
+        operationUserId,
+      );
 
       router.push("/resume");
     } catch (error) {
       fireAndForgetAnalytics(() => analytics.resumeAnalysisFailed({
         file_type: fileType,
         error_code: getResumeAnalyticsErrorCode(error),
-        duration_bucket: getAnalyticsDurationBucket(startedAt, Date.now()),
+        duration_bucket: getAnalyticsDurationBucket(
+          startedAt,
+          Date.now(),
+        ),
       }));
+
       setError(
         error instanceof Error
           ? error.message
@@ -151,45 +178,69 @@ export default function UploadPage() {
   );
 }
 
-async function persistResumeSyncStatus(
+async function saveResumeAnalysisForOperation(
   result: ResumeAnalysisResult,
-  currentUserId: string | null | undefined,
-): Promise<void> {
+  expectedUserId: string | null,
+): Promise<SaveResumeAnalysisResult> {
+  let saveResult: SaveResumeAnalysisResult;
+
   try {
-    const saveResult = await saveCurrentUserResumeAnalysis({
+    saveResult = await saveCurrentUserResumeAnalysis({
       fileName: result.fileName,
       fileType: result.fileType,
       extractedText: result.extractedText,
       parsedProfile: result.parsedProfile,
       userProfile: result.userProfile,
-    });
-
-    if (saveResult.ok) {
-      writeResumeSyncStatus({
-        status: "synced",
-        message: "Resume saved to your SkillMint account.",
-        syncedAt: new Date().toISOString(),
-        databaseId: saveResult.data.id,
-      }, {
-        currentUserId,
-      });
-      return;
-    }
-
-    writeResumeSyncStatus({
-      status: "local-only",
-      message: getLocalOnlySyncMessage(saveResult.error),
     }, {
-      currentUserId,
+      expectedUserId,
     });
   } catch {
+    return {
+      ok: false,
+      reason: "save_failed",
+      error:
+        "Resume analyzed in this browser. Account save did not finish.",
+    };
+  }
+
+  if (
+    !saveResult.ok &&
+    saveResult.reason === "owner_changed"
+  ) {
+    throw new Error(
+      STALE_RESUME_OPERATION_MESSAGE,
+    );
+  }
+
+  return saveResult;
+}
+
+function writeResumeSyncStatusForSaveResult(
+  saveResult: SaveResumeAnalysisResult,
+  currentUserId: string | null,
+): void {
+  if (saveResult.ok) {
     writeResumeSyncStatus({
-      status: "local-only",
-      message: "Resume analyzed in this browser. Account save did not finish.",
+      status: "synced",
+      message:
+        "Resume saved to your SkillMint account.",
+      syncedAt: new Date().toISOString(),
+      databaseId: saveResult.data.id,
     }, {
       currentUserId,
     });
+
+    return;
   }
+
+  writeResumeSyncStatus({
+    status: "local-only",
+    message: getLocalOnlySyncMessage(
+      saveResult.error,
+    ),
+  }, {
+    currentUserId,
+  });
 }
 
 function getLocalOnlySyncMessage(error: string): string {

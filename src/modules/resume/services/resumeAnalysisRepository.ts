@@ -17,20 +17,65 @@ type ResumeAnalysisRow =
 const DEFAULT_LIST_LIMIT = 10;
 const MAX_LIST_LIMIT = 25;
 
+type SaveResumeAnalysisOptions = {
+  expectedUserId?: string | null;
+};
+
+export type SaveResumeAnalysisResult =
+  | {
+      ok: true;
+      data: PersistentResumeAnalysis;
+    }
+  | {
+      ok: false;
+      error: string;
+      reason: "owner_changed" | "save_failed";
+    };
+
 export async function saveCurrentUserResumeAnalysis(
   input: SaveResumeAnalysisInput,
-): Promise<RepositoryResult<PersistentResumeAnalysis>> {
+  options: SaveResumeAnalysisOptions = {},
+): Promise<SaveResumeAnalysisResult> {
+  if (options.expectedUserId === null) {
+    return {
+      ok: false,
+      error:
+        "Sign in to save resume analyses to your account.",
+      reason: "save_failed",
+    };
+  }
+
   const authResult = await getCurrentAuthUser();
 
   if (!authResult.ok) {
-    return authResult;
+    return {
+      ok: false,
+      error: authResult.error,
+      reason: "save_failed",
+    };
   }
 
   const { supabase, user } = authResult.data;
+
+  if (
+    options.expectedUserId !== undefined &&
+    user.id !== options.expectedUserId
+  ) {
+    return {
+      ok: false,
+      error:
+        "Your account changed while this resume was being analyzed.",
+      reason: "owner_changed",
+    };
+  }
+
+  const ownerId =
+    options.expectedUserId ?? user.id;
+
   const { data, error } = await supabase
     .from("resume_analyses")
     .insert({
-      user_id: user.id,
+      user_id: ownerId,
       file_name: input.fileName,
       file_type: input.fileType,
       extracted_text: input.extractedText,
@@ -45,13 +90,28 @@ export async function saveCurrentUserResumeAnalysis(
   if (error) {
     return {
       ok: false,
-      error: getDatabaseErrorMessage(error.message),
+      error: getDatabaseErrorMessage(
+        error.message,
+      ),
+      reason: "save_failed",
+    };
+  }
+
+  const mappedAnalysis =
+    mapResumeAnalysisRow(data);
+
+  if (mappedAnalysis.userId !== ownerId) {
+    return {
+      ok: false,
+      error:
+        "Resume save returned an unexpected account owner.",
+      reason: "save_failed",
     };
   }
 
   return {
     ok: true,
-    data: mapResumeAnalysisRow(data),
+    data: mappedAnalysis,
   };
 }
 
