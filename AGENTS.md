@@ -42,6 +42,8 @@ Blocks 1–5 are frozen. Do not change or silently redefine them without a repro
 
 Active Target cannot alter scores. Mission completion cannot create proof or alter scores automatically. Profile-fit Roles and Latest JD Match remain separate. Missing proof means unverified, not false. Preserve anonymous and account browser partitions, account-owned persistence, and stale-result publication guards. Clear workspace remains browser-only; saved-report deletion and protected backend account deletion remain separate operations.
 
+Block 7.1 resume owner isolation is complete. Preserve its fail-closed contract: Account A data must never create an Account B row, bearer/row owner pair, browser partition, or visible report, and an already Account-A-authenticated request may finish only as Account A. See `docs/BLOCK_7_1_CLOSURE.md`. The broader Block 7 release gate remains incomplete.
+
 ## Safety and verification
 
 Never expose environment-variable values. Do not run migrations, contact production services, change DNS/auth origins, or run destructive or production tests without explicit authorization.

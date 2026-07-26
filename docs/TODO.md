@@ -12,7 +12,7 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - The fail-closed application code deployed automatically from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
 - The isolated hosted project contains no Production copy, has V1–V7 applied, and passed migration, ACL, and live-security verification after V7 repaired inherited `service_role` raw SELECT access.
 - Preview and Production share the same two public Supabase variables, so Preview is not an isolated database environment.
-- Block 7, Beta Launch Readiness, had not started at the July 24, 2026 reconciliation baseline. Block 7.1 resume owner isolation is the next planned engineering workstream.
+- Block 7.1 resume owner isolation is complete. The broader Block 7 launch-readiness gate remains incomplete, and Block 7.2 is the next read-only beta-release decision gate.
 - Public beta is not authorized.
 - Production activation is deferred. Rollout remains blocked pending an approved Production migration/rollback process and post-rollout verification.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
@@ -28,25 +28,21 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - [x] Block 5.2: Export and Trust Center Reliability.
 - [x] Block 5.3: Deletion, Database, Privacy, and Release Safety on the authorized isolated project.
 - [x] Block 6: Privacy-safe analytics and founder dashboard engineering implementation and isolated verification.
+- [x] Block 7.1: Resume owner isolation and stale-operation safety.
 - [x] Account saved-report deletion for resume analyses, JD matches, and career snapshots.
 - [x] Protected backend account-deletion route with recent-authentication, least-privilege, stale-token, race, and cleanup evidence.
 
 Preserve the scoring, proof, mission, Active Target, owner-partition, export, clearing, saved-report deletion, and account-deletion contracts recorded in the frozen documents.
 
-## 3. Block 7.1 ordered queue
+## 3. Block 7.1 completed
 
-**Issue status:** suspected risk — not yet reproduced
+- [x] Reproduced the account-switch owner-isolation defect deterministically.
+- [x] Repaired resume persistence and publication so Account A data cannot create Account B state.
+- [x] Proved that an already Account-A-authenticated request may finish only as Account A.
+- [x] Passed targeted cross-browser, repeated Chromium, race, ownership, analytics, Block 5, Block 6, lint, build, and diff verification.
+- [x] Merged PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4`.
 
-1. [ ] Create a deterministic owner-isolation reproducer.
-2. [ ] Confirm or reject the suspected stale-operation path.
-3. [ ] Perform the minimum product repair only if confirmed.
-4. [ ] Run targeted Chromium, Firefox, and WebKit verification.
-5. [ ] Run repeated race coverage if concurrency behavior changes.
-6. [ ] Run regression verification proportionate to the changed scope.
-7. [ ] Document confirmed findings, decisions, and limitations.
-8. [ ] Publish through a reviewed pull request.
-
-Block 7.1 investigates resume upload, extraction, analysis, browser publication, account persistence, and delayed completion across account changes. It is not expected to resolve all broader release blockers or satisfy the complete Block 7 launch-readiness gate.
+The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md). This completion does not resolve the broader release blockers or satisfy the complete Block 7 launch-readiness gate.
 
 ## 4. Brand & Domain Gate
 
@@ -95,6 +91,7 @@ The automatic fail-closed application deployment did not apply a Production migr
 
 ## 7. Block 7 and production blockers
 
+- [ ] Run Block 7.2 as a read-only beta-release decision gate.
 - [ ] Inventory the actual production schema before any migration.
 - [ ] Approve accountable ownership, backup/recovery, rollback, incident, and monitoring plans.
 - [ ] Apply and exactly verify the locked schema sequence under production authorization.
@@ -116,7 +113,7 @@ The retained release-blocker register is:
 - `provider_backup_log_retention_unverified`
 - `operational_ownership_unresolved`
 
-Block 7.1 is not expected to resolve all of these broader release blockers.
+Block 7.1 did not resolve these broader release blockers.
 
 ## 8. Deferred until after Beta v1
 

@@ -1,11 +1,12 @@
 # SkillMint Beta Freeze Criteria
 
-Use this before creating a beta freeze tag.
+Block 7.1 owner isolation is complete, but the broader Block 7 gate is incomplete and public beta is not authorized. These criteria do not authorize a freeze tag or Production action.
 
 ## Automated Checks
 
 - `npm run lint` passes.
 - `npm run build` passes.
+- `npm run test:e2e:owner-isolation` passes.
 - `npm run smoke:production` passes against the production URL.
 - Safety grep shows no payment provider implementation or service-role secrets in app code.
 
@@ -26,4 +27,4 @@ Use this before creating a beta freeze tag.
 
 ## Freeze Rule
 
-Create the beta freeze tag only after automated checks and manual QA both pass.
+Create the beta freeze tag only after automated checks and manual QA both pass and the broader release gate is explicitly authorized.

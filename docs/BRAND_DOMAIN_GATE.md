@@ -4,7 +4,7 @@
 
 This gate selects a public product name, a backup, and a reservable domain before public labels, founder-facing presentation, launch documentation, support identity, metadata, and external communications accumulate naming debt. It is a product and communication sequencing choice, not a technical dependency for analytics.
 
-The gate is an approved sequencing step before Block 6. It is not Block 6, does not renumber the seven-block roadmap, and is limited to one focused working day, with a second day only if availability or risk screening requires it.
+Historically, this gate was approved as a sequencing step before Block 6. The founder deferred it so brand-neutral Block 6 engineering could proceed. It remains deferred, is required before external beta, and is an input to the Block 7.2 read-only beta-release decision gate. It is not a roadmap block and does not renumber the seven-block roadmap.
 
 ## Decision rationale
 
@@ -25,6 +25,8 @@ The gate is an approved sequencing step before Block 6. It is not Block 6, does 
 | Selected domain to reserve | `Pending` |
 
 The working project name remains SkillMint until these fields are decided.
+
+The internal private npm package identifier `skillmint-app` is repository hygiene, not a selected public name or a completed brand decision.
 
 The gate must produce:
 
@@ -87,7 +89,7 @@ Verify the future public-brand foundation in proportion to its changed surfaces:
 - confirm no scoring, mission, Active Target, export, deletion, schema, API, or route behavior changed;
 - run affected Playwright coverage and fixtures only where the changed public surfaces are covered.
 
-A text-only label change does not require every unrelated test. These checks do not authorize a redesign, new routes, storage changes, domain activation, or production work. Merge and synchronize the public-brand layer before Block 6 begins.
+A text-only label change does not require every unrelated test. These checks do not authorize a redesign, new routes, storage changes, domain activation, or production work. The earlier instruction to merge this layer before Block 6 began is historical and was superseded by the founder deferral; the gate now remains required before external beta and must inform Block 7.2.
 
 ## Domain activation belongs to Block 7
 

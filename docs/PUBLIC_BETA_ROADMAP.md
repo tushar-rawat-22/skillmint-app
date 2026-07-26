@@ -1,6 +1,6 @@
 # SkillMint Beta v1 Launch Roadmap
 
-> **Historical launch framing.** This file preserves the original controlled-beta plan and success metrics. Current block status and sequencing live in [Project Status](PROJECT_STATUS.md) and [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md). Blocks 1–5 are complete and frozen; the Brand & Domain Decision Gate is next; Blocks 6–7 have not started; public beta is not authorized.
+> **Historical and superseded launch framing.** This file preserves the original controlled-beta plan and success metrics; it is not current status or release authorization. Current authority lives in [Project Status](PROJECT_STATUS.md), the [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md), and [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md). Blocks 1–5 are complete and frozen, Block 6 engineering is complete with Production activation deferred, Block 7.1 is complete, the broader Block 7 gate is incomplete, and public beta is not authorized.
 
 ## Position
 
@@ -65,7 +65,7 @@ Mission Execution and Career Path Engine should make next steps clearer without 
 ## Current sequence
 
 - Blocks 1–5: complete and frozen.
-- Pre-Block-6 Brand & Domain Decision Gate: approved next sequence; not a roadmap block.
-- Block 6, Analytics + Founder Dashboard: not started.
-- Block 7, Beta Launch Readiness: not started.
+- Pre-Block-6 Brand & Domain Decision Gate: deferred, required before external beta, and an input to Block 7.2; not a roadmap block.
+- Block 6, Analytics + Founder Dashboard: engineering implementation and isolated verification complete; Production activation deferred and analytics disabled.
+- Block 7, Beta Launch Readiness: in progress; Block 7.1 complete, broader gate incomplete, and Block 7.2 next as a read-only beta-release decision gate.
 - Production rollout and verified privacy/support contact operations: release blockers.

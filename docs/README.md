@@ -5,6 +5,7 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 ## Start here
 
 - [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and next approved sequence.
+- [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is the locked execution roadmap and preservation boundary.
 - [TODO](TODO.md) distinguishes current, blocked, deferred, completed, and historical work.
 - [Repository engineering instructions](../AGENTS.md) define the operational rules for changes.
@@ -39,6 +40,7 @@ These contracts distinguish browser data from account data, owner partitions fro
 
 ## Testing and frozen evidence
 
+- [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md)
 - [Block 5 Closure](BLOCK_5_CLOSURE.md)
 - [Block 5 QA Reconciliation](QA_DATA_CONTROLS.md)
 - [Scoring QA](QA_SCORING_TRUTH_ENGINE.md)
