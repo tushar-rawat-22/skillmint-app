@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "SkillMint | Career Operating System",
   description:
-    "SkillMint is an AI-powered Career Operating System helping students and professionals continuously improve their careers.",
+    "SkillMint is a proof-aware Career Operating System with deterministic resume evidence, role-fit, and next-step guidance.",
 };
 
 export default function RootLayout({

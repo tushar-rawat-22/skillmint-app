@@ -48,6 +48,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run owner-isolation regression
+        run: npm run test:e2e:owner-isolation
+
       - name: Verify dependency tree
         run: npm ls --all
 
@@ -76,3 +82,4 @@ jobs:
           node scripts/analytics-dashboard-fixtures.mjs
           node scripts/analytics-acl-fixtures.mjs
           node scripts/block6-rollout-foundation-fixtures.mjs
+          node scripts/documentation-status-fixtures.mjs

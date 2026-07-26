@@ -2,7 +2,9 @@
 
 **Version:** 1.0
 
-**Status:** Active
+**Status:** Historical architecture record; superseded where current contracts differ
+
+> This file preserves early decision rationale. Its `Accepted` labels and version section describe their historical state, not current implementation or release authority. Use [Project Status](PROJECT_STATUS.md), the [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md), current source and tests, and frozen contract documents when they differ from this record. In particular, Blocks 1–5 are complete and frozen, Block 6 engineering is complete with analytics disabled, Block 7.1 is complete, and public beta remains unauthorized.
 
 ---
 
@@ -373,13 +375,13 @@ Minor implementation details do not require ADRs.
 
 ---
 
-# Current Architecture Version
+# Historical Architecture Version
 
 Version: 1.0
 
-Status: Architecture Freeze (In Progress)
+Status: Historical; superseded by the current repository contracts
 
-Next Milestone:
+Recorded next milestone:
 
 Implementation Phase
 

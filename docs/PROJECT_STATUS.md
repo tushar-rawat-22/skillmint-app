@@ -1,8 +1,8 @@
 # SkillMint Project Status
 
-**Last updated:** July 24, 2026
+**Last updated:** July 26, 2026
 
-**Block 6 and post-Block-6 maintenance baseline:** `dd1614b4ac6619afd9320fb62378d0bdbc671255`
+**Block 7.1 merge baseline:** `2401db7b8613879119a000b4a5019f7f68d88ef4`
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
@@ -43,7 +43,7 @@ Resume Reality
 | Block 5: Data Controls + Trust Center | Complete, verified, merged, synchronized, and frozen | Isolated engineering proof; no production claim |
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
-| Block 7: Beta Launch Readiness | Not started at this reconciliation baseline | Block 7.1 resume owner isolation is the next planned engineering workstream within the broader launch-readiness contract |
+| Block 7: Beta Launch Readiness | In progress; Block 7.1 complete | The broader gate remains incomplete; Block 7.2 is the next read-only beta-release decision gate |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -54,6 +54,8 @@ Blocks 1–5 are frozen. Future work may extend the product only while preservin
 Block 6 engineering implementation and isolated verification are complete. The isolated hosted migration and ACL verification passed, including the V7 additive ACL repair, and the isolated live-security gate passed. These results do not prove Production behavior or authorize Production rollout.
 
 Post-Block-6 maintenance completed the founder invalid-token repair and the data-control provider-status and account-reauthentication repairs. PostCSS CVE-2026-45623 / GHSA-6g55-p6wh-862q was patched. As verified on July 24, 2026, GitHub reported zero open Dependabot alerts; this is a dated observation, not a permanent guarantee.
+
+Block 7.1 confirmed and repaired a resume owner-isolation race. Account A data can no longer be rebound to Account B at persistence or publication time, and an already Account-A-authenticated request may finish only as Account A. The repair merged through PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4` and received the independent verdict `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
 
 Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
@@ -76,7 +78,7 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
-1. Begin Block 7.1 with a deterministic resume owner-isolation reproducer; do not assume the suspected account-switch race is a confirmed defect.
+1. Run Block 7.2 as a read-only beta-release decision gate; do not treat the completed Block 7.1 repair as release authorization.
 2. Keep later Block 7 ordering evidence-driven while preserving its full launch-readiness scope.
 3. Prove the Production V1–V4 catalog and migration-history baseline.
 4. Prepare WAF, founder authorization, retention, monitoring, and kill switches.
@@ -113,5 +115,6 @@ Use the evidence relevant to the question instead of one universal ranking:
 - [Block 5 Closure](BLOCK_5_CLOSURE.md)
 - [Deployment Safety Guide](DEPLOYMENT.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
+- [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Documentation Map](README.md)

@@ -1,6 +1,14 @@
 # SkillMint Release Notes
 
-## Unreleased — Documentation alignment
+## Unreleased — Block 7.1 closure and maintenance enforcement
+
+- Block 7.1 resume owner isolation is complete. The confirmed account-switch defect was repaired in `b19daafbc52ff0e1786e61ced6c2651b0cf9fb25` and merged through PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4`.
+- The final contract prevents Account A resume data from creating an Account B database row, bearer/row owner pair, browser partition, or visible report. An already Account-A-authenticated request may finish only as Account A.
+- The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`; the exact verification record is in [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
+- Routine CI now enforces the deterministic documentation status and targeted Chromium owner-isolation regression.
+- The broader Block 7 gate remains incomplete. Public beta is not authorized, Production V5–V7 remain unapplied, analytics remains disabled, and public brand and domain decisions remain pending.
+
+## Block 5 documentation alignment
 
 - Block 5 is merged into `main` through feature commit `5a8364b25f3f0ae657f55a9a354158d6181f1083` and merge commit `3cb5e28050cf93e42e53405f0f2be9d12e756e27`.
 - Blocks 1–5 are complete and frozen. Their behavior, evidence identities, and non-claims remain unchanged.

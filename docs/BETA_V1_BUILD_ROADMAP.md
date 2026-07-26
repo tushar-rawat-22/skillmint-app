@@ -37,7 +37,7 @@ Current status:
 | Block 5 | Complete, verified, merged, synchronized, and frozen |
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; required before external beta |
 | Block 6 | Engineering implementation and isolated verification complete; Production activation deferred |
-| Block 7 | Not started at the July 24, 2026 reconciliation baseline; Block 7.1 planned next |
+| Block 7 | In progress; Block 7.1 complete and Block 7.2 is the next read-only beta-release decision gate |
 
 ## Block Purposes And Boundaries
 
@@ -139,7 +139,7 @@ Dependencies: Blocks 1-5 must remain intact.
 
 ### 7. Beta Launch Readiness
 
-Status: Not started.
+Status: In progress. Block 7.1 is complete; the broader launch-readiness gate remains incomplete.
 
 Purpose: Final QA, smoke testing, copy review, onboarding readiness, and launch/no-launch decision.
 
@@ -147,13 +147,13 @@ Out of scope: overclaiming launch readiness, adding major new features, payments
 
 Dependencies: Blocks 1-6 must remain intact.
 
-#### Block 7.1 execution note — July 24, 2026
+#### Block 7.1 closure note — July 25, 2026
 
-Block 7.1 — Resume owner isolation and stale-operation safety — is the next planned engineering workstream. Block 7 implementation had not started at this reconciliation baseline.
+Block 7.1 — Resume owner isolation and stale-operation safety — is complete. Deterministic testing confirmed that a resume operation begun by Account A could resolve Account B at persistence time and insert Account A resume data as Account B.
 
-Block 7.1 investigates resume upload, extraction, analysis, browser publication, account persistence, and delayed completion across account changes. The account-switch issue is a suspected risk, not a confirmed defect. Work begins with a deterministic red reproducer, and no product repair is authorized before the risk is reproduced. A test that passes unexpectedly does not prove the suspected defect exists.
+The repair prevents Account A data from creating an Account B database row, bearer/row owner pair, browser partition, or visible report. An already Account-A-authenticated request may finish only as Account A. PR #17 merged at `2401db7b8613879119a000b4a5019f7f68d88ef4` with the independent verdict `PASS_SAFE_FOR_COMMIT_GATE`; the exact record is in [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
 
-Later Block 7 ordering remains evidence-driven. Block 7.1 does not satisfy the complete Block 7 launch-readiness gate; the original Block 7 scope above remains authoritative.
+Block 7.1 does not authorize beta or satisfy the complete Block 7 launch-readiness gate. Block 7.2 is the next read-only beta-release decision gate, and later ordering remains evidence-driven.
 
 ## Global Constraints Before Beta v1 Complete
 

@@ -1,6 +1,6 @@
 # SkillMint Beta QA Checklist
 
-Use this checklist before inviting beta testers and after each production deployment.
+Block 7.1 owner isolation is complete, but the broader Block 7 gate is incomplete and public beta is not authorized. Use this checklist only as input to an explicitly authorized release review and after each authorized production deployment.
 
 ## 1. Public Pages
 
@@ -36,6 +36,7 @@ Use this checklist before inviting beta testers and after each production deploy
 - Extracted text is hidden by default.
 - Account sync message appears for signed-in users.
 - Local-only message appears when signed out or sync is unavailable.
+- `npm run test:e2e:owner-isolation` passes so an in-flight Account A resume operation cannot publish or persist as Account B.
 
 ## 5. ATS Matcher
 

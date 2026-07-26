@@ -140,13 +140,13 @@ Playwright is an additional browser-testing layer with Chromium, Firefox, and We
 - GitHub CI and `main` branch protection are active; the required repository check is the `quality` job.
 - Block 6 implementation and isolated verification are complete. The isolated hosted migration and ACL checks and the live-security gate passed; these results do not prove Production behavior.
 - Production schema rollout and analytics activation have not occurred, and analytics collection remains disabled.
-- The broader Block 7 launch-readiness gate is incomplete. Block 7.1 resume owner isolation is the next planned engineering workstream; its account-switch concern is a suspected risk, not a confirmed defect.
+- Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The broader Block 7 launch-readiness gate remains incomplete; Block 7.2 is the next read-only beta-release decision gate.
 - Public beta is not authorized.
 - Final public branding remains deferred to the approved Brand & Domain Decision Gate.
 - Preview and Production backend separation remains a release concern.
 - Legal review, verified privacy/support operations, provider backup/log-retention evidence, and accountable Production operations remain unresolved.
 
-Current authority and release boundaries are recorded in [Project Status](docs/PROJECT_STATUS.md), [Privacy-safe Analytics Collection](docs/ANALYTICS.md), the [Beta v1 Build Roadmap](docs/BETA_V1_BUILD_ROADMAP.md), the [Deployment Safety Guide](docs/DEPLOYMENT.md), and the [documentation map](docs/README.md).
+Current authority and release boundaries are recorded in [Project Status](docs/PROJECT_STATUS.md), [Block 7.1 Closure](docs/BLOCK_7_1_CLOSURE.md), [Privacy-safe Analytics Collection](docs/ANALYTICS.md), the [Beta v1 Build Roadmap](docs/BETA_V1_BUILD_ROADMAP.md), the [Deployment Safety Guide](docs/DEPLOYMENT.md), and the [documentation map](docs/README.md).
 
 ## Known limitations
 
