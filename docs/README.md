@@ -4,10 +4,13 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 
 ## Start here
 
-- [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and next approved sequence.
+- [Version 2 Transition Gate](V2_TRANSITION_GATE.md) is the current strategic authority: it preserves Beta v1 engineering, stops the former broad Beta v1 public-launch path, and keeps public beta and payments unauthorized.
+- [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
+- [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) is the implementation contract for the first prospective Version 2 product slice; it is not implementation authorization.
+- [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and current approved sequence.
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
-- [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is the locked execution roadmap and preservation boundary.
-- [TODO](TODO.md) distinguishes current, blocked, deferred, completed, and historical work.
+- [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is a preserved historical execution roadmap and frozen-contract boundary; its former launch sequence is superseded for current planning.
+- [TODO](TODO.md) distinguishes current Version 2 authority from completed, deferred, and historical work.
 - [Repository engineering instructions](../AGENTS.md) define the operational rules for changes.
 
 Implementation, tests, schemas, and frozen current contracts override legacy speculative architecture documents when the question is what the application ships today. Durable founder decisions and the locked roadmap remain the authority for approved product direction; source code alone does not silently cancel them.

@@ -1,6 +1,6 @@
 # SkillMint Deployment Safety Guide
 
-SkillMint is preparing for a production beta rollout. The fail-closed Block 6.2 code was automatically deployed from `main`, but Production V5–V7 remain unapplied and analytics remains disabled. This guide is an operator checklist, not a Production readiness claim.
+The former Beta v1 production-beta path is superseded as current sequencing by the [Version 2 Transition Gate](V2_TRANSITION_GATE.md). The fail-closed Block 6.2 code was automatically deployed from `main`, but Production V5–V7 remain unapplied and analytics remains disabled. This guide preserves future operator constraints; it is not a Production readiness claim or deployment authorization.
 
 Beta release readiness remains blocked pending Production rollout and an externally verified, monitored privacy/support contact.
 
@@ -28,9 +28,9 @@ Reserving a domain does not make any of these settings safe or complete. See [Br
 
 Vercel is the preferred deployment target, but a Git-connected host may create preview deployments from branch pushes. Before any remote branch push, independently review the actual Git/Vercel project linkage, deployment protection, preview access, ignored-build settings, and environment-variable scopes. Unknown remote deployment behavior blocks remote push readiness even when a local commit is safe.
 
-Preview and Production currently share the same two public Supabase variables. Preview is therefore connected to the Production backend and must not be used for destructive, migration, or isolated-security testing. Separating those variables requires a later controlled Vercel change.
+Environment separation was independently verified on July 27, 2026: Preview uses the Version 2 staging target and Production uses the Production target. Preview is not connected to the Production backend. This closure does not authorize destructive, migration, or isolated-security testing outside separately approved staging work.
 
-During Block 6 isolated verification, the `skillmint-block6-test` Supabase project reported `ACTIVE_HEALTHY`, received V1–V7, and passed the isolated ACL and live-security checks. This is a historical verification observation, not a current-health guarantee. The project contains no Production copy and is not connected to the Vercel project. It remains a test and evidence environment; its result neither authorizes nor proves Production rollout. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
+During Block 6 isolated verification, the `skillmint-block6-test` Supabase project reported `ACTIVE_HEALTHY`, received V1–V7, and passed the isolated ACL and live-security checks. This is a historical verification observation, not a current-health guarantee. The project contains no Production data and is connected only to Vercel Preview through staging-scoped public variables; that connection does not authorize destructive testing, migrations, or Production work. It remains a test and evidence environment; its result neither authorizes nor proves Production rollout. npm package exclusion through `.npmignore` does not prove that a Vercel build excludes a repository file or environment variable.
 
 ## Public browser variables
 
@@ -77,8 +77,8 @@ SkillMint has no configured seed dataset. The generic `https://supabase.com/docs
 ## Environment responsibilities
 
 - Vercel Production uses Supabase `skillmint-beta`. This repository pass authorizes no migration or setting change.
-- Vercel Preview currently shares Production's two public Supabase variables. It is not an isolated database environment.
-- Supabase `skillmint-block6-test` received V1–V7 during Block 6 isolated verification, has no Production data, and has no Vercel connection. Retain it only as a test and evidence environment unless a future hosted operation receives separate authorization.
+- Vercel Preview is staging-scoped and Vercel Production is Production-scoped. The Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
+- Supabase `skillmint-block6-test` received V1–V7 during Block 6 isolated verification, contains no Production data, and is connected only to Vercel Preview through staging-scoped public variables. That connection does not authorize destructive testing, migrations, or Production work. Retain it only as a test and evidence environment unless a future hosted operation receives separate authorization.
 
 ## Production schema rollout
 
@@ -104,8 +104,8 @@ Migration repair changes history only and executes no SQL. A Production dry-run 
 
 - Confirm the intended Git repository, branch behavior, and project linkage.
 - Confirm Preview and Production variable names and scopes without exposing values.
-- Record the current shared Preview/Production public Supabase variables and block database-affecting Preview tests.
-- Separate Preview variables only through an approved Vercel change with a nonproduction target.
+- Confirm Preview remains staging-scoped and Production remains Production-scoped without exposing values.
+- Change either environment scope only through separately approved configuration work.
 - Confirm deployment protection and preview access before a branch push.
 - Confirm the framework preset and build command use the locked source and lockfile.
 - Apply and verify the approved database rollout before enabling privileged deletion functionality.

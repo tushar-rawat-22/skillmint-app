@@ -140,13 +140,14 @@ Playwright is an additional browser-testing layer with Chromium, Firefox, and We
 - GitHub CI and `main` branch protection are active; the required repository check is the `quality` job.
 - Block 6 implementation and isolated verification are complete. The isolated hosted migration and ACL checks and the live-security gate passed; these results do not prove Production behavior.
 - Production schema rollout and analytics activation have not occurred, and analytics collection remains disabled.
-- Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The broader Block 7 launch-readiness gate remains incomplete; Block 7.2 is the next read-only beta-release decision gate.
+- Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The former broad Beta v1 public-launch path, including its Block 7.2 sequencing, is superseded as current authority by the July 27, 2026 Version 2 transition decision.
 - Public beta is not authorized.
-- Final public branding remains deferred to the approved Brand & Domain Decision Gate.
-- Preview and Production backend separation remains a release concern.
+- Payments remain deferred; the public brand, logo, and domain remain undecided.
+- Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
+- A deliberate Version 2 UI and information-architecture foundation remains a later, separately authorized gate before Production readiness and the planned early-access stage.
 - Legal review, verified privacy/support operations, provider backup/log-retention evidence, and accountable Production operations remain unresolved.
 
-Current authority and release boundaries are recorded in [Project Status](docs/PROJECT_STATUS.md), [Block 7.1 Closure](docs/BLOCK_7_1_CLOSURE.md), [Privacy-safe Analytics Collection](docs/ANALYTICS.md), the [Beta v1 Build Roadmap](docs/BETA_V1_BUILD_ROADMAP.md), the [Deployment Safety Guide](docs/DEPLOYMENT.md), and the [documentation map](docs/README.md).
+Current authority and release boundaries are recorded in the [Version 2 Transition Gate](docs/V2_TRANSITION_GATE.md), [Version 2 Dynamic Execution Roadmap](docs/V2_DYNAMIC_EXECUTION_ROADMAP.md), [Resume Workspace v1 Architecture](docs/RESUME_WORKSPACE_V1_ARCHITECTURE.md), [Project Status](docs/PROJECT_STATUS.md), [Block 7.1 Closure](docs/BLOCK_7_1_CLOSURE.md), [Privacy-safe Analytics Collection](docs/ANALYTICS.md), the historical [Beta v1 Build Roadmap](docs/BETA_V1_BUILD_ROADMAP.md), the [Deployment Safety Guide](docs/DEPLOYMENT.md), and the [documentation map](docs/README.md).
 
 ## Known limitations
 
@@ -156,7 +157,7 @@ Current authority and release boundaries are recorded in [Project Status](docs/P
 - There is no payment or subscription system.
 - There is no production LLM career adviser.
 - The final public brand has not been selected.
-- Production rollout, environment separation, deletion operations, privacy/support monitoring, and legal review remain open work.
+- Production rollout, deletion operations, privacy/support monitoring, and legal review remain open work; environment separation is complete.
 
 ## Documentation
 

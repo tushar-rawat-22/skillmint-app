@@ -1,5 +1,7 @@
 # SkillMint Beta v1 Build Roadmap
 
+> **Historical roadmap; current sequencing superseded July 27, 2026.** This document preserves the Beta v1 plan, completed engineering record, and frozen-contract boundaries. The [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) control current work. The former Block 7.2 public-launch sequence is not an active instruction.
+
 **Status:** Locked roadmap for Beta v1 completion; Block 5 engineering CLOSED AND FROZEN on July 13, 2026 after authorized isolated live-security proof. Beta release remains blocked pending production rollout and external privacy-contact verification.
 **Historical original Beta v1 planning estimate:** Realistic 5-6 weeks; conservative 7-8 weeks. This is not a current launch date or a new estimate.
 **Rule:** No users until Beta v1 Complete unless the founder explicitly changes strategy.
@@ -139,7 +141,7 @@ Dependencies: Blocks 1-5 must remain intact.
 
 ### 7. Beta Launch Readiness
 
-Status: In progress. Block 7.1 is complete; the broader launch-readiness gate remains incomplete.
+Historical status: In progress when this roadmap was the active plan. Block 7.1 is complete; the broader launch-readiness gate remained incomplete.
 
 Purpose: Final QA, smoke testing, copy review, onboarding readiness, and launch/no-launch decision.
 
@@ -153,7 +155,7 @@ Block 7.1 — Resume owner isolation and stale-operation safety — is complete.
 
 The repair prevents Account A data from creating an Account B database row, bearer/row owner pair, browser partition, or visible report. An already Account-A-authenticated request may finish only as Account A. PR #17 merged at `2401db7b8613879119a000b4a5019f7f68d88ef4` with the independent verdict `PASS_SAFE_FOR_COMMIT_GATE`; the exact record is in [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
 
-Block 7.1 does not authorize beta or satisfy the complete Block 7 launch-readiness gate. Block 7.2 is the next read-only beta-release decision gate, and later ordering remains evidence-driven.
+Block 7.1 did not authorize beta or satisfy the complete Block 7 launch-readiness gate. This historical roadmap identified Block 7.2 as its next read-only beta-release decision gate; that former sequencing is superseded by the Version 2 transition authority.
 
 ## Global Constraints Before Beta v1 Complete
 
