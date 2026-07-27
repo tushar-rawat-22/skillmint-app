@@ -1,7 +1,7 @@
 # SkillMint TODO
 
 **Status:** Current work index
-**Authority:** [Project Status](PROJECT_STATUS.md) and [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md)
+**Authority:** [Version 2 Transition Gate](V2_TRANSITION_GATE.md), [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md), and [Project Status](PROJECT_STATUS.md). The Beta v1 roadmap is historical context.
 
 This file distinguishes current work from completed, blocked, deferred, and historical work. It is not a second roadmap and does not reopen frozen blocks.
 
@@ -11,10 +11,10 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - Block 6 engineering implementation and isolated verification are complete.
 - The fail-closed application code deployed automatically from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
 - The isolated hosted project contains no Production copy, has V1–V7 applied, and passed migration, ACL, and live-security verification after V7 repaired inherited `service_role` raw SELECT access.
-- Preview and Production share the same two public Supabase variables, so Preview is not an isolated database environment.
-- Block 7.1 resume owner isolation is complete. The broader Block 7 launch-readiness gate remains incomplete, and Block 7.2 is the next read-only beta-release decision gate.
+- Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
+- Block 7.1 resume owner isolation is complete. The former broad Beta v1 public-launch path and its Block 7.2 sequencing are superseded as current authority by the Version 2 transition.
 - Public beta is not authorized.
-- Production activation is deferred. Rollout remains blocked pending an approved Production migration/rollback process and post-rollout verification.
+- Production activation and payments are deferred. Version 2 preparation is evidence-gated; no Production rollout follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
 - Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
 
@@ -44,7 +44,13 @@ Preserve the scoring, proof, mission, Active Target, owner-partition, export, cl
 
 The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md). This completion does not resolve the broader release blockers or satisfy the complete Block 7 launch-readiness gate.
 
-## 4. Brand & Domain Gate
+## 4. Current Version 2 direction
+
+- [ ] Run only the next evidence-gated Version 2 slice after separate implementation authorization, beginning with [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md).
+- [ ] Keep the four core slices sequential; select at most one optional capability from evidence.
+- [ ] Keep public brand/domain foundation, the deliberate Version 2 UI and Information Architecture Foundation, Production readiness, 20 → 50 → 100 → 200 invitations, continued scaling, and any monetization decision behind the gates in [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
+
+## 5. Historical Brand & Domain Gate
 
 - [ ] Generate an initial shortlist.
 - [ ] Select three finalists.
@@ -55,7 +61,7 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 
 The selected public name, backup, and domain are `Pending`. Reservation does not activate the domain. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
-## 5. Minimal public-brand foundation
+## 6. Historical minimal public-brand foundation
 
 - [ ] Add centralized public-brand configuration on a bounded branch.
 - [ ] Change user-facing brand surfaces only.
@@ -63,7 +69,7 @@ The selected public name, backup, and domain are `Pending`. Reservation does not
 - [ ] Preserve the premium light-first UI, responsive behavior, and accessibility.
 - [ ] Confirm no scoring, mission, Active Target, ownership, export, deletion, schema, storage, auth, DNS, or production behavior changed.
 
-## 6. Block 6: Privacy-safe Analytics + Founder Dashboard
+## 7. Historical Block 6: Privacy-safe Analytics + Founder Dashboard
 
 Engineering implementation and isolated verification are complete. Unchecked items below are deferred Production activation work, not unfinished repository implementation.
 
@@ -89,9 +95,9 @@ Block 6 must not become a public analytics surface and must not overclaim beta r
 
 The automatic fail-closed application deployment did not apply a Production migration or activate analytics. Persistent Production founder configuration, the WAF rule, and the purge schedule are unconfigured. No Production database or setting was changed. These activation tasks remain deferred and do not reopen the completed Block 6 engineering and isolated-verification status. See the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
-## 7. Block 7 and production blockers
+## 8. Historical Block 7 and retained future Production blockers
 
-- [ ] Run Block 7.2 as a read-only beta-release decision gate.
+- [ ] Historical: run Block 7.2 as a read-only beta-release decision gate. This is no longer a current task; see the Version 2 transition authority.
 - [ ] Inventory the actual production schema before any migration.
 - [ ] Approve accountable ownership, backup/recovery, rollback, incident, and monitoring plans.
 - [ ] Apply and exactly verify the locked schema sequence under production authorization.
@@ -115,7 +121,7 @@ The retained release-blocker register is:
 
 Block 7.1 did not resolve these broader release blockers.
 
-## 8. Deferred until after Beta v1
+## 9. Deferred beyond the former Beta v1 plan
 
 - [ ] Payments, checkout, entitlements, subscriptions, and hard paywalls.
 - [ ] AI chat or a generic career coach layer.
@@ -130,7 +136,7 @@ Block 7.1 did not resolve these broader release blockers.
 - [ ] True PNG/image export for Shareable Snapshot if later justified without risky dependency or bundle impact.
 - [ ] Salary calibration before presenting salary as a core trusted metric.
 
-## 9. Historical roadmap and completed sprint notes
+## 10. Historical roadmap and completed sprint notes
 
 The original architecture-to-launch phases and Sprint 5–7/RC-1A–RC-1E checklists are historical execution records. Git history and release documents preserve the detailed chronology. They must not be read as open tasks.
 

@@ -73,11 +73,62 @@ const currentStatusPaths = [
   "README.md",
   "docs/PROJECT_STATUS.md",
   "docs/TODO.md",
-  "docs/BETA_V1_BUILD_ROADMAP.md",
+  "docs/V2_TRANSITION_GATE.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
 ];
 const currentStatus = currentStatusPaths.map((path) => text(path)).join("\n");
 
-for (const path of currentStatusPaths) {
+for (const path of [
+  "docs/V2_TRANSITION_GATE.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
+  "docs/RESUME_WORKSPACE_V1_ARCHITECTURE.md",
+]) {
+  check(existsSync(resolve(root, path)), `${path} is missing`);
+}
+
+const transitionGate = text("docs/V2_TRANSITION_GATE.md");
+for (const [needle, label] of [
+  ["July 27, 2026", "founder decision date"],
+  ["783e1837028b92cf1edbf29f4699acdaa50df9f8", "Version 2 baseline"],
+  ["Public beta is not authorized", "public beta boundary"],
+  [
+    "Payments, checkout, entitlements, subscriptions, and paywalls remain deferred until",
+    "explicit payment deferral",
+  ],
+  ["08-v2-staging-verification.txt", "staging verification report"],
+  [
+    "0be7d87e3f34b877b412c2ddc73a397dacfeb07e071725a3a28fc16f08585d99",
+    "staging verification hash",
+  ],
+  ["08-v2-preview-compiled-verification.txt", "compiled Preview verification report"],
+  [
+    "7cebb9bed5bcf8f8427b7bb4ce850c23b5ea01b7b2be7fc3d00a1528ab44bbd0",
+    "compiled Preview verification hash",
+  ],
+]) {
+  check(transitionGate.includes(needle), `Version 2 transition gate is missing ${label}`);
+}
+
+check(
+  text("docs/V2_DYNAMIC_EXECUTION_ROADMAP.md").includes(
+    "## 7. Version 2 UI and Information Architecture Foundation",
+  ),
+  "Version 2 roadmap is missing the UI and Information Architecture phase",
+);
+check(
+  !/(?:has no Vercel connection|is not connected to the Vercel project)/.test(
+    text("docs/DEPLOYMENT.md"),
+  ),
+  "deployment guidance retains a stale no-Vercel-connection claim",
+);
+check(
+  !/Production (?:configuration|environment(?:-variable)? records?) remains unchanged/i.test(
+    currentStatus,
+  ),
+  "current authority broadly claims Production configuration remained unchanged",
+);
+
+for (const path of ["README.md", "docs/PROJECT_STATUS.md", "docs/TODO.md"]) {
   check(
     /Block 7\.1[^\n]*(?:is )?complete/i.test(text(path)),
     `${path} does not say Block 7.1 is complete`,
@@ -87,6 +138,7 @@ for (const path of currentStatusPaths) {
 for (const [pattern, label] of [
   [/Block 7\.1[^\n]*(?:next planned|next engineering|suspected risk|not (?:yet )?reproduced)/i, "stale Block 7.1 risk or sequencing claim"],
   [/Block 7[^\n]*(?:has not started|had not started|not started)/i, "stale Block 7 not-started claim"],
+  [/Block 7\.2[^\n]*(?:is )?the next read-only beta-release decision gate/i, "superseded Block 7.2 current-authority claim"],
 ]) {
   check(!pattern.test(currentStatus), `current status contains ${label}`);
 }
@@ -106,6 +158,16 @@ check(
   /\[Block 7\.1 Closure\]\(BLOCK_7_1_CLOSURE\.md\)/.test(text("docs/README.md")),
   "docs/README.md does not link BLOCK_7_1_CLOSURE.md",
 );
+for (const path of [
+  "V2_TRANSITION_GATE.md",
+  "V2_DYNAMIC_EXECUTION_ROADMAP.md",
+  "RESUME_WORKSPACE_V1_ARCHITECTURE.md",
+]) {
+  check(
+    text("docs/README.md").includes(`](${path})`),
+    `docs/README.md does not link ${path}`,
+  );
+}
 
 function localLinkTarget(rawTarget) {
   const trimmed = rawTarget.trim();

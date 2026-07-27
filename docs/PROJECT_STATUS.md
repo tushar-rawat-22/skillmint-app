@@ -1,8 +1,8 @@
 # SkillMint Project Status
 
-**Last updated:** July 26, 2026
+**Last updated:** July 27, 2026
 
-**Block 7.1 merge baseline:** `2401db7b8613879119a000b4a5019f7f68d88ef4`
+**Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
@@ -43,7 +43,7 @@ Resume Reality
 | Block 5: Data Controls + Trust Center | Complete, verified, merged, synchronized, and frozen | Isolated engineering proof; no production claim |
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
-| Block 7: Beta Launch Readiness | In progress; Block 7.1 complete | The broader gate remains incomplete; Block 7.2 is the next read-only beta-release decision gate |
+| Block 7: Beta Launch Readiness | Historical broad public-launch path stopped; Block 7.1 remains complete | Its former Block 7.2 sequencing is superseded as current authority by the Version 2 transition |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -57,13 +57,13 @@ Post-Block-6 maintenance completed the founder invalid-token repair and the data
 
 Block 7.1 confirmed and repaired a resume owner-isolation race. Account A data can no longer be rebound to Account B at persistence or publication time, and an already Account-A-authenticated request may finish only as Account A. The repair merged through PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4` and received the independent verdict `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
 
-Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Vercel Preview and Production currently share the same two public Supabase variables, so Preview is not an isolated database environment. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Privacy-safe Analytics Collection](ANALYTICS.md) and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
+Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed. The supplied fresh Preview verification found zero Production-reference hits. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Version 2 Transition Gate](V2_TRANSITION_GATE.md), [Privacy-safe Analytics Collection](ANALYTICS.md), and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
 ## Release boundary
 
-Public beta is not currently authorized. Blocks 5 and 6 passed their applicable isolated engineering gates, but those results are not Production rollout or Production-readiness evidence.
+Public beta is not authorized. Blocks 5 and 6 passed their applicable isolated engineering gates, but those results are not Production rollout or Production-readiness evidence. The former Beta v1 public-launch sequence is not the current work authority; Version 2 preparation is authorized instead.
 
-The current release blocker is:
+The retained future Production-readiness boundary is:
 
 ```text
 Production rollout
@@ -74,17 +74,14 @@ Production schema inventory and rollout, environment/origin coordination, operat
 
 The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied, and no collection flag is enabled.
 
-## Approved next sequence
+## Current approved sequence
 
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
-1. Run Block 7.2 as a read-only beta-release decision gate; do not treat the completed Block 7.1 repair as release authorization.
-2. Keep later Block 7 ordering evidence-driven while preserving its full launch-readiness scope.
-3. Prove the Production V1–V4 catalog and migration-history baseline.
-4. Prepare WAF, founder authorization, retention, monitoring, and kill switches.
-5. Separately authorize Production V5, V6, and V7.
-6. Enable server persistence, then browser delivery, only after those gates.
-7. Finish public branding and domain work before external beta.
+1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
+2. Start with the separately authorized Resume Workspace v1 slice and its architecture contract; do not implement from this status update alone.
+3. Keep public beta, Production activation, and payments unauthorized until their later evidence gates explicitly pass.
+4. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
 
 The public name, backup name, and domain are all pending. The gate does not authorize production, DNS, Supabase, Vercel, authentication, schema, storage, repository, or package changes.
 
@@ -94,13 +91,16 @@ Use the evidence relevant to the question instead of one universal ranking:
 
 - **Implementation truth:** inspect fetched Git chronology, current source, tests, schemas and configuration, and current implementation contracts. Code proves implementation, not strategy; tests prove only exercised behavior; build or deployment success does not prove release readiness.
 - **Frozen verification evidence:** use SHA-pinned closure, QA, and frozen contract documents for the result and scope they record. Do not rewrite historical evidence, combine separate test layers, or claim that historical `/tmp` artifacts remain available.
-- **Current product intent:** use explicit founder decisions durably recorded in the repository, the current approved roadmap and decision documents, then constitution, vision, strategy, and compatible product requirements that have not been superseded. A conversation-only decision must be recorded in the repository before implementation. Code cannot silently cancel founder-approved strategy, and product documents do not prove implementation.
+- **Current product intent:** use explicit founder decisions durably recorded in the repository, beginning with the [Version 2 Transition Gate](V2_TRANSITION_GATE.md), then the current approved roadmap and decision documents, then constitution, vision, strategy, and compatible product requirements that have not been superseded. A conversation-only decision must be recorded in the repository before implementation. Code cannot silently cancel founder-approved strategy, and product documents do not prove implementation.
 - **Historical material:** older UX, UI, architecture, API, database, AI, sprint, and launch documents preserve rationale when clearly classified. They do not prove implementation or grant current authorization when superseded.
 - **Conflict rule:** identify the question and its relevant authority, record the contradiction, do not reinterpret a frozen contract, and obtain and document a founder decision when sequencing remains unresolved.
 
 ## Authoritative references
 
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md)
+- [Version 2 Transition Gate](V2_TRANSITION_GATE.md)
+- [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md)
+- [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md)
 - [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md)
 - [Scoring System](SCORING_SYSTEM.md)
 - [Mission System](MISSION_SYSTEM.md)
