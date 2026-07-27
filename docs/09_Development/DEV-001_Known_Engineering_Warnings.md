@@ -21,6 +21,16 @@ All 17 deterministic fixture scripts, lint, the default Turbopack build, and the
 
 The npm registry was contacted for dependency installation and audit. Production, Vercel, and hosted Supabase were not contacted. This maintenance result is not evidence of historical exploitation or secret exposure, and it makes no such claim.
 
+## PostCSS source-map security maintenance — July 27, 2026
+
+GitHub advisory GHSA-r28c-9q8g-f849 covers previous-source-map path traversal and absolute-path loading. PostCSS 8.5.18 blocked the traversal case when a CSS source path was supplied, but a local regression probe showed that the no-`from` absolute-path case still disclosed external `.map` content.
+
+The repository therefore uses one global exact PostCSS 8.5.23 override instead of the former Next-only 8.5.12 override. This covers the Next and Tailwind dependency paths while preserving the separate Next `sharp` override.
+
+Verification blocked both external-map cases and preserved a valid same-directory previous source map. The Production/runtime dependency audit reported zero vulnerabilities. The full development audit separately reported GHSA-mh99-v99m-4gvg through ESLint-related glob tooling; it is not included in the Production dependency installation and requires a separate compatibility-reviewed maintenance change. No forced ESLint major upgrade was applied.
+
+The npm registry was contacted for lockfile generation, installation, and security-audit data. Production, Vercel, hosted Supabase, and application endpoints were not contacted. The repair does not establish that historical exploitation or data disclosure occurred.
+
 ## Turbopack Sandbox Warning
 
 Codex sandbox builds can fail with a Turbopack process/port permission panic. Running the same build outside the sandbox succeeds.
