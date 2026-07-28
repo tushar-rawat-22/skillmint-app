@@ -10,10 +10,10 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - Blocks 1–5 are complete and frozen.
 - Block 6 engineering implementation and isolated verification are complete.
 - The fail-closed application code deployed automatically from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
-- The isolated hosted project contains no Production copy, has V1–V7 applied, and passed migration, ACL, and live-security verification after V7 repaired inherited `service_role` raw SELECT access.
+- The isolated hosted project contains no Production copy, has V1–V8 applied, and passed migration, ACL, catalog, and live-security verification; V7 repaired inherited `service_role` raw SELECT access and the later ACL-normalization migration preceded V8.
 - Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 - Block 7.1 resume owner isolation is complete. The former broad Beta v1 public-launch path and its Block 7.2 sequencing are superseded as current authority by the Version 2 transition.
-- Version 2 Phase 1A Resume Workspace v1 passed its local engineering gate on July 28, 2026. V8 remains unapplied to hosted and Production databases; product comprehension/repeat-use evidence remains pending.
+- Version 2 Resume Workspace v1 passed its local Phase 1A and isolated hosted/synthetic Preview Phase 1B gates on July 28, 2026. V8 remains unapplied to Production; real-user comprehension and repeat-use evidence remains pending, and Slice 2 is unauthorized.
 - Public beta is not authorized.
 - Production activation and payments are deferred. Version 2 preparation is evidence-gated; no Production rollout follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
@@ -48,8 +48,9 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 ## 4. Current Version 2 direction
 
 - [x] Complete the bounded local engineering gate for [Resume Workspace v1](RESUME_WORKSPACE_V1_ARCHITECTURE.md), including V1–V8 replay, catalog/RLS/lifecycle proof, generated types, ownership/race fixtures, affected browser coverage, lint, and build.
-- [ ] Review and commit/publish Phase 1A only through a separately authorized Git workflow; no commit, push, deployment, or hosted migration is implied by the local gate.
-- [ ] Collect Slice 1 comprehension and repeat-use evidence; decide preserve, revise, defer, or remove before any hosted rollout or Slice 2 work.
+- [x] Publish Phase 1A through PR #21 at merge commit `9eb2318269f835a7f9cc249e8ab014c73a9271ae`; publish the lifecycle ACL normalization through PR #22 at baseline `9db3a832e5ffd2c806a787a8438dfb3946fea879`.
+- [x] Complete [Phase 1B](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md) isolated-staging migration/catalog/behavior verification, protected-Preview target proof, synthetic signed-in flow checks, and credential/data cleanup without contacting Production.
+- [ ] Collect moderated Slice 1 comprehension and repeat-use evidence; decide preserve, revise, defer, remove, or authorize Slice 2. Resume Progress and Comparison v1 remains unauthorized until that review.
 - [ ] Keep the four core slices sequential; select at most one optional capability from evidence.
 - [ ] Keep public brand/domain foundation, the deliberate Version 2 UI and Information Architecture Foundation, Production readiness, 20 → 50 → 100 → 200 invitations, continued scaling, and any monetization decision behind the gates in [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
 
