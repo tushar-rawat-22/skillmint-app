@@ -44,7 +44,7 @@ Resume Reality
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
 | Block 7: Beta Launch Readiness | Historical broad public-launch path stopped; Block 7.1 remains complete | Its former Block 7.2 sequencing is superseded as current authority by the Version 2 transition |
-| Version 2 Phase 1A: Resume Workspace v1 | Local engineering gate complete; product evidence and hosted rollout pending | No Production, deployment, scoring, mission, Active Target, or browser-key change |
+| Version 2 Resume Workspace v1: Phases 1A–1B | Local engineering, isolated hosted, and synthetic Preview gates complete; real-user product evidence pending | No Production, public-beta, Slice 2, scoring, mission, Active Target, or browser-key authorization |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -60,7 +60,9 @@ Block 7.1 confirmed and repaired a resume owner-isolation race. Account A data c
 
 Version 2 Phase 1A implements Resume Workspace v1 as a separate account-owned selection over immutable saved analyses. Explicit set/change/clear actions do not change the browser-active report; a fresh browser gets an offer that must be accepted. V8 uses a one-row owner key, composite owner/source foreign key, active-user RLS, least-privilege column grants, and database-controlled selection timestamps. Account count/export, individual and bulk saved-report deletion, protected account deletion, and Account A/B stale-result guards include the selection without changing their existing public boundaries.
 
-The July 28 local gate replayed V1–V8 from empty, matched the catalog and generated types, passed transactional positive/negative ownership and lifecycle probes, local schema lint, deterministic preservation suites, affected cross-browser tests, source lint, build, and diff checks. This is local repository evidence only. V8 was not applied to a hosted or Production database, no deployment occurred, and product comprehension/repeat-use evidence remains pending.
+The July 28 Phase 1A local gate replayed V1–V8 from empty, matched the catalog and generated types, passed transactional positive/negative ownership and lifecycle probes, local schema lint, deterministic preservation suites, affected cross-browser tests, source lint, build, and diff checks.
+
+Phase 1B then applied the ACL-normalization migration and V8 exactly once to isolated staging, aligned migration history through V8 with a zero-pending dry run, and passed hosted lint, catalog verification, an 18/18 rollback-contained behavior probe, and protected-Preview target verification. Synthetic signed-in Preview checks preserved the separation among saved history, account Workspace selection, and the browser-active report; the final fresh-browser slice passed 8/8. Temporary credentials were revoked, disposable data returned to zero, Preview protection was restored, and Production was not contacted. See [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md).
 
 Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 
@@ -79,18 +81,18 @@ Production rollout
 
 Production schema inventory and rollout, environment/origin coordination, operational ownership, incident and rollback handling, legal review, and provider backup/log retention claims remain outside the verified repository closure. A Vercel deployment or successful build does not by itself satisfy this boundary.
 
-The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied; Phase 1A V8 is also local-only and unapplied; no collection flag is enabled.
+The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied; Production V8 also remains unapplied, while V8 is applied only to isolated staging. No collection flag is enabled.
 
 ## Current approved sequence
 
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
 1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
-2. Preserve the completed local Resume Workspace v1 engineering boundary while collecting its required comprehension and repeat-use evidence. Do not begin Slice 2 or a hosted rollout without separate authorization.
+2. Preserve the completed Resume Workspace v1 engineering boundary while collecting moderated comprehension and repeat-use evidence. Then decide whether to preserve, revise, defer, remove, or explicitly authorize Slice 2; do not begin Slice 2 before that decision.
 3. Keep public beta, Production activation, and payments unauthorized until their later evidence gates explicitly pass.
 4. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
 
-The public name, backup name, and domain are all pending. Phase 1A completion authorizes no production, DNS, hosted Supabase, Vercel, authentication-origin, or public-package action.
+The public name, backup name, and domain are all pending. Phase 1B completion authorizes no Production, DNS, further hosted Supabase or Vercel, authentication-origin, public-package, or Product Slice 2 action.
 
 ## Question-specific authority
 
@@ -123,5 +125,6 @@ Use the evidence relevant to the question instead of one universal ranking:
 - [Deployment Safety Guide](DEPLOYMENT.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md)
+- [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Documentation Map](README.md)

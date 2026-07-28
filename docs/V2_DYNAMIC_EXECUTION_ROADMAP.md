@@ -22,11 +22,11 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Stop condition and decision.** Any mixed target, Production reference in Preview output, pending staging migration, or unresolved lint error stops the affected work. Preserve the closure; revise only under separately authorized remediation. **Contingency:** suspend deployment-related activity and use local deterministic work until separation is re-proved.
 
-## 1. Product Slice 1 — Resume Workspace v1 — local engineering gate complete
+## 1. Product Slice 1 — Resume Workspace v1 — isolated engineering gate complete
 
 **Objective.** Let a signed-in person deliberately identify one saved resume analysis as the account workspace selection without conflating it with browser-local active report state.
 
-**Current evidence.** The July 28, 2026 local engineering gate passed: clean V1–V8 replay, exact catalog/ACL/RLS and lifecycle probes, generated-type provenance, deterministic frozen-contract fixtures, repeated owner/race coverage, affected Chromium suites, and critical Firefox/WebKit paths. No hosted or Production environment was contacted. Product evidence is still required: interviews/usability sessions must show that people return to more than one saved analysis and can explain the difference between account selection, saved history, and browser-active report before scope widens.
+**Current evidence.** The July 28, 2026 Phase 1A local engineering gate passed clean V1–V8 replay, exact catalog/ACL/RLS and lifecycle probes, generated-type provenance, deterministic frozen-contract fixtures, repeated owner/race coverage, affected Chromium suites, and critical Firefox/WebKit paths. Phase 1B then applied and verified V8 only on isolated staging, passed hosted catalog and 18/18 rollback-contained behavior checks, proved the protected Preview targeted staging, and passed synthetic signed-in flows including a final 8/8 fresh-browser slice. Cleanup returned staging data to zero and revoked temporary credentials; Production was not contacted. Product evidence is still required: moderated sessions must show that people return to more than one saved analysis, can explain the difference among account selection, saved history, and the browser-active report, and would use comparison for a useful decision rather than score chasing.
 
 **Smallest complete solution.** The architecture in [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md): one owner-enforced selection for a saved analysis, explicit set/change/clear actions, a cross-device prompt to use the selected account analysis, and no automatic browser activation.
 
@@ -38,7 +38,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Tests.** Deterministic schema/RLS/repository/export/deletion fixtures; browser tests for explicit selection, clearing, cross-device offer, Account A/B switching, stale operations, selected-analysis deletion, browser reset, and accessibility.
 
-**Stop condition and decision.** The local same-owner enforcement gate is satisfied. Stop before Slice 2 or hosted rollout if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Expand only after repeat use and comprehension plus separate authorization; otherwise preserve the bounded implementation, revise copy/flow, defer rollout, or remove the selection before hosted use. **Contingency:** retain saved history plus browser-local restore with no account selection.
+**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied. Stop before Slice 2 if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. After reviewing repeat-use, comprehension, and decision-value evidence, choose preserve, revise, defer, remove, or separately authorize Slice 2. **Contingency:** retain saved history plus browser-local restore with no account selection.
 
 ## 2. Product Slice 2 — Resume Progress and Comparison v1
 

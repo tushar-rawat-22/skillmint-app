@@ -1,6 +1,6 @@
 # Resume Workspace v1 Architecture Decision
 
-**Decision and status (July 28, 2026):** **Model C: a dedicated `active_resume_selections` table** is implemented for the Version 2 Phase 1A repository gate. The local V1–V8 replay, catalog/ACL/RLS probes, generated-type comparison, deterministic fixtures, and affected browser suites passed. No hosted database, deployment, Production service, or public-beta gate was changed.
+**Decision and status (July 28, 2026):** **Model C: a dedicated `active_resume_selections` table** is implemented for Version 2 Resume Workspace v1. The Phase 1A local V1–V8 replay, catalog/ACL/RLS probes, generated-type comparison, deterministic fixtures, and affected browser suites passed. Phase 1B then applied and verified V8 only on isolated staging and verified the staging-targeted protected Preview with synthetic automated signed-in flows. Production, public beta, and Product Slice 2 remain unauthorized.
 
 ## Current repository facts
 
@@ -89,7 +89,17 @@ No existing migration, frozen schema file, RLS policy, export format, browser ke
 
 **Browser checks** covered: signed-out state; explicit set/change/clear; browser-active versus Workspace copy; a fresh-browser offer that requires acceptance; user decline; Account A/B switches during selection/load/delete; late Account A results after B is current; selected-analysis deletion while browser-active; bulk saved-report deletion; full account-deletion follow-up; export and ownership behavior; keyboard/focus/error/status semantics; reduced motion; narrow-screen wrapping; and critical Firefox/WebKit paths.
 
-These checks close only the local Phase 1A engineering gate. Usability/repeat-use evidence, hosted migration, Preview deployment, Production rollout, public beta, and later Version 2 slices remain separately gated.
+These checks close the local Phase 1A engineering gate. They preserve the original local verification history and do not themselves establish hosted behavior.
+
+## Bounded hosted Phase 1B verification
+
+Phase 1B used the isolated `skillmint-block6-test` project (`fowxrrgntlsgyyuoiesx`) and its Vercel Authentication-protected Preview. The ACL-normalization migration and V8 were recorded exactly once, migration history aligned through V8, the final dry run had zero pending migrations, and hosted public-schema lint and catalog verification passed. The hosted catalog confirmed the owner-qualified composite foreign key, RLS, four authenticated owner policies, database-controlled selection trigger, least-privilege authenticated grants, denial of anonymous and `service_role` raw-table access, and intended lifecycle-function execution.
+
+A rollback-contained hosted behavior probe passed 18/18 across ownership, cross-account isolation, timestamp control, raw-table denial, clearing, cascades, bulk cleanup, and protected account-deletion behavior. Synthetic Preview checks confirmed that set/change/clear actions preserve saved history and browser-active authority, while fresh-browser activation remains explicit; the final fresh-browser slice passed 8/8. Runtime interception proved the Preview login targeted staging, and the target-identification token request was aborted before network transmission. Temporary credentials were revoked, disposable data returned to zero, Preview protection was restored, and Production was not contacted.
+
+One diagnostic saw two duplicate aborted Auth identity requests and matching console messages alongside successful identity, saved-analysis, and selection responses, two rendered cards, zero page errors, and full cleanup. It was not reproduced in the final fresh-browser slice, is recorded as a non-blocking automated-test/navigation observation, and has no conclusively proven internal cause. See [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md).
+
+Phase 1B is synthetic automated engineering evidence, not real-user product validation. Moderated comprehension, repeat use of more than one saved analysis, and evidence that comparison improves a useful next decision remain required before the preserve/revise/defer/remove/authorize-Slice-2 decision.
 
 ## Smallest complete implementation boundary and non-goals
 

@@ -6,7 +6,7 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 
 - [Version 2 Transition Gate](V2_TRANSITION_GATE.md) is the current strategic authority: it preserves Beta v1 engineering, stops the former broad Beta v1 public-launch path, and keeps public beta and payments unauthorized.
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
-- [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented local Phase 1A contract, its verification boundary, and the product/hosted evidence still required before expansion.
+- [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented Phase 1A contract, its local verification history, the bounded isolated-hosted Phase 1B evidence, and the real-user evidence still required before expansion.
 - [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and current approved sequence.
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is a preserved historical execution roadmap and frozen-contract boundary; its former launch sequence is superseded for current planning.
@@ -43,6 +43,7 @@ These contracts distinguish browser data from account data, owner partitions fro
 
 ## Testing and frozen evidence
 
+- [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md)
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md)
 - [Block 5 Closure](BLOCK_5_CLOSURE.md)
 - [Block 5 QA Reconciliation](QA_DATA_CONTROLS.md)
@@ -55,7 +56,7 @@ These contracts distinguish browser data from account data, owner partitions fro
 - [Beta QA Checklist](BETA_QA_CHECKLIST.md)
 - [Beta Freeze Criteria](BETA_FREEZE_CRITERIA.md)
 
-Frozen evidence must not be casually rewritten. Preserve recorded identities, commits, hashes, run IDs, counts, scopes, and verdicts. Fixture-bound documentation may also contain wording required by deterministic checks; update it only with the relevant contract and fixture review.
+Frozen evidence must not be casually rewritten. The Phase 1B closure is isolated staging and synthetic automated Preview evidence, not Production or real-user evidence. Preserve recorded identities, commits, hashes, run IDs, counts, scopes, and verdicts. Fixture-bound documentation may also contain wording required by deterministic checks; update it only with the relevant contract and fixture review.
 
 ## Deployment and operations
 

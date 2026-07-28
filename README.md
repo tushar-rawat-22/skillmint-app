@@ -141,7 +141,7 @@ Playwright is an additional browser-testing layer with Chromium, Firefox, and We
 - Block 6 implementation and isolated verification are complete. The isolated hosted migration and ACL checks and the live-security gate passed; these results do not prove Production behavior.
 - Production schema rollout and analytics activation have not occurred, and analytics collection remains disabled.
 - Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The former broad Beta v1 public-launch path, including its Block 7.2 sequencing, is superseded as current authority by the July 27, 2026 Version 2 transition decision.
-- Version 2 Phase 1A Resume Workspace v1 passed its local engineering gate on July 28, 2026. Saved history, account Workspace selection, and the browser-active report remain separate; V8 is not deployed to a hosted or Production database, and Slice 2 is not authorized.
+- Version 2 Resume Workspace v1 passed its local Phase 1A gate and isolated hosted Phase 1B gate on July 28, 2026. Saved history, account Workspace selection, and the browser-active report remain separate; V8 is applied and verified only on isolated staging, remains unapplied to Production, and does not authorize Slice 2 or public beta.
 - Public beta is not authorized.
 - Payments remain deferred; the public brand, logo, and domain remain undecided.
 - Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.

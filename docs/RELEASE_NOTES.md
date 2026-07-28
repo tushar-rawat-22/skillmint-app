@@ -1,13 +1,20 @@
 # SkillMint Release Notes
 
-## Unreleased — Version 2 Phase 1A Resume Workspace v1
+## July 28, 2026 — Version 2 Resume Workspace Phase 1B closure
+
+- Phase 1A merged through PR #21 at `9eb2318269f835a7f9cc249e8ab014c73a9271ae`; lifecycle ACL normalization merged through PR #22 at the Phase 1B baseline `9db3a832e5ffd2c806a787a8438dfb3946fea879`.
+- The ACL-normalization migration and V8 were applied exactly once only to isolated staging. Hosted lint/catalog checks, the rollback-contained 18/18 behavior probe, protected-Preview staging-target proof, and synthetic signed-in flows including the final 8/8 fresh-browser slice passed.
+- Cleanup returned staging Auth/profile/resume/selection data to zero, revoked the temporary Vercel bypass and Supabase key, restored Preview protection, and removed temporary credential files. Production was not contacted.
+- This is isolated hosted engineering and synthetic automated Preview evidence, not real-user validation or Production/public-beta/Slice 2 authorization. The remaining gate is moderated comprehension, repeat use, and decision-value evidence. See [Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md).
+
+## Version 2 Phase 1A Resume Workspace v1 — merged July 28, 2026
 
 - Added a dedicated account-owned Workspace resume selection without changing immutable saved-analysis history or the owner-partitioned browser-active report. Set, change, and clear are explicit; Dashboard activation from a fresh browser requires explicit acceptance.
 - Added V8 `active_resume_selections` with one row per account, a composite owner/source cascade foreign key, active-user RLS, least-privilege column grants, immutable ownership, and a database-controlled timestamp that is stable on no-op writes and resets on genuine replacement.
 - Added exact owner-qualified repositories with final identity and final-state checks, fixed provider-error mapping, Account A/B stale-result rejection, out-of-page selected-analysis resolution, and truthful concurrent set/clear behavior.
 - Extended Trust Center counts, allowlisted account export, individual and bulk saved-report deletion, and protected account deletion while preserving their distinct browser/server scopes and public response shapes.
 - The local verification gate passed clean V1–V8 replay, catalog/ACL/RLS inspection, 12 transactional lifecycle probes, local schema lint, generated-type provenance with only the CLI's trailing blank line normalized, deterministic preservation suites, repeated race/owner coverage, affected Chromium suites, critical Firefox/WebKit paths, source lint, build, and diff checks.
-- This is local repository evidence only. No commit, push, pull request, hosted migration, deployment, Production service, public beta, Slice 2, scoring, mission, Active Target, JD freshness, analytics taxonomy, browser-storage key, or payment change is claimed.
+- The Phase 1A gate was local repository evidence; its later Git publication and isolated Phase 1B verification are recorded separately. Phase 1A changed no Production service, public-beta or Slice 2 authorization, scoring, mission, Active Target, JD freshness, analytics taxonomy, browser-storage key, or payment contract.
 
 ## Unreleased — Block 7.1 closure and maintenance enforcement
 
