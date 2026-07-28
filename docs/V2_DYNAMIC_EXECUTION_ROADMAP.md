@@ -1,12 +1,20 @@
 # Version 2 Dynamic Execution Roadmap
 
-This is a company-building sequence, not a feature quota. Each phase earns the next one with evidence. A phase may be preserved, revised, deferred, or removed; passing a build or a checklist is not enough. The common invariant is that no phase may weaken frozen Blocks 1–5, Block 7.1 owner isolation, truthful product language, owner partitions, allowlisted export, or separate deletion controls.
+This is a company-building sequence, not a feature quota. A phase may be preserved, revised, deferred, or removed as evidence develops; passing a build or a checklist is not enough. The common invariant is that no phase may weaken frozen Blocks 1–5, Block 7.1 owner isolation, truthful product language, owner partitions, allowlisted export, or separate deletion controls.
 
 ## Operating rules
 
-Work proceeds one product slice at a time. Do not run broad backend work, UI redesign, branding, AI assistant, applications, interview preparation, payments, and integrations in parallel. A proposed exception needs a written dependency, an owner, a test plan, and a reason it cannot wait. Every phase must use staged/non-production evidence until a separately authorized Production-readiness gate.
+Work proceeds through the four named product phases below. Brand/domain screening and separately authorized launch-readiness work may run in parallel with Phase 2, but broad backend work, UI redesign, branding execution, AI assistant, applications, interview preparation, payments, and integrations remain outside the launch scope. A proposed exception needs a written dependency, an owner, a test plan, and a reason it cannot wait. Each phase uses staged/non-production evidence until a separately authorized Production-readiness gate permits controlled Production work.
 
 Each phase uses the same decision rule: expand only when the evidence demonstrates repeatable value and safe operation; preserve when the smallest solution is working but evidence is incomplete; revise when users can articulate a correctable gap; defer when value or capacity is unproved; remove when the problem is not important enough to justify its privacy, support, or maintenance cost. On a failed assumption, stop new scope, preserve user data and frozen behavior, record the finding, and return to the smallest preceding usable state.
+
+## Current 15-day controlled-launch sequence
+
+SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete. Phase 2 is the next implementation phase and begins without waiting for the previously required pre-Phase-2 real-user review. Add only the minimum Phase 3 explainability and Phase 4 guided execution and onboarding required for a truthful, usable launch. In parallel, screen the pending public brand and domain and prepare only separately authorized Production-readiness work.
+
+Real-user evidence has not been completed and remains required during controlled early access. It must assess comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. That evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed; it is not market validation.
+
+Invitations begin with approximately 20 users only after all mandatory Production, domain, SMTP, monitoring, rollback, security, privacy, legal, accessibility, operational-ownership, and support gates pass. Expansion toward 50, 100, and 200 users requires an explicit review of stability, comprehension, support load, and material privacy or security issues at each step. This target does not authorize unrestricted acquisition, payments, subscriptions, AI chat, résumé rewriting, auto-apply, job scraping, recruiter tools, institution dashboards, or unrelated feature expansion.
 
 ## 0. Supporting platform foundation — complete
 
@@ -22,11 +30,11 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Stop condition and decision.** Any mixed target, Production reference in Preview output, pending staging migration, or unresolved lint error stops the affected work. Preserve the closure; revise only under separately authorized remediation. **Contingency:** suspend deployment-related activity and use local deterministic work until separation is re-proved.
 
-## 1. Product Slice 1 — Resume Workspace v1 — isolated engineering gate complete
+## 1. Phase 1 — Resume Workspace — complete
 
 **Objective.** Let a signed-in person deliberately identify one saved resume analysis as the account workspace selection without conflating it with browser-local active report state.
 
-**Current evidence.** The July 28, 2026 Phase 1A local engineering gate passed clean V1–V8 replay, exact catalog/ACL/RLS and lifecycle probes, generated-type provenance, deterministic frozen-contract fixtures, repeated owner/race coverage, affected Chromium suites, and critical Firefox/WebKit paths. Phase 1B then applied and verified V8 only on isolated staging, passed hosted catalog and 18/18 rollback-contained behavior checks, proved the protected Preview targeted staging, and passed synthetic signed-in flows including a final 8/8 fresh-browser slice. Cleanup returned staging data to zero and revoked temporary credentials; Production was not contacted. Product evidence is still required: moderated sessions must show that people return to more than one saved analysis, can explain the difference among account selection, saved history, and the browser-active report, and would use comparison for a useful decision rather than score chasing.
+**Current evidence.** The July 28, 2026 Phase 1A local engineering gate passed clean V1–V8 replay, exact catalog/ACL/RLS and lifecycle probes, generated-type provenance, deterministic frozen-contract fixtures, repeated owner/race coverage, affected Chromium suites, and critical Firefox/WebKit paths. Phase 1B then applied and verified V8 only on isolated staging, passed hosted catalog and 18/18 rollback-contained behavior checks, proved the protected Preview targeted staging, and passed synthetic signed-in flows including a final 8/8 fresh-browser slice. Cleanup returned staging data to zero and revoked temporary credentials; Production was not contacted. Phase 1A and Phase 1B remain historical implementation and verification records, not current phase names. Real-user product evidence remains pending and moves into controlled early access.
 
 **Smallest complete solution.** The architecture in [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md): one owner-enforced selection for a saved analysis, explicit set/change/clear actions, a cross-device prompt to use the selected account analysis, and no automatic browser activation.
 
@@ -38,31 +46,31 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Tests.** Deterministic schema/RLS/repository/export/deletion fixtures; browser tests for explicit selection, clearing, cross-device offer, Account A/B switching, stale operations, selected-analysis deletion, browser reset, and accessibility.
 
-**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied. Stop before Slice 2 if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. After reviewing repeat-use, comprehension, and decision-value evidence, choose preserve, revise, defer, remove, or separately authorize Slice 2. **Contingency:** retain saved history plus browser-local restore with no account selection.
+**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied, so Phase 1 is complete and Phase 2 is next. During controlled early access, stop or revise if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Evidence may still cause Phase 1 to be preserved, revised, deferred, or removed. **Contingency:** retain saved history plus browser-local restore with no account selection.
 
-## 2. Product Slice 2 — Resume Progress and Comparison v1
+## 2. Phase 2 — Resume Progress and Comparison — next
 
 **Objective.** Help users compare truthful changes between selected saved analyses and understand progress without pretending that scores are a hiring forecast.
 
-**Evidence required.** Slice 1 repeat use plus qualitative evidence that users want comparison to decide what to improve, not merely to chase a number. Establish that comparison labels are understood and useful.
+**Evidence required.** During controlled early access, establish whether people use comparison to make a useful improvement decision rather than merely chase a number, and whether comparison labels are understood. This evidence may revise, defer, or remove Phase 2, but it no longer blocks implementation from starting.
 
-**Smallest complete solution.** A bounded, side-by-side comparison of two explicitly chosen owned saved analyses using existing deterministic report fields, with date/version context and evidence-first explanations.
+**Smallest complete solution.** A bounded, side-by-side comparison of exactly two explicitly selected saved analyses owned by the same account, derived deterministically from already stored analysis results, with date/version context and evidence-first explanations.
 
-**Dependencies and non-goals.** Depends on accepted Slice 1 product evidence, separate Slice 2 authorization, the workspace selection, immutable saved analyses, and frozen scoring semantics. Local Slice 1 engineering completion does not authorize this slice. No score-history algorithm, ranking, social comparison, automated rewrite, external validation, or persistent multi-resume version-management system.
+**Dependencies and non-goals.** Depends on the completed Phase 1 workspace selection, immutable saved analyses, and frozen scoring semantics. No scoring-formula change, AI résumé rewriting, hiring-probability claim, social ranking, external validation, or persistent comparison history unless separately justified.
 
 **Security and ownership checks.** Both comparison IDs must be same-owner, validated at query and publication time; stale/changed account contexts discard results. Do not expose raw resume data beyond current account authorization.
 
-**Export and deletion effects.** Export can continue to export source analyses; a derived comparison is not a new account record unless separately approved. Deleting either source invalidates the comparison rather than retaining a misleading artifact; account deletion removes source data as today.
+**Export and deletion effects.** Preserve current export, saved-report deletion, and protected account-deletion contracts. Export can continue to export source analyses; a derived comparison is not a new account record unless separately approved. Deleting either source invalidates or removes the comparison rather than retaining a misleading artifact.
 
 **Tests.** Deterministic comparison fixtures for equal/changed/missing evidence, score-truth wording, ownership pairs, deleted inputs, and pagination; browser tests for selection, empty/error states, narrow screens, keyboard operation, and account switches.
 
-**Stop condition and decision.** Stop if comparison invites unsupported causal claims or does not change a user's next action. Expand only with demonstrated decision value; otherwise preserve source history, revise the explanation, defer the slice, or remove comparison. **Contingency:** provide a non-persistent “what changed” view tied to two local selections.
+**Stop condition and decision.** Stop if comparison invites unsupported causal claims, creates score-chasing risk, or does not change a user's next action. Expand only with demonstrated decision value; otherwise preserve source history, revise the explanation, defer Phase 2, or remove comparison. **Contingency:** provide a non-persistent “what changed” view tied to exactly two explicit selections.
 
-## 3. Product Slice 3 — score, role-fit, Proof Confidence, and ATS/JD explainability
+## 3. Phase 3 — Explainability
 
 **Objective.** Make existing deterministic signals easier to interpret and act on without changing frozen math or collapsing distinct concepts.
 
-**Evidence required.** Observe recurring comprehension failures in Slices 1–2 and test that revised explanations improve correct interpretation of score, proof, role fit, and one-JD match.
+**Evidence required.** Observe recurring comprehension failures in Phases 1–2 and test that revised explanations improve correct interpretation of score, proof, role fit, and one-JD match.
 
 **Smallest complete solution.** Contextual explanations and evidence-first next actions that cite existing inputs, caps, freshness, and uncertainty; clear separation between Profile-fit Roles and Latest JD Match.
 
@@ -76,7 +84,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Stop condition and decision.** Stop if explanation increases overclaiming or cannot be tied to deterministic evidence. Expand only when comprehension improves without false confidence; otherwise preserve existing signals, revise copy, defer, or remove the addition. **Contingency:** return to concise static trust copy and document the unresolved confusion.
 
-## 4. Product Slice 4 — guided execution, onboarding, processing feedback, and dashboard hierarchy
+## 4. Phase 4 — Guided execution and onboarding
 
 **Objective.** Reduce first-session uncertainty and make the next truthful action apparent, while retaining the premium light-first system.
 
@@ -84,7 +92,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Smallest complete solution.** A bounded guided path, honest processing states, and dashboard ordering that surfaces Resume Reality, current context, and one next action.
 
-**Dependencies and non-goals.** Depends on established Slice 1–3 language and existing accessibility/responsive foundations. It is not a redesign, gamification layer, AI coach, new backend program, applications tracker, interview prep suite, or payment funnel.
+**Dependencies and non-goals.** Depends on established Phase 1–3 language and existing accessibility/responsive foundations. It is not a redesign, gamification layer, AI coach, new backend program, applications tracker, interview prep suite, or payment funnel.
 
 **Security and ownership checks.** Guided state stays owner-partitioned where personal; processing state does not reveal another account's data or publish stale work after a switch.
 
@@ -102,7 +110,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Smallest complete solution.** A written decision and one bounded capability experiment with success, safety, and removal criteria.
 
-**Dependencies and non-goals.** Depends on evidence from Slices 1–4. No parallel AI assistant, applications suite, interview preparation, payment system, integration program, broad backend expansion, or redesign.
+**Dependencies and non-goals.** Deferred beyond the controlled-launch target and dependent on evidence from Phases 1–4. No parallel AI assistant, applications suite, interview preparation, payment system, integration program, broad backend expansion, or redesign.
 
 **Security and ownership checks.** Threat-model its data flow, owner boundaries, retention, abuse path, and stale work before implementation.
 
@@ -112,15 +120,15 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Stop condition and decision.** Stop if the evidence is ambiguous, value is one-off, or operation cost exceeds capacity. Expand, preserve, revise, defer, or remove by the common decision rule. **Contingency:** return to the core slices and retain the evidence as a future decision record.
 
-## 6. Public brand and domain foundation
+## 6. Public brand and domain foundation — parallel screening
 
-**Objective.** Select the public identity only when it supports a tested product and operating plan.
+**Objective.** Screen the public identity in parallel with Phase 2 and reserve the selected domain early, without activating it.
 
 **Evidence required.** Founder decision, name/domain availability and risk review, clear ownership, and a bounded inventory of public-facing surfaces.
 
-**Smallest complete solution.** Centralized public-brand configuration and user-facing brand changes only; internal SkillMint identifiers remain unchanged.
+**Smallest complete solution.** Keep `SkillMint` as the internal working name while the final public brand and domain remain pending. After founder selection and review, reserve one usable domain; connect it to Production only during the authorized launch-integration window. Internal identifiers remain unchanged.
 
-**Dependencies and non-goals.** Depends on a stable core experience, not on a public launch. No global rename, DNS activation, authentication/origin changes, deployment, or Production configuration. The deliberate Version 2 UI and Information Architecture Foundation is the next sequential gate, not part of public-brand work.
+**Dependencies and non-goals.** Screening may run with Phase 2. Domain purchase, DNS, Vercel assignment, Supabase URL changes, SMTP configuration, authentication/origin changes, deployment, and Production configuration require separate explicit execution approval. No repository, package, storage, schema, migration, function, fixture, or environment-variable identifier is renamed merely because the public brand changes. The deliberate Version 2 UI and Information Architecture Foundation is not part of public-brand work.
 
 **Security and ownership checks.** Preserve storage keys, cookies/session assumptions, trusted origins, identity copy, and account-deletion behavior; review phishing/confusion risk.
 

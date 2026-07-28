@@ -1,6 +1,6 @@
 # Resume Workspace v1 Architecture Decision
 
-**Decision and status (July 28, 2026):** **Model C: a dedicated `active_resume_selections` table** is implemented for Version 2 Resume Workspace v1. The Phase 1A local V1–V8 replay, catalog/ACL/RLS probes, generated-type comparison, deterministic fixtures, and affected browser suites passed. Phase 1B then applied and verified V8 only on isolated staging and verified the staging-targeted protected Preview with synthetic automated signed-in flows. Production, public beta, and Product Slice 2 remain unauthorized.
+**Decision and status (July 28, 2026):** **Model C: a dedicated `active_resume_selections` table** is implemented for Version 2 Resume Workspace v1. The Phase 1A local V1–V8 replay, catalog/ACL/RLS probes, generated-type comparison, deterministic fixtures, and affected browser suites passed. Phase 1B then applied and verified V8 only on isolated staging and verified the staging-targeted protected Preview with synthetic automated signed-in flows. Production and public beta remain unauthorized. The later July 28 founder sequencing amendment makes bounded Phase 2 — Resume Progress and Comparison implementation the next authorized repository work.
 
 ## Current repository facts
 
@@ -99,7 +99,7 @@ A rollback-contained hosted behavior probe passed 18/18 across ownership, cross-
 
 One diagnostic saw two duplicate aborted Auth identity requests and matching console messages alongside successful identity, saved-analysis, and selection responses, two rendered cards, zero page errors, and full cleanup. It was not reproduced in the final fresh-browser slice, is recorded as a non-blocking automated-test/navigation observation, and has no conclusively proven internal cause. See [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md).
 
-Phase 1B is synthetic automated engineering evidence, not real-user product validation. Moderated comprehension, repeat use of more than one saved analysis, and evidence that comparison improves a useful next decision remain required before the preserve/revise/defer/remove/authorize-Slice-2 decision.
+Phase 1B is synthetic automated engineering evidence, not real-user product validation. Moderated comprehension, repeat use of more than one saved analysis, and evidence that comparison improves a useful next decision remain required during controlled early access and may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed.
 
 ## Smallest complete implementation boundary and non-goals
 
