@@ -44,7 +44,7 @@ Resume Reality
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
 | Block 7: Beta Launch Readiness | Historical broad public-launch path stopped; Block 7.1 remains complete | Its former Block 7.2 sequencing is superseded as current authority by the Version 2 transition |
-| Version 2 Resume Workspace v1: Phases 1A–1B | Local engineering, isolated hosted, and synthetic Preview gates complete; real-user product evidence pending | No Production, public-beta, Slice 2, scoring, mission, Active Target, or browser-key authorization |
+| Phase 1 — Resume Workspace | Complete; Phase 1A–1B local, isolated hosted, and synthetic Preview gates passed; real-user evidence remains pending during controlled early access | Bounded Phase 2 — Resume Progress and Comparison implementation is next under the July 28 amendment; no Production, public-beta, scoring, mission, Active Target, or browser-key authorization |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -88,11 +88,13 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
 1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
-2. Preserve the completed Resume Workspace v1 engineering boundary while collecting moderated comprehension and repeat-use evidence. Then decide whether to preserve, revise, defer, remove, or explicitly authorize Slice 2; do not begin Slice 2 before that decision.
-3. Keep public beta, Production activation, and payments unauthorized until their later evidence gates explicitly pass.
-4. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
+2. Begin the bounded Phase 2 — Resume Progress and Comparison repository implementation immediately while preserving the completed Phase 1 — Resume Workspace boundary.
+3. During controlled early access, review comprehension, repeat use, comparison decision value, score-chasing risk, accessibility, and onboarding confusion; the evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed.
+4. Invite an approximately 20-user controlled cohort only after every applicable Production-readiness gate passes.
+5. Keep public beta, unrestricted acquisition, Production activation, and payments separately gated and unauthorized until their applicable evidence gates explicitly pass.
+6. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
 
-The public name, backup name, and domain are all pending. Phase 1B completion authorizes no Production, DNS, further hosted Supabase or Vercel, authentication-origin, public-package, or Product Slice 2 action.
+The public name, backup name, and domain are all pending. The later July 28 amendment authorizes only bounded Phase 2 repository implementation; it does not authorize Production, DNS, hosted Supabase or Vercel configuration, authentication-origin or public-package changes, public beta, payments, deployment, or other launch execution.
 
 ## Question-specific authority
 

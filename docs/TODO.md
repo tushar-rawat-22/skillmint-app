@@ -13,9 +13,12 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - The isolated hosted project contains no Production copy, has V1–V8 applied, and passed migration, ACL, catalog, and live-security verification; V7 repaired inherited `service_role` raw SELECT access and the later ACL-normalization migration preceded V8.
 - Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 - Block 7.1 resume owner isolation is complete. The former broad Beta v1 public-launch path and its Block 7.2 sequencing are superseded as current authority by the Version 2 transition.
-- Version 2 Resume Workspace v1 passed its local Phase 1A and isolated hosted/synthetic Preview Phase 1B gates on July 28, 2026. V8 remains unapplied to Production; real-user comprehension and repeat-use evidence remains pending, and Slice 2 is unauthorized.
-- Public beta is not authorized.
-- Production activation and payments are deferred. Version 2 preparation is evidence-gated; no Production rollout follows from this documentation change.
+- Phase 1 — Resume Workspace is complete. Its Phase 1A and Phase 1B records remain historical implementation and verification evidence. V8 remains unapplied to Production.
+- Phase 2 — Resume Progress and Comparison is the next implementation phase. The founder's July 28, 2026 sequencing amendment removes only the former requirement to complete real-user review before Phase 2 begins.
+- Real-user comprehension, repeat-use, comparison-value, score-chasing, accessibility, and onboarding evidence remains pending and is required during controlled early access.
+- A controlled hosted Production launch is targeted within 15 days, but is not guaranteed and does not prove unlimited scale, permanent Production readiness, or market validation.
+- Public unrestricted acquisition is not authorized.
+- Production activation and payments remain behind separate gates. No Production rollout follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
 - Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
 
@@ -50,20 +53,25 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [x] Complete the bounded local engineering gate for [Resume Workspace v1](RESUME_WORKSPACE_V1_ARCHITECTURE.md), including V1–V8 replay, catalog/RLS/lifecycle proof, generated types, ownership/race fixtures, affected browser coverage, lint, and build.
 - [x] Publish Phase 1A through PR #21 at merge commit `9eb2318269f835a7f9cc249e8ab014c73a9271ae`; publish the lifecycle ACL normalization through PR #22 at baseline `9db3a832e5ffd2c806a787a8438dfb3946fea879`.
 - [x] Complete [Phase 1B](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md) isolated-staging migration/catalog/behavior verification, protected-Preview target proof, synthetic signed-in flow checks, and credential/data cleanup without contacting Production.
-- [ ] Collect moderated Slice 1 comprehension and repeat-use evidence; decide preserve, revise, defer, remove, or authorize Slice 2. Resume Progress and Comparison v1 remains unauthorized until that review.
-- [ ] Keep the four core slices sequential; select at most one optional capability from evidence.
-- [ ] Keep public brand/domain foundation, the deliberate Version 2 UI and Information Architecture Foundation, Production readiness, 20 → 50 → 100 → 200 invitations, continued scaling, and any monetization decision behind the gates in [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
+- [x] Treat Phase 1 — Resume Workspace as complete.
+- [ ] Begin Phase 2 — Resume Progress and Comparison with exactly two explicitly selected same-owner saved analyses, deterministic derivation from stored results, source-deletion invalidation, account-switch and stale-result safety, and no scoring change or persistent comparison history unless separately justified.
+- [ ] Add only the minimum Phase 3 — Explainability needed to make comparison truthful and useful.
+- [ ] Add only the minimum Phase 4 — Guided execution and onboarding work needed for the controlled launch.
+- [ ] During controlled early access, evaluate comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. Use the evidence to preserve, revise, defer, or remove Phase 1 or Phase 2.
+- [ ] Keep unrelated capability expansion, unrestricted acquisition, payments, subscriptions, AI chat, résumé rewriting, auto-apply, job scraping, recruiter tools, and institution dashboards deferred.
+- [ ] After the Production-readiness gate passes, invite approximately 20 users; expand toward 50, 100, and 200 only after explicit stability, comprehension, support-load, and material privacy/security review.
 
-## 5. Historical Brand & Domain Gate
+## 5. Parallel Brand & Domain Gate
 
 - [ ] Generate an initial shortlist.
 - [ ] Select three finalists.
 - [ ] Review domain availability and basic competitor, confusion, pronunciation, spelling, and trademark risk.
 - [ ] Select one public name.
 - [ ] Select one backup name.
-- [ ] Reserve one usable domain.
+- [ ] Reserve one usable domain early after selection and review; do not connect it to Production yet.
+- [ ] During the separately authorized launch-integration window, connect the selected domain and coordinate DNS, Vercel assignment, Supabase URLs, authentication and password-recovery URLs, and SMTP.
 
-The selected public name, backup, and domain are `Pending`. Reservation does not activate the domain. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+`SkillMint` remains the internal working name. The selected public name, backup, and domain are `Pending`; screening runs in parallel with Phase 2. Reservation does not activate the domain. Domain purchase, DNS, Vercel assignment, Supabase URL changes, and SMTP configuration require separate explicit execution approval. A public-brand change must not rename repository, package, storage, schema, migration, function, fixture, or environment-variable identifiers. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
 ## 6. Historical minimal public-brand foundation
 
@@ -107,12 +115,14 @@ The automatic fail-closed application deployment did not apply a Production migr
 - [ ] Apply and exactly verify the locked schema sequence under production authorization.
 - [ ] Verify server/public environment separation and absence of secrets from browser output.
 - [ ] Verify and monitor the privacy/support contact; do not publish an invented address.
+- [ ] Configure and verify custom SMTP, abuse and rate controls, logging and monitoring, and operational support ownership.
 - [ ] Coordinate Vercel production branch, custom-domain mapping, Preview versus Production variables, `NEXT_PUBLIC_APP_URL`, allowed origins, Supabase Site URL, redirect allowlists, password-reset links, canonical URLs, and deletion-origin behavior.
-- [ ] Run authorized production auth, resume, export, saved-report deletion, account-deletion, and smoke checks with a rollback path.
+- [ ] Complete privacy, legal, security, accessibility, and launch/no-launch review.
+- [ ] Run controlled authorized Production auth, resume, comparison, export, saved-report deletion, account-deletion, and smoke checks with a reviewed migration and rollback path.
 - [ ] Review provider backup/log retention claims and obtain legal review before making compliance or erasure promises.
-- [ ] Complete final accessibility, responsive, copy, onboarding, and launch/no-launch review.
+- [ ] Confirm the controlled approximately 20-user cohort, support capacity, pause conditions, and escalation owners before invitations.
 
-Domain activation belongs here, not in the Brand & Domain Gate. Public beta remains blocked until the release gate is explicitly approved.
+Domain integration belongs here, not in the screening and reservation work. Controlled invitations remain blocked until the release gate is explicitly approved.
 
 The retained release-blocker register is:
 
