@@ -60,6 +60,7 @@ export type AccountCountsPresentation = {
   countDisplay: {
     profile: string;
     resumeAnalyses: string;
+    workspaceResumeSelection: string;
     jobMatches: string;
     careerSnapshots: string;
     betaFeedback: string;
@@ -242,6 +243,7 @@ function accountPresentation(
     countDisplay: {
       profile: countValue,
       resumeAnalyses: countValue,
+      workspaceResumeSelection: countValue,
       jobMatches: countValue,
       careerSnapshots: countValue,
       betaFeedback: countValue,
@@ -260,22 +262,26 @@ function isValidAccountDataCounts(
   const keys = [
     "profile",
     "resumeAnalyses",
+    "workspaceResumeSelection",
     "jobMatches",
     "careerSnapshots",
     "betaFeedback",
   ] as const;
-  return Object.keys(record).length === keys.length && keys.every((key) =>
-    Object.prototype.hasOwnProperty.call(record, key) &&
-    typeof record[key] === "number" &&
-    Number.isSafeInteger(record[key]) &&
-    (record[key] as number) >= 0
-  );
+  return Object.keys(record).length === keys.length &&
+    keys.every((key) =>
+      Object.prototype.hasOwnProperty.call(record, key) &&
+      typeof record[key] === "number" &&
+      Number.isSafeInteger(record[key]) &&
+      (record[key] as number) >= 0
+    ) &&
+    (record.workspaceResumeSelection as number) <= 1;
 }
 
 function mapCountDisplay(data: AccountDataCounts) {
   return {
     profile: data.profile.toString(),
     resumeAnalyses: data.resumeAnalyses.toString(),
+    workspaceResumeSelection: data.workspaceResumeSelection.toString(),
     jobMatches: data.jobMatches.toString(),
     careerSnapshots: data.careerSnapshots.toString(),
     betaFeedback: data.betaFeedback.toString(),

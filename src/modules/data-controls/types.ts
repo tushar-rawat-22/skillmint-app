@@ -45,6 +45,7 @@ export type RepositoryResult<T> =
 export type AccountDataCounts = {
   profile: number;
   resumeAnalyses: number;
+  workspaceResumeSelection: number;
   jobMatches: number;
   careerSnapshots: number;
   betaFeedback: number;
@@ -67,6 +68,11 @@ export type ResumeAnalysisExportRow = {
   parsed_profile: ParsedResumeProfile | null;
   user_profile: UserProfile | null;
   created_at: string;
+};
+
+export type WorkspaceResumeSelectionExportRow = {
+  resume_analysis_id: string;
+  selected_at: string;
 };
 
 export type JobMatchExportRow = {
@@ -93,6 +99,7 @@ export type BetaFeedbackExportRow = {
 export type AccountExportTableName =
   | "profiles"
   | "resume_analyses"
+  | "active_resume_selections"
   | "job_matches"
   | "career_snapshots"
   | "beta_feedback";
@@ -142,14 +149,15 @@ export type AccountExportTableIntegrity =
 export type AccountExportManifestTables = {
   profiles: AccountExportNoPaginationIntegrity;
   resume_analyses: AccountExportKeysetPaginationIntegrity;
+  active_resume_selections: AccountExportNoPaginationIntegrity;
   job_matches: AccountExportKeysetPaginationIntegrity;
   career_snapshots: AccountExportCountOnlyIntegrity;
   beta_feedback: AccountExportKeysetPaginationIntegrity;
 };
 
 export type AccountDataExport = {
-  exportVersion: "skillmint-account-export-v2";
-  schemaContractVersion: "skillmint-account-contract-v1";
+  exportVersion: "skillmint-account-export-v3";
+  schemaContractVersion: "skillmint-account-contract-v2";
   source: "account";
   exportedAt: string;
   accountScope: "current_authenticated_account";
@@ -170,6 +178,7 @@ export type AccountDataExport = {
   data: {
     profiles: ProfileExportRow[];
     resume_analyses: ResumeAnalysisExportRow[];
+    active_resume_selections: WorkspaceResumeSelectionExportRow[];
     job_matches: JobMatchExportRow[];
     career_snapshots: [];
     beta_feedback: BetaFeedbackExportRow[];

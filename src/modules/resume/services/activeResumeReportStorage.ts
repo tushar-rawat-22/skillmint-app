@@ -10,6 +10,7 @@ import type {
   BrowserOwnerContext,
   SkillMintStorageDescriptor,
 } from "@/lib/storage/skillMintStorageTypes";
+import { getBrowserDataOwner } from "@/lib/storage/skillMintStorageTypes";
 import type {
   PersistentResumeAnalysis,
   RepositoryResult,
@@ -82,10 +83,21 @@ const EMPTY_PARSED_PROFILE: ResumeAnalysisResult["parsedProfile"] = {
 
 export function setActiveResumeReportFromSavedAnalysis(
   resumeAnalysis: PersistentResumeAnalysis,
-  options: ActiveResumeStorageOptions = {
-    currentUserId: null,
-  },
+  options: ActiveResumeStorageOptions,
 ): RepositoryResult<ActiveResumeAnalysis> {
+  const owner = getBrowserDataOwner(options.currentUserId);
+  if (
+    !owner ||
+    owner.kind !== "account" ||
+    owner.userId !== resumeAnalysis.userId
+  ) {
+    return {
+      ok: false,
+      error:
+        "This saved resume analysis does not belong to the current browser account.",
+    };
+  }
+
   const activeReport =
     mapPersistentResumeAnalysisToActiveReport(resumeAnalysis);
 

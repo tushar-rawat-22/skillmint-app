@@ -243,7 +243,11 @@ for (const role of API_ROLES) {
 const v7Index = manifest.ordered_migrations.findIndex(
   (entry) => entry.version === "20260723000700",
 );
-assert.equal(v7Index, manifest.ordered_migrations.length - 1, "V7 must be the latest tracked migration");
+assert.equal(v7Index, 6, "V7 must retain its fixed historical position after V6");
+assert.ok(
+  manifest.ordered_migrations.length > v7Index,
+  "the tracked migration chain must include V7",
+);
 for (const statement of aclStatements) {
   if (
     statement.migrationIndex < v7Index ||
@@ -255,6 +259,14 @@ for (const statement of aclStatements) {
   }
   assert.equal(statement.privilege, "insert", "V7 or a later migration grants broader table access");
   assert.deepEqual(statement.roles, ["service_role"], "analytics INSERT must be service_role-only");
+}
+
+for (const sql of migrationSql.slice(v7Index + 1)) {
+  assert.doesNotMatch(
+    sql,
+    /\banalytics_events\b|\bget_founder_analytics_summary\b|\bpurge_expired_analytics_events\b/i,
+    "a post-V7 migration must not redefine the frozen analytics schema or ACL",
+  );
 }
 
 const purgeFunctionRevokes = aclStatements.filter(

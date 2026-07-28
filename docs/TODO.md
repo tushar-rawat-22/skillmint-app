@@ -13,6 +13,7 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - The isolated hosted project contains no Production copy, has V1–V7 applied, and passed migration, ACL, and live-security verification after V7 repaired inherited `service_role` raw SELECT access.
 - Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 - Block 7.1 resume owner isolation is complete. The former broad Beta v1 public-launch path and its Block 7.2 sequencing are superseded as current authority by the Version 2 transition.
+- Version 2 Phase 1A Resume Workspace v1 passed its local engineering gate on July 28, 2026. V8 remains unapplied to hosted and Production databases; product comprehension/repeat-use evidence remains pending.
 - Public beta is not authorized.
 - Production activation and payments are deferred. Version 2 preparation is evidence-gated; no Production rollout follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
@@ -46,7 +47,9 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 
 ## 4. Current Version 2 direction
 
-- [ ] Run only the next evidence-gated Version 2 slice after separate implementation authorization, beginning with [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md).
+- [x] Complete the bounded local engineering gate for [Resume Workspace v1](RESUME_WORKSPACE_V1_ARCHITECTURE.md), including V1–V8 replay, catalog/RLS/lifecycle proof, generated types, ownership/race fixtures, affected browser coverage, lint, and build.
+- [ ] Review and commit/publish Phase 1A only through a separately authorized Git workflow; no commit, push, deployment, or hosted migration is implied by the local gate.
+- [ ] Collect Slice 1 comprehension and repeat-use evidence; decide preserve, revise, defer, or remove before any hosted rollout or Slice 2 work.
 - [ ] Keep the four core slices sequential; select at most one optional capability from evidence.
 - [ ] Keep public brand/domain foundation, the deliberate Version 2 UI and Information Architecture Foundation, Production readiness, 20 → 50 → 100 → 200 invitations, continued scaling, and any monetization decision behind the gates in [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
 

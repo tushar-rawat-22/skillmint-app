@@ -3,7 +3,9 @@
 import Link from "next/link";
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -55,7 +57,9 @@ import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import { OnboardingChecklist } from "@/modules/onboarding";
 import {
   getLatestCurrentUserResumeAnalysis,
+  resolveCurrentUserWorkspaceResume,
   setActiveResumeReportFromSavedAnalysis,
+  type PersistentResumeAnalysis,
 } from "@/modules/resume";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
@@ -65,7 +69,6 @@ import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
   ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
-  RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
 } from "@/modules/resume/services/activeResumeReportStorage";
 import {
   fireAndForgetAnalytics,
@@ -79,15 +82,48 @@ type LatestJobMatchSummary = {
   result: JobDescriptionMatchResult;
 };
 
-type SavedResumeLookupState = "checking" | "found" | "missing";
+type DashboardResumeOfferState = {
+  ownerKey: string | null;
+  contextEpoch: number;
+  status:
+    | "idle"
+    | "checking"
+    | "workspace"
+    | "workspace_unavailable"
+    | "latest"
+    | "empty"
+    | "error";
+  analysis: PersistentResumeAnalysis | null;
+  workspaceSelectionId: string | null;
+  message: string | null;
+};
+
 type DashboardRestoreState = {
+  ownerKey: string | null;
+  contextEpoch: number;
   status: "idle" | "loading" | "success" | "error";
   message: string | null;
+};
+
+type DashboardOwnerContext = {
+  ownerKey: string | null;
+  contextEpoch: number;
+  currentUserId: string | null | undefined;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+  hasResumeAnalysis: boolean;
+};
+
+type DashboardOwnedRequest = {
+  ownerKey: string;
+  contextEpoch: number;
+  requestToken: number;
 };
 
 export default function DashboardPage() {
   const {
     user,
+    isConfigured,
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
@@ -98,11 +134,6 @@ export default function DashboardPage() {
   const storedResume = useSyncExternalStore(
     subscribeToStoredData,
     () => readStoredResume(currentUserId),
-    getServerSnapshot,
-  );
-  const storedResumeSyncStatus = useSyncExternalStore(
-    subscribeToStoredData,
-    () => readStoredResumeSyncStatus(currentUserId),
     getServerSnapshot,
   );
   const storedJobMatch = useSyncExternalStore(
@@ -128,17 +159,83 @@ export default function DashboardPage() {
     () => hasValidJobMatch(storedJobMatch),
     [storedJobMatch],
   );
-  const hasSavedResumeSyncSignal = useMemo(
-    () => hasSavedResumeAnalysisSignal(storedResumeSyncStatus),
-    [storedResumeSyncStatus],
-  );
-  const [savedResumeLookupState, setSavedResumeLookupState] =
-    useState<SavedResumeLookupState>("checking");
+  const ownerKey = typeof currentUserId === "string"
+    ? `dashboard-resume:account:${currentUserId}`
+    : null;
+  const committedOwnerContextRef = useRef<DashboardOwnerContext>({
+    ownerKey: null,
+    contextEpoch: 0,
+    currentUserId: undefined,
+    isAuthLoading: true,
+    isConfigured,
+    hasResumeAnalysis: false,
+  });
+  const previousOwnerContext = committedOwnerContextRef.current;
+  const ownerContextChanged =
+    previousOwnerContext.ownerKey !== ownerKey ||
+    previousOwnerContext.isAuthLoading !== isAuthLoading ||
+    previousOwnerContext.isConfigured !== isConfigured ||
+    previousOwnerContext.hasResumeAnalysis !== hasResumeAnalysis;
+  const currentContextEpoch = ownerContextChanged
+    ? previousOwnerContext.contextEpoch + 1
+    : previousOwnerContext.contextEpoch;
+  const liveOwnerContextRef = useRef<DashboardOwnerContext>({
+    ownerKey: null,
+    contextEpoch: 0,
+    currentUserId: undefined,
+    isAuthLoading: true,
+    isConfigured,
+    hasResumeAnalysis: false,
+  });
+  useLayoutEffect(() => {
+    const committedContext: DashboardOwnerContext = {
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      currentUserId,
+      isAuthLoading,
+      isConfigured,
+      hasResumeAnalysis,
+    };
+    committedOwnerContextRef.current = committedContext;
+    liveOwnerContextRef.current = committedContext;
+  }, [
+    currentContextEpoch,
+    currentUserId,
+    hasResumeAnalysis,
+    isAuthLoading,
+    isConfigured,
+    ownerKey,
+  ]);
+  const [resumeOfferState, setResumeOfferState] =
+    useState<DashboardResumeOfferState>({
+      ownerKey: null,
+      contextEpoch: 0,
+      status: "idle",
+      analysis: null,
+      workspaceSelectionId: null,
+      message: null,
+    });
   const [dashboardRestoreState, setDashboardRestoreState] =
     useState<DashboardRestoreState>({
+      ownerKey: null,
+      contextEpoch: 0,
       status: "idle",
       message: null,
     });
+  const isDashboardMountedRef = useRef(true);
+  const resumeOfferRequestTokenRef = useRef(0);
+  const activeResumeOfferRequestRef =
+    useRef<DashboardOwnedRequest | null>(null);
+  const visibleResumeOfferState =
+    resumeOfferState.ownerKey === ownerKey &&
+      resumeOfferState.contextEpoch === currentContextEpoch
+      ? resumeOfferState
+      : createIdleDashboardResumeOfferState(ownerKey, currentContextEpoch);
+  const visibleDashboardRestoreState =
+    dashboardRestoreState.ownerKey === ownerKey &&
+      dashboardRestoreState.contextEpoch === currentContextEpoch
+      ? dashboardRestoreState
+      : createIdleDashboardRestoreState(ownerKey, currentContextEpoch);
   const latestJobMatch = useMemo(
     () => getLatestJobMatchSummary(storedJobMatch, resumeContext),
     [resumeContext, storedJobMatch],
@@ -220,41 +317,151 @@ export default function DashboardPage() {
   ]);
 
   useEffect(() => {
-    if (hasResumeAnalysis || hasSavedResumeSyncSignal) {
+    isDashboardMountedRef.current = true;
+    return () => {
+      isDashboardMountedRef.current = false;
+      activeResumeOfferRequestRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      hasResumeAnalysis ||
+      isAuthLoading ||
+      !isConfigured ||
+      typeof currentUserId !== "string" ||
+      !ownerKey
+    ) {
       return;
     }
 
-    let isActive = true;
-
+    const requestOwnerKey = ownerKey;
+    const requestUserId = currentUserId;
     const timeoutId = window.setTimeout(() => {
-      if (!isActive) {
-        return;
-      }
-
-      setSavedResumeLookupState("checking");
-
-      void getLatestCurrentUserResumeAnalysis()
-        .then((result) => {
-          if (!isActive) {
-            return;
-          }
-
-          setSavedResumeLookupState(
-            result.ok && result.data ? "found" : "missing",
-          );
-        })
-        .catch(() => {
-          if (isActive) {
-            setSavedResumeLookupState("missing");
-          }
-        });
+      void loadResumeOffer();
     }, 0);
 
-    return () => {
-      isActive = false;
-      window.clearTimeout(timeoutId);
-    };
-  }, [hasResumeAnalysis, hasSavedResumeSyncSignal]);
+    async function loadResumeOffer() {
+      const request: DashboardOwnedRequest = {
+        ownerKey: requestOwnerKey,
+        contextEpoch: currentContextEpoch,
+        requestToken: resumeOfferRequestTokenRef.current + 1,
+      };
+      resumeOfferRequestTokenRef.current = request.requestToken;
+      activeResumeOfferRequestRef.current = request;
+      setResumeOfferState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "checking",
+        analysis: null,
+        workspaceSelectionId: null,
+        message: "Checking account resume options.",
+      });
+
+      try {
+        const workspaceResult = await resolveCurrentUserWorkspaceResume(
+          requestUserId,
+        );
+        if (!isCurrentDashboardRequestForPublication(request)) {
+          return;
+        }
+
+        if (!workspaceResult.ok) {
+          setResumeOfferState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
+            status: "error",
+            analysis: null,
+            workspaceSelectionId: null,
+            message: workspaceResult.error,
+          });
+          return;
+        }
+
+        if (workspaceResult.data.status === "selected") {
+          setResumeOfferState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
+            status: "workspace",
+            analysis: workspaceResult.data.analysis,
+            workspaceSelectionId:
+              workspaceResult.data.selection.resumeAnalysisId,
+            message:
+              "A Workspace resume is selected for this account. It will be used on this browser only if you choose it.",
+          });
+          return;
+        }
+
+        if (workspaceResult.data.status === "source_deleted") {
+          setResumeOfferState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
+            status: "workspace_unavailable",
+            analysis: null,
+            workspaceSelectionId:
+              workspaceResult.data.selection.resumeAnalysisId,
+            message:
+              "The selected Workspace resume is unavailable. SkillMint did not substitute the latest saved analysis.",
+          });
+          return;
+        }
+
+        const latestResult = await getLatestCurrentUserResumeAnalysis({
+          expectedUserId: requestUserId,
+        });
+        if (!isCurrentDashboardRequestForPublication(request)) {
+          return;
+        }
+
+        if (!latestResult.ok) {
+          setResumeOfferState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
+            status: "error",
+            analysis: null,
+            workspaceSelectionId: null,
+            message: latestResult.error,
+          });
+          return;
+        }
+
+        setResumeOfferState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: latestResult.data ? "latest" : "empty",
+          analysis: latestResult.data,
+          workspaceSelectionId: null,
+          message: latestResult.data
+            ? "Saved history exists, but no Workspace resume is selected."
+            : null,
+        });
+      } catch {
+        if (isCurrentDashboardRequestForPublication(request)) {
+          setResumeOfferState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
+            status: "error",
+            analysis: null,
+            workspaceSelectionId: null,
+            message: "Could not load account resume options right now.",
+          });
+        }
+      } finally {
+        if (isSameDashboardRequest(activeResumeOfferRequestRef.current, request)) {
+          activeResumeOfferRequestRef.current = null;
+        }
+      }
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    currentContextEpoch,
+    currentUserId,
+    hasResumeAnalysis,
+    isAuthLoading,
+    isConfigured,
+    ownerKey,
+  ]);
 
   const atsMissingSkills = latestJobMatch?.missingSkills ?? [];
   const hasUserProgress = hasResumeAnalysis || hasJobMatch;
@@ -282,21 +489,153 @@ export default function DashboardPage() {
     data.recruiter.confidence,
   );
   const proofDistribution = getProofDistribution(data.profile, data.proof);
-  const hasSavedResumeWithoutActive =
-    !hasResumeAnalysis &&
-    (hasSavedResumeSyncSignal || savedResumeLookupState === "found");
+  const hasAccountResumeOption =
+    visibleResumeOfferState.status === "workspace" ||
+    visibleResumeOfferState.status === "latest" ||
+    visibleResumeOfferState.status === "workspace_unavailable";
+
+  function isCurrentDashboardRequestForPublication(
+    request: DashboardOwnedRequest,
+  ): boolean {
+    return isDashboardMountedRef.current &&
+      !liveOwnerContextRef.current.hasResumeAnalysis &&
+      isCurrentDashboardRequest(
+        request,
+        liveOwnerContextRef.current,
+        activeResumeOfferRequestRef.current,
+      );
+  }
+
+  async function handleUseWorkspaceResume() {
+    const live = liveOwnerContextRef.current;
+    const offeredSelectionId =
+      visibleResumeOfferState.workspaceSelectionId;
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      live.hasResumeAnalysis ||
+      visibleResumeOfferState.status !== "workspace" ||
+      !offeredSelectionId
+    ) {
+      return;
+    }
+
+    const request: DashboardOwnedRequest = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: resumeOfferRequestTokenRef.current + 1,
+    };
+    resumeOfferRequestTokenRef.current = request.requestToken;
+    activeResumeOfferRequestRef.current = request;
+    setDashboardRestoreState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      status: "loading",
+      message: "Checking the Workspace resume before using it on this browser.",
+    });
+
+    try {
+      const result = await resolveCurrentUserWorkspaceResume(
+        live.currentUserId,
+      );
+      if (!isCurrentDashboardRequestForPublication(request)) {
+        return;
+      }
+
+      if (
+        !result.ok ||
+        result.data.status !== "selected" ||
+        result.data.selection.resumeAnalysisId !== offeredSelectionId
+      ) {
+        setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: result.ok
+            ? "The Workspace resume changed or became unavailable. Nothing was loaded on this browser."
+            : result.error,
+        });
+        return;
+      }
+
+      const restoreResult = setActiveResumeReportFromSavedAnalysis(
+        result.data.analysis,
+        {
+          currentUserId: live.currentUserId,
+        },
+      );
+      if (!restoreResult.ok) {
+        setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: restoreResult.error,
+        });
+        return;
+      }
+
+      setDashboardRestoreState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "success",
+        message:
+          "Workspace resume is now the active report on this browser.",
+      });
+    } catch {
+      if (isCurrentDashboardRequestForPublication(request)) {
+        setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: "Could not use the Workspace resume on this browser.",
+        });
+      }
+    } finally {
+      if (isSameDashboardRequest(activeResumeOfferRequestRef.current, request)) {
+        activeResumeOfferRequestRef.current = null;
+      }
+    }
+  }
 
   async function handleRestoreLatestSavedReport() {
+    const live = liveOwnerContextRef.current;
+    const offeredAnalysisId = visibleResumeOfferState.analysis?.id ?? null;
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      live.hasResumeAnalysis ||
+      visibleResumeOfferState.status !== "latest" ||
+      !offeredAnalysisId
+    ) {
+      return;
+    }
+
+    const request: DashboardOwnedRequest = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: resumeOfferRequestTokenRef.current + 1,
+    };
+    resumeOfferRequestTokenRef.current = request.requestToken;
+    activeResumeOfferRequestRef.current = request;
     setDashboardRestoreState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
       status: "loading",
       message: "Loading the latest saved analysis into this browser.",
     });
 
     try {
-      const result = await getLatestCurrentUserResumeAnalysis();
+      const result = await getLatestCurrentUserResumeAnalysis({
+        expectedUserId: live.currentUserId,
+      });
+      if (!isCurrentDashboardRequestForPublication(request)) {
+        return;
+      }
 
       if (!result.ok) {
         setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
           status: "error",
           message: result.error,
         });
@@ -305,17 +644,28 @@ export default function DashboardPage() {
 
       if (!result.data) {
         setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
           status: "error",
           message: "No saved resume analysis is available to restore.",
         });
-        setSavedResumeLookupState("missing");
+        return;
+      }
+      if (result.data.id !== offeredAnalysisId) {
+        setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message:
+            "The latest saved analysis changed. Nothing was loaded on this browser.",
+        });
         return;
       }
 
       const restoreResult = setActiveResumeReportFromSavedAnalysis(
         result.data,
         {
-          currentUserId,
+          currentUserId: live.currentUserId,
         },
       );
 
@@ -328,6 +678,8 @@ export default function DashboardPage() {
           },
         ));
         setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
           status: "error",
           message: restoreResult.error,
         });
@@ -338,14 +690,24 @@ export default function DashboardPage() {
         restore_kind: "latest",
       }));
       setDashboardRestoreState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
         status: "success",
         message: "Latest saved analysis is now this browser's active dashboard report.",
       });
     } catch {
-      setDashboardRestoreState({
-        status: "error",
-        message: "Could not restore the latest saved report right now.",
-      });
+      if (isCurrentDashboardRequestForPublication(request)) {
+        setDashboardRestoreState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: "Could not restore the latest saved report right now.",
+        });
+      }
+    } finally {
+      if (isSameDashboardRequest(activeResumeOfferRequestRef.current, request)) {
+        activeResumeOfferRequestRef.current = null;
+      }
     }
   }
 
@@ -359,26 +721,43 @@ export default function DashboardPage() {
             </p>
 
             <h1 className="mt-4 max-w-3xl text-4xl font-black md:text-5xl">
-              {hasSavedResumeWithoutActive
+              {hasAccountResumeOption
                 ? "No active resume report selected."
                 : "Upload your resume to build your career report."}
             </h1>
 
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              {hasSavedResumeWithoutActive
-                ? "Saved analyses exist in your account, but none is currently loaded as this browser's active dashboard report."
+              {visibleResumeOfferState.status === "workspace"
+                ? "A Workspace resume is selected for this account, but it is not loaded as this browser’s active dashboard report."
+                : visibleResumeOfferState.status === "latest"
+                  ? "Saved analyses exist in your account, but none is currently loaded as this browser’s active dashboard report."
+                  : visibleResumeOfferState.status === "workspace_unavailable"
+                    ? visibleResumeOfferState.message
                 : "SkillMint needs Resume Reality before showing Career IQ, Proof Confidence, Profile-fit roles, Latest JD Match context, and next missions."}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {hasSavedResumeWithoutActive && (
+              {visibleResumeOfferState.status === "workspace" && (
+                <button
+                  type="button"
+                  onClick={handleUseWorkspaceResume}
+                  disabled={visibleDashboardRestoreState.status === "loading"}
+                  className={premiumPrimaryCta}
+                >
+                  {visibleDashboardRestoreState.status === "loading"
+                    ? "Loading workspace resume..."
+                    : "Use workspace resume on this browser"}
+                </button>
+              )}
+
+              {visibleResumeOfferState.status === "latest" && (
                 <button
                   type="button"
                   onClick={handleRestoreLatestSavedReport}
-                  disabled={dashboardRestoreState.status === "loading"}
+                  disabled={visibleDashboardRestoreState.status === "loading"}
                   className={premiumPrimaryCta}
                 >
-                  {dashboardRestoreState.status === "loading"
+                  {visibleDashboardRestoreState.status === "loading"
                     ? "Restoring..."
                     : "Restore latest saved report"}
                 </button>
@@ -391,7 +770,8 @@ export default function DashboardPage() {
                 Upload resume
               </Link>
 
-              {hasSavedResumeWithoutActive && (
+              {(hasAccountResumeOption ||
+                visibleResumeOfferState.status === "error") && (
                 <Link
                   href="/resume"
                   className={premiumSecondaryCta}
@@ -408,15 +788,49 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            {dashboardRestoreState.message && (
+            {(visibleResumeOfferState.status === "checking" ||
+              visibleResumeOfferState.status === "error") &&
+              visibleResumeOfferState.message && (
+                <p
+                  role={
+                    visibleResumeOfferState.status === "error"
+                      ? "alert"
+                      : "status"
+                  }
+                  aria-live={
+                    visibleResumeOfferState.status === "error"
+                      ? "assertive"
+                      : "polite"
+                  }
+                  className={`mt-5 max-w-3xl rounded-2xl border p-4 text-sm leading-6 ${
+                    visibleResumeOfferState.status === "error"
+                      ? "border-rose-200 bg-rose-50 text-rose-800"
+                      : "border-slate-200 bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  {visibleResumeOfferState.message}
+                </p>
+              )}
+
+            {visibleDashboardRestoreState.message && (
               <p
+                role={
+                  visibleDashboardRestoreState.status === "error"
+                    ? "alert"
+                    : "status"
+                }
+                aria-live={
+                  visibleDashboardRestoreState.status === "error"
+                    ? "assertive"
+                    : "polite"
+                }
                 className={`mt-5 max-w-3xl rounded-2xl border p-4 text-sm leading-6 ${
-                  dashboardRestoreState.status === "error"
+                  visibleDashboardRestoreState.status === "error"
                     ? "border-rose-200 bg-rose-50 text-rose-800"
                     : "border-emerald-200 bg-emerald-50 text-emerald-800"
                 }`}
               >
-                {dashboardRestoreState.message}
+                {visibleDashboardRestoreState.message}
               </p>
             )}
           </section>
@@ -687,18 +1101,63 @@ function subscribeToStoredData(onStoreChange: () => void): () => void {
   return subscribeToSkillMintWorkspaceUpdates(onStoreChange);
 }
 
+function createIdleDashboardResumeOfferState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): DashboardResumeOfferState {
+  return {
+    ownerKey,
+    contextEpoch,
+    status: "idle",
+    analysis: null,
+    workspaceSelectionId: null,
+    message: null,
+  };
+}
+
+function createIdleDashboardRestoreState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): DashboardRestoreState {
+  return {
+    ownerKey,
+    contextEpoch,
+    status: "idle",
+    message: null,
+  };
+}
+
+function isCurrentDashboardRequest(
+  request: DashboardOwnedRequest,
+  liveContext: DashboardOwnerContext,
+  activeRequest: DashboardOwnedRequest | null,
+): boolean {
+  return Boolean(
+    activeRequest &&
+    request.ownerKey === liveContext.ownerKey &&
+    request.contextEpoch === liveContext.contextEpoch &&
+    request.ownerKey === activeRequest.ownerKey &&
+    request.contextEpoch === activeRequest.contextEpoch &&
+    request.requestToken === activeRequest.requestToken,
+  );
+}
+
+function isSameDashboardRequest(
+  left: DashboardOwnedRequest | null,
+  right: DashboardOwnedRequest,
+): boolean {
+  return Boolean(
+    left &&
+    left.ownerKey === right.ownerKey &&
+    left.contextEpoch === right.contextEpoch &&
+    left.requestToken === right.requestToken,
+  );
+}
+
 function readStoredResume(
   currentUserId: string | null | undefined,
 ): string | null {
   return readVisibleStorageValue(ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR, {
-    currentUserId,
-  });
-}
-
-function readStoredResumeSyncStatus(
-  currentUserId: string | null | undefined,
-): string | null {
-  return readVisibleStorageValue(RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR, {
     currentUserId,
   });
 }
@@ -741,18 +1200,6 @@ function hasValidJobMatch(storedValue: string | null): boolean {
     parsedValue &&
       isRecord(parsedValue.result) &&
       typeof parsedValue.result.matchScore === "number",
-  );
-}
-
-function hasSavedResumeAnalysisSignal(storedValue: string | null): boolean {
-  const parsedValue = parseRecord(storedValue);
-
-  return Boolean(
-    parsedValue &&
-      (
-        parsedValue.status === "synced" ||
-        typeof parsedValue.databaseId === "string"
-      ),
   );
 }
 

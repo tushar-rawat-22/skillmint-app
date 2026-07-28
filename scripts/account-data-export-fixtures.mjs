@@ -47,6 +47,7 @@ const {
   buildAccountDataExportWithAdapter,
 } = require("../src/modules/data-controls/services/accountDataRepository.ts");
 const {
+  ACCOUNT_EXPORT_TABLE_ORDER,
   ACCOUNT_EXPORT_TABLE_CONTRACTS,
   isValidAccountExportTimestamp,
 } = require("../src/modules/data-controls/accountDataExportContract.ts");
@@ -62,14 +63,30 @@ function test(name, callback) {
   tests.push({ name, callback });
 }
 
-test("central contracts declare the five known account tables", () => {
+test("central contracts declare the six known account tables in reconciliation order", () => {
   assert.deepEqual(Object.keys(ACCOUNT_EXPORT_TABLE_CONTRACTS), [
     "profiles",
     "resume_analyses",
+    "active_resume_selections",
     "job_matches",
     "career_snapshots",
     "beta_feedback",
   ]);
+  assert.deepEqual(
+    [...ACCOUNT_EXPORT_TABLE_ORDER],
+    Object.keys(ACCOUNT_EXPORT_TABLE_CONTRACTS),
+  );
+  assert.deepEqual(ACCOUNT_EXPORT_TABLE_CONTRACTS.active_resume_selections, {
+    tableName: "active_resume_selections",
+    ownerColumn: "user_id",
+    cardinality: "zero_or_one",
+    selectedColumns: "user_id,resume_analysis_id,selected_at",
+    primaryKey: "user_id",
+    pagination: "none",
+    internalFieldsExcluded: ["user_id"],
+    reconstructRow:
+      ACCOUNT_EXPORT_TABLE_CONTRACTS.active_resume_selections.reconstructRow,
+  });
   assert.equal(ACCOUNT_EXPORT_TABLE_CONTRACTS.career_snapshots.pagination, "count_only");
   assert.equal(ACCOUNT_EXPORT_TABLE_CONTRACTS.career_snapshots.reconstructRow, null);
 });
@@ -83,15 +100,25 @@ test("empty valid account exports every table with zero integrity counts", async
     assert.equal(payload.manifest.tables[table].exportedCount, 0);
     assert.equal(payload.manifest.tables[table].postCount, 0);
   }
+  assert.equal(payload.exportVersion, "skillmint-account-export-v3");
+  assert.equal(payload.schemaContractVersion, "skillmint-account-contract-v2");
+  assert.deepEqual(payload.data.active_resume_selections, []);
   assert.deepEqual(payload.data.career_snapshots, []);
 });
 
 test("manifest reports only applicable pagination integrity checks", async () => {
   const payload = parseSuccess(await build(createAdapter()));
   const profilePagination = payload.manifest.tables.profiles.pagination;
+  const selectionPagination =
+    payload.manifest.tables.active_resume_selections.pagination;
   const careerPagination = payload.manifest.tables.career_snapshots.pagination;
 
   assert.deepEqual(profilePagination, {
+    strategy: "none",
+    queryCompleted: true,
+    pagesFetched: 1,
+  });
+  assert.deepEqual(selectionPagination, {
     strategy: "none",
     queryCompleted: true,
     pagesFetched: 1,
@@ -111,6 +138,9 @@ test("manifest reports only applicable pagination integrity checks", async () =>
     });
   }
   assert.equal("everyPageValidated" in profilePagination, false);
+  assert.equal("everyPageValidated" in selectionPagination, false);
+  assert.equal("terminatedNormally" in selectionPagination, false);
+  assert.equal("monotonicCursorObserved" in selectionPagination, false);
   assert.equal("terminatedNormally" in profilePagination, false);
   assert.equal("monotonicCursorObserved" in profilePagination, false);
   assert.equal("everyPageValidated" in careerPagination, false);
@@ -144,6 +174,10 @@ test("an invalid explicit expected account fails before any adapter call", async
       adapterCalls += 1;
       return { data: [], error: null };
     },
+    async getActiveResumeSelectionRows() {
+      adapterCalls += 1;
+      return { data: [], error: null };
+    },
     async getKeysetPage() {
       adapterCalls += 1;
       return { data: [], error: null };
@@ -169,6 +203,108 @@ test("a provider row owned by another account is rejected even after filtering",
     resume_analyses: [createResumeAnalysis(1, { user_id: OTHER_USER_ID })],
   }));
   assertFailure(result, "invalid_response");
+});
+
+test("one valid workspace selection is owner-validated and reconstructed without user_id", async () => {
+  const analysis = createResumeAnalysis(7);
+  const selection = createWorkspaceSelection(analysis.id);
+  const adapter = createAdapter({
+    resume_analyses: [analysis],
+    active_resume_selections: [selection],
+  });
+  const payload = parseSuccess(await build(adapter));
+  assert.deepEqual(payload.data.active_resume_selections, [{
+    resume_analysis_id: analysis.id,
+    selected_at: selection.selected_at,
+  }]);
+  assert.equal(
+    payload.data.active_resume_selections[0].user_id,
+    undefined,
+  );
+  assert.equal(adapter.observed.selectionLimits[0], 2);
+  assert(
+    adapter.observed.ownerFilters.some((filter) =>
+      JSON.stringify(filter) === JSON.stringify([
+        "active_resume_selections",
+        "user_id",
+        EXPECTED_USER_ID,
+      ])
+    ),
+  );
+});
+
+test("workspace selection rejects cross-owner, malformed, and unexpected provider rows", async () => {
+  const analysis = createResumeAnalysis(8);
+  const base = createWorkspaceSelection(analysis.id);
+  for (const invalidSelection of [
+    { ...base, user_id: OTHER_USER_ID },
+    { ...base, resume_analysis_id: "not-a-uuid" },
+    { ...base, selected_at: "2026-02-30T12:00:00Z" },
+    { ...base, server_only: "unexpected" },
+  ]) {
+    const result = await build(createAdapter({
+      resume_analyses: [analysis],
+      active_resume_selections: [invalidSelection],
+    }));
+    assertFailure(result, "invalid_response");
+  }
+
+  const malformedResponse = createAdapter({
+    resume_analyses: [analysis],
+    active_resume_selections: [base],
+    selectionResolver() {
+      return { malformed: true };
+    },
+  });
+  assertFailure(await build(malformedResponse), "invalid_response");
+});
+
+test("workspace selection permits zero or one row only", async () => {
+  const analysis = createResumeAnalysis(9);
+  const selection = createWorkspaceSelection(analysis.id);
+  const preCountViolation = createAdapter({
+    resume_analyses: [analysis],
+    active_resume_selections: [selection, selection],
+  });
+  assertFailure(await build(preCountViolation), "cardinality_violation");
+
+  const responseViolation = createAdapter({
+    resume_analyses: [analysis],
+    active_resume_selections: [selection, selection],
+    countSequences: { active_resume_selections: [1, 1] },
+  });
+  assertFailure(await build(responseViolation), "cardinality_violation");
+  assert.equal(responseViolation.observed.selectionLimits[0], 2);
+});
+
+test("workspace selection fails closed when its source is absent from the complete export", async () => {
+  const result = await build(createAdapter({
+    active_resume_selections: [createWorkspaceSelection(uuid(99))],
+  }));
+  assertFailure(result, "count_mismatch");
+});
+
+test("workspace selection resolves against a source beyond the first resume page", async () => {
+  const analyses = [
+    createResumeAnalysis(1),
+    createResumeAnalysis(2),
+    createResumeAnalysis(3),
+  ];
+  const selected = analyses[2];
+  const payload = parseSuccess(await build(createAdapter({
+    resume_analyses: analyses,
+    active_resume_selections: [createWorkspaceSelection(selected.id)],
+  }), {
+    limits: { pageSize: 1, maxPagesPerTable: 3 },
+  }));
+  assert.equal(
+    payload.manifest.tables.resume_analyses.pagination.pagesFetched,
+    3,
+  );
+  assert.equal(
+    payload.data.active_resume_selections[0].resume_analysis_id,
+    selected.id,
+  );
 });
 
 test("more than 1000 rows paginate in deterministic ascending id order", async () => {
@@ -383,6 +519,19 @@ test("profile-row adapter throw resolves to a safe failure", async () => {
   assertSafeThrownFailure(await build(adapter), "unknown");
 });
 
+test("workspace-selection adapter rejection resolves without partial data", async () => {
+  const analysis = createResumeAnalysis(10);
+  const adapter = createAdapter({
+    resume_analyses: [analysis],
+    active_resume_selections: [createWorkspaceSelection(analysis.id)],
+  });
+  adapter.getActiveResumeSelectionRows = () =>
+    Promise.reject(new Error(`network failed ${RAW_PROVIDER_FAILURE}`));
+  const result = await build(adapter);
+  assertSafeThrownFailure(result, "network_failure");
+  assert.equal("data" in result, false);
+});
+
 test("keyset page adapter rejection resolves without partial data", async () => {
   const adapter = createAdapter({
     profiles: [createProfile()],
@@ -412,15 +561,15 @@ test("post-count adapter throw resolves without returning collected rows", async
 });
 
 test("account change between table collectors discards all data", async () => {
-  const identities = Array(8).fill(EXPECTED_USER_ID);
-  identities[3] = OTHER_USER_ID;
+  const identities = Array(9).fill(EXPECTED_USER_ID);
+  identities[4] = OTHER_USER_ID;
   const result = await build(createAdapter({ identitySequence: identities }));
   assertFailure(result, "account_changed");
 });
 
 test("account change immediately before final return discards serialized data", async () => {
-  const identities = Array(8).fill(EXPECTED_USER_ID);
-  identities[7] = OTHER_USER_ID;
+  const identities = Array(9).fill(EXPECTED_USER_ID);
+  identities[8] = OTHER_USER_ID;
   const result = await build(createAdapter({ identitySequence: identities }));
   assertFailure(result, "account_changed");
 });
@@ -619,12 +768,14 @@ test("manifest counts match reconstructed row arrays", async () => {
   const payload = parseSuccess(await build(createAdapter({
     profiles: [createProfile()],
     resume_analyses: [createResumeAnalysis(1), createResumeAnalysis(2)],
+    active_resume_selections: [createWorkspaceSelection(uuid(2))],
     job_matches: [createJobMatch(3)],
     beta_feedback: [createFeedback(4), createFeedback(5)],
   })));
   for (const table of [
     "profiles",
     "resume_analyses",
+    "active_resume_selections",
     "job_matches",
     "career_snapshots",
     "beta_feedback",
@@ -669,6 +820,9 @@ test("account ownership ids do not enter successful JSON", async () => {
   const result = await build(createAdapter({
     profiles: [createProfile({ id: EXPECTED_USER_ID })],
     resume_analyses: [createResumeAnalysis(1, { user_id: EXPECTED_USER_ID })],
+    active_resume_selections: [
+      createWorkspaceSelection(uuid(1), { user_id: EXPECTED_USER_ID }),
+    ],
     job_matches: [createJobMatch(2, { user_id: EXPECTED_USER_ID })],
     beta_feedback: [createFeedback(3, { user_id: EXPECTED_USER_ID })],
   }));
@@ -694,6 +848,7 @@ test("fixed input and exportedAt produce byte-identical deterministic JSON", asy
   const tables = {
     profiles: [createProfile()],
     resume_analyses: [createResumeAnalysis(2), createResumeAnalysis(1)],
+    active_resume_selections: [createWorkspaceSelection(uuid(2))],
     job_matches: [createJobMatch(4), createJobMatch(3)],
     beta_feedback: [createFeedback(6), createFeedback(5)],
   };
@@ -731,6 +886,7 @@ function createAdapter(input = {}) {
   const tables = {
     profiles: input.profiles ?? [],
     resume_analyses: input.resume_analyses ?? [],
+    active_resume_selections: input.active_resume_selections ?? [],
     job_matches: input.job_matches ?? [],
     career_snapshots: input.career_snapshots ?? [],
     beta_feedback: input.beta_feedback ?? [],
@@ -749,6 +905,7 @@ function createAdapter(input = {}) {
   const observed = {
     pageTables: [],
     profileLimits: [],
+    selectionLimits: [],
     ownerFilters: [],
   };
 
@@ -780,6 +937,23 @@ function createAdapter(input = {}) {
       return error
         ? { data: null, error }
         : { data: tables.profiles.slice(0, query.limit), error: null };
+    },
+    async getActiveResumeSelectionRows(query) {
+      observed.selectionLimits.push(query.limit);
+      observed.ownerFilters.push([
+        "active_resume_selections",
+        "user_id",
+        query.expectedUserId,
+      ]);
+      const error = input.queryErrors?.["selection"];
+      if (error) return { data: null, error };
+      const resolved = input.selectionResolver?.(query);
+      return {
+        data: resolved === undefined
+          ? tables.active_resume_selections.slice(0, query.limit)
+          : resolved,
+        error: null,
+      };
     },
     async getKeysetPage(query) {
       observed.pageTables.push(query.tableName);
@@ -866,6 +1040,15 @@ function createResumeAnalysis(index, overrides = {}) {
     parsed_profile: createParsedProfile(),
     user_profile: createUserProfile(),
     created_at: "2026-02-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function createWorkspaceSelection(resumeAnalysisId, overrides = {}) {
+  return {
+    user_id: EXPECTED_USER_ID,
+    resume_analysis_id: resumeAnalysisId,
+    selected_at: "2026-02-02T00:00:00.000Z",
     ...overrides,
   };
 }

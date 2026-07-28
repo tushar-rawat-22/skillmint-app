@@ -44,6 +44,7 @@ type AccountPreparationRow = {
   job_matches_deleted: number;
   career_snapshots_deleted: number;
   beta_feedback_deleted: number;
+  active_resume_selections_deleted: number;
   verified_absent: true;
 };
 
@@ -147,6 +148,7 @@ export async function POST(request: Request) {
               jobMatches: row.job_matches_deleted,
               careerSnapshots: row.career_snapshots_deleted,
               betaFeedback: row.beta_feedback_deleted,
+              activeResumeSelections: row.active_resume_selections_deleted,
             },
           };
         },
@@ -198,15 +200,34 @@ function parseAccountPreparationRow(data: unknown): AccountPreparationRow | null
     : data;
   if (!isRecord(row) || row.verified_absent !== true) return null;
 
-  const keys = [
+  const countKeys = [
     "profiles_deleted",
     "resume_analyses_deleted",
     "job_matches_deleted",
     "career_snapshots_deleted",
     "beta_feedback_deleted",
+    "active_resume_selections_deleted",
   ] as const;
-  if (!keys.every((key) => isSafeCount(row[key]))) return null;
-  return row as AccountPreparationRow;
+  const exactKeys = [...countKeys, "verified_absent"].sort();
+  if (
+    Object.keys(row).sort().join("\0") !== exactKeys.join("\0") ||
+    !countKeys.every((key) => isSafeCount(row[key])) ||
+    Number(row.active_resume_selections_deleted) > 1
+  ) {
+    return null;
+  }
+
+  return {
+    profiles_deleted: Number(row.profiles_deleted),
+    resume_analyses_deleted: Number(row.resume_analyses_deleted),
+    job_matches_deleted: Number(row.job_matches_deleted),
+    career_snapshots_deleted: Number(row.career_snapshots_deleted),
+    beta_feedback_deleted: Number(row.beta_feedback_deleted),
+    active_resume_selections_deleted: Number(
+      row.active_resume_selections_deleted,
+    ),
+    verified_absent: true,
+  };
 }
 
 function isSafeCount(value: unknown): boolean {

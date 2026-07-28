@@ -22,11 +22,11 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Stop condition and decision.** Any mixed target, Production reference in Preview output, pending staging migration, or unresolved lint error stops the affected work. Preserve the closure; revise only under separately authorized remediation. **Contingency:** suspend deployment-related activity and use local deterministic work until separation is re-proved.
 
-## 1. Product Slice 1 — Resume Workspace v1
+## 1. Product Slice 1 — Resume Workspace v1 — local engineering gate complete
 
 **Objective.** Let a signed-in person deliberately identify one saved resume analysis as the account workspace selection without conflating it with browser-local active report state.
 
-**Evidence required.** Interviews/usability sessions show that people return to more than one saved analysis and can explain the difference between account selection, saved history, and browser-active report. Validate a representative stale-account-switch path before widening scope.
+**Current evidence.** The July 28, 2026 local engineering gate passed: clean V1–V8 replay, exact catalog/ACL/RLS and lifecycle probes, generated-type provenance, deterministic frozen-contract fixtures, repeated owner/race coverage, affected Chromium suites, and critical Firefox/WebKit paths. No hosted or Production environment was contacted. Product evidence is still required: interviews/usability sessions must show that people return to more than one saved analysis and can explain the difference between account selection, saved history, and browser-active report before scope widens.
 
 **Smallest complete solution.** The architecture in [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md): one owner-enforced selection for a saved analysis, explicit set/change/clear actions, a cross-device prompt to use the selected account analysis, and no automatic browser activation.
 
@@ -38,7 +38,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Tests.** Deterministic schema/RLS/repository/export/deletion fixtures; browser tests for explicit selection, clearing, cross-device offer, Account A/B switching, stale operations, selected-analysis deletion, browser reset, and accessibility.
 
-**Stop condition and decision.** Stop if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement, or if same-owner enforcement cannot be demonstrated. Expand only after repeat use and comprehension; otherwise preserve the existing explicit restore, revise copy/flow, defer persistence, or remove the selection. **Contingency:** retain saved history plus browser-local restore with no account selection.
+**Stop condition and decision.** The local same-owner enforcement gate is satisfied. Stop before Slice 2 or hosted rollout if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Expand only after repeat use and comprehension plus separate authorization; otherwise preserve the bounded implementation, revise copy/flow, defer rollout, or remove the selection before hosted use. **Contingency:** retain saved history plus browser-local restore with no account selection.
 
 ## 2. Product Slice 2 — Resume Progress and Comparison v1
 
@@ -48,7 +48,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 **Smallest complete solution.** A bounded, side-by-side comparison of two explicitly chosen owned saved analyses using existing deterministic report fields, with date/version context and evidence-first explanations.
 
-**Dependencies and non-goals.** Depends on the workspace selection, immutable saved analyses, and frozen scoring semantics. No score-history algorithm, ranking, social comparison, automated rewrite, external validation, or persistent multi-resume version-management system.
+**Dependencies and non-goals.** Depends on accepted Slice 1 product evidence, separate Slice 2 authorization, the workspace selection, immutable saved analyses, and frozen scoring semantics. Local Slice 1 engineering completion does not authorize this slice. No score-history algorithm, ranking, social comparison, automated rewrite, external validation, or persistent multi-resume version-management system.
 
 **Security and ownership checks.** Both comparison IDs must be same-owner, validated at query and publication time; stale/changed account contexts discard results. Do not expose raw resume data beyond current account authorization.
 

@@ -72,7 +72,14 @@ function countState(ownerKey, overrides = {}) {
     ownerKey,
     request: { ownerKey, contextEpoch: 4, requestToken: 1 },
     status: "ready",
-    data: { profile: 0, resumeAnalyses: 0, jobMatches: 0, careerSnapshots: 0, betaFeedback: 0 },
+    data: {
+      profile: 0,
+      resumeAnalyses: 0,
+      workspaceResumeSelection: 0,
+      jobMatches: 0,
+      careerSnapshots: 0,
+      betaFeedback: 0,
+    },
     error: null,
     ...overrides,
   };
@@ -173,7 +180,20 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
   assert.equal(notConfigured.countDisplay.profile, "Unavailable");
   assert.equal(notConfigured.canExport, false);
   assert.equal(accountPresentation({ state: countState(ownerA, { status: "loading", data: null }) }).countDisplay.profile, "Checking…");
-  const stale = accountPresentation({ currentUserId: "account-b", currentOwnerKey: ownerB, state: countState(ownerA, { data: { profile: 99, resumeAnalyses: 99, jobMatches: 99, careerSnapshots: 99, betaFeedback: 99 } }) });
+  const stale = accountPresentation({
+    currentUserId: "account-b",
+    currentOwnerKey: ownerB,
+    state: countState(ownerA, {
+      data: {
+        profile: 99,
+        resumeAnalyses: 99,
+        workspaceResumeSelection: 99,
+        jobMatches: 99,
+        careerSnapshots: 99,
+        betaFeedback: 99,
+      },
+    }),
+  });
   assert.equal(stale.status, "loading");
   assert.equal(stale.countDisplay.profile, "Checking…");
   const staleEpoch = accountPresentation({ currentContextEpoch: 5, state: countState(ownerA) });
@@ -185,13 +205,59 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
   const zero = accountPresentation();
   assert.equal(zero.status, "ready");
   assert.equal(zero.countDisplay.profile, "0");
-  const nonzero = accountPresentation({ state: countState(ownerA, { data: { profile: 1, resumeAnalyses: 2, jobMatches: 3, careerSnapshots: 4, betaFeedback: 5 } }) });
-  assert.deepEqual(nonzero.countDisplay, { profile: "1", resumeAnalyses: "2", jobMatches: "3", careerSnapshots: "4", betaFeedback: "5" });
+  const nonzero = accountPresentation({
+    state: countState(ownerA, {
+      data: {
+        profile: 1,
+        resumeAnalyses: 2,
+        workspaceResumeSelection: 1,
+        jobMatches: 3,
+        careerSnapshots: 4,
+        betaFeedback: 5,
+      },
+    }),
+  });
+  assert.deepEqual(nonzero.countDisplay, {
+    profile: "1",
+    resumeAnalyses: "2",
+    workspaceResumeSelection: "1",
+    jobMatches: "3",
+    careerSnapshots: "4",
+    betaFeedback: "5",
+  });
   for (const invalid of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
-    const malformed = accountPresentation({ state: countState(ownerA, { data: { profile: invalid, resumeAnalyses: 0, jobMatches: 0, careerSnapshots: 0, betaFeedback: 0 } }) });
+    const malformed = accountPresentation({
+      state: countState(ownerA, {
+        data: {
+          profile: invalid,
+          resumeAnalyses: 0,
+          workspaceResumeSelection: 0,
+          jobMatches: 0,
+          careerSnapshots: 0,
+          betaFeedback: 0,
+        },
+      }),
+    });
     assert.equal(malformed.status, "error");
     assert.equal(malformed.countDisplay.profile, "Unavailable");
   }
+  const impossibleSelectionCount = accountPresentation({
+    state: countState(ownerA, {
+      data: {
+        profile: 0,
+        resumeAnalyses: 1,
+        workspaceResumeSelection: 2,
+        jobMatches: 0,
+        careerSnapshots: 0,
+        betaFeedback: 0,
+      },
+    }),
+  });
+  assert.equal(impossibleSelectionCount.status, "error");
+  assert.equal(
+    impossibleSelectionCount.countDisplay.workspaceResumeSelection,
+    "Unavailable",
+  );
   assert.equal(accountPresentation({ isAuthLoading: true }).canExport, false);
   assertNoOwnerCopy(error, ownerA);
 });

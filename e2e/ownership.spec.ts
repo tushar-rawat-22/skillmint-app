@@ -51,6 +51,7 @@ test("@critical @race Account A to B rejects delayed A counts and closes A dialo
   const gates = [
     ...provider.holdNext("count:profiles"),
     ...provider.holdNext("count:resume_analyses"),
+    ...provider.holdNext("count:active_resume_selections"),
     ...provider.holdNext("count:job_matches"),
     ...provider.holdNext("count:career_snapshots"),
     ...provider.holdNext("count:beta_feedback"),
@@ -59,6 +60,7 @@ test("@critical @race Account A to B rejects delayed A counts and closes A dialo
   await Promise.all([
     provider.waitFor("count:profiles", 1, ACCOUNT_A.id),
     provider.waitFor("count:resume_analyses", 1, ACCOUNT_A.id),
+    provider.waitFor("count:active_resume_selections", 1, ACCOUNT_A.id),
     provider.waitFor("count:job_matches", 1, ACCOUNT_A.id),
     provider.waitFor("count:career_snapshots", 1, ACCOUNT_A.id),
     provider.waitFor("count:beta_feedback", 1, ACCOUNT_A.id),
@@ -79,6 +81,7 @@ test("@critical @race Account A to B to A does not reactivate the original A req
   const gates = [
     ...provider.holdNext("count:profiles"),
     ...provider.holdNext("count:resume_analyses"),
+    ...provider.holdNext("count:active_resume_selections"),
     ...provider.holdNext("count:job_matches"),
     ...provider.holdNext("count:career_snapshots"),
     ...provider.holdNext("count:beta_feedback"),
@@ -111,6 +114,7 @@ test("@race remount during count collection cannot publish into the new page", a
   const gates = [
     ...provider.holdNext("count:profiles"),
     ...provider.holdNext("count:resume_analyses"),
+    ...provider.holdNext("count:active_resume_selections"),
     ...provider.holdNext("count:job_matches"),
     ...provider.holdNext("count:career_snapshots"),
     ...provider.holdNext("count:beta_feedback"),

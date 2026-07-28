@@ -26,6 +26,7 @@ import type {
   RepositoryResult,
   ResumeAnalysisExportRow,
   SavedReportsDeletionCounts,
+  WorkspaceResumeSelectionExportRow,
 } from "@/modules/data-controls/types";
 
 type SupabaseBrowserClient = NonNullable<
@@ -52,6 +53,11 @@ export type AccountDataExportQueryAdapter = {
     expectedUserId: string;
   }) => Promise<AdapterResponse>;
   getProfileRows: (input: {
+    expectedUserId: string;
+    selectedColumns: string;
+    limit: 2;
+  }) => Promise<AdapterResponse>;
+  getActiveResumeSelectionRows: (input: {
     expectedUserId: string;
     selectedColumns: string;
     limit: 2;
@@ -117,12 +123,14 @@ export async function getCurrentUserAccountDataCounts(
     const [
       profileCount,
       resumeAnalysesCount,
+      workspaceResumeSelectionCount,
       jobMatchesCount,
       careerSnapshotsCount,
       betaFeedbackCount,
     ] = await Promise.all([
       getCount(supabase, "profiles", "id", userId),
       getCount(supabase, "resume_analyses", "user_id", userId),
+      getCount(supabase, "active_resume_selections", "user_id", userId),
       getCount(supabase, "job_matches", "user_id", userId),
       getCount(supabase, "career_snapshots", "user_id", userId),
       getCount(supabase, "beta_feedback", "user_id", userId),
@@ -131,6 +139,7 @@ export async function getCurrentUserAccountDataCounts(
     const counts = [
       profileCount,
       resumeAnalysesCount,
+      workspaceResumeSelectionCount,
       jobMatchesCount,
       careerSnapshotsCount,
       betaFeedbackCount,
@@ -142,11 +151,15 @@ export async function getCurrentUserAccountDataCounts(
     if (
       !profileCount.ok ||
       !resumeAnalysesCount.ok ||
+      !workspaceResumeSelectionCount.ok ||
       !jobMatchesCount.ok ||
       !careerSnapshotsCount.ok ||
       !betaFeedbackCount.ok
     ) {
       return failure("unknown");
+    }
+    if (workspaceResumeSelectionCount.data > 1) {
+      return failure("cardinality_violation");
     }
 
     const finalIdentity = await confirmSupabaseIdentity(supabase, userId);
@@ -157,6 +170,7 @@ export async function getCurrentUserAccountDataCounts(
       data: {
         profile: profileCount.data,
         resumeAnalyses: resumeAnalysesCount.data,
+        workspaceResumeSelection: workspaceResumeSelectionCount.data,
         jobMatches: jobMatchesCount.data,
         careerSnapshots: careerSnapshotsCount.data,
         betaFeedback: betaFeedbackCount.data,
@@ -251,6 +265,22 @@ export async function buildAccountDataExportWithAdapter(
   const afterResumeAnalyses = await checkExpectedIdentity(adapter, expectedUserId);
   if (!afterResumeAnalyses.ok) return afterResumeAnalyses;
 
+  const workspaceResumeSelection =
+    await collectActiveResumeSelectionTable(
+      adapter,
+      expectedUserId,
+      resumeAnalyses.data.rows,
+      limits,
+      resourceState,
+    );
+  if (!workspaceResumeSelection.ok) return workspaceResumeSelection;
+
+  const afterWorkspaceResumeSelection = await checkExpectedIdentity(
+    adapter,
+    expectedUserId,
+  );
+  if (!afterWorkspaceResumeSelection.ok) return afterWorkspaceResumeSelection;
+
   const jobMatches = await collectKeysetTable<JobMatchExportRow>(
     adapter,
     ACCOUNT_EXPORT_TABLE_CONTRACTS.job_matches,
@@ -285,8 +315,8 @@ export async function buildAccountDataExportWithAdapter(
   if (!afterCollectors.ok) return afterCollectors;
 
   const payload: AccountDataExport = {
-    exportVersion: "skillmint-account-export-v2",
-    schemaContractVersion: "skillmint-account-contract-v1",
+    exportVersion: "skillmint-account-export-v3",
+    schemaContractVersion: "skillmint-account-contract-v2",
     source: "account",
     exportedAt,
     accountScope: "current_authenticated_account",
@@ -299,6 +329,7 @@ export async function buildAccountDataExportWithAdapter(
       tables: {
         profiles: profiles.data.integrity,
         resume_analyses: resumeAnalyses.data.integrity,
+        active_resume_selections: workspaceResumeSelection.data.integrity,
         job_matches: jobMatches.data.integrity,
         career_snapshots: careerSnapshots.data.integrity,
         beta_feedback: betaFeedback.data.integrity,
@@ -314,6 +345,7 @@ export async function buildAccountDataExportWithAdapter(
     data: {
       profiles: profiles.data.rows,
       resume_analyses: resumeAnalyses.data.rows,
+      active_resume_selections: workspaceResumeSelection.data.rows,
       job_matches: jobMatches.data.rows,
       career_snapshots: [],
       beta_feedback: betaFeedback.data.rows,
@@ -431,6 +463,14 @@ function createSupabaseAccountExportAdapter(
         .limit(input.limit);
       return { data, error, status };
     },
+    async getActiveResumeSelectionRows(input) {
+      const { data, error, status } = await supabase
+        .from("active_resume_selections")
+        .select(input.selectedColumns)
+        .eq("user_id", input.expectedUserId)
+        .limit(input.limit);
+      return { data, error, status };
+    },
     async getKeysetPage(input) {
       let query = supabase
         .from(input.tableName)
@@ -495,7 +535,88 @@ async function collectProfileTable(
     ok: true,
     data: {
       rows,
-      integrity: createProfileIntegrity(preCount.data, rows.length, postCount.data),
+      integrity: createNoPaginationIntegrity(
+        preCount.data,
+        rows.length,
+        postCount.data,
+      ),
+    },
+  };
+}
+
+async function collectActiveResumeSelectionTable(
+  adapter: AccountDataExportQueryAdapter,
+  expectedUserId: string,
+  resumeAnalyses: readonly ResumeAnalysisExportRow[],
+  limits: AccountExportLimits,
+  resourceState: ResourceState,
+): Promise<RepositoryResult<CollectedTable<
+  WorkspaceResumeSelectionExportRow,
+  AccountExportNoPaginationIntegrity
+>>> {
+  const contract = ACCOUNT_EXPORT_TABLE_CONTRACTS.active_resume_selections;
+  const preCount = await getAdapterCount(adapter, contract, expectedUserId);
+  if (!preCount.ok) return preCount;
+  if (preCount.data > 1) return failure("cardinality_violation");
+
+  const responseResult = await safeAdapterCall(() =>
+    adapter.getActiveResumeSelectionRows({
+      expectedUserId,
+      selectedColumns: contract.selectedColumns,
+      limit: 2,
+    })
+  );
+  if (!responseResult.ok) return responseResult;
+  const response = responseResult.data;
+  if (response.error) return providerFailure(response.error, response.status);
+  if (!Array.isArray(response.data)) return failure("invalid_response");
+  if (response.data.length > 1) return failure("cardinality_violation");
+
+  const rows: WorkspaceResumeSelectionExportRow[] = [];
+  for (const providerRow of response.data) {
+    if (!providerRowBelongsToExpectedAccount(
+      providerRow,
+      contract.ownerColumn,
+      expectedUserId,
+    )) {
+      return failure("invalid_response");
+    }
+    const reconstructed = contract.reconstructRow(providerRow);
+    if (!reconstructed.ok) return failure("invalid_response");
+    const guard = recordResourceUse(reconstructed.value, resourceState, limits, 1);
+    if (!guard.ok) return guard;
+    rows.push(reconstructed.value);
+  }
+
+  const postCount = await getAdapterCount(adapter, contract, expectedUserId);
+  if (!postCount.ok) return postCount;
+  if (postCount.data > 1) return failure("cardinality_violation");
+
+  const reconciled = reconcileCounts(preCount.data, rows.length, postCount.data);
+  if (!reconciled.ok) return reconciled;
+
+  if (rows.length === 1) {
+    const exportedAnalysisIds = new Set(
+      resumeAnalyses.map((row) => getUuidComparisonKey(row.id)),
+    );
+    if (
+      !exportedAnalysisIds.has(
+        getUuidComparisonKey(rows[0].resume_analysis_id),
+      )
+    ) {
+      return failure("count_mismatch");
+    }
+  }
+
+  return {
+    ok: true,
+    data: {
+      rows,
+      integrity: createNoPaginationIntegrity(
+        preCount.data,
+        rows.length,
+        postCount.data,
+      ),
     },
   };
 }
@@ -771,6 +892,13 @@ async function getExactSupabaseCount(
       .eq("id", expectedUserId);
   }
 
+  if (tableName === "active_resume_selections") {
+    return supabase
+      .from("active_resume_selections")
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", expectedUserId);
+  }
+
   return supabase
     .from(tableName)
     .select("id", { count: "exact", head: true })
@@ -794,7 +922,7 @@ function reconcileCounts(
     : failure("count_mismatch");
 }
 
-function createProfileIntegrity(
+function createNoPaginationIntegrity(
   preCount: number,
   exportedCount: number,
   postCount: number,
@@ -1064,7 +1192,8 @@ function createSafeError(code: AccountDataErrorCode): AccountDataRepositoryError
       retryable: false,
     },
     cardinality_violation: {
-      message: "The account profile data is inconsistent, so no export was created.",
+      message:
+        "A one-row account record is inconsistent, so the account data request was not completed.",
       retryable: false,
     },
     count_mismatch: {
