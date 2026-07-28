@@ -9,7 +9,8 @@
         "20260723000400",
         "20260723000500",
         "20260723000600",
-        "20260723000700"
+        "20260723000700",
+        "20260727000800"
       ]
     },
     "production": {
@@ -22,7 +23,8 @@
       "pending_execution": [
         "20260723000500",
         "20260723000600",
-        "20260723000700"
+        "20260723000700",
+        "20260727000800"
       ],
       "migration_history_repair": "history_only_no_sql_execution"
     }
@@ -76,6 +78,13 @@
       "migration_path": "supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql",
       "sha256": "46f5606f45599d5955081d677a3f6bc51474fc0750a7daad87963b6bf9855b4c",
       "rollout_classification": "pending_analytics_acl_hardening"
+    },
+    {
+      "version": "20260727000800",
+      "source_path": "supabase/schema_v8_active_resume_selections.sql",
+      "migration_path": "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
+      "sha256": "233c4aa2d7f7fbf0fa8a034f763cbe38cd2399054641b6023a66c11cc730a3a1",
+      "rollout_classification": "pending_resume_workspace_phase_1a"
     }
   ]
 }

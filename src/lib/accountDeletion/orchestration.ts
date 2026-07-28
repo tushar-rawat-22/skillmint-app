@@ -57,6 +57,7 @@ function isConfirmedDatabaseCleanup(value: unknown): boolean {
     "jobMatches",
     "careerSnapshots",
     "betaFeedback",
+    "activeResumeSelections",
   ];
   if (
     Object.keys(value.counts).length !== expected.length ||

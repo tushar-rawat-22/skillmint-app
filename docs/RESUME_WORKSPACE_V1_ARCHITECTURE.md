@@ -1,12 +1,12 @@
 # Resume Workspace v1 Architecture Decision
 
-**Decision:** Recommend **Model C: a dedicated `active_resume_selections` table** when Resume Workspace v1 is separately authorized for implementation. This is a design contract only; it creates no migration, code, or hosted change.
+**Decision and status (July 28, 2026):** **Model C: a dedicated `active_resume_selections` table** is implemented for the Version 2 Phase 1A repository gate. The local V1–V8 replay, catalog/ACL/RLS probes, generated-type comparison, deterministic fixtures, and affected browser suites passed. No hosted database, deployment, Production service, or public-beta gate was changed.
 
 ## Current repository facts
 
 `resume_analyses` is append-only account history in practice: each row has an immutable report payload, global UUID `id`, owner `user_id`, timestamp, and owner-scoped RLS. Browser-local `skillmint:resume-analysis` is the active dashboard report and is partitioned for anonymous, Account A, and Account B state. `resume-sync-status` may carry the saved row ID solely to describe its local sync relationship. A saved row is restored only through an explicit browser action; the dashboard does not silently replace a local report. Deleting that row detaches the local sync reference and preserves the browser report as local.
 
-The repository has a one-row-per-account `profiles` table but profile creation is optional for resume persistence. Saved reports have owner-aware listing, current fixed-size display, browser restore, individual delete, bulk saved-report deletion, allowlisted account export, and protected account deletion. Generated `Database` types are checked-in under `src/lib/supabase/database.types.ts`. Existing V1–V7 migration files and frozen database evidence must remain immutable.
+The repository has a one-row-per-account `profiles` table but profile creation is optional for resume persistence. Saved reports have owner-aware listing, current fixed-size display, browser restore, individual delete, bulk saved-report deletion, allowlisted account export, and protected account deletion. Phase 1A adds one account-owned Workspace selection, explicit set/change/clear controls, and an opt-in Dashboard offer without changing the current browser-active report automatically. Generated `Database` types are checked in under `src/lib/supabase/database.types.ts`. Existing V1–V7 migration files and frozen database evidence remain immutable.
 
 ## Models considered
 
@@ -44,9 +44,9 @@ The strongest counterargument is operational simplicity: Model A needs no new ta
 
 Model A is rejected because selection is not profile identity and profiles may not exist. Model B is rejected because its name and apparent extensibility invite premature persistence for Active Target, JDs, missions, and unrelated workspace state. Model C is the smallest durable contract; it is not a commitment to a broad workspace aggregate.
 
-## Exact data contract for a future authorized migration
+## Implemented data contract
 
-The proposed table is conceptual until separately reviewed:
+V8 implements this owner-qualified table:
 
 ```text
 public.resume_analyses
@@ -62,11 +62,11 @@ active_resume_selections
     on delete cascade
 ```
 
-The current `resume_analyses_user_id_id_idx` index on `resume_analyses(user_id, id)` is non-unique and does not satisfy PostgreSQL's referenced-key requirement for this composite foreign key. A future authorized forward migration must add the named `public.resume_analyses_user_id_id_key` UNIQUE constraint shown above, or an equivalently reviewed qualifying unique referenced key. That migration must review redundant-index handling rather than assume the current index should be retained or removed.
+V8 adds the named `public.resume_analyses_user_id_id_key` UNIQUE constraint required by the composite foreign key and removes only the now-redundant non-unique `resume_analyses_user_id_id_idx`. The separate `(user_id, created_at desc, id)` history index remains. Local catalog inspection confirmed the exact constraints and retained indexes.
 
-The composite key is mandatory. A foreign key on `resume_analysis_id` alone is insufficient because it permits a selection row for Account A to reference Account B's analysis. `selected_at` is the one timestamp: it represents when the current selection was made and resets whenever the selected analysis changes. There is no `updated_at` without a demonstrated separate lifecycle need. Ownership authority comes from the authenticated session, RLS, and the composite FK; client ownership input is never trusted. `resume_analyses.user_id` is already immutable for the user-facing repository and must not gain a browser update path. The table must have RLS enabled, no public/anonymous access, revoked default privileges, and authenticated CRUD policies requiring `is_active_skillmint_user()` and exact `auth.uid() = user_id`; privileged account-deletion preparation remains server-only. If a direct browser upsert is chosen, its exact SELECT, INSERT, and UPDATE privileges and RLS policies must be tested.
+The composite key is mandatory. A foreign key on `resume_analysis_id` alone is insufficient because it permits a selection row for Account A to reference Account B's analysis. `selected_at` is the one timestamp: it represents when the current selection was made, is retained for a no-op write, and is reset with database-controlled `statement_timestamp()` only when the selected analysis changes. There is no `updated_at` without a demonstrated separate lifecycle need. Ownership authority comes from the authenticated session, RLS, and the composite FK; client ownership input is never trusted. `resume_analyses.user_id` remains immutable for the user-facing repository and has no browser update path. The table has RLS enabled, no public/anonymous or service-role raw table access, revoked default privileges, authenticated column-level CRUD permissions, and exactly four policies requiring `is_active_skillmint_user()` and exact `auth.uid() = user_id`; privileged account-deletion preparation remains server-only.
 
-The generated Supabase `Database` type must gain the table, relationships/function adjustments only after the forward migration and local type-generation/review process. No hand-waved `any`, mismatched generated type, or client-supplied owner is acceptable.
+The generated Supabase `Database` type contains the table, relationship, and adjusted function results. Default local generation from the reset V1–V8 database matches the checked-in content exactly; the checked-in copy removes only the CLI's extra blank line at EOF so `git diff --check` remains clean. No hand-waved `any`, mismatched generated type, or client-supplied owner is accepted.
 
 ## Exact user-visible behavior
 
@@ -77,17 +77,19 @@ The generated Supabase `Database` type must gain the table, relationships/functi
 - Saved analyses remain immutable history; a selection is only a pointer. Future resume naming can use a later optional display-name field on the analysis, not alter this selection contract.
 - Deleting the selected saved analysis removes its selection through the FK cascade. The local browser report is preserved but its saved-row sync reference is detached, exactly as existing individual deletion behavior requires. Bulk saved-report deletion removes selections and leaves any browser report local. Full account deletion removes the selection with account data.
 
-## Repository change boundary for a future implementation
+## Implemented repository boundary
 
-Likely areas are a new forward SQL migration and source schema manifest; generated `src/lib/supabase/database.types.ts`; a tightly scoped resume-selection repository under `src/modules/resume/services`; `src/modules/resume/types.ts` and module exports; `src/app/resume/page.tsx` and `src/app/dashboard/page.tsx`; browser sync-status/storage helpers only where a local reference needs detaching; account export collectors/contracts; saved-report deletion RPC, protected account-deletion contract, and their deterministic fixtures; `docs/DATA_MAP.md`, `docs/DATA_EXPORT.md`, and `docs/ACCOUNT_DELETION.md`; plus targeted Playwright coverage. It must not silently move business rules into presentation components.
+The bounded implementation consists of the V8 forward SQL source/migration and manifest entry; generated `src/lib/supabase/database.types.ts`; owner-qualified resume-selection and saved-analysis repositories under `src/modules/resume/services`; resume types/exports; explicit Resume and Dashboard orchestration; existing browser sync/storage integration only where a deleted saved reference must detach; account count/export/deletion contracts; updated data-control documentation; deterministic fixtures; and focused Playwright coverage. Business rules remain in repositories, intelligence, storage, and protected deletion modules rather than presentation components.
 
 No existing migration, frozen schema file, RLS policy, export format, browser key, Active Target contract, JD freshness rule, score contract, mission rule, or account-deletion identity derivation may be rewritten. Use one new timestamped forward migration, validate against the staging-only environment when authorized, and roll a discovered defect forward with another reviewed migration. Do not edit applied SQL, repair migration history, or attempt an unreviewed rollback. If a migration fails before use, stop and use the reviewed rollback/forward-fix plan; do not improvise hosted repair.
 
-## Required verification before implementation completion
+## Verification completed for the local engineering gate
 
-**Deterministic fixtures** must prove: same-owner composite-FK rejection; anonymous denial; Account A/B CRUD isolation; active-user/stale-token denial; selection only for an owned existing analysis; explicit replace and clear; deletion cascade; individual and bulk saved-report deletion; protected account deletion cleanup and verification; export allowlisting and owner-ID omission; pagination with a selected analysis outside the first page; unnamed/future-named analysis display; generated-type coverage; owner/context/request-token stale-operation rejection; and preserved browser partition, Clear workspace, score, target, JD freshness, and mission contracts.
+**Database and deterministic checks** proved: clean local V1–V8 replay; exact catalog, policy, privilege, trigger, function, and index shape; same-owner composite-FK enforcement; anonymous and inactive-user denial; Account A/B CRUD isolation; selection only for an owned existing analysis; insert/replace/no-op timestamp semantics; explicit replace and clear; deletion cascades; individual and bulk saved-report deletion; protected account-deletion cleanup/count/absence; export allowlisting and owner-ID omission; selected analysis outside the first history page; generated-type provenance; stale owner/context/request rejection; and preserved browser partition, Clear workspace, scoring, target, JD freshness, mission, analytics, and Block 5 contracts.
 
-**Browser tests** must cover: signed-out state; explicit set/change/clear; browser-active versus account-active copy; a fresh device/browser offer that requires acceptance; user decline; Account A to B switch during selection/load/delete; late Account A result after B is current; selected-analysis deletion while browser-active; bulk saved-report deletion; full account deletion follow-up; export behavior; keyboard/focus/error/status semantics; reduced motion and narrow-screen wrapping.
+**Browser checks** covered: signed-out state; explicit set/change/clear; browser-active versus Workspace copy; a fresh-browser offer that requires acceptance; user decline; Account A/B switches during selection/load/delete; late Account A results after B is current; selected-analysis deletion while browser-active; bulk saved-report deletion; full account-deletion follow-up; export and ownership behavior; keyboard/focus/error/status semantics; reduced motion; narrow-screen wrapping; and critical Firefox/WebKit paths.
+
+These checks close only the local Phase 1A engineering gate. Usability/repeat-use evidence, hosted migration, Preview deployment, Production rollout, public beta, and later Version 2 slices remain separately gated.
 
 ## Smallest complete implementation boundary and non-goals
 

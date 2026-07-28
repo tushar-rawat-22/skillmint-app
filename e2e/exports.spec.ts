@@ -27,13 +27,22 @@ test("@critical account export download has exact current-account contract and n
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^skillmint-account-\d{4}-\d{2}-\d{2}\.json$/);
   const payload = await downloadedJson(download);
-  expect(payload.exportVersion).toBe("skillmint-account-export-v2");
+  expect(payload.exportVersion).toBe("skillmint-account-export-v3");
+  expect(payload.schemaContractVersion).toBe("skillmint-account-contract-v2");
   expect(payload.source).toBe("account");
   expect(payload.accountScope).toBe("current_authenticated_account");
   expect(payload.data.profiles).toEqual([expect.objectContaining({
     email: ACCOUNT_A.email,
     target_role: "Synthetic engineer",
   })]);
+  expect(payload.data.active_resume_selections).toEqual([]);
+  expect(
+    payload.manifest.tables.active_resume_selections.pagination,
+  ).toEqual({
+    strategy: "none",
+    queryCompleted: true,
+    pagesFetched: 1,
+  });
   expect(JSON.stringify(payload)).not.toContain(ACCOUNT_A.id);
   expect(JSON.stringify(payload)).not.toContain(ACCOUNT_B.email);
   const accountStatus = page.getByRole("status").filter({ hasText: "Account download" });

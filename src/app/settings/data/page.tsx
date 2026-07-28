@@ -801,8 +801,8 @@ export default function DataSettingsPage() {
         status: "success",
         data: result.data,
         message: cleanupResult.failedKeys.length
-          ? "Saved reports were deleted from your account. Profile and feedback were preserved, but some local synced references could not be cleaned automatically."
-          : "Saved reports were deleted from your account. Profile and feedback were preserved.",
+          ? "The Workspace resume selection and saved reports were deleted from your account. Profile and feedback were preserved, but some local synced references could not be cleaned automatically."
+          : "The Workspace resume selection and saved reports were deleted from your account. Profile and feedback were preserved.",
         error: null,
       });
       setShowSavedReportsDialog(false);
@@ -1219,7 +1219,7 @@ export default function DataSettingsPage() {
 
           {accountCountsPresentation.status !== "signed_out" ? (
             <>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                 <OverviewCard
                   label="Profile"
                   value={accountCountsPresentation.countDisplay.profile}
@@ -1229,6 +1229,15 @@ export default function DataSettingsPage() {
                 <OverviewCard
                   label="Resume analyses"
                   value={accountCountsPresentation.countDisplay.resumeAnalyses}
+                  detail="Deleted by Delete saved reports."
+                />
+
+                <OverviewCard
+                  label="Workspace resume selection"
+                  value={
+                    accountCountsPresentation.countDisplay
+                      .workspaceResumeSelection
+                  }
                   detail="Deleted by Delete saved reports."
                 />
 
@@ -1350,7 +1359,7 @@ export default function DataSettingsPage() {
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <DangerAction
               title="Delete saved reports"
-              body="Deletes synced resume analyses, JD matches, and career snapshots. Keeps your account, profile, and feedback; only broken synced browser references are detached."
+              body="Deletes the Workspace resume selection, synced resume analyses, JD matches, and career snapshots. Keeps your account, profile, feedback, and browser report; only broken synced references are detached."
               actionLabel="Delete saved reports"
               disabled={!user || visibleSavedReportsDeletion.status === "loading"}
               onClick={() => setShowSavedReportsDialog(true)}
@@ -1429,10 +1438,11 @@ export default function DataSettingsPage() {
           onClose={() => setShowSavedReportsDialog(false)}
         >
           <ul className="list-disc space-y-2 pl-5">
+            <li>Deletes the account&apos;s Workspace resume selection.</li>
             <li>Deletes synced resume analyses.</li>
             <li>Deletes synced JD matches.</li>
             <li>Deletes synced career snapshots.</li>
-            <li>Preserves your account, profile, feedback, and browser data except broken synced references.</li>
+            <li>Preserves your account, profile, feedback, and browser-active report.</li>
             <li>Detaches broken synced references from this browser.</li>
           </ul>
         </ConfirmDialog>

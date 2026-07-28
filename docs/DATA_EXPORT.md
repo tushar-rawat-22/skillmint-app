@@ -10,9 +10,11 @@ Privacy transformations are explicit and contract-specific. They exclude known s
 
 ## Account export
 
-The current account format is `skillmint-account-export-v2` with contract `skillmint-account-contract-v1`. The UI supplies its captured expected account ID, and the collector verifies exact authenticated identity before collection, between table collectors, and immediately before return. Ownership IDs are used for queries and validation but excluded from the JSON.
+The current account format is `skillmint-account-export-v3` with contract `skillmint-account-contract-v2`. The UI supplies its captured expected account ID, and the collector verifies exact authenticated identity before collection, between table collectors, and immediately before return. Ownership IDs are used for queries and validation but excluded from the JSON.
 
-The export allowlists profiles, resume analyses, JD matches, and beta feedback. Feedback moderation `status` is not exported. `career_snapshots` is intentionally count-only: a zero count produces an explicit empty array; any nonzero count blocks the entire export as an unsupported data contract. Keyset-paginated tables use ascending UUID IDs, conservative row/page/total/byte guards, duplicate detection, strictly increasing cursors, and pre/post count reconciliation. Profile cardinality is zero-or-one.
+The export allowlists profiles, resume analyses, the Workspace-resume selection, JD matches, and beta feedback. Feedback moderation `status` is not exported. `career_snapshots` is intentionally count-only: a zero count produces an explicit empty array; any nonzero count blocks the entire export as an unsupported data contract. Keyset-paginated tables use ascending UUID IDs, conservative row/page/total/byte guards, duplicate detection, strictly increasing cursors, and pre/post count reconciliation. Profile and Workspace-selection cardinality are independently zero-or-one.
+
+The Workspace selection uses no pagination and exports only `resume_analysis_id` and the database-controlled `selected_at`; `user_id` remains validation-only. Collection occurs after the complete owned resume-analysis history. A selection whose source analysis is absent from that complete successful collection fails the whole export rather than falling back to the latest row or returning an unreconciled pointer.
 
 Collectors use separate authenticated requests. Stable observed counts do not prove a complete historical provider export or an atomic point-in-time transactional snapshot; concurrent changes can remain undetected. Any identity, query, count, contract, pagination, serialization, or size failure returns no partial JSON.
 
@@ -20,4 +22,4 @@ Collectors use separate authenticated requests. Stable observed counts do not pr
 
 Both paths pass the exact generated filename and JSON string to the download helper. A success means one browser download click was requested. It does not prove that the browser saved a file or that the download completed. The helper creates one Blob and one object URL, clicks at most once, removes the temporary anchor, and schedules URL revocation after a successful click request. Blocked downloads remain a browser/manual-QA concern.
 
-Offline fixtures do not prove live Supabase rows, live RLS, indexes, browser save behavior, legal compliance, or production readiness.
+The Phase 1A local database gate proved the V8 selection table, owner-qualified constraints, RLS/ACL shape, lifecycle behavior, and local generated-type provenance. Offline fixtures and local database proof still do not prove a hosted catalog, Production behavior, browser file-save completion, legal compliance, or production readiness.

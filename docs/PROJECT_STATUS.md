@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** July 27, 2026
+**Last updated:** July 28, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -28,7 +28,7 @@ Resume Reality
 - Profile-fit Roles describe general resume fit. Latest JD Match applies to one pasted job description and the resume context used for that match.
 - Active Target changes focus and priority, not scores. Stale JD context must not appear current.
 - Mission completion is self-progress. Scores move only after evidence changes and re-analysis detects it.
-- Saved analysis is account history. The active report powers the current browser dashboard.
+- Saved analyses are immutable account history. A signed-in user may separately choose one Workspace resume for cross-device discovery. The active report remains browser-local and alone powers the current browser dashboard; Workspace selection never changes it automatically.
 - Anonymous and account-owned browser state are separate owner partitions. One account must not consume another account's browser partition.
 - Clear workspace removes registered SkillMint browser data only. Saved-report deletion and backend account deletion are separate operations.
 
@@ -44,6 +44,7 @@ Resume Reality
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
 | Block 7: Beta Launch Readiness | Historical broad public-launch path stopped; Block 7.1 remains complete | Its former Block 7.2 sequencing is superseded as current authority by the Version 2 transition |
+| Version 2 Phase 1A: Resume Workspace v1 | Local engineering gate complete; product evidence and hosted rollout pending | No Production, deployment, scoring, mission, Active Target, or browser-key change |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -56,6 +57,10 @@ Block 6 engineering implementation and isolated verification are complete. The i
 Post-Block-6 maintenance completed the founder invalid-token repair and the data-control provider-status and account-reauthentication repairs. PostCSS CVE-2026-45623 / GHSA-6g55-p6wh-862q was patched. As verified on July 24, 2026, GitHub reported zero open Dependabot alerts; this is a dated observation, not a permanent guarantee.
 
 Block 7.1 confirmed and repaired a resume owner-isolation race. Account A data can no longer be rebound to Account B at persistence or publication time, and an already Account-A-authenticated request may finish only as Account A. The repair merged through PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4` and received the independent verdict `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
+
+Version 2 Phase 1A implements Resume Workspace v1 as a separate account-owned selection over immutable saved analyses. Explicit set/change/clear actions do not change the browser-active report; a fresh browser gets an offer that must be accepted. V8 uses a one-row owner key, composite owner/source foreign key, active-user RLS, least-privilege column grants, and database-controlled selection timestamps. Account count/export, individual and bulk saved-report deletion, protected account deletion, and Account A/B stale-result guards include the selection without changing their existing public boundaries.
+
+The July 28 local gate replayed V1–V8 from empty, matched the catalog and generated types, passed transactional positive/negative ownership and lifecycle probes, local schema lint, deterministic preservation suites, affected cross-browser tests, source lint, build, and diff checks. This is local repository evidence only. V8 was not applied to a hosted or Production database, no deployment occurred, and product comprehension/repeat-use evidence remains pending.
 
 Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 
@@ -74,18 +79,18 @@ Production rollout
 
 Production schema inventory and rollout, environment/origin coordination, operational ownership, incident and rollback handling, legal review, and provider backup/log retention claims remain outside the verified repository closure. A Vercel deployment or successful build does not by itself satisfy this boundary.
 
-The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied, and no collection flag is enabled.
+The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied; Phase 1A V8 is also local-only and unapplied; no collection flag is enabled.
 
 ## Current approved sequence
 
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
 1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
-2. Start with the separately authorized Resume Workspace v1 slice and its architecture contract; do not implement from this status update alone.
+2. Preserve the completed local Resume Workspace v1 engineering boundary while collecting its required comprehension and repeat-use evidence. Do not begin Slice 2 or a hosted rollout without separate authorization.
 3. Keep public beta, Production activation, and payments unauthorized until their later evidence gates explicitly pass.
 4. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
 
-The public name, backup name, and domain are all pending. The gate does not authorize production, DNS, Supabase, Vercel, authentication, schema, storage, repository, or package changes.
+The public name, backup name, and domain are all pending. Phase 1A completion authorizes no production, DNS, hosted Supabase, Vercel, authentication-origin, or public-package action.
 
 ## Question-specific authority
 

@@ -1,5 +1,14 @@
 # SkillMint Release Notes
 
+## Unreleased — Version 2 Phase 1A Resume Workspace v1
+
+- Added a dedicated account-owned Workspace resume selection without changing immutable saved-analysis history or the owner-partitioned browser-active report. Set, change, and clear are explicit; Dashboard activation from a fresh browser requires explicit acceptance.
+- Added V8 `active_resume_selections` with one row per account, a composite owner/source cascade foreign key, active-user RLS, least-privilege column grants, immutable ownership, and a database-controlled timestamp that is stable on no-op writes and resets on genuine replacement.
+- Added exact owner-qualified repositories with final identity and final-state checks, fixed provider-error mapping, Account A/B stale-result rejection, out-of-page selected-analysis resolution, and truthful concurrent set/clear behavior.
+- Extended Trust Center counts, allowlisted account export, individual and bulk saved-report deletion, and protected account deletion while preserving their distinct browser/server scopes and public response shapes.
+- The local verification gate passed clean V1–V8 replay, catalog/ACL/RLS inspection, 12 transactional lifecycle probes, local schema lint, generated-type provenance with only the CLI's trailing blank line normalized, deterministic preservation suites, repeated race/owner coverage, affected Chromium suites, critical Firefox/WebKit paths, source lint, build, and diff checks.
+- This is local repository evidence only. No commit, push, pull request, hosted migration, deployment, Production service, public beta, Slice 2, scoring, mission, Active Target, JD freshness, analytics taxonomy, browser-storage key, or payment change is claimed.
+
 ## Unreleased — Block 7.1 closure and maintenance enforcement
 
 - Block 7.1 resume owner isolation is complete. The confirmed account-switch defect was repaired in `b19daafbc52ff0e1786e61ced6c2651b0cf9fb25` and merged through PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4`.

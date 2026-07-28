@@ -27,6 +27,7 @@ import type {
   JobMatchExportRow,
   ProfileExportRow,
   ResumeAnalysisExportRow,
+  WorkspaceResumeSelectionExportRow,
 } from "@/modules/data-controls/types";
 
 export type AccountExportCardinality = "zero_or_one" | "zero_or_many";
@@ -46,7 +47,7 @@ export type AccountExportTableContract<T> = {
   ownerColumn: "id" | "user_id";
   cardinality: AccountExportCardinality;
   selectedColumns: string;
-  primaryKey: "id";
+  primaryKey: "id" | "user_id";
   pagination: AccountExportPagination;
   internalFieldsExcluded: readonly string[];
   reconstructRow: ((value: unknown) => AccountExportReconstructionResult<T>) | null;
@@ -55,6 +56,7 @@ export type AccountExportTableContract<T> = {
 export const ACCOUNT_EXPORT_TABLE_ORDER = [
   "profiles",
   "resume_analyses",
+  "active_resume_selections",
   "job_matches",
   "career_snapshots",
   "beta_feedback",
@@ -82,6 +84,16 @@ export const ACCOUNT_EXPORT_TABLE_CONTRACTS = {
     pagination: "id_keyset",
     internalFieldsExcluded: ["user_id"],
     reconstructRow: reconstructResumeAnalysisExportRow,
+  },
+  active_resume_selections: {
+    tableName: "active_resume_selections",
+    ownerColumn: "user_id",
+    cardinality: "zero_or_one",
+    selectedColumns: "user_id,resume_analysis_id,selected_at",
+    primaryKey: "user_id",
+    pagination: "none",
+    internalFieldsExcluded: ["user_id"],
+    reconstructRow: reconstructWorkspaceResumeSelectionExportRow,
   },
   job_matches: {
     tableName: "job_matches",
@@ -123,6 +135,7 @@ export const ACCOUNT_EXPORT_TABLE_CONTRACTS = {
 export const SUPPORTED_ACCOUNT_EXPORT_TABLES = [
   "profiles",
   "resume_analyses",
+  "active_resume_selections",
   "job_matches",
   "beta_feedback",
 ] as const satisfies readonly SupportedAccountExportTableName[];
@@ -164,6 +177,23 @@ export function reconstructResumeAnalysisExportRow(
         reconstructUserProfile,
       ),
       created_at: requireIsoTimestamp(row, "created_at"),
+    };
+  });
+}
+
+export function reconstructWorkspaceResumeSelectionExportRow(
+  value: unknown,
+): AccountExportReconstructionResult<WorkspaceResumeSelectionExportRow> {
+  return reconstruct(() => {
+    const row = requireExactRecord(value, [
+      "user_id",
+      "resume_analysis_id",
+      "selected_at",
+    ]);
+    requireUuid(row, "user_id");
+    return {
+      resume_analysis_id: requireUuid(row, "resume_analysis_id"),
+      selected_at: requireIsoTimestamp(row, "selected_at"),
     };
   });
 }

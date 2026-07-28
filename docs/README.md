@@ -6,7 +6,7 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 
 - [Version 2 Transition Gate](V2_TRANSITION_GATE.md) is the current strategic authority: it preserves Beta v1 engineering, stops the former broad Beta v1 public-launch path, and keeps public beta and payments unauthorized.
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
-- [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) is the implementation contract for the first prospective Version 2 product slice; it is not implementation authorization.
+- [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented local Phase 1A contract, its verification boundary, and the product/hosted evidence still required before expansion.
 - [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and current approved sequence.
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is a preserved historical execution roadmap and frozen-contract boundary; its former launch sequence is superseded for current planning.

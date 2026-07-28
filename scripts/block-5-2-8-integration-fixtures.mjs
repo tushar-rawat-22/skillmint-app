@@ -113,6 +113,8 @@ test("2 Trust Center uses public exports and independent owner-bound state", () 
   assert.match(pageSource, /buildCurrentUserAccountDataExport\(\{/);
   assert.match(pageSource, /expectedUserId: live\.currentUserId/);
   assert.match(pageSource, /accountCountsState/);
+  assert.match(pageSource, /Workspace resume selection/);
+  assert.match(pageSource, /workspaceResumeSelection/);
   assert.match(pageSource, /accountExportState/);
   assert.match(pageSource, /browserNotice/);
   assert.match(pageSource, /activeBrowserExportRef/);
@@ -179,6 +181,9 @@ test("5 account collection rejects a provider owner different from captured UI o
     },
     async getProfileRows() {
       throw new Error("profiles must not run after identity mismatch");
+    },
+    async getActiveResumeSelectionRows() {
+      throw new Error("workspace selection must not run after identity mismatch");
     },
     async getKeysetPage() {
       throw new Error("pages must not run after identity mismatch");

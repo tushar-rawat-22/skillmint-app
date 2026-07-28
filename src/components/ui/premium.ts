@@ -20,7 +20,7 @@ export const premiumMutedText =
   "text-sm leading-6 text-slate-600";
 
 export const premiumPrimaryCta =
-  "inline-flex items-center justify-center rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-900/10 transition hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-200 disabled:text-emerald-900";
+  "inline-flex items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-900/10 motion-safe:transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-200 disabled:text-emerald-900";
 
 export const premiumSecondaryCta =
   "inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-60";

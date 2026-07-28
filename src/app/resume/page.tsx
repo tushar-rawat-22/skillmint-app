@@ -1,9 +1,13 @@
 "use client";
 
+/* eslint-disable react-hooks/refs -- Owner epochs intentionally read the last committed context during render so stale account state is synchronously masked before layout effects commit the new live context. */
+
 import Link from "next/link";
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -36,13 +40,17 @@ import {
 } from "@/modules/activation";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
+  clearCurrentUserWorkspaceResumeSelection,
   deleteCurrentUserResumeAnalysis,
   detachActiveResumeSyncStatus,
   listCurrentUserResumeAnalyses,
   readActiveResumeReportSnapshot,
   readResumeSyncStatusSnapshot,
+  resolveCurrentUserWorkspaceResume,
+  setCurrentUserWorkspaceResumeSelection,
   type PersistentResumeAnalysis,
   type ResumeSyncStatus,
+  type WorkspaceResumeSelection,
   setActiveResumeReportFromSavedAnalysis,
 } from "@/modules/resume";
 import {
@@ -64,6 +72,8 @@ type DatabaseLoadState = {
 };
 
 type ResumeHistoryState = {
+  ownerKey: string | null;
+  contextEpoch: number;
   isLoading: boolean;
   items: PersistentResumeAnalysis[];
   message: string | null;
@@ -71,15 +81,56 @@ type ResumeHistoryState = {
 };
 
 type RestoreState = {
+  ownerKey: string | null;
+  contextEpoch: number;
   status: "idle" | "success" | "error";
   message: string | null;
   activeId: string | null;
 };
 
 type DeleteSavedAnalysisState = {
+  ownerKey: string | null;
+  contextEpoch: number;
   status: "idle" | "loading" | "success" | "error";
   message: string | null;
   activeId: string | null;
+};
+
+type WorkspaceResumeLoadState = {
+  ownerKey: string | null;
+  contextEpoch: number;
+  status: "idle" | "loading" | "none" | "selected" | "source_deleted" | "error";
+  selection: WorkspaceResumeSelection | null;
+  analysis: PersistentResumeAnalysis | null;
+  error: string | null;
+};
+
+type WorkspaceResumeActionState = {
+  ownerKey: string | null;
+  contextEpoch: number;
+  status: "idle" | "loading" | "success" | "error";
+  activeId: string | null;
+  message: string | null;
+};
+
+type ResumeOwnerContext = {
+  ownerKey: string | null;
+  contextEpoch: number;
+  currentUserId: string | null | undefined;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+};
+
+type ResumeOwnedRequest = {
+  ownerKey: string;
+  contextEpoch: number;
+  requestToken: number;
+};
+
+type DeleteCandidate = {
+  ownerKey: string;
+  contextEpoch: number;
+  analysis: PersistentResumeAnalysis;
 };
 
 type ExtractedTextPreview = {
@@ -120,6 +171,48 @@ export default function ResumePage() {
     isLoading: isAuthLoading,
   } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const ownerKey = typeof currentUserId === "string"
+    ? `resume-workspace:account:${currentUserId}`
+    : null;
+  const committedOwnerContextRef = useRef<ResumeOwnerContext>({
+    ownerKey: null,
+    contextEpoch: 0,
+    currentUserId: undefined,
+    isAuthLoading: true,
+    isConfigured,
+  });
+  const previousOwnerContext = committedOwnerContextRef.current;
+  const ownerContextChanged =
+    previousOwnerContext.ownerKey !== ownerKey ||
+    previousOwnerContext.isAuthLoading !== isAuthLoading ||
+    previousOwnerContext.isConfigured !== isConfigured;
+  const currentContextEpoch = ownerContextChanged
+    ? previousOwnerContext.contextEpoch + 1
+    : previousOwnerContext.contextEpoch;
+  const liveOwnerContextRef = useRef<ResumeOwnerContext>({
+    ownerKey: null,
+    contextEpoch: 0,
+    currentUserId: undefined,
+    isAuthLoading: true,
+    isConfigured,
+  });
+  useLayoutEffect(() => {
+    const committedContext: ResumeOwnerContext = {
+      ownerKey,
+      contextEpoch: currentContextEpoch,
+      currentUserId,
+      isAuthLoading,
+      isConfigured,
+    };
+    committedOwnerContextRef.current = committedContext;
+    liveOwnerContextRef.current = committedContext;
+  }, [
+    currentContextEpoch,
+    currentUserId,
+    isAuthLoading,
+    isConfigured,
+    ownerKey,
+  ]);
   const analytics = getBrowserAnalyticsRuntime({
     isAuthResolved: !isAuthLoading,
     hasAccount: Boolean(user),
@@ -145,72 +238,165 @@ export default function ResumePage() {
   const userId = user?.id ?? null;
   const [resumeHistoryState, setResumeHistoryState] =
     useState<ResumeHistoryState>({
+      ownerKey: null,
+      contextEpoch: 0,
       isLoading: false,
       items: [],
       message: null,
       error: null,
     });
   const [restoreState, setRestoreState] = useState<RestoreState>({
+    ownerKey: null,
+    contextEpoch: 0,
     status: "idle",
     message: null,
     activeId: null,
   });
   const [deleteState, setDeleteState] = useState<DeleteSavedAnalysisState>({
+    ownerKey: null,
+    contextEpoch: 0,
     status: "idle",
     message: null,
     activeId: null,
   });
+  const [workspaceResumeState, setWorkspaceResumeState] =
+    useState<WorkspaceResumeLoadState>({
+      ownerKey: null,
+      contextEpoch: 0,
+      status: "idle",
+      selection: null,
+      analysis: null,
+      error: null,
+    });
+  const [workspaceActionState, setWorkspaceActionState] =
+    useState<WorkspaceResumeActionState>({
+      ownerKey: null,
+      contextEpoch: 0,
+      status: "idle",
+      activeId: null,
+      message: null,
+    });
   const [deleteCandidate, setDeleteCandidate] =
-    useState<PersistentResumeAnalysis | null>(null);
+    useState<DeleteCandidate | null>(null);
+  const isResumePageMountedRef = useRef(true);
+  const historyRequestTokenRef = useRef(0);
+  const activeHistoryRequestRef = useRef<ResumeOwnedRequest | null>(null);
+  const workspaceRequestTokenRef = useRef(0);
+  const activeWorkspaceRequestRef = useRef<ResumeOwnedRequest | null>(null);
+  const deleteRequestTokenRef = useRef(0);
+  const activeDeleteRequestRef = useRef<ResumeOwnedRequest | null>(null);
   const [showExtractedText, setShowExtractedText] = useState(false);
   const [showFullExtractedText, setShowFullExtractedText] =
     useState(false);
   const activeAnalysis = analysis;
   const activeDatabaseId = syncStatus?.databaseId ?? null;
+  const visibleResumeHistoryState =
+    resumeHistoryState.ownerKey === ownerKey &&
+      resumeHistoryState.contextEpoch === currentContextEpoch
+      ? resumeHistoryState
+      : createIdleResumeHistoryState(ownerKey, currentContextEpoch);
+  const visibleRestoreState =
+    restoreState.ownerKey === ownerKey &&
+      restoreState.contextEpoch === currentContextEpoch
+      ? restoreState
+      : createIdleRestoreState(ownerKey, currentContextEpoch);
+  const visibleDeleteState =
+    deleteState.ownerKey === ownerKey &&
+      deleteState.contextEpoch === currentContextEpoch
+      ? deleteState
+      : createIdleDeleteState(ownerKey, currentContextEpoch);
+  const visibleWorkspaceResumeState =
+    workspaceResumeState.ownerKey === ownerKey &&
+      workspaceResumeState.contextEpoch === currentContextEpoch
+      ? workspaceResumeState
+      : createIdleWorkspaceResumeState(ownerKey, currentContextEpoch);
+  const visibleWorkspaceActionState =
+    workspaceActionState.ownerKey === ownerKey &&
+      workspaceActionState.contextEpoch === currentContextEpoch
+      ? workspaceActionState
+      : createIdleWorkspaceActionState(ownerKey, currentContextEpoch);
+  const visibleDeleteCandidate =
+    deleteCandidate?.ownerKey === ownerKey &&
+      deleteCandidate.contextEpoch === currentContextEpoch
+      ? deleteCandidate.analysis
+      : null;
   const savedResumeAnalyses =
-    isConfigured && userId ? resumeHistoryState.items : [];
+    isConfigured && userId ? visibleResumeHistoryState.items : [];
   const databaseLoadState = useMemo<DatabaseLoadState>(() => {
     return {
-      isLoading: resumeHistoryState.isLoading,
-      message: resumeHistoryState.error ?? resumeHistoryState.message,
+      isLoading: visibleResumeHistoryState.isLoading,
+      message:
+        visibleResumeHistoryState.error ?? visibleResumeHistoryState.message,
     };
   }, [
-    resumeHistoryState.error,
-    resumeHistoryState.isLoading,
-    resumeHistoryState.message,
+    visibleResumeHistoryState.error,
+    visibleResumeHistoryState.isLoading,
+    visibleResumeHistoryState.message,
   ]);
 
   useEffect(() => {
-    if (!isConfigured || isAuthLoading || !userId) {
+    isResumePageMountedRef.current = true;
+    return () => {
+      isResumePageMountedRef.current = false;
+      activeHistoryRequestRef.current = null;
+      activeWorkspaceRequestRef.current = null;
+      activeDeleteRequestRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !isConfigured ||
+      isAuthLoading ||
+      !userId ||
+      !ownerKey
+    ) {
       return;
     }
 
-    let isActive = true;
+    const requestOwnerKey = ownerKey;
+    const requestUserId = userId;
     const timeoutId = window.setTimeout(() => {
       void loadSavedResumeAnalyses();
     }, 0);
 
     async function loadSavedResumeAnalyses() {
-      if (!isActive) {
-        return;
-      }
-
-      setResumeHistoryState((currentState) => ({
-        ...currentState,
+      const request: ResumeOwnedRequest = {
+        ownerKey: requestOwnerKey,
+        contextEpoch: currentContextEpoch,
+        requestToken: historyRequestTokenRef.current + 1,
+      };
+      historyRequestTokenRef.current = request.requestToken;
+      activeHistoryRequestRef.current = request;
+      setResumeHistoryState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
         isLoading: true,
+        items: [],
         message: null,
         error: null,
-      }));
+      });
 
       try {
-        const result = await listCurrentUserResumeAnalyses(10);
+        const result = await listCurrentUserResumeAnalyses(10, {
+          expectedUserId: requestUserId,
+        });
 
-        if (!isActive) {
+        if (
+          !isResumePageMountedRef.current ||
+          !isCurrentResumeRequest(
+            request,
+            liveOwnerContextRef.current,
+            activeHistoryRequestRef.current,
+          )
+        ) {
           return;
         }
 
         if (!result.ok) {
           setResumeHistoryState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
             isLoading: false,
             items: [],
             message: null,
@@ -220,6 +406,8 @@ export default function ResumePage() {
         }
 
         setResumeHistoryState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
           isLoading: false,
           items: result.data,
           message: result.data.length
@@ -230,31 +418,160 @@ export default function ResumePage() {
           error: null,
         });
       } catch {
-        if (!isActive) {
+        if (
+          !isResumePageMountedRef.current ||
+          !isCurrentResumeRequest(
+            request,
+            liveOwnerContextRef.current,
+            activeHistoryRequestRef.current,
+          )
+        ) {
           return;
         }
 
         setResumeHistoryState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
           isLoading: false,
           items: [],
           message: null,
           error: "Could not load saved resume analyses right now.",
         });
+      } finally {
+        if (isSameResumeRequest(activeHistoryRequestRef.current, request)) {
+          activeHistoryRequestRef.current = null;
+        }
       }
     }
 
     return () => {
-      isActive = false;
       window.clearTimeout(timeoutId);
     };
-  }, [isAuthLoading, isConfigured, userId]);
+  }, [
+    currentContextEpoch,
+    isAuthLoading,
+    isConfigured,
+    ownerKey,
+    userId,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isConfigured ||
+      isAuthLoading ||
+      !userId ||
+      !ownerKey
+    ) {
+      return;
+    }
+
+    const requestOwnerKey = ownerKey;
+    const requestUserId = userId;
+    const timeoutId = window.setTimeout(() => {
+      void loadWorkspaceResume();
+    }, 0);
+
+    async function loadWorkspaceResume() {
+      const request: ResumeOwnedRequest = {
+        ownerKey: requestOwnerKey,
+        contextEpoch: currentContextEpoch,
+        requestToken: workspaceRequestTokenRef.current + 1,
+      };
+      workspaceRequestTokenRef.current = request.requestToken;
+      activeWorkspaceRequestRef.current = request;
+      setWorkspaceResumeState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "loading",
+        selection: null,
+        analysis: null,
+        error: null,
+      });
+
+      try {
+        const result = await resolveCurrentUserWorkspaceResume(requestUserId);
+        if (
+          !isResumePageMountedRef.current ||
+          !isCurrentResumeRequest(
+            request,
+            liveOwnerContextRef.current,
+            activeWorkspaceRequestRef.current,
+          )
+        ) {
+          return;
+        }
+
+        if (!result.ok) {
+          setWorkspaceResumeState({
+            ownerKey: request.ownerKey,
+            contextEpoch: request.contextEpoch,
+            status: "error",
+            selection: null,
+            analysis: null,
+            error: result.error,
+          });
+          return;
+        }
+
+        setWorkspaceResumeState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: result.data.status,
+          selection: result.data.selection,
+          analysis: result.data.analysis,
+          error: null,
+        });
+      } catch {
+        if (
+          !isResumePageMountedRef.current ||
+          !isCurrentResumeRequest(
+            request,
+            liveOwnerContextRef.current,
+            activeWorkspaceRequestRef.current,
+          )
+        ) {
+          return;
+        }
+
+        setWorkspaceResumeState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          selection: null,
+          analysis: null,
+          error: "Could not load the Workspace resume right now.",
+        });
+      } finally {
+        if (isSameResumeRequest(activeWorkspaceRequestRef.current, request)) {
+          activeWorkspaceRequestRef.current = null;
+        }
+      }
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    currentContextEpoch,
+    isAuthLoading,
+    isConfigured,
+    ownerKey,
+    userId,
+  ]);
 
   function handleSetActiveReport(
     resumeAnalysis: PersistentResumeAnalysis,
     restoreKind: "latest" | "selected" = "selected",
   ) {
+    const live = liveOwnerContextRef.current;
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      resumeAnalysis.userId !== live.currentUserId
+    ) {
+      return;
+    }
+
     const result = setActiveResumeReportFromSavedAnalysis(resumeAnalysis, {
-      currentUserId,
+      currentUserId: live.currentUserId,
     });
 
     if (!result.ok) {
@@ -266,6 +583,8 @@ export default function ResumePage() {
         },
       ));
       setRestoreState({
+        ownerKey: live.ownerKey,
+        contextEpoch: live.contextEpoch,
         status: "error",
         message: result.error,
         activeId: resumeAnalysis.id,
@@ -277,6 +596,8 @@ export default function ResumePage() {
       restore_kind: restoreKind,
     }));
     setRestoreState({
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
       status: "success",
       message:
         "Saved resume analysis is now the active dashboard report in this browser.",
@@ -285,10 +606,13 @@ export default function ResumePage() {
   }
 
   function handleRestoreLatestSavedReport() {
+    const live = liveOwnerContextRef.current;
     const latestSavedAnalysis = savedResumeAnalyses[0];
 
-    if (!latestSavedAnalysis) {
+    if (!live.ownerKey || !latestSavedAnalysis) {
       setRestoreState({
+        ownerKey: live.ownerKey,
+        contextEpoch: live.contextEpoch,
         status: "error",
         message: "No saved resume analysis is available to restore.",
         activeId: null,
@@ -299,54 +623,396 @@ export default function ResumePage() {
     handleSetActiveReport(latestSavedAnalysis, "latest");
   }
 
-  async function handleDeleteSavedAnalysis() {
-    if (!deleteCandidate || deleteState.status === "loading") {
+  async function handleSetWorkspaceResume(
+    resumeAnalysis: PersistentResumeAnalysis,
+  ) {
+    const live = liveOwnerContextRef.current;
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      resumeAnalysis.userId !== live.currentUserId ||
+      visibleDeleteState.status === "loading"
+    ) {
       return;
     }
 
-    const deletedAnalysis = deleteCandidate;
+    const activeRequest = activeWorkspaceRequestRef.current;
+    if (
+      activeRequest &&
+      isCurrentResumeRequest(activeRequest, live, activeRequest)
+    ) {
+      return;
+    }
 
+    const request: ResumeOwnedRequest = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: workspaceRequestTokenRef.current + 1,
+    };
+    workspaceRequestTokenRef.current = request.requestToken;
+    activeWorkspaceRequestRef.current = request;
+    setDeleteCandidate(null);
+    setWorkspaceActionState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      status: "loading",
+      activeId: resumeAnalysis.id,
+      message: "Saving this account’s Workspace resume selection.",
+    });
+
+    try {
+      const result = await setCurrentUserWorkspaceResumeSelection(
+        resumeAnalysis.id,
+        live.currentUserId,
+      );
+      if (
+        !isResumePageMountedRef.current ||
+        !isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeWorkspaceRequestRef.current,
+        )
+      ) {
+        return;
+      }
+
+      if (!result.ok) {
+        setWorkspaceActionState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          activeId: resumeAnalysis.id,
+          message: result.error,
+        });
+        return;
+      }
+
+      setWorkspaceResumeState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "selected",
+        selection: result.data,
+        analysis: resumeAnalysis,
+        error: null,
+      });
+      setWorkspaceActionState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "success",
+        activeId: resumeAnalysis.id,
+        message:
+          "Workspace resume updated. This browser’s active report was not changed.",
+      });
+    } catch {
+      if (
+        isResumePageMountedRef.current &&
+        isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeWorkspaceRequestRef.current,
+        )
+      ) {
+        setWorkspaceActionState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          activeId: resumeAnalysis.id,
+          message: "Could not update the Workspace resume right now.",
+        });
+      }
+    } finally {
+      if (isSameResumeRequest(activeWorkspaceRequestRef.current, request)) {
+        activeWorkspaceRequestRef.current = null;
+      }
+    }
+  }
+
+  async function handleClearWorkspaceResume() {
+    const live = liveOwnerContextRef.current;
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      visibleDeleteState.status === "loading"
+    ) {
+      return;
+    }
+
+    const activeRequest = activeWorkspaceRequestRef.current;
+    if (
+      activeRequest &&
+      isCurrentResumeRequest(activeRequest, live, activeRequest)
+    ) {
+      return;
+    }
+
+    const request: ResumeOwnedRequest = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: workspaceRequestTokenRef.current + 1,
+    };
+    workspaceRequestTokenRef.current = request.requestToken;
+    activeWorkspaceRequestRef.current = request;
+    setDeleteCandidate(null);
+    setWorkspaceActionState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      status: "loading",
+      activeId:
+        visibleWorkspaceResumeState.selection?.resumeAnalysisId ?? null,
+      message: "Clearing this account’s Workspace resume selection.",
+    });
+
+    try {
+      const result = await clearCurrentUserWorkspaceResumeSelection(
+        live.currentUserId,
+      );
+      if (
+        !isResumePageMountedRef.current ||
+        !isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeWorkspaceRequestRef.current,
+        )
+      ) {
+        return;
+      }
+
+      if (!result.ok) {
+        setWorkspaceActionState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          activeId: null,
+          message: result.error,
+        });
+        return;
+      }
+
+      setWorkspaceResumeState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "none",
+        selection: null,
+        analysis: null,
+        error: null,
+      });
+      setWorkspaceActionState({
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "success",
+        activeId: null,
+        message:
+          "Workspace resume cleared. Saved analyses and this browser’s active report were preserved.",
+      });
+    } catch {
+      if (
+        isResumePageMountedRef.current &&
+        isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeWorkspaceRequestRef.current,
+        )
+      ) {
+        setWorkspaceActionState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          activeId: null,
+          message: "Could not clear the Workspace resume right now.",
+        });
+      }
+    } finally {
+      if (isSameResumeRequest(activeWorkspaceRequestRef.current, request)) {
+        activeWorkspaceRequestRef.current = null;
+      }
+    }
+  }
+
+  function handleChooseDeleteCandidate(
+    resumeAnalysis: PersistentResumeAnalysis,
+  ) {
+    const live = liveOwnerContextRef.current;
+    if (
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      resumeAnalysis.userId !== live.currentUserId ||
+      visibleWorkspaceActionState.status === "loading"
+    ) {
+      return;
+    }
+
+    setDeleteCandidate({
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      analysis: resumeAnalysis,
+    });
+  }
+
+  async function handleDeleteSavedAnalysis() {
+    const live = liveOwnerContextRef.current;
+    if (
+      !visibleDeleteCandidate ||
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      visibleDeleteCandidate.userId !== live.currentUserId ||
+      visibleWorkspaceActionState.status === "loading"
+    ) {
+      return;
+    }
+
+    const activeRequest = activeDeleteRequestRef.current;
+    if (
+      activeRequest &&
+      isCurrentResumeRequest(activeRequest, live, activeRequest)
+    ) {
+      return;
+    }
+
+    const deletedAnalysis = visibleDeleteCandidate;
+    const request: ResumeOwnedRequest = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: deleteRequestTokenRef.current + 1,
+    };
+    deleteRequestTokenRef.current = request.requestToken;
+    activeDeleteRequestRef.current = request;
+    historyRequestTokenRef.current += 1;
+    activeHistoryRequestRef.current = null;
+    workspaceRequestTokenRef.current += 1;
+    activeWorkspaceRequestRef.current = null;
+    setWorkspaceActionState(
+      createIdleWorkspaceActionState(
+        request.ownerKey,
+        request.contextEpoch,
+      ),
+    );
     setDeleteState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
       status: "loading",
       message: "Deleting saved resume analysis from your account.",
       activeId: deletedAnalysis.id,
     });
 
-    const previousItems = resumeHistoryState.items;
+    const previousItems = visibleResumeHistoryState.items;
+    setResumeHistoryState({
+      ...visibleResumeHistoryState,
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      items: previousItems.filter((item) => item.id !== deletedAnalysis.id),
+    });
 
-    setResumeHistoryState((currentState) => ({
-      ...currentState,
-      items: currentState.items.filter((item) => item.id !== deletedAnalysis.id),
-    }));
+    try {
+      const result = await deleteCurrentUserResumeAnalysis(
+        deletedAnalysis.id,
+        {
+          expectedUserId: live.currentUserId,
+        },
+      );
+      if (
+        !isResumePageMountedRef.current ||
+        !isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeDeleteRequestRef.current,
+        )
+      ) {
+        return;
+      }
 
-    const result = await deleteCurrentUserResumeAnalysis(deletedAnalysis.id);
+      if (!result.ok) {
+        setResumeHistoryState({
+          ...visibleResumeHistoryState,
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          items: previousItems,
+        });
+        setDeleteState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: result.error,
+          activeId: deletedAnalysis.id,
+        });
+        return;
+      }
 
-    if (!result.ok) {
-      setResumeHistoryState((currentState) => ({
-        ...currentState,
-        items: previousItems,
-      }));
+      const workspaceResult = await resolveCurrentUserWorkspaceResume(
+        live.currentUserId,
+      );
+      if (
+        !isResumePageMountedRef.current ||
+        !isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeDeleteRequestRef.current,
+        )
+      ) {
+        return;
+      }
+
+      if (workspaceResult.ok) {
+        setWorkspaceResumeState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: workspaceResult.data.status,
+          selection: workspaceResult.data.selection,
+          analysis: workspaceResult.data.analysis,
+          error: null,
+        });
+      } else {
+        setWorkspaceResumeState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          selection: null,
+          analysis: null,
+          error:
+            "The saved analysis was deleted, but the Workspace resume status could not be refreshed.",
+        });
+      }
+
+      detachActiveResumeSyncStatus(deletedAnalysis.id, {
+        currentUserId: live.currentUserId,
+      });
+
+      setDeleteCandidate(null);
       setDeleteState({
-        status: "error",
-        message: result.error,
+        ownerKey: request.ownerKey,
+        contextEpoch: request.contextEpoch,
+        status: "success",
+        message:
+          "Saved resume analysis deleted from your account. If it was the Workspace resume, that selection was removed. The browser active report was preserved.",
         activeId: deletedAnalysis.id,
       });
-      return;
+    } catch {
+      if (
+        isResumePageMountedRef.current &&
+        isCurrentResumeRequest(
+          request,
+          liveOwnerContextRef.current,
+          activeDeleteRequestRef.current,
+        )
+      ) {
+        setResumeHistoryState({
+          ...visibleResumeHistoryState,
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          items: previousItems,
+        });
+        setDeleteState({
+          ownerKey: request.ownerKey,
+          contextEpoch: request.contextEpoch,
+          status: "error",
+          message: "Could not delete the saved resume analysis right now.",
+          activeId: deletedAnalysis.id,
+        });
+      }
+    } finally {
+      if (isSameResumeRequest(activeDeleteRequestRef.current, request)) {
+        activeDeleteRequestRef.current = null;
+      }
     }
-
-    if (activeDatabaseId === deletedAnalysis.id) {
-      detachActiveResumeSyncStatus(deletedAnalysis.id, {
-        currentUserId,
-      });
-    }
-
-    setDeleteCandidate(null);
-    setDeleteState({
-      status: "success",
-      message:
-        "Saved resume analysis deleted from your account. The browser active report was preserved.",
-      activeId: deletedAnalysis.id,
-    });
   }
 
   if (!activeAnalysis) {
@@ -389,21 +1055,25 @@ export default function ResumePage() {
 
           <SavedResumeAnalysesSection
             activeDatabaseId={activeDatabaseId}
-            deleteState={deleteState}
-            historyState={resumeHistoryState}
+            deleteState={visibleDeleteState}
+            historyState={visibleResumeHistoryState}
             isAuthLoading={isAuthLoading}
             isConfigured={isConfigured}
             isSignedIn={Boolean(userId)}
-            onDeleteSaved={setDeleteCandidate}
+            onClearWorkspace={handleClearWorkspaceResume}
+            onDeleteSaved={handleChooseDeleteCandidate}
             onRestoreLatest={handleRestoreLatestSavedReport}
             onSetActive={handleSetActiveReport}
-            restoreState={restoreState}
+            onSetWorkspace={handleSetWorkspaceResume}
+            restoreState={visibleRestoreState}
             showRestoreLatestAction
+            workspaceActionState={visibleWorkspaceActionState}
+            workspaceState={visibleWorkspaceResumeState}
           />
 
           <DeleteSavedAnalysisDialog
-            candidate={deleteCandidate}
-            isLoading={deleteState.status === "loading"}
+            candidate={visibleDeleteCandidate}
+            isLoading={visibleDeleteState.status === "loading"}
             onClose={() => setDeleteCandidate(null)}
             onConfirm={handleDeleteSavedAnalysis}
           />
@@ -481,15 +1151,19 @@ export default function ResumePage() {
 
         <SavedResumeAnalysesSection
           activeDatabaseId={activeDatabaseId}
-          deleteState={deleteState}
-          historyState={resumeHistoryState}
+          deleteState={visibleDeleteState}
+          historyState={visibleResumeHistoryState}
           isAuthLoading={isAuthLoading}
           isConfigured={isConfigured}
           isSignedIn={Boolean(userId)}
-          onDeleteSaved={setDeleteCandidate}
+          onClearWorkspace={handleClearWorkspaceResume}
+          onDeleteSaved={handleChooseDeleteCandidate}
           onRestoreLatest={handleRestoreLatestSavedReport}
           onSetActive={handleSetActiveReport}
-          restoreState={restoreState}
+          onSetWorkspace={handleSetWorkspaceResume}
+          restoreState={visibleRestoreState}
+          workspaceActionState={visibleWorkspaceActionState}
+          workspaceState={visibleWorkspaceResumeState}
         />
 
         <ParsedResumeSections profile={activeAnalysis.parsedProfile} />
@@ -622,8 +1296,8 @@ export default function ResumePage() {
         </section>
 
         <DeleteSavedAnalysisDialog
-          candidate={deleteCandidate}
-          isLoading={deleteState.status === "loading"}
+          candidate={visibleDeleteCandidate}
+          isLoading={visibleDeleteState.status === "loading"}
           onClose={() => setDeleteCandidate(null)}
           onConfirm={handleDeleteSavedAnalysis}
         />
@@ -664,11 +1338,15 @@ type SavedResumeAnalysesSectionProps = {
   isAuthLoading: boolean;
   isConfigured: boolean;
   isSignedIn: boolean;
+  onClearWorkspace: () => void;
   onDeleteSaved: (resumeAnalysis: PersistentResumeAnalysis) => void;
   onRestoreLatest: () => void;
   onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
+  onSetWorkspace: (resumeAnalysis: PersistentResumeAnalysis) => void;
   restoreState: RestoreState;
   showRestoreLatestAction?: boolean;
+  workspaceActionState: WorkspaceResumeActionState;
+  workspaceState: WorkspaceResumeLoadState;
 };
 
 function SavedResumeAnalysesSection({
@@ -678,11 +1356,15 @@ function SavedResumeAnalysesSection({
   isAuthLoading,
   isConfigured,
   isSignedIn,
+  onClearWorkspace,
   onDeleteSaved,
   onRestoreLatest,
   onSetActive,
+  onSetWorkspace,
   restoreState,
   showRestoreLatestAction = false,
+  workspaceActionState,
+  workspaceState,
 }: SavedResumeAnalysesSectionProps) {
   const [showOlderAnalyses, setShowOlderAnalyses] = useState(false);
   const historyItems = isConfigured && isSignedIn
@@ -692,6 +1374,7 @@ function SavedResumeAnalysesSection({
   const canRestoreLatest =
     Boolean(latestSavedAnalysis) &&
     latestSavedAnalysis?.id !== activeDatabaseId;
+  const workspaceResumeId = workspaceState.selection?.resumeAnalysisId ?? null;
   const activeSavedAnalysis = historyItems.find(
     (resumeAnalysis) => resumeAnalysis.id === activeDatabaseId,
   ) ?? null;
@@ -737,6 +1420,16 @@ function SavedResumeAnalysesSection({
         )}
       </div>
 
+      <WorkspaceResumeStatus
+        actionState={workspaceActionState}
+        isAuthLoading={isAuthLoading}
+        isConfigured={isConfigured}
+        isDeleteLoading={deleteState.status === "loading"}
+        isSignedIn={isSignedIn}
+        onClear={onClearWorkspace}
+        state={workspaceState}
+      />
+
       <ResumeHistoryStatus
         historyState={historyState}
         isAuthLoading={isAuthLoading}
@@ -746,6 +1439,8 @@ function SavedResumeAnalysesSection({
 
       {restoreState.message && (
         <p
+          role={restoreState.status === "error" ? "alert" : "status"}
+          aria-live={restoreState.status === "error" ? "assertive" : "polite"}
           className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${
             restoreState.status === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -758,6 +1453,8 @@ function SavedResumeAnalysesSection({
 
       {deleteState.message && (
         <p
+          role={deleteState.status === "error" ? "alert" : "status"}
+          aria-live={deleteState.status === "error" ? "assertive" : "polite"}
           className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${
             deleteState.status === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -795,21 +1492,129 @@ function SavedResumeAnalysesSection({
                 key={resumeAnalysis.id}
                 activeDatabaseId={activeDatabaseId}
                 badgeLabel={getSavedAnalysisBadgeLabel({
-                  activeDatabaseId,
                   latestNonActiveId,
                   resumeAnalysisId: resumeAnalysis.id,
                 })}
                 deleteState={deleteState}
+                isWorkspaceResume={workspaceResumeId === resumeAnalysis.id}
                 onDeleteSaved={onDeleteSaved}
                 onSetActive={onSetActive}
+                onSetWorkspace={onSetWorkspace}
                 resumeAnalysis={resumeAnalysis}
                 restoreState={restoreState}
+                workspaceActionState={workspaceActionState}
+                workspaceState={workspaceState}
               />
             ))}
           </div>
         </>
       )}
     </section>
+  );
+}
+
+function WorkspaceResumeStatus({
+  actionState,
+  isAuthLoading,
+  isConfigured,
+  isDeleteLoading,
+  isSignedIn,
+  onClear,
+  state,
+}: {
+  actionState: WorkspaceResumeActionState;
+  isAuthLoading: boolean;
+  isConfigured: boolean;
+  isDeleteLoading: boolean;
+  isSignedIn: boolean;
+  onClear: () => void;
+  state: WorkspaceResumeLoadState;
+}) {
+  let title = "Workspace resume";
+  let message =
+    "Choose one saved analysis as this account’s Workspace resume. It stays separate from the active report on this browser.";
+  let tone = "border-slate-200 bg-slate-50 text-slate-700";
+
+  if (isAuthLoading || state.status === "loading") {
+    message = "Checking this account’s Workspace resume selection.";
+  } else if (!isConfigured) {
+    message = "Workspace resume selection is unavailable until account sync is configured.";
+    tone = "border-amber-200 bg-amber-50 text-amber-900";
+  } else if (!isSignedIn) {
+    message =
+      "Sign in to select a Workspace resume. Signed-out browser reports remain separate.";
+  } else if (state.status === "selected" && state.analysis) {
+    title = "Workspace resume selected";
+    message = `${state.analysis.fileName || "Untitled resume"} — analyzed ${
+      formatAnalyzedDate(state.analysis.createdAt)
+    }. This selection does not replace this browser’s active report.`;
+    tone = "border-emerald-200 bg-emerald-50 text-emerald-900";
+  } else if (state.status === "source_deleted") {
+    title = "Workspace resume unavailable";
+    message =
+      "The selected saved analysis is no longer available. SkillMint did not substitute another analysis.";
+    tone = "border-amber-200 bg-amber-50 text-amber-900";
+  } else if (state.status === "error") {
+    title = "Workspace resume unavailable";
+    message = state.error ?? "Could not load the Workspace resume.";
+    tone = "border-rose-200 bg-rose-50 text-rose-800";
+  } else if (state.status === "none") {
+    message =
+      "No Workspace resume is selected. Saved analyses and this browser’s active report are unchanged.";
+  }
+
+  return (
+    <div
+      role={state.status === "error" ? "alert" : "status"}
+      aria-live={state.status === "error" ? "assertive" : "polite"}
+      className={`mt-5 rounded-2xl border p-4 ${tone}`}
+    >
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-950">
+            {title}
+          </p>
+          <p className="mt-2 break-words text-sm leading-6">
+            {message}
+          </p>
+        </div>
+
+        {(state.status === "selected" ||
+          state.status === "source_deleted") && (
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={
+              actionState.status === "loading" ||
+              isDeleteLoading
+            }
+            className={premiumSecondaryCta}
+          >
+            {actionState.status === "loading"
+              ? "Clearing..."
+              : "Clear workspace resume"}
+          </button>
+        )}
+      </div>
+
+      {actionState.message && (
+        <p
+          role={actionState.status === "error" ? "alert" : "status"}
+          aria-live={
+            actionState.status === "error" ? "assertive" : "polite"
+          }
+          className={`mt-3 rounded-xl border px-3 py-2 text-sm ${
+            actionState.status === "error"
+              ? "border-rose-200 bg-white text-rose-800"
+              : actionState.status === "success"
+                ? "border-emerald-200 bg-white text-emerald-800"
+                : "border-slate-200 bg-white text-slate-700"
+          }`}
+        >
+          {actionState.message}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -908,22 +1713,30 @@ function getResumeHistoryPresentation({
 
 type SavedResumeAnalysisCardProps = {
   activeDatabaseId: string | null;
-  badgeLabel: "Current active report" | "Latest saved" | "Saved";
+  badgeLabel: "Latest saved" | "Saved";
   deleteState: DeleteSavedAnalysisState;
+  isWorkspaceResume: boolean;
   onDeleteSaved: (resumeAnalysis: PersistentResumeAnalysis) => void;
   onSetActive: (resumeAnalysis: PersistentResumeAnalysis) => void;
+  onSetWorkspace: (resumeAnalysis: PersistentResumeAnalysis) => void;
   resumeAnalysis: PersistentResumeAnalysis;
   restoreState: RestoreState;
+  workspaceActionState: WorkspaceResumeActionState;
+  workspaceState: WorkspaceResumeLoadState;
 };
 
 function SavedResumeAnalysisCard({
   activeDatabaseId,
   badgeLabel,
   deleteState,
+  isWorkspaceResume,
   onDeleteSaved,
   onSetActive,
+  onSetWorkspace,
   resumeAnalysis,
   restoreState,
+  workspaceActionState,
+  workspaceState,
 }: SavedResumeAnalysisCardProps) {
   const userProfile = isUserProfile(resumeAnalysis.userProfile)
     ? resumeAnalysis.userProfile
@@ -933,6 +1746,10 @@ function SavedResumeAnalysisCard({
   const isDeleting =
     deleteState.status === "loading" &&
     deleteState.activeId === resumeAnalysis.id;
+  const isWorkspaceActionLoading =
+    workspaceActionState.status === "loading";
+  const hasDifferentWorkspaceResume =
+    Boolean(workspaceState.selection) && !isWorkspaceResume;
   const topProfileFitRole = userProfile
     ? calculateRoleMatches(userProfile)[0]?.role ?? "Not enough role signals"
     : "Missing report data";
@@ -942,6 +1759,8 @@ function SavedResumeAnalysisCard({
       className={`min-w-0 rounded-2xl border p-5 ${
         isActive
           ? "border-emerald-300 bg-emerald-50 shadow-[0_12px_34px_rgba(15,23,42,0.07)]"
+          : isWorkspaceResume
+            ? "border-sky-300 bg-sky-50 shadow-[0_12px_34px_rgba(15,23,42,0.06)]"
           : "border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
       }`}
     >
@@ -956,15 +1775,21 @@ function SavedResumeAnalysisCard({
           </p>
         </div>
 
-        <span
-          className={`w-fit rounded-full border px-3 py-1 text-xs font-bold ${
-            isActive
-              ? "border-emerald-300 bg-white text-emerald-800"
-              : "border-slate-200 bg-slate-50 text-slate-600"
-          }`}
-        >
-          {badgeLabel}
-        </span>
+        <div className="flex max-w-full flex-wrap gap-2">
+          {isWorkspaceResume && (
+            <span className="w-fit rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-bold text-sky-800">
+              Workspace resume
+            </span>
+          )}
+          {isActive && (
+            <span className="w-fit rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-bold text-emerald-800">
+              Active report on this browser
+            </span>
+          )}
+          <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+            {badgeLabel}
+          </span>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -982,21 +1807,42 @@ function SavedResumeAnalysisCard({
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <button
           type="button"
+          onClick={() => onSetWorkspace(resumeAnalysis)}
+          disabled={
+            isWorkspaceResume ||
+            isWorkspaceActionLoading ||
+            deleteState.status === "loading" ||
+            workspaceState.status === "loading"
+          }
+          className={premiumPrimaryCta}
+        >
+          {isWorkspaceResume
+            ? "Workspace resume"
+            : isWorkspaceActionLoading &&
+                workspaceActionState.activeId === resumeAnalysis.id
+              ? "Saving..."
+              : hasDifferentWorkspaceResume
+                ? "Change workspace resume"
+                : "Set as workspace resume"}
+        </button>
+
+        <button
+          type="button"
           onClick={() => onSetActive(resumeAnalysis)}
           disabled={isActive || !userProfile}
-          className="rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-bold text-emerald-800 transition hover:border-emerald-400 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+          className={premiumSecondaryCta}
         >
           {isActive
-            ? "Current active report"
+            ? "Active report on this browser"
             : userProfile
-              ? "Set as active report"
+              ? "Use as this browser’s active report"
               : "Missing report data"}
         </button>
 
         {isActive && (
           <Link
             href="/dashboard"
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
+            className={premiumSecondaryCta}
           >
             View dashboard
           </Link>
@@ -1011,7 +1857,7 @@ function SavedResumeAnalysisCard({
         <button
           type="button"
           onClick={() => onDeleteSaved(resumeAnalysis)}
-          disabled={isDeleting}
+          disabled={isDeleting || isWorkspaceActionLoading}
           className={`${premiumDangerCta} px-4 py-2.5 text-sm`}
         >
           {isDeleting ? "Deleting..." : "Delete saved analysis"}
@@ -1054,6 +1900,11 @@ function DeleteSavedAnalysisDialog({
       )}
 
       <p className="mt-3">
+        If this is the Workspace resume, that account selection is removed
+        automatically. Another saved analysis is not substituted.
+      </p>
+
+      <p className="mt-3">
         If this saved analysis is referenced by the current browser report,
         SkillMint will detach only that broken synced reference and keep the
         browser report local.
@@ -1063,18 +1914,12 @@ function DeleteSavedAnalysisDialog({
 }
 
 function getSavedAnalysisBadgeLabel({
-  activeDatabaseId,
   latestNonActiveId,
   resumeAnalysisId,
 }: {
-  activeDatabaseId: string | null;
   latestNonActiveId: string | null;
   resumeAnalysisId: string;
-}): "Current active report" | "Latest saved" | "Saved" {
-  if (activeDatabaseId === resumeAnalysisId) {
-    return "Current active report";
-  }
-
+}): "Latest saved" | "Saved" {
   if (latestNonActiveId === resumeAnalysisId) {
     return "Latest saved";
   }
@@ -1808,6 +2653,100 @@ function isStringArray(value: unknown): value is string[] {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" &&
     !Array.isArray(value);
+}
+
+function createIdleResumeHistoryState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): ResumeHistoryState {
+  return {
+    ownerKey,
+    contextEpoch,
+    isLoading: false,
+    items: [],
+    message: null,
+    error: null,
+  };
+}
+
+function createIdleRestoreState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): RestoreState {
+  return {
+    ownerKey,
+    contextEpoch,
+    status: "idle",
+    message: null,
+    activeId: null,
+  };
+}
+
+function createIdleDeleteState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): DeleteSavedAnalysisState {
+  return {
+    ownerKey,
+    contextEpoch,
+    status: "idle",
+    message: null,
+    activeId: null,
+  };
+}
+
+function createIdleWorkspaceResumeState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): WorkspaceResumeLoadState {
+  return {
+    ownerKey,
+    contextEpoch,
+    status: "idle",
+    selection: null,
+    analysis: null,
+    error: null,
+  };
+}
+
+function createIdleWorkspaceActionState(
+  ownerKey: string | null,
+  contextEpoch: number,
+): WorkspaceResumeActionState {
+  return {
+    ownerKey,
+    contextEpoch,
+    status: "idle",
+    activeId: null,
+    message: null,
+  };
+}
+
+function isCurrentResumeRequest(
+  request: ResumeOwnedRequest,
+  liveContext: ResumeOwnerContext,
+  activeRequest: ResumeOwnedRequest | null,
+): boolean {
+  return Boolean(
+    activeRequest &&
+    request.ownerKey === liveContext.ownerKey &&
+    request.contextEpoch === liveContext.contextEpoch &&
+    request.ownerKey === activeRequest.ownerKey &&
+    request.contextEpoch === activeRequest.contextEpoch &&
+    request.requestToken === activeRequest.requestToken,
+  );
+}
+
+function isSameResumeRequest(
+  left: ResumeOwnedRequest | null,
+  right: ResumeOwnedRequest,
+): boolean {
+  return Boolean(
+    left &&
+    left.ownerKey === right.ownerKey &&
+    left.contextEpoch === right.contextEpoch &&
+    left.requestToken === right.requestToken,
+  );
 }
 
 function subscribeToStoredAnalysis(

@@ -144,6 +144,9 @@ test("server route keeps identity, service role, stages, and responses inside tr
   assert.ok(route.indexOf("getUser(token)") < route.indexOf("decodeJwtPayload(token)"));
   assert.match(route, /const adminClient = createSupabaseAdminClient\(\)[\s\S]*adminClient[\s\S]*\.rpc\([\s\S]*"prepare_account_deletion"[\s\S]*target_user_id:\s*userData\.user\.id/);
   assert.doesNotMatch(route, /userClient[\s\S]{0,240}prepare_account_deletion/);
+  assert.match(route, /active_resume_selections_deleted/);
+  assert.match(route, /activeResumeSelections:\s*row\.active_resume_selections_deleted/);
+  assert.match(route, /Object\.keys\(row\)\.sort\(\)/);
   assert.match(route, /activeDeletions/);
   assert.match(route, /"Cache-Control": "no-store, max-age=0"/);
   assert.doesNotMatch(route, /request(?:Body|Text|\.json\(\))[\s\S]{0,100}(?:userId|user_id|accountId)/);
@@ -253,13 +256,14 @@ test("route preserves exact safe success and generic Auth-failure responses", as
   const routePath = require.resolve("../src/app/api/account/delete/route.ts");
   const cached = new Map([helperPath, adminPath, configPath, routePath].map((key) => [key, require.cache[key]]));
   let helperResult = { ok: true, deleted: true };
+  let preparationRow = cleanupRow();
   class MockAdminConfigurationError extends Error {}
   require.cache[helperPath] = moduleStub(helperPath, {
     deleteAuthUserWithVerifiedConvergence: async () => helperResult,
   });
   require.cache[adminPath] = moduleStub(adminPath, {
     createSupabaseAdminClient: () => ({
-      rpc: async () => ({ error: null, data: cleanupRow() }),
+      rpc: async () => ({ error: null, data: preparationRow }),
       auth: { admin: {} },
     }),
     SupabaseAdminConfigurationError: MockAdminConfigurationError,
@@ -302,6 +306,18 @@ test("route preserves exact safe success and generic Auth-failure responses", as
     assert.equal(success.status, 200);
     assert.deepEqual(await success.json(), { ok: true, deleted: true });
 
+    const missingSelectionCount = cleanupRow();
+    delete missingSelectionCount.active_resume_selections_deleted;
+    preparationRow = missingSelectionCount;
+    const malformedPreparation = await POST(request());
+    assert.equal(malformedPreparation.status, 500);
+    assert.deepEqual(await malformedPreparation.json(), {
+      ok: false,
+      code: "account_data_cleanup_failed",
+      error: "Account deletion did not finish. Please try again.",
+    });
+
+    preparationRow = cleanupRow();
     helperResult = { ok: false, rawProviderError: "RAW_PROVIDER_IDENTIFIER" };
     const failure = await POST(request());
     assert.equal(failure.status, 500);
@@ -706,7 +722,14 @@ function cleanupSuccess() {
   return {
     ok: true,
     verifiedAbsent: true,
-    counts: { profiles: 0, resumeAnalyses: 0, jobMatches: 0, careerSnapshots: 0, betaFeedback: 0 },
+    counts: {
+      profiles: 0,
+      resumeAnalyses: 0,
+      jobMatches: 0,
+      careerSnapshots: 0,
+      betaFeedback: 0,
+      activeResumeSelections: 0,
+    },
   };
 }
 
@@ -717,6 +740,7 @@ function cleanupRow() {
     job_matches_deleted: 0,
     career_snapshots_deleted: 0,
     beta_feedback_deleted: 0,
+    active_resume_selections_deleted: 0,
     verified_absent: true,
   };
 }
