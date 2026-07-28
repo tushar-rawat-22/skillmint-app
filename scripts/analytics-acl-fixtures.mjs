@@ -86,7 +86,7 @@ const aclStatements = [];
 const migrationSql = manifest.ordered_migrations.map((entry, migrationIndex) => {
   const sql = fs.readFileSync(path.join(repoRoot, entry.migration_path), "utf8");
   const statementPattern =
-    /\b(grant|revoke)\s+([\s\S]*?)\s+on\s+(table|function)\s+public\.([a-z_][a-z0-9_]*)(\s*\([^;]*?\))?\s+(to|from)\s+([^;]+);/gi;
+    /^[ \t]*(grant|revoke)\s+([\s\S]*?)\s+on\s+(table|function)\s+public\.([a-z_][a-z0-9_]*)(\s*\([^;]*?\))?\s+(to|from)\s+([^;]+);/gim;
 
   for (const match of sql.matchAll(statementPattern)) {
     const [, action, rawPrivilege, objectType, objectName, rawArguments, direction, rawRoles] =

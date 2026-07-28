@@ -55,6 +55,8 @@ const SELECTED_AT = "2026-07-27T09:30:00.000Z";
 const EXPORTED_AT = "2026-07-27T10:00:00.000Z";
 const V8_SHA256 =
   "233c4aa2d7f7fbf0fa8a034f763cbe38cd2399054641b6023a66c11cc730a3a1";
+const ACL_NORMALIZATION_SHA256 =
+  "6536263fd8cceb15e04daa60509a5923aff8562b50e4f19810fd59948dc89154";
 const PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
 
@@ -115,6 +117,12 @@ const FROZEN_MIGRATIONS = [
       "46f5606f45599d5955081d677a3f6bc51474fc0750a7daad87963b6bf9855b4c",
   },
 ];
+
+const aclNormalizationVersion = "20260727000750";
+const aclNormalizationSourcePath = "supabase/schema_v7_1_lifecycle_function_acl_normalization.sql";
+const aclNormalizationMigrationPath = "supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql";
+const aclNormalizationSource = readText(aclNormalizationSourcePath);
+const aclNormalizationMigration = readText(aclNormalizationMigrationPath);
 
 const v8SourcePath = "supabase/schema_v8_active_resume_selections.sql";
 const v8MigrationPath =
@@ -221,35 +229,112 @@ test("V1-V7 retain their authorized hashes, byte identity, and zero diff", () =>
   assertGitZeroDiff(frozenPaths);
 });
 
-test("V8 source, migration, hash, order, and manifest entry are exact", () => {
-  assert.equal(v8Source, v8Migration);
-  assert.equal(Buffer.compare(readBuffer(v8SourcePath), readBuffer(v8MigrationPath)), 0);
-  assert.equal(sha256(readBuffer(v8SourcePath)), V8_SHA256);
-  assert.equal(sha256(readBuffer(v8MigrationPath)), V8_SHA256);
-  assert.deepEqual(
-    manifest.ordered_migrations.map((entry) => entry.version),
-    [...FROZEN_MIGRATIONS.map((entry) => entry.version), "20260727000800"],
-  );
-  assert.deepEqual(manifest.ordered_migrations.at(-1), {
-    version: "20260727000800",
-    source_path: v8SourcePath,
-    migration_path: v8MigrationPath,
-    sha256: V8_SHA256,
-    rollout_classification: "pending_resume_workspace_phase_1a",
-  });
-  assert.deepEqual(
-    manifest.generated_for.empty_isolated_project.apply_in_order,
-    manifest.ordered_migrations.map((entry) => entry.version),
+test("ACL normalization and V8 source, migration, hashes, order, and manifest entries are exact", () => {
+  assert.equal(aclNormalizationSource, aclNormalizationMigration);
+  assert.equal(
+    Buffer.compare(
+      readBuffer(aclNormalizationSourcePath),
+      readBuffer(aclNormalizationMigrationPath),
+    ),
+    0,
   );
   assert.equal(
-    manifest.generated_for.production.pending_execution.at(-1),
-    "20260727000800",
+    sha256(readBuffer(aclNormalizationSourcePath)),
+    ACL_NORMALIZATION_SHA256,
   );
+  assert.equal(
+    sha256(readBuffer(aclNormalizationMigrationPath)),
+    ACL_NORMALIZATION_SHA256,
+  );
+
+  assert.equal(v8Source, v8Migration);
+  assert.equal(
+    Buffer.compare(readBuffer(v8SourcePath), readBuffer(v8MigrationPath)),
+    0,
+  );
+  assert.equal(sha256(readBuffer(v8SourcePath)), V8_SHA256);
+  assert.equal(sha256(readBuffer(v8MigrationPath)), V8_SHA256);
+
+  const expectedVersions = [
+    ...FROZEN_MIGRATIONS.map((entry) => entry.version),
+    aclNormalizationVersion,
+    "20260727000800",
+  ];
+
+  assert.deepEqual(
+    manifest.ordered_migrations.map((entry) => entry.version),
+    expectedVersions,
+  );
+
+  assert.deepEqual(
+    manifest.ordered_migrations.find(
+      (entry) => entry.version === aclNormalizationVersion,
+    ),
+    {
+      version: aclNormalizationVersion,
+      source_path: aclNormalizationSourcePath,
+      migration_path: aclNormalizationMigrationPath,
+      sha256: ACL_NORMALIZATION_SHA256,
+      rollout_classification:
+        "pending_lifecycle_function_acl_normalization",
+    },
+  );
+
+  assert.deepEqual(
+    manifest.ordered_migrations.find(
+      (entry) => entry.version === "20260727000800",
+    ),
+    {
+      version: "20260727000800",
+      source_path: v8SourcePath,
+      migration_path: v8MigrationPath,
+      sha256: V8_SHA256,
+      rollout_classification: "pending_resume_workspace_phase_1a",
+    },
+  );
+
+  assert.deepEqual(
+    manifest.generated_for.empty_isolated_project.apply_in_order,
+    expectedVersions,
+  );
+
+  assert.deepEqual(
+    manifest.generated_for.production.pending_execution.slice(-2),
+    [aclNormalizationVersion, "20260727000800"],
+  );
+
   assert.equal(
     manifest.generated_for.production
       .catalog_proof_required_before_marking_applied
-      .includes("20260727000800"),
+      .includes(aclNormalizationVersion),
     false,
+  );
+});
+
+test("Lifecycle ACL normalization is transactional and narrowly scoped", () => {
+  assert.match(
+    aclNormalizationSource,
+    /\nbegin;\n\ndo \$acl_normalization_preflight\$/,
+  );
+  assert.match(
+    aclNormalizationSource,
+    /do \$acl_normalization_postflight\$/,
+  );
+  assert.match(
+    aclNormalizationSource,
+    /revoke execute\s+on function public\.is_active_skillmint_user\(\)\s+from service_role;/,
+  );
+  assert.match(
+    aclNormalizationSource,
+    /revoke execute\s+on function public\.delete_current_user_saved_reports\(\)\s+from service_role;/,
+  );
+  assert.doesNotMatch(
+    aclNormalizationSource,
+    /revoke execute\s+on function public\.prepare_account_deletion\(uuid\)/,
+  );
+  assert.match(
+    aclNormalizationSource,
+    /\$acl_normalization_postflight\$;\n\ncommit;\s*$/,
   );
 });
 

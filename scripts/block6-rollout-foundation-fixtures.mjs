@@ -76,6 +76,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v5_analytics_events.sql",
   "supabase/schema_v6_analytics_aggregation.sql",
   "supabase/schema_v7_analytics_acl_hardening.sql",
+  "supabase/schema_v7_1_lifecycle_function_acl_normalization.sql",
   "supabase/schema_v8_active_resume_selections.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
@@ -84,6 +85,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260723000500_schema_v5_analytics_events.sql",
   "supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql",
   "supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql",
+  "supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql",
   "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
   "supabase/migrations/manifest.json",
 ];
@@ -139,6 +141,13 @@ const migrations = [
     classification: "pending_analytics_acl_hardening",
   },
   {
+    version: "20260727000750",
+    source: "supabase/schema_v7_1_lifecycle_function_acl_normalization.sql",
+    migration: "supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql",
+    hash: "6536263fd8cceb15e04daa60509a5923aff8562b50e4f19810fd59948dc89154",
+    classification: "pending_lifecycle_function_acl_normalization",
+  },
+  {
     version: "20260727000800",
     source: "supabase/schema_v8_active_resume_selections.sql",
     migration: "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
@@ -161,7 +170,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered eight SQL files",
+  "migration directory must contain the exact ordered nine SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -194,7 +203,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 8, "manifest must contain eight migrations");
+equal(manifest.ordered_migrations.length, 9, "manifest must contain nine migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -212,7 +221,8 @@ manifest.ordered_migrations.forEach((entry, index) => {
 equal(manifest.ordered_migrations[4].version, migrations[4].version, "V5 must follow V4");
 equal(manifest.ordered_migrations[5].version, migrations[5].version, "V6 must follow V5");
 equal(manifest.ordered_migrations[6].version, migrations[6].version, "V7 must follow V6");
-equal(manifest.ordered_migrations[7].version, migrations[7].version, "V8 must follow V7");
+equal(manifest.ordered_migrations[7].version, migrations[7].version, "ACL normalization must follow V7");
+equal(manifest.ordered_migrations[8].version, migrations[8].version, "V8 must follow ACL normalization");
 
 const config = text("supabase/config.toml");
 check(config.startsWith("# Generated with Supabase CLI 2.109.1 for local and migration tooling."), "config provenance missing");
