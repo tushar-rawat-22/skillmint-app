@@ -782,7 +782,7 @@ async function waitForLocalServer(child) {
     try {
       const response = await fetch(`${APP_ORIGIN}/api/health/config`, { cache: "no-store" });
       const payload = await response.json();
-      if (response.ok && payload?.supabaseConfigured === true) return;
+      if (response.ok && payload?.status === "healthy") return;
     } catch { /* not ready */ }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }

@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** July 28, 2026
+**Last updated:** July 29, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -55,6 +55,14 @@ Blocks 1–5 are frozen. Future work may extend the product only while preservin
 Block 6 engineering implementation and isolated verification are complete. The isolated hosted migration and ACL verification passed, including the V7 additive ACL repair, and the isolated live-security gate passed. These results do not prove Production behavior or authorize Production rollout.
 
 Post-Block-6 maintenance completed the founder invalid-token repair and the data-control provider-status and account-reauthentication repairs. PostCSS CVE-2026-45623 / GHSA-6g55-p6wh-862q was patched. As verified on July 24, 2026, GitHub reported zero open Dependabot alerts; this is a dated observation, not a permanent guarantee.
+
+Launch-critical repository hardening now shares a 4 MiB resume-upload contract
+across client and server, rejects scanned PDFs with a typed 422 response,
+bounds file and DOCX archive validation, sanitizes password-recovery failures,
+serves a static security-header baseline, reduces the health response to a
+coarse no-store status, and runs those contracts in CI. This work does not
+configure a hosted WAF or CAPTCHA provider, authorize or contact Production, or
+begin Phase 2.
 
 Block 7.1 confirmed and repaired a resume owner-isolation race. Account A data can no longer be rebound to Account B at persistence or publication time, and an already Account-A-authenticated request may finish only as Account A. The repair merged through PR #17 at `2401db7b8613879119a000b4a5019f7f68d88ef4` and received the independent verdict `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md).
 

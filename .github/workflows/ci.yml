@@ -20,7 +20,7 @@ jobs:
   quality:
     name: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     env:
       CI: "1"
       NEXT_TELEMETRY_DISABLED: "1"
@@ -29,6 +29,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Node.js
@@ -51,8 +52,42 @@ jobs:
       - name: Install Chromium
         run: npx playwright install chromium --with-deps
 
+      - name: Check patch whitespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git rev-parse --verify HEAD^1 >/dev/null 2>&1; then
+            git diff --check HEAD^1 HEAD
+          elif git cat-file -p HEAD | grep -q '^parent '; then
+            echo "Unable to resolve the first parent required for the whitespace check." >&2
+            exit 1
+          else
+            git diff-tree --check --root --no-commit-id -r HEAD
+          fi
+
+      - name: Scan tracked secrets and local paths
+        run: npm run check:secret-paths
+
+      - name: Run launch-hardening fixtures
+        run: npm run fixtures:launch-hardening
+
+      - name: Run Resume Workspace Phase 1A fixtures
+        run: npm run fixtures:resume-workspace-phase-1a
+
+      - name: Run launch-hardening browser coverage
+        run: npm run test:e2e:launch-hardening
+
+      - name: Run forgot-password coverage
+        run: npm run test:e2e:forgot-password
+
+      - name: Run existing password-recovery coverage
+        run: npm run test:e2e:password-recovery
+
       - name: Run owner-isolation regression
         run: npm run test:e2e:owner-isolation
+
+      - name: Run Resume Workspace regression
+        run: npm run test:e2e:resume-workspace
 
       - name: Verify dependency tree
         run: npm ls --all

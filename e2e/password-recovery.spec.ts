@@ -27,8 +27,121 @@ const RAW_PASSWORD_UPDATE_COPY =
 
 const SAFE_PASSWORD_UPDATE_ERROR =
   "We could not update your password. Please try again or request a new reset link.";
+const SAFE_RESET_REQUEST_ERROR =
+  "We could not send a reset link. Please try again.";
+const SAFE_RESET_REQUEST_SUCCESS =
+  "If an account exists for that email, a password reset link will be sent.";
 
 const NEW_PASSWORD = "synthetic-new-password";
+
+test(
+  "@forgot-password successful request uses non-enumerating copy and preserves the reset redirect",
+  async ({ page, provider }) => {
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(ACCOUNT_A.email);
+    await page.getByRole("button", {
+      name: "Send reset link",
+    }).click();
+
+    await expect(
+      page.getByText(SAFE_RESET_REQUEST_SUCCESS),
+    ).toBeVisible();
+    expect(provider.count("auth:password-reset")).toBe(1);
+    expect(provider.latestPasswordResetBody()).toMatchObject({
+      email: ACCOUNT_A.email,
+    });
+    expect(
+      provider.latestPasswordResetUrl()?.searchParams.get(
+        "redirect_to",
+      ),
+    ).toBe(`${APP_ORIGIN}/reset-password`);
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeEnabled();
+  },
+);
+
+test(
+  "@forgot-password returned provider failure is sanitized and retryable",
+  async ({ page, provider }) => {
+    provider.passwordResetMode = "reject";
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(ACCOUNT_A.email);
+    await page.getByRole("button", {
+      name: "Send reset link",
+    }).click();
+
+    await expect(page.getByText(SAFE_RESET_REQUEST_ERROR)).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(
+      "RAW_SYNTHETIC_PASSWORD_RESET_SECRET",
+    );
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeEnabled();
+
+    provider.passwordResetMode = "success";
+    await page.getByRole("button", {
+      name: "Send reset link",
+    }).click();
+    await expect(
+      page.getByText(SAFE_RESET_REQUEST_SUCCESS),
+    ).toBeVisible();
+    expect(provider.count("auth:password-reset")).toBe(2);
+  },
+);
+
+test(
+  "@forgot-password thrown network failure is sanitized and restores submitting state",
+  async ({ page, provider }) => {
+    provider.passwordResetMode = "abort";
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(ACCOUNT_A.email);
+    await page.getByRole("button", {
+      name: "Send reset link",
+    }).click();
+
+    await expect(page.getByText(SAFE_RESET_REQUEST_ERROR)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: "Sending..." }),
+    ).toHaveCount(0);
+  },
+);
+
+test(
+  "@forgot-password duplicate synchronous submission is prevented while pending",
+  async ({ page, provider }) => {
+    const [requestGate] = provider.holdNext(
+      "auth:password-reset",
+    );
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(ACCOUNT_A.email);
+    await page.locator("form").evaluate((form) => {
+      if (!(form instanceof HTMLFormElement)) {
+        throw new Error("Forgot-password form was not an HTML form");
+      }
+      form.requestSubmit();
+      form.requestSubmit();
+    });
+
+    await provider.waitFor("auth:password-reset", 1);
+    try {
+      expect(provider.count("auth:password-reset")).toBe(1);
+      await expect(
+        page.getByRole("button", { name: "Sending..." }),
+      ).toBeDisabled();
+    } finally {
+      requestGate.release();
+    }
+
+    await expect(
+      page.getByText(SAFE_RESET_REQUEST_SUCCESS),
+    ).toBeVisible();
+    expect(provider.count("auth:password-reset")).toBe(1);
+  },
+);
 
 test(
   "@password-recovery @password-recovery-page direct visit never exposes an active reset form",

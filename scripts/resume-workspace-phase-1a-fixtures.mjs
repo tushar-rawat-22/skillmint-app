@@ -1595,7 +1595,7 @@ test("frozen product and analytics contracts have zero diff and no new taxonomy"
   );
 });
 
-test("package metadata permits only the two Phase 1A scripts and lock stays exact", () => {
+test("package metadata permits only Phase 1A and launch-hardening scripts and lock stays exact", () => {
   const currentPackage = JSON.parse(readText("package.json"));
   const baselinePackage = JSON.parse(
     gitShow(`${authorizedBaseline}:package.json`),
@@ -1614,13 +1614,38 @@ test("package metadata permits only the two Phase 1A scripts and lock stays exac
       .filter((name) => !(name in baselinePackage.scripts))
       .sort(),
     [
+      "check:secret-paths",
+      "fixtures:launch-hardening",
       "fixtures:resume-workspace-phase-1a",
+      "test:e2e:forgot-password",
+      "test:e2e:launch-hardening",
+      "test:e2e:password-recovery",
       "test:e2e:resume-workspace",
     ],
   );
   assert.equal(
+    currentPackage.scripts["check:secret-paths"],
+    "node scripts/secret-path-regression.mjs",
+  );
+  assert.equal(
+    currentPackage.scripts["fixtures:launch-hardening"],
+    "node scripts/launch-hardening-fixtures.mjs",
+  );
+  assert.equal(
     currentPackage.scripts["fixtures:resume-workspace-phase-1a"],
     "node scripts/resume-workspace-phase-1a-fixtures.mjs",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:forgot-password"],
+    "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @forgot-password --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:launch-hardening"],
+    "playwright test e2e/launch-hardening.spec.ts --project=chromium --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:password-recovery"],
+    "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @password-recovery --workers=1 --retries=0",
   );
   assert.equal(
     currentPackage.scripts["test:e2e:resume-workspace"],

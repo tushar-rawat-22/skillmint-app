@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import {
   premiumInput,
@@ -11,9 +11,18 @@ import {
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
+import { requestPasswordReset } from "@/modules/auth/services/passwordResetRequest";
+
+const RESET_REQUEST_FAILURE_MESSAGE =
+  "We could not send a reset link. Please try again.";
+const RESET_REQUEST_SUCCESS_MESSAGE =
+  "If an account exists for that email, a password reset link will be sent.";
+const RESET_SERVICE_UNAVAILABLE_MESSAGE =
+  "Password recovery is temporarily unavailable. Please try again later.";
 
 export default function ForgotPasswordPage() {
   const configStatus = useMemo(() => getSupabaseConfigStatus(), []);
+  const submissionInFlight = useRef(false);
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -21,6 +30,10 @@ export default function ForgotPasswordPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (submissionInFlight.current) {
+      return;
+    }
 
     const trimmedEmail = email.trim();
 
@@ -33,28 +46,34 @@ export default function ForgotPasswordPage() {
     const supabase = createSupabaseBrowserClient();
 
     if (!configStatus.isConfigured || !supabase) {
-      setError(configStatus.message);
+      setError(RESET_SERVICE_UNAVAILABLE_MESSAGE);
       setMessage("");
       return;
     }
 
+    submissionInFlight.current = true;
     setIsSubmitting(true);
     setError("");
     setMessage("");
 
-    const { error: resetError } =
-      await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+    try {
+      const result = await requestPasswordReset(supabase, {
+        email: trimmedEmail,
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-    setIsSubmitting(false);
+      if (!result.ok) {
+        setError(RESET_REQUEST_FAILURE_MESSAGE);
+        return;
+      }
 
-    if (resetError) {
-      setError(resetError.message);
-      return;
+      setMessage(RESET_REQUEST_SUCCESS_MESSAGE);
+    } catch {
+      setError(RESET_REQUEST_FAILURE_MESSAGE);
+    } finally {
+      submissionInFlight.current = false;
+      setIsSubmitting(false);
     }
-
-    setMessage("Password reset link sent. Check your email.");
   }
 
   return (
@@ -93,12 +112,6 @@ export default function ForgotPasswordPage() {
         {message && (
           <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
             {message}
-          </p>
-        )}
-
-        {!configStatus.isConfigured && (
-          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
-            {configStatus.message}
           </p>
         )}
 
