@@ -1333,7 +1333,7 @@ test("CI whitespace gate checks committed parent diffs and fails closed when a p
     path.join(root, ".github/workflows/ci.yml"),
     "utf8",
   );
-  assert.match(workflow, /fetch-depth:\s*2/u);
+  assert.match(workflow, /fetch-depth:\s*0/u);
   assert.match(
     workflow,
     /git diff --check HEAD\^1 HEAD/u,
