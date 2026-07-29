@@ -1,12 +1,39 @@
 # Version 2 Resume Progress and Comparison Architecture
 
-**Status:** Phase 2 Core and UI are committed locally; Phase 2B is a local
-closure candidate pending acceptance, commit, push, independent review, checks,
-and merge.
+**Status:** Phase 2 engineering is complete, merged through PR #26, deployed,
+and directly route-verified. User evidence remains pending.
 
 **Accepted Core:** `02501543fdb39a7ad51d08a29adb15a175844f15`
 
 **Accepted UI:** `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8`
+
+**Closure commit:** `47f30a6300375ebdfeb48109a9ad6d82c3a67e39`
+
+## Post-merge operational status
+
+| Evidence | Status |
+| --- | --- |
+| Core commit | `02501543fdb39a7ad51d08a29adb15a175844f15` |
+| UI commit | `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8` |
+| Closure commit | `47f30a6300375ebdfeb48109a9ad6d82c3a67e39` |
+| Pull request | PR #26 |
+| Merge commit | `17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433` |
+| Pull-request CI | Passed |
+| Main CI | Run `30469897446`, passed |
+| Production deployment | Completed |
+| General Production smoke | Passed |
+| Direct `/resume/compare` route | HTTP 200 with visible “Compare saved report evidence” heading |
+| Authenticated Production comparison | Not performed |
+| Hosted Production PostgREST pair and pagination verification | Not performed |
+| Real-user comprehension and decision-value evidence | Pending |
+| Controlled-user launch | Unauthorized |
+| Phase 3 | Not started |
+
+The direct response remained on `/resume/compare` and returned HTML without a
+visible application, internal-server, or not-found error. Raw serialized
+Next.js fallback strings appeared only in the framework response payload, not
+in rendered visible content. This distinction applies to this verification and
+does not make raw-response error inspection generally unnecessary.
 
 ## Objective and truth boundary
 
@@ -117,12 +144,13 @@ Chromium during closure validation.
 
 ## Known limits and evidence still required
 
-This closure is local engineering evidence. It does not include hosted
-PostgREST verification, a Production deployment, Production database contact,
-or real-user comprehension and decision-value evidence. Remote deletion is
-noticed only on Compare or Refresh. Historical version metadata remains
-unavailable, so the interface can show saved time but cannot reconstruct a
-version lineage.
+This is engineering/deployment closure, not hosted database-flow or user
+validation. Authenticated Production comparison was not performed, hosted
+Production PostgREST pair and pagination behavior was not verified, and
+real-user comprehension and decision-value evidence remains pending. Remote
+deletion is noticed only on Compare or Refresh. Historical version metadata
+remains unavailable, so the interface can show saved time but cannot
+reconstruct a version lineage.
 
 The focused suite emits the pre-existing Next.js smooth-scroll warning caused
 by global application styling. It is non-blocking and unrelated to comparison
@@ -135,4 +163,6 @@ bounded differences, make a useful next decision, avoid score chasing, and can
 operate the flow accessibly. Revise the explanation or interaction if the gap
 is correctable; defer or remove comparison if it encourages causal or hiring
 claims, creates harmful score chasing, or does not change the user's next
-action.
+action. Controlled-user invitations remain unauthorized, Production migrations
+remain unauthorized, public beta is not authorized, and Phase 3 has not
+started.

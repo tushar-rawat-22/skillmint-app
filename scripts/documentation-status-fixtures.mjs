@@ -78,6 +78,43 @@ const currentStatusPaths = [
 ];
 const currentStatus = currentStatusPaths.map((path) => text(path)).join("\n");
 
+const phase2StatusPaths = [
+  "docs/PROJECT_STATUS.md",
+  "docs/TODO.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
+  "docs/V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md",
+];
+const phase2Status = phase2StatusPaths.map((path) => text(path)).join("\n");
+
+for (const path of phase2StatusPaths) {
+  check(
+    !text(path).includes("local closure candidate"),
+    `${path} retains obsolete Phase 2 local-candidate wording`,
+  );
+}
+
+for (const [needle, label] of [
+  ["PR #26", "Phase 2 pull request"],
+  ["17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433", "Phase 2 merge commit"],
+  ["30469897446", "successful main CI run"],
+  ["/resume/compare", "direct Production route verification"],
+  ["Phase 3 has not started", "Phase 3 not-started boundary"],
+  ["Controlled-user invitations remain unauthorized", "controlled-user launch boundary"],
+  ["Production migrations remain unauthorized", "Production migration boundary"],
+  ["public beta is not authorized", "public-beta boundary"],
+  ["Authenticated Production comparison was not performed", "authenticated Production limit"],
+  [
+    "hosted Production PostgREST pair and pagination behavior was not verified",
+    "hosted PostgREST limit",
+  ],
+  [
+    "real-user comprehension and decision-value evidence remains pending",
+    "real-user evidence limit",
+  ],
+]) {
+  check(phase2Status.includes(needle), `Phase 2 status is missing ${label}`);
+}
+
 for (const path of [
   "docs/V2_TRANSITION_GATE.md",
   "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
