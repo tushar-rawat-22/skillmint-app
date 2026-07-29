@@ -111,20 +111,31 @@ export default function ResumeComparisonView({
             Skill evidence is unavailable for one or both sources.
           </p>
         ) : (
-          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-            <EvidenceList
-              heading="Detected in both"
-              items={comparison.skills.retained}
-            />
-            <EvidenceList
-              heading="Detected only in Source A"
-              items={comparison.skills.onlyInSourceA}
-            />
-            <EvidenceList
-              heading="Detected only in Source B"
-              items={comparison.skills.onlyInSourceB}
-            />
-          </div>
+          <>
+            {comparison.skills.truncated && (
+              <p
+                role="status"
+                className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"
+              >
+                Showing up to 100 items per skill group. Additional detected
+                differences are not displayed.
+              </p>
+            )}
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              <EvidenceList
+                heading="Detected in both"
+                items={comparison.skills.retained}
+              />
+              <EvidenceList
+                heading="Detected only in Source A"
+                items={comparison.skills.onlyInSourceA}
+              />
+              <EvidenceList
+                heading="Detected only in Source B"
+                items={comparison.skills.onlyInSourceB}
+              />
+            </div>
+          </>
         )}
       </section>
 

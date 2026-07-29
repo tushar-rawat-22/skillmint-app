@@ -12,6 +12,7 @@ import {
   expect,
   login,
   ownerContainer,
+  signOut,
   test,
 } from "./support/runtime";
 
@@ -63,6 +64,8 @@ class Deferred {
 class ResumeComparisonApi {
   readonly requests: ComparisonRequest[] = [];
   private readonly analyses = new Map<string, ResumeAnalysisRow[]>();
+  private readonly completions = new Map<string, number>();
+  private readonly failures = new Map<string, number>();
   private readonly gates = new Map<string, Deferred[]>();
   private readonly malformedPairs = new Map<string, number>();
 
@@ -105,6 +108,11 @@ class ResumeComparisonApi {
     return gate;
   }
 
+  failNext(kind: ComparisonRequestKind, accountId: string) {
+    const key = requestKey(kind, accountId);
+    this.failures.set(key, (this.failures.get(key) ?? 0) + 1);
+  }
+
   count(kind: ComparisonRequestKind, accountId?: string) {
     return this.requests.filter((request) =>
       request.kind === kind &&
@@ -121,6 +129,20 @@ class ResumeComparisonApi {
       () => this.count(kind, accountId),
       {
         message: `waiting for ${count} ${kind} request(s)`,
+        timeout: 10_000,
+      },
+    ).toBeGreaterThanOrEqual(count);
+  }
+
+  async waitForCompletion(
+    kind: ComparisonRequestKind,
+    count: number,
+    accountId: string,
+  ) {
+    await expect.poll(
+      () => this.completions.get(requestKey(kind, accountId)) ?? 0,
+      {
+        message: `waiting for ${count} completed ${kind} request(s)`,
         timeout: 10_000,
       },
     ).toBeGreaterThanOrEqual(count);
@@ -180,8 +202,17 @@ class ResumeComparisonApi {
       await gate.promise;
     }
 
+    if (this.consumeFailure(kind, accountId)) {
+      this.recordCompletion(kind, accountId);
+      await json(route, 503, {
+        message: "RAW_SYNTHETIC_PROVIDER_SECRET",
+      });
+      return;
+    }
+
     const qualifiedOwner = readEqValue(url, "user_id");
     if (qualifiedOwner !== accountId) {
+      this.recordCompletion(kind, accountId);
       await json(route, 200, []);
       return;
     }
@@ -197,6 +228,7 @@ class ResumeComparisonApi {
       if (this.consumeMalformedPair(accountId) && output[0]) {
         delete output[0].comparison_skills;
       }
+      this.recordCompletion(kind, accountId);
       await json(route, 200, output);
       return;
     }
@@ -206,6 +238,7 @@ class ResumeComparisonApi {
     const page = rows
       .slice(start, start + limit)
       .map((row) => projectSelectedColumns(row, select));
+    this.recordCompletion(kind, accountId);
     await json(route, 200, page);
   }
 
@@ -217,11 +250,32 @@ class ResumeComparisonApi {
     this.malformedPairs.set(accountId, remaining - 1);
     return true;
   }
+
+  private consumeFailure(
+    kind: ComparisonRequestKind,
+    accountId: string,
+  ) {
+    const key = requestKey(kind, accountId);
+    const remaining = this.failures.get(key) ?? 0;
+    if (remaining === 0) {
+      return false;
+    }
+    this.failures.set(key, remaining - 1);
+    return true;
+  }
+
+  private recordCompletion(
+    kind: ComparisonRequestKind,
+    accountId: string,
+  ) {
+    const key = requestKey(kind, accountId);
+    this.completions.set(key, (this.completions.get(key) ?? 0) + 1);
+  }
 }
 
 test.describe("saved resume comparison", () => {
   test(
-    "signed-out access hides personal history and does not query it",
+    "@critical signed-out access hides personal history and does not query it",
     async ({ page }) => {
       const api = new ResumeComparisonApi();
       api.setAnalyses(
@@ -347,7 +401,7 @@ test.describe("saved resume comparison", () => {
   );
 
   test(
-    "successful comparison preserves source order and exposes only sanitized evidence",
+    "@critical successful comparison preserves source order and exposes only sanitized evidence",
     async ({ page }) => {
       const api = new ResumeComparisonApi();
       const rows = comparisonRows(ACCOUNT_A);
@@ -365,6 +419,13 @@ test.describe("saved resume comparison", () => {
           exact: true,
         }),
       ).toBeVisible();
+      const resultRegion = page.locator("[aria-live='polite']").filter({
+        has: page.getByRole("heading", {
+          name: "Saved report evidence",
+          exact: true,
+        }),
+      });
+      await expect(resultRegion).toBeFocused();
       const pairRequest = api.latest("pair", ACCOUNT_A.id);
       expect(pairRequest?.ids).toEqual([
         rows[0].id,
@@ -399,6 +460,90 @@ test.describe("saved resume comparison", () => {
       expect(resultText).not.toContain("hiring probability");
       expect(resultText).not.toContain("recommendation");
       expect(resultText).not.toContain("progress");
+      await expect(
+        page.getByText(
+          "Showing up to 100 items per skill group. Additional detected differences are not displayed.",
+          { exact: true },
+        ),
+      ).toHaveCount(0);
+      await expect(
+        page.getByText("Detected", { exact: true }).first(),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Not detected", { exact: true }).first(),
+      ).toBeVisible();
+
+      const sourceALabel = page.getByText("Source A", {
+        exact: true,
+      }).first();
+      const sourceBLabel = page.getByText("Source B", {
+        exact: true,
+      }).first();
+      expect(await sourceALabel.evaluate((sourceA, sourceB) =>
+        Boolean(
+          sourceA.compareDocumentPosition(sourceB as Node) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ), await sourceBLabel.elementHandle())).toBe(true);
+
+      const currentUrl = new URL(page.url());
+      expect(currentUrl.search).toBe("");
+      expect(currentUrl.hash).toBe("");
+      expect(page.url()).not.toContain(rows[0].id);
+      expect(page.url()).not.toContain(rows[1].id);
+    },
+  );
+
+  test(
+    "skill truncation is disclosed only for bounded Core output",
+    async ({ page }) => {
+      const api = new ResumeComparisonApi();
+      const rows = comparisonRows(ACCOUNT_A);
+      rows[0].parsed_profile.skills = Array.from(
+        { length: 130 },
+        (_, index) => `A skill ${String(index).padStart(3, "0")}`,
+      );
+      rows[1].parsed_profile.skills = Array.from(
+        { length: 130 },
+        (_, index) => `B skill ${String(index).padStart(3, "0")}`,
+      );
+      api.setAnalyses(ACCOUNT_A.id, rows);
+      await api.install(page);
+
+      await login(page, ACCOUNT_A);
+      await page.goto("/resume/compare");
+      await assignPair(page, rows[0], rows[1]);
+      await page.getByRole("button", { name: "Compare" }).click();
+
+      const notice = page.getByRole("status").filter({
+        hasText:
+          "Showing up to 100 items per skill group. Additional detected differences are not displayed.",
+      });
+      await expect(notice).toBeVisible();
+
+      const sourceAGroup = page.getByRole("heading", {
+        name: "Detected only in Source A",
+      }).locator("..");
+      const sourceBGroup = page.getByRole("heading", {
+        name: "Detected only in Source B",
+      }).locator("..");
+      await expect(sourceAGroup.getByRole("listitem")).toHaveCount(100);
+      await expect(sourceBGroup.getByRole("listitem")).toHaveCount(100);
+      await expect(page.getByText("A skill 129", {
+        exact: true,
+      })).toHaveCount(0);
+      await expect(page.getByText("B skill 129", {
+        exact: true,
+      })).toHaveCount(0);
+
+      const skillsSection = page.getByRole("heading", {
+        name: "Skills",
+        exact: true,
+      }).locator("..");
+      await expect(skillsSection.getByRole("button")).toHaveCount(0);
+      await expect(skillsSection.locator("details, pre")).toHaveCount(0);
+      await expect(
+        page.getByText("RAW_SYNTHETIC_PROVIDER_SECRET"),
+      ).toHaveCount(0);
     },
   );
 
@@ -425,11 +570,21 @@ test.describe("saved resume comparison", () => {
       await page.getByRole("button", {
         name: "Refresh comparison",
       }).click();
+      await api.waitFor("pair", 2, ACCOUNT_A.id);
+      expect(api.latest("pair", ACCOUNT_A.id)?.ids).toEqual([
+        rows[0].id,
+        rows[1].id,
+      ]);
       await expect(
         page.getByRole("heading", {
           name: "Comparison unavailable",
         }),
       ).toBeVisible();
+      await expect(page.getByRole("alert").filter({
+        has: page.getByRole("heading", {
+          name: "Comparison unavailable",
+        }),
+      })).toBeFocused();
       await expect(
         page.getByText(
           "One or both selected reports are no longer available. Replace a source and try again.",
@@ -449,6 +604,11 @@ test.describe("saved resume comparison", () => {
       api.setAnalyses(ACCOUNT_A.id, rows);
       api.malformedNextPair(ACCOUNT_A.id);
       await page.getByRole("button", { name: "Compare" }).click();
+      await api.waitFor("pair", 3, ACCOUNT_A.id);
+      expect(api.latest("pair", ACCOUNT_A.id)?.ids).toEqual([
+        rows[0].id,
+        rows[1].id,
+      ]);
       await expect(
         page.getByText(
           "One or both selected reports could not be safely read. Replace a source and try again.",
@@ -468,17 +628,13 @@ test.describe("saved resume comparison", () => {
   );
 
   test(
-    "Account A delayed history is synchronously masked and cannot publish after Account B takes ownership",
+    "@race Account A delayed history error is synchronously masked across account switch and logout",
     async ({ context, page }) => {
       const api = new ResumeComparisonApi();
-      const accountARows = syntheticAnalyses(ACCOUNT_A, 2);
+      const accountARows = syntheticAnalyses(ACCOUNT_A, 12);
       const accountBRows = syntheticAnalyses(ACCOUNT_B, 2);
       api.setAnalyses(ACCOUNT_A.id, accountARows);
       api.setAnalyses(ACCOUNT_B.id, accountBRows);
-      const delayedAccountAHistory = api.holdNext(
-        "history",
-        ACCOUNT_A.id,
-      );
       const delayedAccountBHistory = api.holdNext(
         "history",
         ACCOUNT_B.id,
@@ -488,6 +644,22 @@ test.describe("saved resume comparison", () => {
       await login(page, ACCOUNT_A);
       await page.goto("/resume/compare");
       await api.waitFor("history", 1, ACCOUNT_A.id);
+      await expect(
+        page.getByText(accountARows[0].file_name, {
+          exact: true,
+        }),
+      ).toBeVisible();
+
+      const delayedAccountAHistory = api.holdNext(
+        "history",
+        ACCOUNT_A.id,
+      );
+      api.failNext("history", ACCOUNT_A.id);
+      await page.getByRole("button", {
+        name: "Next",
+        exact: true,
+      }).click();
+      await api.waitFor("history", 2, ACCOUNT_A.id);
 
       await logInOnControlPage(context, ACCOUNT_B);
       await api.waitFor("history", 1, ACCOUNT_B.id);
@@ -499,6 +671,13 @@ test.describe("saved resume comparison", () => {
       await expect(
         page.getByText("0 of 2 selected", { exact: true }),
       ).toBeVisible();
+      delayedAccountAHistory.release();
+      await api.waitForCompletion("history", 2, ACCOUNT_A.id);
+      await expect(
+        page.getByRole("heading", {
+          name: "Saved report history unavailable",
+        }),
+      ).toHaveCount(0);
       delayedAccountBHistory.release();
       await expect(
         page.getByText(accountBRows[0].file_name, {
@@ -506,24 +685,37 @@ test.describe("saved resume comparison", () => {
         }),
       ).toBeVisible();
 
-      delayedAccountAHistory.release();
-      await expect.poll(
-        () => api.count("history", ACCOUNT_B.id),
-      ).toBeGreaterThanOrEqual(1);
       await expect(
         page.getByText(accountARows[0].file_name, {
           exact: true,
         }),
       ).toHaveCount(0);
+      await expect(
+        page.getByRole("heading", {
+          name: "Saved report history unavailable",
+        }),
+      ).toHaveCount(0);
+
+      await signOut(context);
+      await expect(
+        page.getByText(accountBRows[0].file_name, {
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("heading", {
+          name: "Sign in to compare saved reports",
+        }),
+      ).toBeVisible();
     },
   );
 
   test(
-    "Account A delayed pair is invalidated before Account B can see selection or results",
+    "@critical @race Account A delayed pair is invalidated by Account B newer comparison",
     async ({ context, page }) => {
       const api = new ResumeComparisonApi();
       const accountARows = comparisonRows(ACCOUNT_A);
-      const accountBRows = syntheticAnalyses(ACCOUNT_B, 2);
+      const accountBRows = comparisonRows(ACCOUNT_B);
       api.setAnalyses(ACCOUNT_A.id, accountARows);
       api.setAnalyses(ACCOUNT_B.id, accountBRows);
       const delayedAccountBHistory = api.holdNext(
@@ -561,19 +753,38 @@ test.describe("saved resume comparison", () => {
           exact: true,
         }),
       ).toBeVisible();
-
-      delayedAccountAPair.release();
+      await assignPair(page, accountBRows[0], accountBRows[1]);
+      await page.getByRole("button", { name: "Compare" }).click();
+      await api.waitFor("pair", 1, ACCOUNT_B.id);
       await expect(
         page.getByRole("heading", {
           name: "Saved report evidence",
           exact: true,
         }),
-      ).toHaveCount(0);
+      ).toBeVisible();
+      expect(api.latest("pair", ACCOUNT_B.id)?.ids).toEqual([
+        accountBRows[0].id,
+        accountBRows[1].id,
+      ]);
+
+      delayedAccountAPair.release();
+      await api.waitForCompletion("pair", 1, ACCOUNT_A.id);
+      await expect(
+        page.getByRole("heading", {
+          name: "Saved report evidence",
+          exact: true,
+        }),
+      ).toBeVisible();
       await expect(
         page.getByText(accountARows[1].file_name, {
           exact: true,
         }),
       ).toHaveCount(0);
+      await expect(
+        page.getByText(accountBRows[1].file_name, {
+          exact: true,
+        }).first(),
+      ).toBeVisible();
     },
   );
 
@@ -637,6 +848,19 @@ test.describe("saved resume comparison", () => {
           }),
         }),
       ).toBeVisible();
+      await expect(
+        page.locator("[aria-live='polite']").filter({
+          has: page.getByRole("heading", {
+            name: "Saved report evidence",
+            exact: true,
+          }),
+        }),
+      ).toBeFocused();
+      await expect(
+        page.getByRole("button", {
+          name: "Refresh comparison",
+        }),
+      ).toBeEnabled();
 
       await expect.poll(
         () => page.evaluate(() => ({
@@ -656,8 +880,10 @@ test.describe("saved resume comparison", () => {
         ),
       ).toEqual([]);
       expect(
-        provider.count("rows:active_resume_selections", ACCOUNT_A.id),
-      ).toBe(0);
+        provider.unexpectedRequests.filter((url) =>
+          url.includes("active_resume_selections")
+        ),
+      ).toEqual([]);
       expect(
         provider.requests.filter((request) =>
           request.url.includes("analytics")

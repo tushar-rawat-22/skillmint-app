@@ -14,7 +14,8 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 - Block 7.1 resume owner isolation is complete. The former broad Beta v1 public-launch path and its Block 7.2 sequencing are superseded as current authority by the Version 2 transition.
 - Phase 1 — Resume Workspace is complete. Its Phase 1A and Phase 1B records remain historical implementation and verification evidence. V8 remains unapplied to Production.
-- Phase 2 — Resume Progress and Comparison is the next implementation phase. The founder's July 28, 2026 sequencing amendment removes only the former requirement to complete real-user review before Phase 2 begins.
+- Phase 2 Core is accepted and committed locally at `02501543fdb39a7ad51d08a29adb15a175844f15`; the accepted UI is committed locally at `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8`. Phase 2B is a local closure candidate only, and Phase 3 has not started.
+- Phase 2B still requires acceptance, commit, push, independent review, checks, and merge. No hosted PostgREST, Production, or real-user comprehension verification is claimed.
 - Real-user comprehension, repeat-use, comparison-value, score-chasing, accessibility, and onboarding evidence remains pending and is required during controlled early access.
 - A controlled hosted Production launch is targeted within 15 days, but is not guaranteed and does not prove unlimited scale, permanent Production readiness, or market validation.
 - Public unrestricted acquisition is not authorized.
@@ -54,7 +55,8 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [x] Publish Phase 1A through PR #21 at merge commit `9eb2318269f835a7f9cc249e8ab014c73a9271ae`; publish the lifecycle ACL normalization through PR #22 at baseline `9db3a832e5ffd2c806a787a8438dfb3946fea879`.
 - [x] Complete [Phase 1B](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md) isolated-staging migration/catalog/behavior verification, protected-Preview target proof, synthetic signed-in flow checks, and credential/data cleanup without contacting Production.
 - [x] Treat Phase 1 — Resume Workspace as complete.
-- [ ] Begin Phase 2 — Resume Progress and Comparison with exactly two explicitly selected same-owner saved analyses, deterministic derivation from stored results, source-deletion invalidation, account-switch and stale-result safety, and no scoring change or persistent comparison history unless separately justified.
+- [x] Commit the accepted Phase 2 Core and UI locally with exactly two explicit same-owner saved reports, deterministic sanitized evidence, source-deletion invalidation, account-switch and stale-result safety, and no scoring or persistent comparison history.
+- [ ] Accept, commit, push, independently review, check, and merge the bounded [Phase 2B local closure candidate](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md). Do not treat the candidate as merged or hosted evidence.
 - [ ] Add only the minimum Phase 3 — Explainability needed to make comparison truthful and useful.
 - [ ] Add only the minimum Phase 4 — Guided execution and onboarding work needed for the controlled launch.
 - [ ] During controlled early access, evaluate comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. Use the evidence to preserve, revise, defer, or remove Phase 1 or Phase 2.

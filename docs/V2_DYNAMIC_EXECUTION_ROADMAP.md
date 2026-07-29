@@ -10,7 +10,7 @@ Each phase uses the same decision rule: expand only when the evidence demonstrat
 
 ## Current 15-day controlled-launch sequence
 
-SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete. Phase 2 is the next implementation phase and begins without waiting for the previously required pre-Phase-2 real-user review. Add only the minimum Phase 3 explainability and Phase 4 guided execution and onboarding required for a truthful, usable launch. In parallel, screen the pending public brand and domain and prepare only separately authorized Production-readiness work.
+SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete. Phase 2 Core and UI are accepted and committed locally, while Phase 2B remains a local closure candidate pending acceptance, commit, push, independent review, checks, and merge. Phase 3 has not started. In parallel, screen the pending public brand and domain and prepare only separately authorized Production-readiness work.
 
 Real-user evidence has not been completed and remains required during controlled early access. It must assess comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. That evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed; it is not market validation.
 
@@ -46,15 +46,17 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Tests.** Deterministic schema/RLS/repository/export/deletion fixtures; browser tests for explicit selection, clearing, cross-device offer, Account A/B switching, stale operations, selected-analysis deletion, browser reset, and accessibility.
 
-**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied, so Phase 1 is complete and Phase 2 is next. During controlled early access, stop or revise if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Evidence may still cause Phase 1 to be preserved, revised, deferred, or removed. **Contingency:** retain saved history plus browser-local restore with no account selection.
+**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied, so Phase 1 is complete and bounded Phase 2 work has begun locally. During controlled early access, stop or revise if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Evidence may still cause Phase 1 to be preserved, revised, deferred, or removed. **Contingency:** retain saved history plus browser-local restore with no account selection.
 
-## 2. Phase 2 — Resume Progress and Comparison — next
+## 2. Phase 2 — Resume Progress and Comparison — local closure candidate
 
 **Objective.** Help users compare truthful changes between selected saved analyses and understand progress without pretending that scores are a hiring forecast.
 
+**Current evidence.** The accepted Core is committed locally at `02501543fdb39a7ad51d08a29adb15a175844f15`, and the accepted UI is committed locally at `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8`. Phase 2B is only a local closure candidate until it is accepted, committed, pushed, independently reviewed, checked, and merged. There is no hosted PostgREST, Production, or real-user comprehension claim. See [Version 2 Resume Progress and Comparison Architecture](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md).
+
 **Evidence required.** During controlled early access, establish whether people use comparison to make a useful improvement decision rather than merely chase a number, and whether comparison labels are understood. This evidence may revise, defer, or remove Phase 2, but it no longer blocks implementation from starting.
 
-**Smallest complete solution.** A bounded, side-by-side comparison of exactly two explicitly selected saved analyses owned by the same account, derived deterministically from already stored analysis results, with date/version context and evidence-first explanations.
+**Smallest complete solution.** A bounded, side-by-side comparison of exactly two explicitly selected saved reports owned by the same account, derived deterministically from stored results, with saved-time context, truthful missing-version metadata, and evidence-first explanations.
 
 **Dependencies and non-goals.** Depends on the completed Phase 1 workspace selection, immutable saved analyses, and frozen scoring semantics. No scoring-formula change, AI résumé rewriting, hiring-probability claim, social ranking, external validation, or persistent comparison history unless separately justified.
 
@@ -62,11 +64,11 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Export and deletion effects.** Preserve current export, saved-report deletion, and protected account-deletion contracts. Export can continue to export source analyses; a derived comparison is not a new account record unless separately approved. Deleting either source invalidates or removes the comparison rather than retaining a misleading artifact.
 
-**Tests.** Deterministic comparison fixtures for equal/changed/missing evidence, score-truth wording, ownership pairs, deleted inputs, and pagination; browser tests for selection, empty/error states, narrow screens, keyboard operation, and account switches.
+**Tests.** The closure fixture preserves the full accepted Core behavior suite while pinning Core runtime paths to the accepted commit. Focused browser coverage exercises bounded selection, truncation disclosure, missing/malformed sources, owner and request races, logout, URL/storage/persistence preservation, keyboard and focus behavior, announcements, alerts, reduced motion, a 320-pixel viewport, and serious/critical Axe findings. CI remains Chromium-only; three critical flows remain available locally in Firefox and WebKit.
 
 **Stop condition and decision.** Stop if comparison invites unsupported causal claims, creates score-chasing risk, or does not change a user's next action. Expand only with demonstrated decision value; otherwise preserve source history, revise the explanation, defer Phase 2, or remove comparison. **Contingency:** provide a non-persistent “what changed” view tied to exactly two explicit selections.
 
-## 3. Phase 3 — Explainability
+## 3. Phase 3 — Explainability — not started
 
 **Objective.** Make existing deterministic signals easier to interpret and act on without changing frozen math or collapsing distinct concepts.
 

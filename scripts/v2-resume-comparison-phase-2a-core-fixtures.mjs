@@ -12,6 +12,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const srcRoot = path.join(repoRoot, "src");
 const originalResolveFilename = Module._resolveFilename;
+const acceptedCoreCommit =
+  "02501543fdb39a7ad51d08a29adb15a175844f15";
+const fixtureArguments = process.argv.slice(2);
+const closureMode =
+  fixtureArguments.length === 1 && fixtureArguments[0] === "--closure";
+
+if (fixtureArguments.length > 0 && !closureMode) {
+  throw new Error(
+    "Use no arguments for implementation-time mode or --closure for committed closure mode.",
+  );
+}
 
 Module._resolveFilename = function resolveSkillMintAlias(
   request,
@@ -83,6 +94,18 @@ const approvedPaths = [
   fixturePath,
   indexPath,
 ].sort();
+const closureApprovedPaths = [
+  ".github/workflows/ci.yml",
+  "docs/PROJECT_STATUS.md",
+  "docs/TODO.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
+  "docs/V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md",
+  "e2e/resume-comparison.spec.ts",
+  "package.json",
+  "scripts/resume-workspace-phase-1a-fixtures.mjs",
+  fixturePath,
+  "src/modules/resume/components/ResumeComparisonView.tsx",
+].sort();
 const domainSource = readText(domainPath);
 const repositorySource = readText(repositoryPath);
 const indexSource = readText(indexPath);
@@ -116,8 +139,8 @@ const {
 
 const tests = [];
 
-function test(name, callback) {
-  tests.push({ name, callback });
+function test(name, callback, kind = "behavior") {
+  tests.push({ name, callback, kind });
 }
 
 function compareResumeEvidence(sourceA, sourceB) {
@@ -1634,32 +1657,90 @@ test("new module index exports only the approved core modules", () => {
   );
 });
 
-test("only the four approved repository paths are changed or untracked", () => {
-  assert.deepEqual(getChangedAndUntrackedPaths(), approvedPaths);
-});
+test(
+  closureMode
+    ? "closure mode pins the accepted Core runtime and ancestry"
+    : "only the four approved repository paths are changed or untracked",
+  () => {
+    if (!closureMode) {
+      assert.deepEqual(getChangedAndUntrackedPaths(), approvedPaths);
+      return;
+    }
+
+    execFileSync(
+      "git",
+      ["merge-base", "--is-ancestor", acceptedCoreCommit, "HEAD"],
+      {
+        cwd: repoRoot,
+        stdio: "pipe",
+      },
+    );
+    execFileSync(
+      "git",
+      [
+        "diff",
+        "--exit-code",
+        acceptedCoreCommit,
+        "--",
+        domainPath,
+        repositoryPath,
+        indexPath,
+      ],
+      {
+        cwd: repoRoot,
+        stdio: "pipe",
+      },
+    );
+  },
+  "path-context",
+);
 
 test("preservation boundary excludes UI, routes, packages and frozen systems", () => {
   const changed = getChangedAndUntrackedPaths();
-  const forbiddenPatterns = [
-    /^src\/app\//,
-    /^src\/components\//,
-    /^src\/intelligence\//,
-    /^src\/lib\/storage\//,
-    /^src\/lib\/accountDeletion\//,
-    /^src\/modules\/data-controls\//,
-    /^supabase\//,
-    /^docs\//,
-    /^\.github\//,
-    /^package(?:-lock)?\.json$/,
-    /workspaceResumeRepository/,
-    /activeResumeReportStorage/,
-  ];
+  if (closureMode) {
+    assert.deepEqual(
+      changed.filter((changedPath) =>
+        !closureApprovedPaths.includes(changedPath)
+      ),
+      [],
+    );
+  }
+  const forbiddenPatterns = closureMode
+    ? [
+        /^src\/app\//,
+        /^src\/components\//,
+        /^src\/intelligence\//,
+        /^src\/lib\/storage\//,
+        /^src\/lib\/accountDeletion\//,
+        /^src\/modules\/data-controls\//,
+        /^src\/modules\/resume\/domain\//,
+        /^src\/modules\/resume\/services\//,
+        /^src\/modules\/resume\/index\.ts$/,
+        /^supabase\//,
+        /^package-lock\.json$/,
+        /workspaceResumeRepository/,
+        /activeResumeReportStorage/,
+      ]
+    : [
+        /^src\/app\//,
+        /^src\/components\//,
+        /^src\/intelligence\//,
+        /^src\/lib\/storage\//,
+        /^src\/lib\/accountDeletion\//,
+        /^src\/modules\/data-controls\//,
+        /^supabase\//,
+        /^docs\//,
+        /^\.github\//,
+        /^package(?:-lock)?\.json$/,
+        /workspaceResumeRepository/,
+        /activeResumeReportStorage/,
+      ];
   for (const changedPath of changed) {
     for (const pattern of forbiddenPatterns) {
       assert.doesNotMatch(changedPath, pattern);
     }
   }
-});
+}, "path-context");
 
 test("no UI, URL selection, browser key or comparison persistence is added", () => {
   const newSource = `${domainSource}\n${repositorySource}\n${indexSource}`;
@@ -1692,13 +1773,16 @@ test("package lock and every forbidden tracked path have zero diff", () => {
       stdio: "pipe",
     },
   );
+  const activeApprovedPaths = closureMode
+    ? closureApprovedPaths
+    : approvedPaths;
   assert.deepEqual(
     getChangedAndUntrackedPaths().filter((changedPath) =>
-      !approvedPaths.includes(changedPath)
+      !activeApprovedPaths.includes(changedPath)
     ),
     [],
   );
-});
+}, "path-context");
 
 let passed = 0;
 for (const { name, callback } of tests) {
@@ -1712,7 +1796,11 @@ for (const { name, callback } of tests) {
 }
 
 console.log(
-  `Phase 2A-Core fixtures passed: ${passed}/${tests.length} tests.`,
+  `Phase 2A-Core fixtures (${closureMode ? "closure" : "implementation-time"} mode) passed: ${passed}/${tests.length} tests; ${
+    tests.filter(({ kind }) => kind === "behavior").length
+  } behavioral tests and ${
+    tests.filter(({ kind }) => kind === "path-context").length
+  } path-context tests.`,
 );
 
 function compareWithSkills(sourceASkills, sourceBSkills) {
