@@ -44,7 +44,8 @@ Resume Reality
 | Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
 | Block 7: Beta Launch Readiness | Historical broad public-launch path stopped; Block 7.1 remains complete | Its former Block 7.2 sequencing is superseded as current authority by the Version 2 transition |
-| Phase 1 — Resume Workspace | Complete; Phase 1A–1B local, isolated hosted, and synthetic Preview gates passed; real-user evidence remains pending during controlled early access | Bounded Phase 2 — Resume Progress and Comparison implementation is next under the July 28 amendment; no Production, public-beta, scoring, mission, Active Target, or browser-key authorization |
+| Phase 1 — Resume Workspace | Complete; Phase 1A–1B local, isolated hosted, and synthetic Preview gates passed; real-user evidence remains pending during controlled early access | Phase 2 preserves the separate Workspace, browser-active report, export, and deletion contracts |
+| Phase 2 — Resume Progress and Comparison | Core and UI are accepted and committed locally; Phase 2B is a local closure candidate | Phase 2B is not yet accepted, committed, pushed, independently reviewed, checked, or merged; no hosted, Production, scoring, mission, Active Target, or browser-key authorization |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -72,6 +73,10 @@ The July 28 Phase 1A local gate replayed V1–V8 from empty, matched the catalog
 
 Phase 1B then applied the ACL-normalization migration and V8 exactly once to isolated staging, aligned migration history through V8 with a zero-pending dry run, and passed hosted lint, catalog verification, an 18/18 rollback-contained behavior probe, and protected-Preview target verification. Synthetic signed-in Preview checks preserved the separation among saved history, account Workspace selection, and the browser-active report; the final fresh-browser slice passed 8/8. Temporary credentials were revoked, disposable data returned to zero, Preview protection was restored, and Production was not contacted. See [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md).
 
+Version 2 Phase 2 Core is accepted and committed locally at `02501543fdb39a7ad51d08a29adb15a175844f15`; the accepted UI is committed locally at `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8` on `feature/v2-resume-progress-comparison`. The bounded comparison uses exactly two explicit same-owner saved reports, refetches only that pair, derives sanitized evidence in memory, and creates no score comparison, URL selection state, browser-storage key, comparison persistence, export record, Workspace change, browser-active report change, resume-sync change, or analytics event. See [Version 2 Resume Progress and Comparison Architecture](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md).
+
+Phase 2B adds truthful skill-truncation disclosure, reusable closure fixtures, focused race/cross-browser/accessibility coverage, CI gates, and current architecture/status documentation. It remains a local closure candidate until it is accepted, committed, pushed, independently reviewed, checked, and merged. No hosted PostgREST or real-user comprehension verification has been claimed, controlled-user invitations remain unauthorized, and Phase 3 has not started.
+
 Analytics collection remains disabled. Production rollout has not occurred, and persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
 
 The supplied fresh Preview verification found zero Production-reference hits. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Version 2 Transition Gate](V2_TRANSITION_GATE.md), [Privacy-safe Analytics Collection](ANALYTICS.md), and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
@@ -96,7 +101,7 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 **Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
 
 1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
-2. Begin the bounded Phase 2 — Resume Progress and Comparison repository implementation immediately while preserving the completed Phase 1 — Resume Workspace boundary.
+2. Complete and independently review the bounded local Phase 2B closure candidate while preserving the completed Phase 1 — Resume Workspace boundary. Acceptance, commit, push, checks, and merge remain separate steps.
 3. During controlled early access, review comprehension, repeat use, comparison decision value, score-chasing risk, accessibility, and onboarding confusion; the evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed.
 4. Invite an approximately 20-user controlled cohort only after every applicable Production-readiness gate passes.
 5. Keep public beta, unrestricted acquisition, Production activation, and payments separately gated and unauthorized until their applicable evidence gates explicitly pass.
@@ -120,6 +125,7 @@ Use the evidence relevant to the question instead of one universal ranking:
 - [Version 2 Transition Gate](V2_TRANSITION_GATE.md)
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md)
 - [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md)
+- [Version 2 Resume Progress and Comparison Architecture](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md)
 - [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md)
 - [Scoring System](SCORING_SYSTEM.md)
 - [Mission System](MISSION_SYSTEM.md)

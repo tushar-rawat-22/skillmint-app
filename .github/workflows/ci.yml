@@ -71,6 +71,9 @@ jobs:
       - name: Run launch-hardening fixtures
         run: npm run fixtures:launch-hardening
 
+      - name: Run Resume Comparison fixtures
+        run: npm run fixtures:resume-comparison
+
       - name: Run Resume Workspace Phase 1A fixtures
         run: npm run fixtures:resume-workspace-phase-1a
 
@@ -88,6 +91,9 @@ jobs:
 
       - name: Run Resume Workspace regression
         run: npm run test:e2e:resume-workspace
+
+      - name: Run Resume Comparison browser coverage
+        run: npm run test:e2e:resume-comparison
 
       - name: Verify dependency tree
         run: npm ls --all

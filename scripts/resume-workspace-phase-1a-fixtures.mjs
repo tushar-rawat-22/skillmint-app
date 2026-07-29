@@ -1595,7 +1595,7 @@ test("frozen product and analytics contracts have zero diff and no new taxonomy"
   );
 });
 
-test("package metadata permits only Phase 1A and launch-hardening scripts and lock stays exact", () => {
+test("package metadata permits only Phase 1A, launch-hardening, and Resume Comparison scripts and lock stays exact", () => {
   const currentPackage = JSON.parse(readText("package.json"));
   const baselinePackage = JSON.parse(
     gitShow(`${authorizedBaseline}:package.json`),
@@ -1616,10 +1616,15 @@ test("package metadata permits only Phase 1A and launch-hardening scripts and lo
     [
       "check:secret-paths",
       "fixtures:launch-hardening",
+      "fixtures:resume-comparison",
       "fixtures:resume-workspace-phase-1a",
       "test:e2e:forgot-password",
       "test:e2e:launch-hardening",
       "test:e2e:password-recovery",
+      "test:e2e:resume-comparison",
+      "test:e2e:resume-comparison:firefox",
+      "test:e2e:resume-comparison:race",
+      "test:e2e:resume-comparison:webkit",
       "test:e2e:resume-workspace",
     ],
   );
@@ -1630,6 +1635,10 @@ test("package metadata permits only Phase 1A and launch-hardening scripts and lo
   assert.equal(
     currentPackage.scripts["fixtures:launch-hardening"],
     "node scripts/launch-hardening-fixtures.mjs",
+  );
+  assert.equal(
+    currentPackage.scripts["fixtures:resume-comparison"],
+    "node scripts/v2-resume-comparison-phase-2a-core-fixtures.mjs --closure",
   );
   assert.equal(
     currentPackage.scripts["fixtures:resume-workspace-phase-1a"],
@@ -1646,6 +1655,22 @@ test("package metadata permits only Phase 1A and launch-hardening scripts and lo
   assert.equal(
     currentPackage.scripts["test:e2e:password-recovery"],
     "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @password-recovery --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:resume-comparison"],
+    "playwright test e2e/resume-comparison.spec.ts --project=chromium --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:resume-comparison:firefox"],
+    "playwright test e2e/resume-comparison.spec.ts --project=firefox --grep @critical --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:resume-comparison:race"],
+    "playwright test e2e/resume-comparison.spec.ts --project=chromium --grep @race --repeat-each=3 --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:resume-comparison:webkit"],
+    "playwright test e2e/resume-comparison.spec.ts --project=webkit --grep @critical --workers=1 --retries=0",
   );
   assert.equal(
     currentPackage.scripts["test:e2e:resume-workspace"],
