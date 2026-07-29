@@ -25,6 +25,7 @@ import {
   premiumSecondaryCta,
   premiumSurface,
 } from "@/components/ui/premium";
+import { ROUTES } from "@/constants/routes";
 import type { ResumeAnalysisResult } from "@/lib/resume/analyzeResume";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
@@ -1409,15 +1410,24 @@ function SavedResumeAnalysesSection({
           </p>
         </div>
 
-        {showRestoreLatestAction && canRestoreLatest && (
-          <button
-            type="button"
-            onClick={onRestoreLatest}
-            className={premiumPrimaryCta}
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href={ROUTES.RESUME_COMPARE}
+            className={premiumSecondaryCta}
           >
-            Restore latest saved report
-          </button>
-        )}
+            Compare saved reports
+          </Link>
+
+          {showRestoreLatestAction && canRestoreLatest && (
+            <button
+              type="button"
+              onClick={onRestoreLatest}
+              className={premiumPrimaryCta}
+            >
+              Restore latest saved report
+            </button>
+          )}
+        </div>
       </div>
 
       <WorkspaceResumeStatus

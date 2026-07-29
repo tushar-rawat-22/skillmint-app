@@ -17,6 +17,8 @@ export const ROUTES = {
 
   RESUME: "/resume",
 
+  RESUME_COMPARE: "/resume/compare",
+
   UPLOAD: "/upload",
 
   ATS: "/ats",

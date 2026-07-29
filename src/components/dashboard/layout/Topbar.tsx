@@ -6,6 +6,7 @@ const routeLabels: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/setup": "Career Setup",
   "/resume": "Resume Intelligence",
+  "/resume/compare": "Resume Comparison",
   "/ats": "ATS Match",
   "/roadmap": "Career Roadmap",
   "/profile": "Profile",
