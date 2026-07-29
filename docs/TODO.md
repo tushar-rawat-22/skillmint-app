@@ -11,15 +11,16 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - Block 6 engineering implementation and isolated verification are complete.
 - The fail-closed application code deployed automatically from `main`; Production V5–V7 remain unapplied and analytics remains disabled.
 - The isolated hosted project contains no Production copy, has V1–V8 applied, and passed migration, ACL, catalog, and live-security verification; V7 repaired inherited `service_role` raw SELECT access and the later ACL-normalization migration preceded V8.
-- Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
+- Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target. During that July 27 verification, the then-live deployment was not changed and the Production Supabase database was not contacted.
 - Block 7.1 resume owner isolation is complete. The former broad Beta v1 public-launch path and its Block 7.2 sequencing are superseded as current authority by the Version 2 transition.
 - Phase 1 — Resume Workspace is complete. Its Phase 1A and Phase 1B records remain historical implementation and verification evidence. V8 remains unapplied to Production.
-- Phase 2 Core is accepted and committed locally at `02501543fdb39a7ad51d08a29adb15a175844f15`; the accepted UI is committed locally at `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8`. Phase 2B is a local closure candidate only, and Phase 3 has not started.
-- Phase 2B still requires acceptance, commit, push, independent review, checks, and merge. No hosted PostgREST, Production, or real-user comprehension verification is claimed.
+- Phase 2 engineering is complete and merged through PR #26 at `17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433`; the reviewed feature head was `47f30a6300375ebdfeb48109a9ad6d82c3a67e39`.
+- Pull-request CI and main push CI run `30469897446` passed. Vercel deployed the resulting `main` application, the general read-only Production smoke passed, and `/resume/compare` returned HTTP 200 with the expected visible heading.
+- Authenticated Production comparison was not performed, hosted Production PostgREST pair and pagination behavior was not verified, and real-user comprehension and decision-value evidence remains pending. Phase 3 has not started.
 - Real-user comprehension, repeat-use, comparison-value, score-chasing, accessibility, and onboarding evidence remains pending and is required during controlled early access.
 - A controlled hosted Production launch is targeted within 15 days, but is not guaranteed and does not prove unlimited scale, permanent Production readiness, or market validation.
 - Public unrestricted acquisition is not authorized.
-- Production activation and payments remain behind separate gates. No Production rollout follows from this documentation change.
+- Controlled-user activation, Production database rollout, and payments remain behind separate gates. No further Production action follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
 - Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
 
@@ -56,8 +57,10 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [x] Complete [Phase 1B](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md) isolated-staging migration/catalog/behavior verification, protected-Preview target proof, synthetic signed-in flow checks, and credential/data cleanup without contacting Production.
 - [x] Treat Phase 1 — Resume Workspace as complete.
 - [x] Commit the accepted Phase 2 Core and UI locally with exactly two explicit same-owner saved reports, deterministic sanitized evidence, source-deletion invalidation, account-switch and stale-result safety, and no scoring or persistent comparison history.
-- [ ] Accept, commit, push, independently review, check, and merge the bounded [Phase 2B local closure candidate](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md). Do not treat the candidate as merged or hosted evidence.
-- [ ] Add only the minimum Phase 3 — Explainability needed to make comparison truthful and useful.
+- [x] Accept, commit, push, independently review, check, and merge bounded Phase 2 through [PR #26](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md) at `17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433`.
+- [x] Record successful main CI run `30469897446`, the general read-only Production smoke, and direct `/resume/compare` HTTP 200 verification with the expected visible heading.
+- [ ] Perform a read-only Phase 3 — Explainability architecture inspection before authorizing implementation.
+- [ ] Implement only the minimum separately authorized Phase 3 — Explainability needed to make comparison truthful and useful. Phase 3 has not started.
 - [ ] Add only the minimum Phase 4 — Guided execution and onboarding work needed for the controlled launch.
 - [ ] During controlled early access, evaluate comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. Use the evidence to preserve, revise, defer, or remove Phase 1 or Phase 2.
 - [ ] Keep unrelated capability expansion, unrestricted acquisition, payments, subscriptions, AI chat, résumé rewriting, auto-apply, job scraping, recruiter tools, and institution dashboards deferred.
@@ -73,7 +76,7 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [ ] Reserve one usable domain early after selection and review; do not connect it to Production yet.
 - [ ] During the separately authorized launch-integration window, connect the selected domain and coordinate DNS, Vercel assignment, Supabase URLs, authentication and password-recovery URLs, and SMTP.
 
-`SkillMint` remains the internal working name. The selected public name, backup, and domain are `Pending`; screening runs in parallel with Phase 2. Reservation does not activate the domain. Domain purchase, DNS, Vercel assignment, Supabase URL changes, and SMTP configuration require separate explicit execution approval. A public-brand change must not rename repository, package, storage, schema, migration, function, fixture, or environment-variable identifiers. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
+`SkillMint` remains the internal working name. The selected public name, backup, and domain are `Pending`; screening continues separately after Phase 2. Reservation does not activate the domain. Domain purchase, DNS, Vercel assignment, Supabase URL changes, and SMTP configuration require separate explicit execution approval. A public-brand change must not rename repository, package, storage, schema, migration, function, fixture, or environment-variable identifiers. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
 ## 6. Historical minimal public-brand foundation
 

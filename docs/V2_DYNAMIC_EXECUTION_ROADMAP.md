@@ -4,13 +4,13 @@ This is a company-building sequence, not a feature quota. A phase may be preserv
 
 ## Operating rules
 
-Work proceeds through the four named product phases below. Brand/domain screening and separately authorized launch-readiness work may run in parallel with Phase 2, but broad backend work, UI redesign, branding execution, AI assistant, applications, interview preparation, payments, and integrations remain outside the launch scope. A proposed exception needs a written dependency, an owner, a test plan, and a reason it cannot wait. Each phase uses staged/non-production evidence until a separately authorized Production-readiness gate permits controlled Production work.
+Work proceeds through the four named product phases below. Phase 2 is complete at the engineering/deployment level; brand/domain screening and separately authorized launch-readiness work remain separate. Broad backend work, UI redesign, branding execution, AI assistant, applications, interview preparation, payments, and integrations remain outside the launch scope. A proposed exception needs a written dependency, an owner, a test plan, and a reason it cannot wait. The Phase 2 application deployment and read-only route verification do not authorize authenticated Production data-flow work or controlled invitations.
 
 Each phase uses the same decision rule: expand only when the evidence demonstrates repeatable value and safe operation; preserve when the smallest solution is working but evidence is incomplete; revise when users can articulate a correctable gap; defer when value or capacity is unproved; remove when the problem is not important enough to justify its privacy, support, or maintenance cost. On a failed assumption, stop new scope, preserve user data and frozen behavior, record the finding, and return to the smallest preceding usable state.
 
 ## Current 15-day controlled-launch sequence
 
-SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete. Phase 2 Core and UI are accepted and committed locally, while Phase 2B remains a local closure candidate pending acceptance, commit, push, independent review, checks, and merge. Phase 3 has not started. In parallel, screen the pending public brand and domain and prepare only separately authorized Production-readiness work.
+SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete, and Phase 2 is operationally closed for engineering and deployment after merge through PR #26. Phase 3 is the next bounded phase, but it has not started; its next action is a read-only architecture inspection before implementation. Separately, screen the pending public brand and domain and prepare only authorized Production-readiness work.
 
 Real-user evidence has not been completed and remains required during controlled early access. It must assess comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. That evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed; it is not market validation.
 
@@ -46,15 +46,15 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Tests.** Deterministic schema/RLS/repository/export/deletion fixtures; browser tests for explicit selection, clearing, cross-device offer, Account A/B switching, stale operations, selected-analysis deletion, browser reset, and accessibility.
 
-**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied, so Phase 1 is complete and bounded Phase 2 work has begun locally. During controlled early access, stop or revise if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Evidence may still cause Phase 1 to be preserved, revised, deferred, or removed. **Contingency:** retain saved history plus browser-local restore with no account selection.
+**Stop condition and decision.** The isolated same-owner enforcement and synthetic Preview gates are satisfied, so Phase 1 is complete; Phase 2 subsequently reached engineering/deployment closure. During controlled early access, stop or revise if users misread the selection as a score change, a resume editor, or automatic cross-device dashboard replacement. Evidence may still cause Phase 1 to be preserved, revised, deferred, or removed. **Contingency:** retain saved history plus browser-local restore with no account selection.
 
-## 2. Phase 2 — Resume Progress and Comparison — local closure candidate
+## 2. Phase 2 — Resume Progress and Comparison — engineering/deployment closed
 
 **Objective.** Help users compare truthful changes between selected saved analyses and understand progress without pretending that scores are a hiring forecast.
 
-**Current evidence.** The accepted Core is committed locally at `02501543fdb39a7ad51d08a29adb15a175844f15`, and the accepted UI is committed locally at `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8`. Phase 2B is only a local closure candidate until it is accepted, committed, pushed, independently reviewed, checked, and merged. There is no hosted PostgREST, Production, or real-user comprehension claim. See [Version 2 Resume Progress and Comparison Architecture](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md).
+**Current evidence.** Core commit `02501543fdb39a7ad51d08a29adb15a175844f15`, UI commit `4f777b0e149bb148319c4c38cd1e9cb51d91e4e8`, and reviewed feature head `47f30a6300375ebdfeb48109a9ad6d82c3a67e39` merged through PR #26 at `17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433`. Pull-request CI and main CI run `30469897446` passed. Vercel deployed the resulting `main` application, the general read-only Production smoke passed, and `/resume/compare` returned HTTP 200 with the expected visible heading. This is engineering/deployment closure, not authenticated Production data-flow or user validation. Authenticated Production comparison was not performed, hosted Production PostgREST pair and pagination behavior was not verified, and real-user comprehension and decision-value evidence remains pending. See [Version 2 Resume Progress and Comparison Architecture](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md).
 
-**Evidence required.** During controlled early access, establish whether people use comparison to make a useful improvement decision rather than merely chase a number, and whether comparison labels are understood. This evidence may revise, defer, or remove Phase 2, but it no longer blocks implementation from starting.
+**Evidence required.** During controlled early access, establish whether people use comparison to make a useful improvement decision rather than merely chase a number, and whether comparison labels are understood. This evidence may revise, defer, or remove Phase 2, but its absence does not reopen the engineering/deployment closure.
 
 **Smallest complete solution.** A bounded, side-by-side comparison of exactly two explicitly selected saved reports owned by the same account, derived deterministically from stored results, with saved-time context, truthful missing-version metadata, and evidence-first explanations.
 
@@ -71,6 +71,8 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 ## 3. Phase 3 — Explainability — not started
 
 **Objective.** Make existing deterministic signals easier to interpret and act on without changing frozen math or collapsing distinct concepts.
+
+**Next action.** Perform a read-only architecture inspection and record the bounded explainability opportunity before seeking implementation authorization. Phase 3 implementation has not started.
 
 **Evidence required.** Observe recurring comprehension failures in Phases 1–2 and test that revised explanations improve correct interpretation of score, proof, role fit, and one-JD match.
 
@@ -94,7 +96,7 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Smallest complete solution.** A bounded guided path, honest processing states, and dashboard ordering that surfaces Resume Reality, current context, and one next action.
 
-**Dependencies and non-goals.** Depends on established Phase 1–3 language and existing accessibility/responsive foundations. It is not a redesign, gamification layer, AI coach, new backend program, applications tracker, interview prep suite, or payment funnel.
+**Dependencies and non-goals.** Depends on completed Phase 1–2 behavior, any separately authorized Phase 3 language, and existing accessibility/responsive foundations. Phase 4 remains separately gated. It is not a redesign, gamification layer, AI coach, new backend program, applications tracker, interview prep suite, or payment funnel.
 
 **Security and ownership checks.** Guided state stays owner-partitioned where personal; processing state does not reveal another account's data or publish stale work after a switch.
 
@@ -130,7 +132,7 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Smallest complete solution.** Keep `SkillMint` as the internal working name while the final public brand and domain remain pending. After founder selection and review, reserve one usable domain; connect it to Production only during the authorized launch-integration window. Internal identifiers remain unchanged.
 
-**Dependencies and non-goals.** Screening may run with Phase 2. Domain purchase, DNS, Vercel assignment, Supabase URL changes, SMTP configuration, authentication/origin changes, deployment, and Production configuration require separate explicit execution approval. No repository, package, storage, schema, migration, function, fixture, or environment-variable identifier is renamed merely because the public brand changes. The deliberate Version 2 UI and Information Architecture Foundation is not part of public-brand work.
+**Dependencies and non-goals.** Screening may continue separately after Phase 2. Domain purchase, DNS, Vercel assignment, Supabase URL changes, SMTP configuration, authentication/origin changes, deployment, and Production configuration require separate explicit execution approval. No repository, package, storage, schema, migration, function, fixture, or environment-variable identifier is renamed merely because the public brand changes. The deliberate Version 2 UI and Information Architecture Foundation is not part of public-brand work.
 
 **Security and ownership checks.** Preserve storage keys, cookies/session assumptions, trusted origins, identity copy, and account-deletion behavior; review phishing/confusion risk.
 
