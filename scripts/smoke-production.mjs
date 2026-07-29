@@ -97,18 +97,6 @@ async function checkHealthConfig() {
       return;
     }
 
-    if (!payload.supabaseConfigured) {
-      failures += 1;
-      const missingEnvVars = payload.missingEnvVars.length
-        ? payload.missingEnvVars.join(", ")
-        : "unknown";
-
-      console.error(
-        `FAIL ${route}: Supabase env is not configured. Missing: ${missingEnvVars}`,
-      );
-      return;
-    }
-
     console.log(`PASS ${route}`);
   } catch (error) {
     failures += 1;
@@ -121,9 +109,8 @@ async function checkHealthConfig() {
 function isHealthConfigPayload(value) {
   return Boolean(value) &&
     typeof value === "object" &&
-    typeof value.supabaseConfigured === "boolean" &&
-    Array.isArray(value.missingEnvVars) &&
-    value.missingEnvVars.every((item) => typeof item === "string");
+    Object.keys(value).length === 1 &&
+    value.status === "healthy";
 }
 
 if (failures > 0) {

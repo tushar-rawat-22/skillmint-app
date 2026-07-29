@@ -112,10 +112,52 @@ Migration repair changes history only and executes no SQL. A Production dry-run 
 - Verify server-only variables are absent from browser/static output.
 - Run production smoke tests only after the environment and schema gates pass.
 
+## Repository launch-security baseline
+
+Resume extraction accepts PDF, DOCX, and TXT files up to exactly 4 MiB. The
+browser and server share that limit and the finite public error contract. The
+server checks filename, declared type, file structure, extracted-text size, and
+bounded DOCX archive metadata before analysis. DOCX inspection allows at most
+256 entries, 4 MiB per expanded entry, 12 MiB total expansion, and a 100:1
+entry compression ratio before Mammoth runs.
+
+It also requires central and local ZIP metadata to agree, accepts only reviewed
+flags and Microsoft padding, validates exact data descriptors, and rejects
+overlapping entry ranges, unsupported extras, or data entering the central
+directory. Extraction successes and typed failures use explicit no-store
+response caching. Scanned or image-only PDFs fail with
+`scanned_pdf_unsupported` and HTTP 422; warning or OCR guidance is never
+returned as successful resume text. These bounds reduce parser and archive
+exposure but do not eliminate every parser vulnerability.
+
+Next.js serves a static security-header baseline with CSP frame protection,
+`nosniff`, a strict-origin referrer policy, a bounded permissions policy, and
+`X-Frame-Options: DENY`. The CSP derives the configured Supabase HTTP and
+WebSocket origins rather than hardcoding a project. The current static,
+non-nonce policy includes `unsafe-inline` for scripts and styles; a future
+nonce- or hash-based architecture may remove that allowance, but this launch
+hardening change does not implement one. `unsafe-eval` is development-only.
+This static policy is a baseline, not a complete browser-security programme.
+
+`/api/health/config` returns only `{"status":"healthy"}` with HTTP 200 or
+`{"status":"degraded"}` with HTTP 503 and explicit no-store caching. It does
+not expose environment-variable names, values, project identity, or internal
+configuration structure.
+
+The extraction route rejects explicit cross-origin browser requests using the
+canonical request URL and a strictly parsed ordinary Host fallback. Forwarded
+host values are not origin authority. This is browser-request hardening, not
+authentication, authorization, or a WAF. The repository does not provide
+durable distributed rate limiting or a Production WAF; hosted WAF and
+rate-limit controls remain separately gated and unconfigured. Password
+recovery can pass an opaque CAPTCHA token when a future verified integration
+provides one; no CAPTCHA provider is configured or active.
+
 ## Production smoke checklist
 
 - Run `npm run smoke:production` against the explicitly approved deployment.
-- Verify `/api/health/config` reports configuration status without values.
+- Verify `/api/health/config` reports only the coarse healthy status and uses
+  no-store caching.
 - Verify landing, signup, login, dashboard, profile, setup, resume, ATS, roadmap, feedback, and mobile navigation paths.
 - Verify signed-out fallback behavior remains truthful.
 - Verify safe deletion-route failures before any authorized destructive test.

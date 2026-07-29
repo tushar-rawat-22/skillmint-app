@@ -23,7 +23,7 @@ export default function DropZone({
         </h2>
 
         <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600">
-          Choose a PDF, DOCX, or TXT file up to 5MB. Full extracted text is
+          Choose a PDF, DOCX, or TXT file up to 4 MiB. Full extracted text is
           used for analysis, but raw text stays hidden by default.
         </p>
 

@@ -43,6 +43,7 @@ export class SyntheticProvider {
   readonly unexpectedRequests: string[] = [];
   loginMode: ProviderMode = "success";
   recoveryExchangeMode: ProviderMode = "success";
+  passwordResetMode: ProviderMode = "success";
   passwordUpdateMode: ProviderMode = "success";
   countMode: "success" | "reject" = "success";
   feedbackMode: ProviderMode = "success";
@@ -52,6 +53,7 @@ export class SyntheticProvider {
   private failures = new Map<string, number>();
   private authUserOverrides: string[] = [];
   private usedRecoveryCodes = new Set<string>();
+  private passwordResetBodies: Record<string, unknown>[] = [];
 
   async install(context: BrowserContext) {
     await context.route("**/*", async (route) => {
@@ -81,6 +83,17 @@ export class SyntheticProvider {
 
   overrideNextAuthUser(accountId: string) {
     this.authUserOverrides.push(accountId);
+  }
+
+  latestPasswordResetBody(): Record<string, unknown> | null {
+    return this.passwordResetBodies.at(-1) ?? null;
+  }
+
+  latestPasswordResetUrl(): URL | null {
+    const record = this.requests.findLast(
+      (request) => request.kind === "auth:password-reset",
+    );
+    return record ? new URL(record.url) : null;
   }
 
   count(kind: string, accountId?: string | null): number {
@@ -190,6 +203,40 @@ export class SyntheticProvider {
       }
 
       await json(route, 200, createSession(account));
+      return;
+    }
+
+    if (
+      url.pathname === "/auth/v1/recover" &&
+      request.method() === "POST"
+    ) {
+      const body = parseJson(request.postData());
+      const kind = "auth:password-reset";
+      this.passwordResetBodies.push(body);
+      this.record(kind, null, url);
+      await this.releaseGate(kind);
+
+      if (this.passwordResetMode === "abort") {
+        await route.abort("connectionfailed");
+        return;
+      }
+
+      if (this.passwordResetMode === "reject") {
+        await json(route, 503, {
+          error_code: "provider_failure",
+          msg: "RAW_SYNTHETIC_PASSWORD_RESET_SECRET",
+        });
+        return;
+      }
+
+      if (this.passwordResetMode === "malformed") {
+        await json(route, 200, {
+          unexpected: "response",
+        });
+        return;
+      }
+
+      await json(route, 200, {});
       return;
     }
 

@@ -14,6 +14,10 @@ import {
   analyzeResume as runResumeAnalysis,
   type ResumeAnalysisResult,
 } from "@/lib/resume/analyzeResume";
+import {
+  RESUME_EXTRACTION_ERRORS,
+  ResumeExtractionError,
+} from "@/lib/resume/resumeUploadContract";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
 import {
   saveCurrentUserResumeAnalysis,
@@ -116,9 +120,7 @@ export default function UploadPage() {
       }));
 
       setError(
-        error instanceof Error
-          ? error.message
-          : "Resume analysis failed. Please try again.",
+        getResumeAnalysisPublicError(error),
       );
 
       setLoading(false);
@@ -176,6 +178,21 @@ export default function UploadPage() {
       <AnalysisProgress loading={loading} />
     </main>
   );
+}
+
+function getResumeAnalysisPublicError(error: unknown): string {
+  if (error instanceof ResumeExtractionError) {
+    return RESUME_EXTRACTION_ERRORS[error.code].message;
+  }
+
+  if (
+    error instanceof Error &&
+    error.message === STALE_RESUME_OPERATION_MESSAGE
+  ) {
+    return STALE_RESUME_OPERATION_MESSAGE;
+  }
+
+  return "Resume analysis failed. Please try again.";
 }
 
 async function saveResumeAnalysisForOperation(
