@@ -29,6 +29,10 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "synthetic-playwright-publishable-key",
       NEXT_PUBLIC_APP_URL: appOrigin,
       NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED: "true",
+      SKILLMINT_PUBLIC_SIGNUP_ENABLED:
+        process.env.SKILLMINT_E2E_PUBLIC_SIGNUP_ENABLED === "true"
+          ? "true"
+          : "",
     },
   },
   projects: [

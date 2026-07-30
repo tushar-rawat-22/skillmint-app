@@ -54,6 +54,7 @@ The public analytics flag is build-time configuration. It must remain absent or 
 SUPABASE_SECRET_KEY=
 ANALYTICS_COLLECTION_ENABLED=
 ANALYTICS_FOUNDER_USER_ID=
+SKILLMINT_PUBLIC_SIGNUP_ENABLED=
 ```
 
 `SUPABASE_SECRET_KEY` is server-only. It must never use a `NEXT_PUBLIC_` prefix, enter browser bundles, appear in logs or test artifacts, or be exposed to client code. It is required only by trusted server functionality that needs administrative authority, including the protected account-deletion route. Scope and protect it independently for each deployment environment.
@@ -61,6 +62,14 @@ ANALYTICS_FOUNDER_USER_ID=
 Do not configure the account-deletion route in a Preview environment unless that preview is protected, explicitly authorized, and connected to an appropriately migrated nonproduction Supabase project.
 
 `ANALYTICS_COLLECTION_ENABLED` controls server persistence and defaults off. `ANALYTICS_FOUNDER_USER_ID` is authorization configuration for the protected founder route. Both are server-only, independently scoped, and forbidden from browser output.
+
+## Controlled registration boundary
+
+`SKILLMINT_PUBLIC_SIGNUP_ENABLED` is a server-only application setting. Public signup defaults closed and is enabled only when the trimmed, case-insensitive value is exactly `true`. It must not use a `NEXT_PUBLIC_` prefix or enter browser bundles. Existing-user login remains available in either state. The public routes remain statically generated, so a registration-setting change takes effect only through a new authorized deployment.
+
+This gate removes SkillMint's active signup UI and guards the shared auth submission path. It is not an invitation system, an authorization boundary, or a replacement for Supabase Auth's hosted **Allow new users to sign up** control. That provider-level setting is unverified and unchanged by Phase 5A and must be verified before controlled access is authorized. Existing-user login must remain enabled at the provider.
+
+Phase 5A engineering implementation is complete. Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
 
 ## Operator-only database configuration
 

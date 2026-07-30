@@ -2,7 +2,13 @@ import Link from "next/link";
 
 import { ROUTES } from "@/constants/routes";
 
-export default function Hero() {
+type HeroProps = {
+  publicSignupEnabled: boolean;
+};
+
+export default function Hero({
+  publicSignupEnabled,
+}: HeroProps) {
   return (
     <section className="relative overflow-hidden border-b border-slate-200 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.14),transparent_38%),linear-gradient(180deg,#ffffff,#f7f5ef)]">
       <div className="mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center md:py-32">
@@ -52,7 +58,7 @@ export default function Hero() {
             href={ROUTES.SIGNUP}
             className="rounded-xl bg-emerald-600 px-8 py-4 font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
           >
-            Start Free
+            {publicSignupEnabled ? "Create account" : "View early access"}
           </Link>
 
           <a

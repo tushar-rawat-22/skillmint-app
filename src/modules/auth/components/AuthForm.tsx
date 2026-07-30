@@ -10,12 +10,19 @@ import {
 } from "@/components/ui/premium";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
+import {
+  submitAuthCredentials,
+} from "@/modules/auth/services/authCredentials";
 
-type AuthFormProps = {
-  mode: "login" | "signup";
-};
+type AuthFormProps =
+  | { mode: "login" }
+  | {
+      mode: "signup";
+      publicSignupEnabled: boolean;
+    };
 
-export default function AuthForm({ mode }: AuthFormProps) {
+export default function AuthForm(props: AuthFormProps) {
+  const { mode } = props;
   const router = useRouter();
   const configStatus = useMemo(() => getSupabaseConfigStatus(), []);
   const [email, setEmail] = useState("");
@@ -26,6 +33,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (
+      mode === "signup" &&
+      props.publicSignupEnabled !== true
+    ) {
+      setError("Account creation is currently closed.");
+      setMessage("");
+      return;
+    }
 
     const validationError = getValidationError(email, password, mode);
 
@@ -47,35 +63,40 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setError("");
     setMessage("");
 
-    try {
-      if (mode === "login") {
-        const { error: signInError } =
-          await supabase.auth.signInWithPassword({
-            email: email.trim(),
+    const result = await submitAuthCredentials(
+      supabase,
+      mode === "login"
+        ? { mode, email, password }
+        : {
+            mode,
+            email,
             password,
-          });
+            publicSignupEnabled: props.publicSignupEnabled,
+          },
+    );
 
-        if (signInError) {
-          setError("Login could not be completed. Please try again.");
-          return;
-        }
+    try {
+      if (result.status === "signup_disabled") {
+        setError("Account creation is currently closed.");
+        return;
+      }
 
+      if (result.status === "failure") {
+        setError(
+          mode === "login"
+            ? "Login could not be completed. Please try again."
+            : "Account creation could not be completed. Please try again.",
+        );
+        return;
+      }
+
+      if (mode === "login") {
         router.push("/dashboard");
         router.refresh();
         return;
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-      });
-
-      if (signUpError) {
-        setError("Account creation could not be completed. Please try again.");
-        return;
-      }
-
-      if (data.session) {
+      if (result.sessionCreated) {
         router.push("/settings/data?import=1");
         router.refresh();
         return;
@@ -84,15 +105,26 @@ export default function AuthForm({ mode }: AuthFormProps) {
       setMessage(
         "Account created. Check your email if confirmation is required, then use Data & privacy to import any anonymous browser workspace.",
       );
-    } catch {
-      setError(
-        mode === "login"
-          ? "Login could not be completed. Please try again."
-          : "Account creation could not be completed. Please try again.",
-      );
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (
+    mode === "signup" &&
+    props.publicSignupEnabled !== true
+  ) {
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+        <h2 className="text-xl font-bold text-slate-950">
+          Account creation is currently closed
+        </h2>
+
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Existing users can continue to log in.
+        </p>
+      </section>
+    );
   }
 
   if (!configStatus.isConfigured) {

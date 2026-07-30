@@ -89,7 +89,7 @@ export default function AuthStatusCard() {
           href="/signup"
           className={premiumSecondaryCta}
         >
-          Create account
+          View early access
         </Link>
       </div>
     </article>

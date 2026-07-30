@@ -9,6 +9,7 @@ import {
   premiumSurface,
 } from "@/components/ui/premium";
 import { getPrivacyContact } from "@/config/privacyContact";
+import { getPublicSignupConfiguration } from "@/config/publicSignup";
 
 const sections = [
   {
@@ -50,10 +51,11 @@ const sections = [
 
 export default function PrivacyPage() {
   const privacyContact = getPrivacyContact();
+  const { enabled } = getPublicSignupConfiguration();
 
   return (
     <>
-      <Navbar />
+      <Navbar publicSignupEnabled={enabled} />
 
       <main className="bg-[#f7f5ef] px-4 py-10 text-slate-950 md:px-8">
         <div className={premiumPageStack}>

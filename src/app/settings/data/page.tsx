@@ -1301,7 +1301,7 @@ export default function DataSettingsPage() {
                 href="/signup"
                 className={premiumSecondaryCta}
               >
-                Create account
+                View early access
               </Link>
             </div>
           )}

@@ -66,16 +66,16 @@ export function buildOnboardingSteps(
     },
     {
       id: "create-account",
-      title: "Create account and sync data",
+      title: "Account access and data sync",
       description:
-        "Keep your resume analyses, job matches, and roadmap available across sessions.",
+        "Existing accounts can keep resume analyses, job matches, and roadmap available across sessions.",
       href: progress.isSignedIn ? "/settings" : "/signup",
       status: progress.isSignedIn
         ? "complete"
         : progress.isSupabaseConfigured
           ? "active"
           : "locked",
-      cta: progress.isSignedIn ? "View sync status" : "Create account",
+      cta: progress.isSignedIn ? "View sync status" : "View early access",
     },
   ];
 }
