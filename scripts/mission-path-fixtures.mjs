@@ -284,6 +284,7 @@ assertDoneStatusDoesNotChangeScores();
 assertAppliedContextEvidenceDetection();
 assertEvidenceCanBeDetectedAfterReanalysis();
 assertNoBannedWording();
+assertDashboardReadinessProjectionRemoved();
 
 console.log("Mission path fixtures passed.");
 console.log(
@@ -676,6 +677,81 @@ function assertNoBannedWording() {
     !/Best Match|verified proof|Proof verified|guaranteed job|guaranteed placement|job ready|hireable|placement chance|Score boosted|boosted because mission/i
       .test(combinedText),
     "Mission/path output should avoid banned overclaiming language.",
+  );
+}
+
+function assertDashboardReadinessProjectionRemoved() {
+  const dashboardPagePath = path.join(
+    srcRoot,
+    "app/dashboard/page.tsx",
+  );
+  const visualsIndexPath = path.join(
+    srcRoot,
+    "components/dashboard/visuals/index.ts",
+  );
+  const readinessTrendPath = path.join(
+    srcRoot,
+    "components/dashboard/visuals/ReadinessTrend.tsx",
+  );
+  const dashboardComponentsRoot = path.join(
+    srcRoot,
+    "components/dashboard",
+  );
+  const dashboardPageSource = fs.readFileSync(
+    dashboardPagePath,
+    "utf8",
+  );
+  const visualsIndexSource = fs.readFileSync(
+    visualsIndexPath,
+    "utf8",
+  );
+  const dashboardProjectionSource = [
+    dashboardPagePath,
+    ...fs.readdirSync(dashboardComponentsRoot, {
+      recursive: true,
+    })
+      .filter((relativePath) =>
+        typeof relativePath === "string" &&
+        /\.(?:ts|tsx)$/.test(relativePath)
+      )
+      .map((relativePath) =>
+        path.join(dashboardComponentsRoot, relativePath)
+      ),
+  ]
+    .map((sourcePath) => fs.readFileSync(sourcePath, "utf8"))
+    .join("\n");
+
+  assert(
+    !fs.existsSync(readinessTrendPath),
+    "ReadinessTrend.tsx should not exist.",
+  );
+  assert(
+    !/\bReadinessTrend\b/.test(dashboardPageSource),
+    "Dashboard should not import or render ReadinessTrend.",
+  );
+  assert(
+    !/\bReadinessTrend\b/.test(visualsIndexSource),
+    "Dashboard visuals should not export ReadinessTrend.",
+  );
+  assert(
+    !/Projected Readiness Path/i.test(dashboardProjectionSource),
+    "Dashboard product code should not contain Projected Readiness Path.",
+  );
+  assert(
+    !/\bbuildProjectedScores\b|\bprojectedScores\b/.test(
+      dashboardProjectionSource,
+    ),
+    "Dashboard product code should not derive future Career IQ values.",
+  );
+  assert(
+    !/\b(?:30d|60d|90d)\b/.test(dashboardProjectionSource),
+    "Dashboard product code should not tie Career IQ to elapsed-time labels.",
+  );
+  assert(
+    !/mission[\s\S]{0,120}(?:score\s*[+*]|elapsed|time step)/i.test(
+      dashboardProjectionSource,
+    ),
+    "Dashboard product code should not derive numeric Career IQ from mission completion or elapsed time.",
   );
 }
 
