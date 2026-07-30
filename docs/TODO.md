@@ -16,11 +16,14 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - Phase 1 — Resume Workspace is complete. Its Phase 1A and Phase 1B records remain historical implementation and verification evidence. V8 remains unapplied to Production.
 - Phase 2 engineering is complete and merged through PR #26 at `17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433`; the reviewed feature head was `47f30a6300375ebdfeb48109a9ad6d82c3a67e39`.
 - Pull-request CI and main push CI run `30469897446` passed. Vercel deployed the resulting `main` application, the general read-only Production smoke passed, and `/resume/compare` returned HTTP 200 with the expected visible heading.
-- Authenticated Production comparison was not performed, hosted Production PostgREST pair and pagination behavior was not verified, and real-user comprehension and decision-value evidence remains pending. Phase 3 has not started.
+- Authenticated Production comparison was not performed, hosted Production PostgREST pair and pagination behavior was not verified, and real-user comprehension and decision-value evidence remains pending.
+- The read-only explainability architecture inspection completed without repository changes and returned `IMPLEMENT_A_BOUNDED_SLICE`. The bounded repair removed the unsupported numeric “Projected Readiness Path” through PR #28 at merge commit `2f443d4c595e01523015aae3b9b2072eebfba9c6`; no replacement forecast or score estimate was added.
+- Initial pull-request CI run `30513546806` exposed a stale protected-fixture hash, and the follow-up changed only that exact hash pin. Replacement pull-request CI run `30514124663` and main push CI run `30514466459` passed, Vercel reported a successful Production deployment, the general read-only Production smoke passed, and the feature branch was removed locally and remotely.
+- Broad Phase 3 explainability expansion is deferred pending demonstrated recurring comprehension evidence. Phase 4 has not started and remains separately gated.
 - Real-user comprehension, repeat-use, comparison-value, score-chasing, accessibility, and onboarding evidence remains pending and is required during controlled early access.
 - A controlled hosted Production launch is targeted within 15 days, but is not guaranteed and does not prove unlimited scale, permanent Production readiness, or market validation.
 - Public unrestricted acquisition is not authorized.
-- Controlled-user activation, Production database rollout, and payments remain behind separate gates. No further Production action follows from this documentation change.
+- Controlled-user invitations remain unauthorized, Production migrations remain unauthorized, and payments remain behind separate gates. No further Production action follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
 - Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
 
@@ -59,8 +62,10 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [x] Commit the accepted Phase 2 Core and UI locally with exactly two explicit same-owner saved reports, deterministic sanitized evidence, source-deletion invalidation, account-switch and stale-result safety, and no scoring or persistent comparison history.
 - [x] Accept, commit, push, independently review, check, and merge bounded Phase 2 through [PR #26](V2_RESUME_PROGRESS_COMPARISON_ARCHITECTURE.md) at `17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433`.
 - [x] Record successful main CI run `30469897446`, the general read-only Production smoke, and direct `/resume/compare` HTTP 200 verification with the expected visible heading.
-- [ ] Perform a read-only Phase 3 — Explainability architecture inspection before authorizing implementation.
-- [ ] Implement only the minimum separately authorized Phase 3 — Explainability needed to make comparison truthful and useful. Phase 3 has not started.
+- [x] Complete the read-only Phase 3 — Explainability architecture inspection without repository changes and record the `IMPLEMENT_A_BOUNDED_SLICE` verdict.
+- [x] Remove the unsupported numeric “Projected Readiness Path” through PR #28 without adding a replacement prediction, probability, confidence range, timeline, estimated score gain, or future-readiness claim; merge at `2f443d4c595e01523015aae3b9b2072eebfba9c6`.
+- [x] Record the stale protected-fixture hash failure in initial PR CI run `30513546806`, the hash-pin-only repair, successful replacement PR CI run `30514124663`, successful main CI run `30514466459`, successful Production deployment, read-only Production smoke, and local/remote feature-branch cleanup.
+- [x] Defer broad Phase 3 explainability expansion pending demonstrated recurring comprehension evidence; the absence of that evidence prevents further scope and does not invalidate the completed truth repair.
 - [ ] Add only the minimum Phase 4 — Guided execution and onboarding work needed for the controlled launch.
 - [ ] During controlled early access, evaluate comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. Use the evidence to preserve, revise, defer, or remove Phase 1 or Phase 2.
 - [ ] Keep unrelated capability expansion, unrestricted acquisition, payments, subscriptions, AI chat, résumé rewriting, auto-apply, job scraping, recruiter tools, and institution dashboards deferred.

@@ -4,13 +4,15 @@ This is a company-building sequence, not a feature quota. A phase may be preserv
 
 ## Operating rules
 
-Work proceeds through the four named product phases below. Phase 2 is complete at the engineering/deployment level; brand/domain screening and separately authorized launch-readiness work remain separate. Broad backend work, UI redesign, branding execution, AI assistant, applications, interview preparation, payments, and integrations remain outside the launch scope. A proposed exception needs a written dependency, an owner, a test plan, and a reason it cannot wait. The Phase 2 application deployment and read-only route verification do not authorize authenticated Production data-flow work or controlled invitations.
+Work proceeds through the four named product phases below. Phase 2 is complete at the engineering/deployment level, and the Phase 3 inspection plus one bounded truth repair are complete; brand/domain screening and separately authorized launch-readiness work remain separate. Broad backend work, UI redesign, branding execution, AI assistant, applications, interview preparation, payments, and integrations remain outside the launch scope. A proposed exception needs a written dependency, an owner, a test plan, and a reason it cannot wait. The Phase 2 application deployment, Phase 3 truth repair, and read-only Production verification do not authorize authenticated Production data-flow work or controlled invitations.
 
 Each phase uses the same decision rule: expand only when the evidence demonstrates repeatable value and safe operation; preserve when the smallest solution is working but evidence is incomplete; revise when users can articulate a correctable gap; defer when value or capacity is unproved; remove when the problem is not important enough to justify its privacy, support, or maintenance cost. On a failed assumption, stop new scope, preserve user data and frozen behavior, record the finding, and return to the smallest preceding usable state.
 
 ## Current 15-day controlled-launch sequence
 
-SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete, and Phase 2 is operationally closed for engineering and deployment after merge through PR #26. Phase 3 is the next bounded phase, but it has not started; its next action is a read-only architecture inspection before implementation. Separately, screen the pending public brand and domain and prepare only authorized Production-readiness work.
+SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete, Phase 2 is operationally closed for engineering and deployment after merge through PR #26, and the Phase 3 read-only inspection and bounded readiness-truth repair are complete after merge through PR #28. Broader Phase 3 expansion is deferred pending demonstrated recurring comprehension evidence. Phase 4 has not started and remains separately gated. Separately, screen the pending public brand and domain and prepare only authorized Production-readiness work.
+
+The Phase 3 read-only explainability architecture inspection completed without repository changes and returned `IMPLEMENT_A_BOUNDED_SLICE`. The accepted slice removed the unsupported numeric “Projected Readiness Path” without a replacement forecast. Initial pull-request CI run `30513546806` failed on a stale protected-fixture hash; the follow-up changed only that exact hash pin. Replacement pull-request CI run `30514124663` and main push CI run `30514466459` passed at merge commit `2f443d4c595e01523015aae3b9b2072eebfba9c6`. Vercel reported a successful Production deployment, and the general read-only Production smoke passed. Controlled-user invitations remain unauthorized, Production migrations remain unauthorized, and no hosted data-flow or launch action follows from this result.
 
 Real-user evidence has not been completed and remains required during controlled early access. It must assess comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. That evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed; it is not market validation.
 
@@ -68,15 +70,15 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Stop condition and decision.** Stop if comparison invites unsupported causal claims, creates score-chasing risk, or does not change a user's next action. Expand only with demonstrated decision value; otherwise preserve source history, revise the explanation, defer Phase 2, or remove comparison. **Contingency:** provide a non-persistent “what changed” view tied to exactly two explicit selections.
 
-## 3. Phase 3 — Explainability — not started
+## 3. Phase 3 — Explainability — bounded truth repair complete; broader expansion deferred
 
 **Objective.** Make existing deterministic signals easier to interpret and act on without changing frozen math or collapsing distinct concepts.
 
-**Next action.** Perform a read-only architecture inspection and record the bounded explainability opportunity before seeking implementation authorization. Phase 3 implementation has not started.
+**Current evidence.** The read-only explainability architecture inspection completed without repository changes and returned `IMPLEMENT_A_BOUNDED_SLICE`. It identified one demonstrated truth defect: synthetic 30/60/90-day Career IQ gains in the unsupported numeric “Projected Readiness Path” implied that completing the next mission predicted score movement, contrary to the frozen rule that mission completion records self-progress and Career IQ changes only after evidence changes and later re-analysis detects them. The bounded implementation commit `2b772d8ccefd1f1484baa727e6f230318ab3288c` and reviewed head `98ec7eaa4dbbae824d48d6b29958c022cbe6a22e` merged through PR #28 at `2f443d4c595e01523015aae3b9b2072eebfba9c6`. Initial pull-request CI run `30513546806` failed because of a stale protected-fixture hash, and the follow-up changed only that exact hash pin. Replacement pull-request CI run `30514124663` and main push CI run `30514466459` passed. Vercel reported a successful Production deployment, and the general read-only Production smoke passed.
 
-**Evidence required.** Observe recurring comprehension failures in Phases 1–2 and test that revised explanations improve correct interpretation of score, proof, role fit, and one-JD match.
+**Evidence required.** Any broader expansion requires recurring comprehension evidence from Phases 1–2 and proof that revised explanations improve correct interpretation of score, proof, role fit, and one-JD match. The absence of broader user evidence prevents further Phase 3 scope; it does not invalidate the completed truth repair.
 
-**Smallest complete solution.** Contextual explanations and evidence-first next actions that cite existing inputs, caps, freshness, and uncertainty; clear separation between Profile-fit Roles and Latest JD Match.
+**Smallest complete solution.** For the demonstrated defect, remove the unsupported forecast and preserve the current deterministic signals. The repair added no replacement forecast, probability, confidence range, timeline, estimated score gain, or future-readiness claim. Contextual explanations and evidence-first next actions that cite existing inputs, caps, freshness, and uncertainty remain candidates only if recurring comprehension evidence justifies them; Profile-fit Roles and Latest JD Match must remain separate.
 
 **Dependencies and non-goals.** Depends on current scoring, proof, target, and JD contracts. No recalibration, model/LLM judgment, keyword stuffing advice, job guarantee, external proof verification, saved JD history, job board, or auto-application.
 
@@ -86,9 +88,9 @@ Invitations begin with approximately 20 users only after all mandatory Productio
 
 **Tests.** Deterministic wording/data fixtures covering missing proof, scoring caps, stale JD, target isolation, and no-score-change invariants; browser comprehension/accessibility tests.
 
-**Stop condition and decision.** Stop if explanation increases overclaiming or cannot be tied to deterministic evidence. Expand only when comprehension improves without false confidence; otherwise preserve existing signals, revise copy, defer, or remove the addition. **Contingency:** return to concise static trust copy and document the unresolved confusion.
+**Stop condition and decision.** The actual decision is to preserve the current deterministic signals after removing the unsupported forecast and defer broader explanation work until recurring comprehension evidence exists. Stop if an explanation increases overclaiming or cannot be tied to deterministic evidence. Expand only when comprehension improves without false confidence; otherwise preserve existing signals, revise copy, defer, or remove the addition. This bounded repair does not establish user comprehension, market validation, or broad Phase 3 value. **Contingency:** return to concise static trust copy and document the unresolved confusion.
 
-## 4. Phase 4 — Guided execution and onboarding
+## 4. Phase 4 — Guided execution and onboarding — not started
 
 **Objective.** Reduce first-session uncertainty and make the next truthful action apparent, while retaining the premium light-first system.
 
