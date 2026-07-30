@@ -42,6 +42,7 @@ export class SyntheticProvider {
   readonly requests: RequestRecord[] = [];
   readonly unexpectedRequests: string[] = [];
   loginMode: ProviderMode = "success";
+  signupMode: ProviderMode = "success";
   recoveryExchangeMode: ProviderMode = "success";
   passwordResetMode: ProviderMode = "success";
   passwordUpdateMode: ProviderMode = "success";
@@ -243,6 +244,41 @@ export class SyntheticProvider {
     const bearerAccount = accountFromAuthorization(
       request.headers().authorization,
     );
+
+    if (
+      url.pathname === "/auth/v1/signup" &&
+      request.method() === "POST"
+    ) {
+      const body = parseJson(request.postData());
+      const account = accountForEmail(body.email);
+      const kind = "auth:signup";
+
+      this.record(kind, account?.id ?? null, url);
+      await this.releaseGate(kind);
+
+      if (this.signupMode === "abort") {
+        await route.abort("connectionfailed");
+        return;
+      }
+
+      if (this.signupMode === "reject" || !account) {
+        await json(route, 422, {
+          error_code: "signup_disabled",
+          msg: "RAW_SYNTHETIC_SIGNUP_PROVIDER_SECRET",
+        });
+        return;
+      }
+
+      if (this.signupMode === "malformed") {
+        await json(route, 200, {
+          unexpected: "response",
+        });
+        return;
+      }
+
+      await json(route, 200, createSession(account));
+      return;
+    }
 
     if (
       url.pathname === "/auth/v1/user" &&

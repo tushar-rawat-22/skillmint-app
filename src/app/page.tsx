@@ -8,20 +8,23 @@ import ProductLoop from "@/components/landing/ProductLoop";
 import DashboardPreview from "@/components/landing/DashboardPreview";
 import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
+import { getPublicSignupConfiguration } from "@/config/publicSignup";
 
 export default function HomePage() {
+  const { enabled } = getPublicSignupConfiguration();
+
   return (
     <>
-      <Navbar />
+      <Navbar publicSignupEnabled={enabled} />
 
       <main className="overflow-x-hidden bg-[#f7f5ef] text-slate-950">
-        <Hero />
+        <Hero publicSignupEnabled={enabled} />
         <Problem />
         <DashboardPreview />
-        <ProductLoop />
+        <ProductLoop publicSignupEnabled={enabled} />
         <Features />
         <FAQ />
-        <CTA />
+        <CTA publicSignupEnabled={enabled} />
       </main>
 
       <Footer />

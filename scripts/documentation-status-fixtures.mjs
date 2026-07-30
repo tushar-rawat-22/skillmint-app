@@ -78,6 +78,71 @@ const currentStatusPaths = [
 ];
 const currentStatus = currentStatusPaths.map((path) => text(path)).join("\n");
 
+const phase5aStatusPaths = [
+  "docs/PROJECT_STATUS.md",
+  "docs/TODO.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
+  "docs/DEPLOYMENT.md",
+];
+const phase5aStatus = phase5aStatusPaths
+  .map((path) => text(path))
+  .join("\n");
+
+for (const [needle, label] of [
+  [
+    "Phase 5A engineering implementation is complete",
+    "durable engineering-complete status",
+  ],
+  [
+    "SKILLMINT_PUBLIC_SIGNUP_ENABLED",
+    "server-only registration setting",
+  ],
+  ["defaults closed", "default-closed registration behavior"],
+  ["existing-user login", "existing-user login continuity"],
+  [
+    "Allow new users to sign up",
+    "Supabase hosted signup control",
+  ],
+  ["unverified and unchanged", "provider-level non-claim"],
+  [
+    "Controlled-user invitations remain unauthorized",
+    "invitation boundary",
+  ],
+  [
+    "Production migrations remain unauthorized",
+    "Production migration boundary",
+  ],
+  [
+    "Merge or deployment alone does not authorize controlled access",
+    "merge and deployment non-authorization boundary",
+  ],
+  [
+    "new authorized deployment",
+    "static deployment-time configuration boundary",
+  ],
+]) {
+  check(
+    phase5aStatus.includes(needle),
+    `Phase 5A status is missing ${label}`,
+  );
+}
+
+for (const path of phase5aStatusPaths) {
+  check(
+    !/Phase 5A[^\n]*(?:feat\/|implemented only|feature[- ]branch|unmerged|undeployed|no deployment occurred|review and merge)/i.test(
+      text(path),
+    ),
+    `${path} retains temporary Phase 5A workflow status`,
+  );
+}
+
+check(
+  text(".env.example").includes(
+    "SKILLMINT_PUBLIC_SIGNUP_ENABLED=",
+  ),
+  ".env.example is missing the Phase 5A server-only setting",
+);
+
 const phase2StatusPaths = [
   "docs/PROJECT_STATUS.md",
   "docs/TODO.md",

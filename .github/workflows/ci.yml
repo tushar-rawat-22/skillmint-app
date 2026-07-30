@@ -71,6 +71,9 @@ jobs:
       - name: Run launch-hardening fixtures
         run: npm run fixtures:launch-hardening
 
+      - name: Run controlled-access fixtures
+        run: npm run fixtures:controlled-access
+
       - name: Run Resume Comparison fixtures
         run: npm run fixtures:resume-comparison
 
@@ -79,6 +82,9 @@ jobs:
 
       - name: Run launch-hardening browser coverage
         run: npm run test:e2e:launch-hardening
+
+      - name: Run controlled-access browser coverage
+        run: npm run test:e2e:controlled-access
 
       - name: Run forgot-password coverage
         run: npm run test:e2e:forgot-password
@@ -103,6 +109,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify controlled-access client bundle boundary
+        run: npm run check:controlled-access-client-bundles
 
       - name: Run offline contract fixtures
         run: |

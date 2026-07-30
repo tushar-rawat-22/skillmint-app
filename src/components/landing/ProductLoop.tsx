@@ -25,7 +25,13 @@ const productLoopSteps = [
   },
 ];
 
-export default function ProductLoop() {
+type ProductLoopProps = {
+  publicSignupEnabled: boolean;
+};
+
+export default function ProductLoop({
+  publicSignupEnabled,
+}: ProductLoopProps) {
   return (
     <section
       id="how-it-works"
@@ -73,7 +79,7 @@ export default function ProductLoop() {
             href={ROUTES.SIGNUP}
             className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
           >
-            Start Free
+            {publicSignupEnabled ? "Create account" : "View early access"}
           </Link>
 
           <a

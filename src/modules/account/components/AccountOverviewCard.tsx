@@ -159,7 +159,7 @@ export default function AccountOverviewCard({
             href="/signup"
             className={premiumSecondaryCta}
           >
-            Create account
+            View early access
           </Link>
         </div>
       </article>

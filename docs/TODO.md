@@ -26,6 +26,9 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - Real-user comprehension, repeat-use, comparison-value, score-chasing, accessibility, and onboarding evidence remains pending and is required during controlled early access.
 - A controlled hosted Production launch is targeted within 15 days, but is not guaranteed and does not prove unlimited scale, permanent Production readiness, or market validation.
 - Public unrestricted acquisition is not authorized.
+- Phase 5A engineering implementation is complete: public signup defaults closed, existing-user login remains available, and no prospective-user data is collected.
+- Supabase Auth's hosted **Allow new users to sign up** setting remains unverified and unchanged. The application gate does not replace it, and it must be verified before controlled access is authorized.
+- Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
 - Controlled-user invitations remain unauthorized, Production migrations remain unauthorized, and payments remain behind separate gates. No further Production action follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
 - Block 5 isolated engineering verification must not be described as production rollout, legal readiness, or provider-retention proof.
@@ -73,6 +76,10 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [x] Record implementation commit `0eb4cd94e1a5e642ab9dd6350bfa4153197dd45c`, successful pull-request CI run `30522914931` against the reviewed head, successful main push CI run `30523438736` at the merge commit, successful Production deployment, read-only Production smoke, and local and remote feature-branch cleanup.
 - [x] Complete the minimum demonstrated Phase 4 repair: keep the native input as the keyboard-reachable native chooser and sole chooser authority, remove the inaccurate drag-and-drop wording with no drag-and-drop implementation, add processing status and busy semantics and failure alert semantics, and add no new onboarding state.
 - [x] Defer broader Phase 4 guided-execution and onboarding work pending recurring controlled-user evidence; automated browser semantics are preserved, but real assistive-technology evidence remains pending and the Phase 4 Production smoke was not authenticated functional accessibility validation.
+- [x] Implement the Phase 5A server-only, default-closed application signup gate and truthful closed-state copy while preserving existing-user login.
+- [x] Add deterministic configuration and auth-submission fixtures plus focused closed/enabled Chromium behavior coverage.
+- [ ] Verify Supabase Auth's hosted **Allow new users to sign up** control and confirm existing-user login remains enabled before any separately authorized controlled access.
+- [ ] Authorize any registration-setting change and new deployment separately; merge or deployment alone does not authorize controlled access.
 - [ ] During controlled early access, evaluate comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. Use the evidence to preserve, revise, defer, or remove Phase 1 or Phase 2.
 - [ ] Keep unrelated capability expansion, unrestricted acquisition, payments, subscriptions, AI chat, résumé rewriting, auto-apply, job scraping, recruiter tools, and institution dashboards deferred.
 - [ ] After the Production-readiness gate passes, invite approximately 20 users; expand toward 50, 100, and 200 only after explicit stability, comprehension, support-load, and material privacy/security review.
