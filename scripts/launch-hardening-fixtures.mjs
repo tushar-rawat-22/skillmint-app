@@ -1185,6 +1185,95 @@ test("analysis rejects before parsing, scoring, publication, or persistence", as
   }
 });
 
+test("upload accessibility preserves native chooser, truthful status, and failure contracts", () => {
+  const dropZoneSource = fs.readFileSync(
+    path.join(root, "src/components/upload/DropZone.tsx"),
+    "utf8",
+  );
+  const progressSource = fs.readFileSync(
+    path.join(root, "src/components/upload/AnalysisProgress.tsx"),
+    "utf8",
+  );
+  const uploadPageSource = fs.readFileSync(
+    path.join(root, "src/app/upload/page.tsx"),
+    "utf8",
+  );
+  const fileInput = dropZoneSource.match(
+    /<input[\s\S]*?\/>/u,
+  )?.[0];
+
+  assert.ok(fileInput);
+  assert.match(fileInput, /type="file"/u);
+  assert.match(fileInput, /accept="\.pdf,\.docx,\.txt"/u);
+  assert.doesNotMatch(
+    fileInput,
+    /\b(?:hidden|aria-hidden|tabIndex)\s*=/u,
+  );
+  assert.doesNotMatch(
+    fileInput,
+    /(?:display\s*:\s*none|visibility\s*:\s*hidden|\bhidden\b)/u,
+  );
+  assert.match(fileInput, /\bopacity-0\b/u);
+  assert.match(
+    dropZoneSource,
+    /<label[\s\S]*?htmlFor="resume-file-upload"/u,
+  );
+  assert.match(fileInput, /id="resume-file-upload"/u);
+  assert.match(dropZoneSource, /\bfocus-within:(?:ring|outline)-/u);
+  assert.doesNotMatch(dropZoneSource, /\.click\s*\(/u);
+  assert.doesNotMatch(
+    dropZoneSource,
+    /(?:onDrop|onDrag|drag-and-drop|drag and drop)/iu,
+  );
+  assert.doesNotMatch(dropZoneSource, /Drop your resume here/u);
+  assert.match(dropZoneSource, /Choose your resume file/u);
+  assert.match(dropZoneSource, /up to 4 MiB/u);
+  assert.match(dropZoneSource, /raw text stays hidden by default/u);
+
+  assert.match(progressSource, /aria-busy="true"/u);
+  assert.match(progressSource, /role="status"/u);
+  assert.match(progressSource, /aria-live="polite"/u);
+  assert.match(progressSource, /aria-atomic="true"/u);
+  assert.match(
+    progressSource,
+    /role="status"[\s\S]*?Resume analysis is processing\.[\s\S]*?<\/p>/u,
+  );
+  assert.doesNotMatch(progressSource, /\b\d+\s*%/u);
+  assert.doesNotMatch(
+    progressSource,
+    /(?:estimated|forecast|remaining time|seconds? left|minutes? left)/iu,
+  );
+
+  assert.match(uploadPageSource, /role="alert"/u);
+  assert.match(
+    uploadPageSource,
+    /role="alert"[\s\S]*?aria-atomic="true"/u,
+  );
+  const analysisIndex = uploadPageSource.indexOf(
+    "await runResumeAnalysis(file)",
+  );
+  const persistenceIndex = uploadPageSource.indexOf(
+    "saveResumeAnalysisForOperation(",
+    analysisIndex,
+  );
+  const publicationIndex = uploadPageSource.indexOf(
+    "writeActiveResumeReport(result",
+    analysisIndex,
+  );
+  const routingIndex = uploadPageSource.indexOf(
+    'router.push("/resume")',
+    analysisIndex,
+  );
+  assert.ok(analysisIndex >= 0);
+  assert.ok(persistenceIndex > analysisIndex);
+  assert.ok(publicationIndex > persistenceIndex);
+  assert.ok(routingIndex > publicationIndex);
+  assert.doesNotMatch(
+    `${dropZoneSource}\n${progressSource}\n${uploadPageSource}`,
+    /(?:localStorage|sessionStorage|analytics\.(?:track|capture)|fireAndForgetAnalytics\(\(\) => analytics\.[^(]*Accessibility)/u,
+  );
+});
+
 test("password reset support passes an optional opaque CAPTCHA token without inventing one", async () => {
   const calls = [];
   const client = {

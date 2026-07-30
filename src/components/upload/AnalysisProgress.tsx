@@ -9,7 +9,19 @@ export default function AnalysisProgress({
 
   return (
     <section className="mx-auto mt-12 max-w-5xl">
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)] md:p-8">
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        Resume analysis is processing.
+      </p>
+
+      <div
+        aria-busy="true"
+        className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_14px_42px_rgba(15,23,42,0.06)] md:p-8"
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">

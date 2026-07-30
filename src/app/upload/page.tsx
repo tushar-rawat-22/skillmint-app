@@ -161,7 +161,11 @@ export default function UploadPage() {
             </button>
 
             {error && (
-              <div className="mx-auto mt-5 max-w-xl rounded-xl border border-rose-200 bg-rose-50 p-4 text-left">
+              <div
+                role="alert"
+                aria-atomic="true"
+                className="mx-auto mt-5 max-w-xl rounded-xl border border-rose-200 bg-rose-50 p-4 text-left"
+              >
                 <p className="text-sm font-bold text-rose-800">
                   Analysis failed
                 </p>
