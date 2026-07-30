@@ -48,7 +48,8 @@ Resume Reality
 | Phase 2 — Resume Progress and Comparison | Engineering complete, merged through PR #26, deployed, and directly route-verified | Engineering/deployment closure only; no authenticated Production comparison, hosted PostgREST, real-user, scoring, mission, Active Target, or browser-key authorization |
 | Phase 3 — Explainability | Read-only inspection and one bounded readiness-truth repair complete through PR #28; broader expansion deferred | The unsupported forecast was removed without a replacement prediction; recurring comprehension evidence remains pending |
 | Phase 4 — Guided execution and onboarding | Read-only inspection and one bounded upload-accessibility repair complete through PR #30 | Broader Phase 4 work is deferred pending recurring controlled-user evidence; no controlled invitation or launch authorization |
-| Phase 5A — Controlled Access Foundation | Engineering implementation complete | Application signup defaults closed; provider-level signup control remains unverified and unchanged |
+| Phase 5A — Controlled Access Foundation | Engineering implementation complete | Application signup defaults closed; the later bounded inventory verified provider signup disabled and email login enabled |
+| Phase 5B — Production Rollout Foundation | Offline validator, forward ACL repair, rollout authority, and deterministic repository coverage implemented | Readiness remains `NO-GO`; no Production or hosted change is authorized or claimed |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -98,7 +99,13 @@ No controlled user was invited, and no real-user onboarding, abandonment, compre
 
 Phase 5A adds a server-only `SKILLMINT_PUBLIC_SIGNUP_ENABLED` application gate. Public signup defaults closed unless the trimmed, case-insensitive value is exactly `true`; the closed state renders no signup form or account-creation controls, collects no prospective-user data, and directs existing users to login. The shared auth submission path independently refuses disabled signup while preserving existing-user login and sanitized errors.
 
-This is an application-level public-registration gate, not an invitation system or authorization boundary. Supabase Auth's hosted **Allow new users to sign up** setting remains unverified and unchanged and must be verified before controlled access is authorized; existing-user login must remain enabled. Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
+This is an application-level public-registration gate, not an invitation system or authorization boundary. The hosted control was unverified and unchanged during Phase 5A. The bounded July 30 Production inventory later verified provider signup disabled and existing email login enabled; both states must be preserved. Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
+
+Phase 5B records a verified Production exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift, with unknown migration-history and table-grant visibility. Its offline validator keeps `CATALOG_BASELINE=V1+V2`, separately reports `CATALOG_DRIFT=public.rls_auto_enable`, returns `NO-GO`, and reports the zero-backup, no-PITR, disabled SSL enforcement, absent custom SMTP, disabled CAPTCHA, enabled email auto-confirm, six-character password minimum, unknown table-grant visibility, and untracked-function blockers.
+
+The inventory did not capture that function's live owner, exact event-trigger contract, or body. The forward migration after V8 therefore fails closed unless an authorized preflight matches the exact repository function-owner and event-trigger-owner contract, including `postgres` ownership for both; it snapshots that contract across the ACL-only change but intentionally does not inspect the body. Exact body verification remains an authorized rehearsal and postflight requirement. See [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md).
+
+This repository foundation does not resolve a blocker, apply V3–V8, normalize the live function, repair migration history, change Auth, enable analytics, contact a hosted service, or authorize invitations. Production rollout remains `NO-GO`.
 
 Analytics collection remains disabled. The Phase 2 application deployment did not perform a Production database rollout, enable analytics, or satisfy the broader Production-readiness gate. Persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; that earlier environment-separation action did not redeploy the then-live application or contact the Production Supabase database.
 
@@ -117,7 +124,7 @@ Production rollout
 
 Production schema inventory and rollout, environment/origin coordination, operational ownership, incident and rollback handling, legal review, and provider backup/log retention claims remain outside the verified repository closure. A Vercel deployment or successful build does not by itself satisfy this boundary.
 
-The automatic fail-closed deployment is not a Production database rollout claim. Production V5, V6, and V7 remain unapplied; Production V8 also remains unapplied, while V8 is applied only to isolated staging. No collection flag is enabled.
+The automatic fail-closed deployment is not a Production database rollout claim. The July 30 inventory verified only the V1+V2 Production catalog; V3–V8 remain catalog-pending, while V8 is applied only to isolated staging. The new post-V8 ACL repair is also unapplied. No collection flag is enabled.
 
 ## Current approved sequence
 
@@ -125,10 +132,11 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 
 1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
 2. Preserve the completed Phase 2 engineering/deployment closure, completed Phase 3 inspection and bounded truth repair, and completed Phase 4 inspection and bounded upload-accessibility repair. Do not expand Phase 3 without recurring comprehension evidence or Phase 4 without recurring controlled-user evidence.
-3. Treat separately gated launch-readiness and controlled-user preparation as the next work, not another automatic Phase 4 runtime slice. During any later authorized controlled early access, review comprehension, repeat use, comparison decision value, score-chasing risk, accessibility, and onboarding confusion; the evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed.
-4. Invite an approximately 20-user controlled cohort only after every applicable Production-readiness gate passes.
-5. Keep public beta, unrestricted acquisition, Production activation, and payments separately gated and unauthorized until their applicable evidence gates explicitly pass.
-6. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
+3. Follow the `NO-GO` gates in [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md). The next schema step is independent review and isolated rehearsal, not Production execution.
+4. Treat separately gated launch-readiness and controlled-user preparation as the next work, not another automatic Phase 4 runtime slice. During any later authorized controlled early access, review comprehension, repeat use, comparison decision value, score-chasing risk, accessibility, and onboarding confusion; the evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed.
+5. Invite an approximately 20-user controlled cohort only after every applicable Production-readiness gate passes.
+6. Keep public beta, unrestricted acquisition, Production activation, and payments separately gated and unauthorized until their applicable evidence gates explicitly pass.
+7. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
 
 The public name, backup name, and domain are all pending. The later July 28 amendment authorizes only bounded Phase 2 repository implementation; it does not authorize Production, DNS, hosted Supabase or Vercel configuration, authentication-origin or public-package changes, public beta, payments, deployment, or other launch execution.
 
@@ -163,6 +171,7 @@ Use the evidence relevant to the question instead of one universal ranking:
 - [Block 5 Closure](BLOCK_5_CLOSURE.md)
 - [Deployment Safety Guide](DEPLOYMENT.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
+- [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md)
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md)
 - [Version 2 Resume Workspace Phase 1B Closure](V2_RESUME_WORKSPACE_PHASE_1B_CLOSURE.md)
 - [Release Notes](RELEASE_NOTES.md)

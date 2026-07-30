@@ -259,6 +259,7 @@ test("ACL normalization and V8 source, migration, hashes, order, and manifest en
     ...FROZEN_MIGRATIONS.map((entry) => entry.version),
     aclNormalizationVersion,
     "20260727000800",
+    "20260730000900",
   ];
 
   assert.deepEqual(
@@ -299,8 +300,8 @@ test("ACL normalization and V8 source, migration, hashes, order, and manifest en
   );
 
   assert.deepEqual(
-    manifest.generated_for.production.pending_execution.slice(-2),
-    [aclNormalizationVersion, "20260727000800"],
+    manifest.generated_for.production.pending_execution.slice(-3),
+    [aclNormalizationVersion, "20260727000800", "20260730000900"],
   );
 
   assert.equal(
@@ -1595,7 +1596,7 @@ test("frozen product and analytics contracts have zero diff and no new taxonomy"
   );
 });
 
-test("package metadata permits only authorized Phase 1A, launch-hardening, controlled-access, and Resume Comparison scripts and lock stays exact", () => {
+test("package metadata permits only authorized fixture scripts and lock stays exact", () => {
   const currentPackage = JSON.parse(readText("package.json"));
   const baselinePackage = JSON.parse(
     gitShow(`${authorizedBaseline}:package.json`),
@@ -1615,9 +1616,11 @@ test("package metadata permits only authorized Phase 1A, launch-hardening, contr
       .sort(),
     [
       "check:controlled-access-client-bundles",
+      "check:production-rollout-readiness",
       "check:secret-paths",
       "fixtures:controlled-access",
       "fixtures:launch-hardening",
+      "fixtures:production-rollout-foundation",
       "fixtures:resume-comparison",
       "fixtures:resume-workspace-phase-1a",
       "test:e2e:controlled-access",

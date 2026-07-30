@@ -60,6 +60,7 @@ const rolloutFoundationPaths = [
   "docs/BETA_V1_BUILD_ROADMAP.md",
   "docs/BLOCK_6_ROLLOUT_RUNBOOK.md",
   "docs/DEPLOYMENT.md",
+  "docs/PRODUCTION_SCHEMA_ROLLOUT.md",
   "docs/PROJECT_STATUS.md",
   "docs/README.md",
   "docs/TODO.md",
@@ -68,6 +69,8 @@ const rolloutFoundationPaths = [
   "scripts/analytics-acl-fixtures.mjs",
   "scripts/block6-rollout-foundation-fixtures.mjs",
   "scripts/block6-target-guard.mjs",
+  "scripts/production-rollout-foundation-fixtures.mjs",
+  "scripts/production-rollout-readiness.mjs",
   "supabase/config.toml",
   "supabase/schema_v1.sql",
   "supabase/schema_v2_feedback.sql",
@@ -78,6 +81,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v7_analytics_acl_hardening.sql",
   "supabase/schema_v7_1_lifecycle_function_acl_normalization.sql",
   "supabase/schema_v8_active_resume_selections.sql",
+  "supabase/schema_v9_public_function_acl_normalization.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -87,6 +91,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql",
   "supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql",
   "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
+  "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -96,28 +101,28 @@ const migrations = [
     source: "supabase/schema_v1.sql",
     migration: "supabase/migrations/20260723000100_schema_v1.sql",
     hash: "af7a9a7314b699d1e38fe6998bc382489a33532315f188d77d0f8f739b5357e5",
-    classification: "existing_production_baseline_requires_catalog_proof",
+    classification: "existing_production_catalog_verified_history_unknown",
   },
   {
     version: "20260723000200",
     source: "supabase/schema_v2_feedback.sql",
     migration: "supabase/migrations/20260723000200_schema_v2_feedback.sql",
     hash: "213fae232e106ff82cd6e300fc27507d77a612dd8c5f128bd91601f114f33701",
-    classification: "existing_production_baseline_requires_catalog_proof",
+    classification: "existing_production_catalog_verified_history_unknown",
   },
   {
     version: "20260723000300",
     source: "supabase/schema_v3_data_controls.sql",
     migration: "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
     hash: "a130483eac5ffafdbf293b3938e18dabea57a0e36c7d8617fb8bc448ae042959",
-    classification: "existing_production_baseline_requires_catalog_proof",
+    classification: "pending_data_controls",
   },
   {
     version: "20260723000400",
     source: "supabase/schema_v4_account_deletion_security.sql",
     migration: "supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql",
     hash: "3ff175e86b79516ee896578d01b6b64fb747aa2b371187fa63f8225c09807587",
-    classification: "existing_production_baseline_requires_catalog_proof",
+    classification: "pending_account_deletion_security",
   },
   {
     version: "20260723000500",
@@ -154,6 +159,14 @@ const migrations = [
     hash: "233c4aa2d7f7fbf0fa8a034f763cbe38cd2399054641b6023a66c11cc730a3a1",
     classification: "pending_resume_workspace_phase_1a",
   },
+  {
+    version: "20260730000900",
+    source: "supabase/schema_v9_public_function_acl_normalization.sql",
+    migration:
+      "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
+    hash: "4868c2d50b738db84183184ae70b96b27c9a43da152fd66a14b615e4a703bdea",
+    classification: "pending_public_function_acl_normalization",
+  },
 ];
 
 for (const item of migrations) {
@@ -170,7 +183,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered nine SQL files",
+  "migration directory must contain the exact ordered ten SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -190,12 +203,12 @@ equal(
 );
 equal(
   manifest.generated_for.production.catalog_proof_required_before_marking_applied,
-  migrations.slice(0, 4).map((item) => item.version),
+  migrations.slice(0, 2).map((item) => item.version),
   "Production baseline versions changed",
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  migrations.slice(4).map((item) => item.version),
+  migrations.slice(2).map((item) => item.version),
   "Production pending versions changed",
 );
 equal(
@@ -203,7 +216,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 9, "manifest must contain nine migrations");
+equal(manifest.ordered_migrations.length, 10, "manifest must contain ten migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -218,11 +231,46 @@ manifest.ordered_migrations.forEach((entry, index) => {
   equal(entry.sha256, expected.hash, "manifest hash changed");
   equal(entry.rollout_classification, expected.classification, "manifest classification changed");
 });
+const productionPendingVersions = new Set(
+  manifest.generated_for.production.pending_execution,
+);
+for (const entry of manifest.ordered_migrations) {
+  if (productionPendingVersions.has(entry.version)) {
+    check(
+      entry.rollout_classification.startsWith("pending_"),
+      `${entry.version} pending classification must begin with pending_`,
+    );
+    check(
+      !entry.rollout_classification.startsWith("existing_production"),
+      `${entry.version} pending classification cannot describe an existing Production baseline`,
+    );
+  }
+}
+for (const baselineVersion of ["20260723000100", "20260723000200"]) {
+  check(
+    !productionPendingVersions.has(baselineVersion),
+    `${baselineVersion} cannot be pending execution`,
+  );
+}
+for (const pendingVersion of ["20260723000300", "20260723000400"]) {
+  const entry = manifest.ordered_migrations.find(
+    (migrationEntry) => migrationEntry.version === pendingVersion,
+  );
+  check(
+    !entry.rollout_classification.includes("existing_production"),
+    `${pendingVersion} cannot be classified as an existing Production baseline`,
+  );
+}
 equal(manifest.ordered_migrations[4].version, migrations[4].version, "V5 must follow V4");
 equal(manifest.ordered_migrations[5].version, migrations[5].version, "V6 must follow V5");
 equal(manifest.ordered_migrations[6].version, migrations[6].version, "V7 must follow V6");
 equal(manifest.ordered_migrations[7].version, migrations[7].version, "ACL normalization must follow V7");
 equal(manifest.ordered_migrations[8].version, migrations[8].version, "V8 must follow ACL normalization");
+equal(
+  manifest.ordered_migrations[9].version,
+  migrations[9].version,
+  "public-function ACL normalization must follow V8",
+);
 
 const config = text("supabase/config.toml");
 check(config.startsWith("# Generated with Supabase CLI 2.109.1 for local and migration tooling."), "config provenance missing");
@@ -386,7 +434,8 @@ for (const [pattern, claim] of [
   [/Block 6\.1 and Block 6\.2 are merged and frozen pending rollout/i, "Block 6.1/6.2 merged and frozen"],
   [/fail-closed[^.]*automatically deployed|automatically deployed[^.]*fail-closed/i, "fail-closed automatic deployment"],
   [/skillmint-block6-test[^.]*ACTIVE_HEALTHY|ACTIVE_HEALTHY[^.]*skillmint-block6-test/i, "isolated project state"],
-  [/Production V5(?:,|–) V6(?:,|, and|–) V7 remain unapplied/i, "Production V5/V6/V7 unapplied"],
+  [/verified only (?:the )?V1\+V2 Production catalog|Production catalog as V1\+V2/i, "Production V1+V2 catalog baseline"],
+  [/V3–V8 remain (?:catalog-)?pending/i, "Production V3–V8 pending"],
   [/analytics remains disabled/i, "analytics disabled"],
   [/founder UUID[^.]*WAF[^.]*retention[^.]*unconfigured/i, "founder/WAF/retention unconfigured"],
   [/Preview and Production[^.]*share[^.]*two public Supabase variables/i, "Preview/Production shared backend"],

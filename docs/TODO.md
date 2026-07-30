@@ -27,7 +27,9 @@ This file distinguishes current work from completed, blocked, deferred, and hist
 - A controlled hosted Production launch is targeted within 15 days, but is not guaranteed and does not prove unlimited scale, permanent Production readiness, or market validation.
 - Public unrestricted acquisition is not authorized.
 - Phase 5A engineering implementation is complete: public signup defaults closed, existing-user login remains available, and no prospective-user data is collected.
-- Supabase Auth's hosted **Allow new users to sign up** setting remains unverified and unchanged. The application gate does not replace it, and it must be verified before controlled access is authorized.
+- The hosted signup control was unverified and unchanged during Phase 5A. The bounded July 30 inventory later verified provider signup disabled and existing email login enabled; both states must be preserved.
+- Phase 5B repository implementation is complete: the offline evidence validator returns `NO-GO`, the Production catalog is verified as the exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift, migration history and table-grant visibility remain unknown, and one post-V8 migration narrowly normalizes that function's execution only when its exact function-owner and event-trigger-owner contract is present.
+- The current operational blockers are zero backups, no PITR, disabled database SSL enforcement, absent custom SMTP, disabled CAPTCHA, email auto-confirm enabled, password minimum 6, unknown migration history, unknown table-grant visibility, V3–V8 catalog-pending, and the untracked `rls_auto_enable` surface whose live owner, exact event trigger, and body were not captured. See [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md).
 - Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
 - Controlled-user invitations remain unauthorized, Production migrations remain unauthorized, and payments remain behind separate gates. No further Production action follows from this documentation change.
 - Publishing a privacy/support contact is blocked until ownership and monitoring are externally verified.
@@ -78,7 +80,9 @@ The independent verdict was `PASS_SAFE_FOR_COMMIT_GATE`. See [Block 7.1 Closure]
 - [x] Defer broader Phase 4 guided-execution and onboarding work pending recurring controlled-user evidence; automated browser semantics are preserved, but real assistive-technology evidence remains pending and the Phase 4 Production smoke was not authenticated functional accessibility validation.
 - [x] Implement the Phase 5A server-only, default-closed application signup gate and truthful closed-state copy while preserving existing-user login.
 - [x] Add deterministic configuration and auth-submission fixtures plus focused closed/enabled Chromium behavior coverage.
-- [ ] Verify Supabase Auth's hosted **Allow new users to sign up** control and confirm existing-user login remains enabled before any separately authorized controlled access.
+- [x] Record the bounded read-only verification that provider signup is disabled and existing email login is enabled.
+- [x] Implement the Phase 5B offline readiness validator, exact post-V8 ACL migration, rollout authority, and deterministic CI coverage without contacting Production.
+- [ ] Resolve the `NO-GO` controls in [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md), then complete independent review and an isolated V1+V2 rehearsal plus restore drill.
 - [ ] Authorize any registration-setting change and new deployment separately; merge or deployment alone does not authorize controlled access.
 - [ ] During controlled early access, evaluate comprehension of saved analyses, the account Workspace resume, and the browser-active report; repeat use; comparison decision value; score-chasing risk; accessibility; and onboarding confusion. Use the evidence to preserve, revise, defer, or remove Phase 1 or Phase 2.
 - [ ] Keep unrelated capability expansion, unrestricted acquisition, payments, subscriptions, AI chat, résumé rewriting, auto-apply, job scraping, recruiter tools, and institution dashboards deferred.
@@ -118,7 +122,7 @@ Engineering implementation and isolated verification are complete. Unchecked ite
 - [x] Complete the independent terminal review of Block 6.2.
 - [x] Merge and freeze Block 6.2 pending rollout.
 - [x] Run the separately authorized isolated V7 migration and repeated live-security verification gate.
-- [ ] Prove the Production V1–V4 baseline catalog before any migration-history repair.
+- [ ] Historical Block 6 item superseded by the July 30 V1+V2 catalog proof: resolve still-unknown migration history without inferring it from catalog state.
 - [ ] Authorize the separate Production V5–V7 rollout with rollback and monitoring.
 - [ ] Configure distributed Vercel WAF enforcement; the coarse 60-per-minute pre-Auth allowance and separate ten-per-minute founder limiter/one-query lock are process-local only.
 - [ ] Separately authorize and implement `pg_cron` scheduling for the exact 1,080-hour purge contract; each run deletes at most 10,000 overdue events, so repeated runs may be needed. It is currently unapplied, uncallable by API roles, and unscheduled.
@@ -133,7 +137,7 @@ The automatic fail-closed application deployment did not apply a Production migr
 ## 8. Historical Block 7 and retained future Production blockers
 
 - [ ] Historical: run Block 7.2 as a read-only beta-release decision gate. This is no longer a current task; see the Version 2 transition authority.
-- [ ] Inventory the actual production schema before any migration.
+- [x] Inventory the actual Production schema read-only; the July 30 evidence proves the V1+V2 catalog and leaves migration history unknown.
 - [ ] Approve accountable ownership, backup/recovery, rollback, incident, and monitoring plans.
 - [ ] Apply and exactly verify the locked schema sequence under production authorization.
 - [ ] Verify server/public environment separation and absence of secrets from browser output.
@@ -155,6 +159,16 @@ The retained release-blocker register is:
 - `legal_review_unresolved`
 - `provider_backup_log_retention_unverified`
 - `operational_ownership_unresolved`
+- `production_backup_absent`
+- `production_pitr_disabled`
+- `production_ssl_enforcement_disabled`
+- `production_smtp_absent`
+- `production_captcha_disabled`
+- `production_email_autoconfirm_enabled`
+- `production_password_minimum_6`
+- `production_migration_history_unknown`
+- `table_grant_visibility_unknown`
+- `production_rls_auto_enable_drift`
 
 Block 7.1 did not resolve these broader release blockers.
 
