@@ -229,6 +229,80 @@ test(
 );
 
 test(
+  "@launch-hardening dashboard removes the readiness forecast without hiding current guidance",
+  async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.route("**/api/resume/extract", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          extractedText: [
+            "Skills: TypeScript React Node.js SQL",
+            "Projects: Built and deployed an accessible career dashboard with automated tests and measurable performance improvements.",
+            "Education: B.Tech Computer Science",
+          ].join("\n"),
+        }),
+      });
+    });
+
+    await page.goto("/upload");
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "dashboard-truth-resume.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("synthetic dashboard truth fixture"),
+    });
+    await page.getByRole("button", {
+      name: "Analyze Resume",
+    }).click();
+    await expect(page).toHaveURL(/\/resume$/);
+
+    await page.goto("/dashboard");
+
+    await expect(
+      page.getByText("Current readiness signal", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Career IQ", { exact: true }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Readiness Signals", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Next best things", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Projected Readiness Path", { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText(
+        "Projection only, based on completing the next visible mission",
+        { exact: false },
+      ),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('[aria-label="Projected readiness path"]'),
+    ).toHaveCount(0);
+
+    for (const label of ["30d", "60d", "90d"]) {
+      await expect(
+        page.getByText(label, { exact: true }),
+      ).toHaveCount(0);
+    }
+
+    const overflow = await page.evaluate(() => ({
+      body: document.body.scrollWidth - document.body.clientWidth,
+      document:
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    }));
+    expect(overflow.body).toBeLessThanOrEqual(1);
+    expect(overflow.document).toBeLessThanOrEqual(1);
+  },
+);
+
+test(
   "@launch-hardening security headers and coarse health response are served by the running app",
   async ({ page }) => {
     const pageResponse = await page.request.get(

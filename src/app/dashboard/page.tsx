@@ -20,7 +20,6 @@ import NextMissionsCard from "@/components/dashboard/NextMissionsCard";
 import ShareableCareerCard from "@/components/dashboard/ShareableCareerCard";
 import ProofConfidenceExplainer from "@/components/dashboard/ProofConfidenceExplainer";
 import {
-  ReadinessTrend,
   ScoreBars,
   ScoreRing,
   SkillDistribution,
@@ -472,11 +471,6 @@ export default function DashboardPage() {
     hasJobMatch,
     data.proof,
   );
-  const topImprovement = getTopImprovement(
-    data.proof.nextProofMove,
-    data.missions,
-    data.recommendations,
-  );
   const readinessBars = getReadinessBars(
     data.careerIQ.score,
     data.careerIQ.grade,
@@ -883,16 +877,11 @@ export default function DashboardPage() {
             caption="Career IQ uses weighted resume-evidence categories, and weak proof can apply explainable caps."
           />
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6">
             <ScoreBars
               title="Readiness Signals"
               subtitle="A proof-aware comparison of the signals powering your career report."
               items={readinessBars}
-            />
-
-            <ReadinessTrend
-              score={data.careerIQ.score}
-              topMission={topImprovement}
             />
           </div>
         </section>
@@ -1343,15 +1332,6 @@ function parseRecord(storedValue: string | null): Record<string, unknown> | null
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" &&
     !Array.isArray(value);
-}
-
-function getTopImprovement(
-  proofMove: string,
-  missions: string[],
-  recommendations: string[],
-): string {
-  return proofMove || [...missions, ...recommendations][0] ||
-    "Upload a resume";
 }
 
 function getShareableProofMove(proofMove: string): string {
