@@ -1595,7 +1595,7 @@ test("frozen product and analytics contracts have zero diff and no new taxonomy"
   );
 });
 
-test("package metadata permits only Phase 1A, launch-hardening, and Resume Comparison scripts and lock stays exact", () => {
+test("package metadata permits only authorized Phase 1A, launch-hardening, controlled-access, and Resume Comparison scripts and lock stays exact", () => {
   const currentPackage = JSON.parse(readText("package.json"));
   const baselinePackage = JSON.parse(
     gitShow(`${authorizedBaseline}:package.json`),
@@ -1614,10 +1614,13 @@ test("package metadata permits only Phase 1A, launch-hardening, and Resume Compa
       .filter((name) => !(name in baselinePackage.scripts))
       .sort(),
     [
+      "check:controlled-access-client-bundles",
       "check:secret-paths",
+      "fixtures:controlled-access",
       "fixtures:launch-hardening",
       "fixtures:resume-comparison",
       "fixtures:resume-workspace-phase-1a",
+      "test:e2e:controlled-access",
       "test:e2e:forgot-password",
       "test:e2e:launch-hardening",
       "test:e2e:password-recovery",
@@ -1629,8 +1632,16 @@ test("package metadata permits only Phase 1A, launch-hardening, and Resume Compa
     ],
   );
   assert.equal(
+    currentPackage.scripts["check:controlled-access-client-bundles"],
+    "node scripts/controlled-access-fixtures.mjs --require-client-build",
+  );
+  assert.equal(
     currentPackage.scripts["check:secret-paths"],
     "node scripts/secret-path-regression.mjs",
+  );
+  assert.equal(
+    currentPackage.scripts["fixtures:controlled-access"],
+    "node scripts/controlled-access-fixtures.mjs",
   );
   assert.equal(
     currentPackage.scripts["fixtures:launch-hardening"],
@@ -1643,6 +1654,10 @@ test("package metadata permits only Phase 1A, launch-hardening, and Resume Compa
   assert.equal(
     currentPackage.scripts["fixtures:resume-workspace-phase-1a"],
     "node scripts/resume-workspace-phase-1a-fixtures.mjs",
+  );
+  assert.equal(
+    currentPackage.scripts["test:e2e:controlled-access"],
+    "playwright test e2e/controlled-access.spec.ts --project=chromium --grep @closed --workers=1 --retries=0 && SKILLMINT_E2E_PUBLIC_SIGNUP_ENABLED=true playwright test e2e/controlled-access.spec.ts --project=chromium --grep @enabled --workers=1 --retries=0",
   );
   assert.equal(
     currentPackage.scripts["test:e2e:forgot-password"],
