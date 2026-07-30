@@ -1,6 +1,6 @@
 # SkillMint Deployment Safety Guide
 
-The former Beta v1 production-beta path is superseded as current sequencing by the [Version 2 Transition Gate](V2_TRANSITION_GATE.md). The fail-closed Block 6.2 code was automatically deployed from `main`, but Production V5–V7 remain unapplied and analytics remains disabled. This guide preserves future operator constraints; it is not a Production readiness claim or deployment authorization.
+The former Beta v1 production-beta path is superseded as current sequencing by the [Version 2 Transition Gate](V2_TRANSITION_GATE.md). The fail-closed Block 6.2 code was automatically deployed from `main`, but the July 30 inventory verified only a V1+V2 Production catalog and analytics remains disabled. This guide preserves future operator constraints; it is not a Production readiness claim or deployment authorization.
 
 Beta release readiness remains blocked pending Production rollout and an externally verified, monitored privacy/support contact.
 
@@ -67,7 +67,7 @@ Do not configure the account-deletion route in a Preview environment unless that
 
 `SKILLMINT_PUBLIC_SIGNUP_ENABLED` is a server-only application setting. Public signup defaults closed and is enabled only when the trimmed, case-insensitive value is exactly `true`. It must not use a `NEXT_PUBLIC_` prefix or enter browser bundles. Existing-user login remains available in either state. The public routes remain statically generated, so a registration-setting change takes effect only through a new authorized deployment.
 
-This gate removes SkillMint's active signup UI and guards the shared auth submission path. It is not an invitation system, an authorization boundary, or a replacement for Supabase Auth's hosted **Allow new users to sign up** control. That provider-level setting is unverified and unchanged by Phase 5A and must be verified before controlled access is authorized. Existing-user login must remain enabled at the provider.
+This gate removes SkillMint's active signup UI and guards the shared auth submission path. It is not an invitation system, an authorization boundary, or a replacement for Supabase Auth's hosted **Allow new users to sign up** control. That provider-level setting was unverified and unchanged by Phase 5A. The later bounded inventory verified provider signup disabled and existing email login enabled; both must remain unchanged unless a separate action is authorized.
 
 Phase 5A engineering implementation is complete. Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
 
@@ -91,6 +91,10 @@ SkillMint has no configured seed dataset. The generic `https://supabase.com/docs
 
 ## Production schema rollout
 
+The current authority is [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md). The bounded July 30 inventory verified the exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift. It did not establish migration history or complete table grants; both remain unknown. It exposed the drift function but did not capture its live function owner, exact event-trigger contract, or body.
+
+V9's repository preflight fails closed unless the exact expected function-owner and event-trigger contract is present, including `postgres` ownership for both the function and its sole attached event trigger, and it intentionally does not inspect the body. Authorized rehearsal and postflight must verify the body separately. V3–V8 and the new post-V8 ACL repair are unapplied catalog targets, not authorized work.
+
 For an empty isolated environment, the committed forward order is:
 
 1. `supabase/migrations/20260723000100_schema_v1.sql`
@@ -100,14 +104,15 @@ For an empty isolated environment, the committed forward order is:
 5. `supabase/migrations/20260723000500_schema_v5_analytics_events.sql`
 6. `supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql`
 7. `supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql`
+8. `supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql`
+9. `supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql`
+10. `supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql`
 
-The timestamped files are byte-identical to the seven source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. V1–V6 remain unchanged; later corrections require a separately reviewed forward migration.
+The timestamped files are byte-identical to their source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. V1–V8 remain unchanged; later corrections require a separately reviewed forward migration.
 
 The isolated project received V1–V7 during Block 6 verification, and its ACL and live-security checks passed. This result is not Production proof. The outer `BEGIN`/`COMMIT` wrappers in V4–V7 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
 
-Production V1–V4 are baseline candidates, not trusted migration history. Exact history and normalized catalog proof must cover tables, columns, constraints, indexes, RLS, grants, functions, triggers, owners, ACLs, and search paths before marking them applied.
-
-Migration repair changes history only and executes no SQL. A Production dry-run must show only V5, V6, and V7 before authorization, and those migrations must be applied and verified separately. V7 removes inherited/default `service_role` table access and restores INSERT only; it does not enable analytics. Isolated verification is not Production proof. Follow the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
+Do not mark V1 or V2 applied in history solely because the catalog matches them. An authorized operator must establish exact history before any repair or rollout. Migration repair changes history only and executes no SQL, but no repair is currently authorized. The target sequence begins at V3 only after backup, restore, history, dry-run, ownership, incident, and communications gates pass. Follow the current rollout authority; the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md) remains historical Block 6 guidance.
 
 ## Vercel deployment checklist
 

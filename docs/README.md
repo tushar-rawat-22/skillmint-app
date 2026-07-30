@@ -26,6 +26,7 @@ Implementation, tests, schemas, and frozen current contracts override legacy spe
 - [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md)
 - [Privacy-safe Analytics Collection](ANALYTICS.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
+- [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md)
 
 These documents preserve the separation between Profile-fit Roles and Latest JD Match, score truth and focus, mission progress and evidence, and the current light-first UI direction.
 
@@ -62,6 +63,7 @@ Frozen evidence must not be casually rewritten. The Phase 1B closure is isolated
 
 - [Deployment Safety Guide](DEPLOYMENT.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
+- [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md)
 - [Project Status](PROJECT_STATUS.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Changelog](CHANGELOG.md)

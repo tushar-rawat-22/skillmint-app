@@ -350,7 +350,11 @@ for (const [pattern, label] of [
 
 for (const [pattern, label] of [
   [/public beta (?:is|remains) not (?:currently )?authorized/i, "public beta remains unauthorized"],
-  [/Production V5(?:,|–) V6(?:,|, and|–) V7 remain unapplied/i, "Production V5–V7 remain unapplied"],
+  [
+    /exact V1\+V2 versioned catalog baseline[\s\S]{0,160}known untracked [`']?public\.rls_auto_enable\(\)/i,
+    "Production catalog separates the V1+V2 versioned baseline from known drift",
+  ],
+  [/V3–V8 remain (?:catalog-)?pending/i, "Production V3–V8 remain pending"],
   [/analytics (?:collection )?remains disabled/i, "analytics remains disabled"],
   [/(?:public )?(?:brand|name)[^\n]*(?:domain)[^\n]*(?:pending|remain pending)|(?:public )?brand[^\n]*pending[\s\S]{0,120}domain[^\n]*pending/i, "brand and domain remain pending"],
 ]) {
