@@ -5,10 +5,10 @@
 ## 1. Current state
 
 ```text
-STATE_AS_OF_DATE=2026-07-30
-STATE_AS_OF_MAIN=c71753a1b9ba956301b92b64bde897d173ea1117
-LATEST_MERGED_PR=33
-LATEST_IMPLEMENTATION_COMMIT=7eee335f1abe557047f4e963579cf1776bf0dc9d
+BUSINESS_STATE_VERIFIED_DATE=2026-07-30
+BUSINESS_STATE_BASELINE_MAIN=c71753a1b9ba956301b92b64bde897d173ea1117
+LATEST_PRODUCT_PR=33
+LATEST_PRODUCT_IMPLEMENTATION_COMMIT=7eee335f1abe557047f4e963579cf1776bf0dc9d
 REPOSITORY=tushar-rawat-22/skillmint-app
 LOCAL_REPOSITORY=~/Desktop/skillmint-app
 DEFAULT_BRANCH=main
@@ -61,11 +61,12 @@ A new ChatGPT session must do this before recommending work:
    - `docs/PRODUCTION_SCHEMA_ROLLOUT.md`;
    - `docs/DEPLOYMENT.md`.
 3. Treat current GitHub `main` and newer verified live evidence as higher authority than this file.
-4. When `main` is newer, explain the delta briefly, update the state in this file during the next appropriate documentation change, and continue from the latest valid next gate.
-5. Do not ask Tushar to repeat project history already recorded here.
-6. Do not invent a different roadmap merely because the conversation is new.
-7. Do not create a documentation-only “phase” after every small action. Update this file at major gate closure, merge, Production change, rollback, or executive decision.
-8. Do not add a new launch gate unless a concrete failure, dependency, compliance obligation, or operational risk requires it.
+4. A newer `main` SHA is not automatically a product-state change. Inspect the delta first; documentation-only or context-maintenance commits may leave the recorded business state unchanged.
+5. When the delta materially changes product, Production, launch, authorization, scope, spend, or risk, explain it briefly, update this file during the next appropriate documentation change, and continue from the latest valid next gate.
+6. Do not ask Tushar to repeat project history already recorded here.
+7. Do not invent a different roadmap merely because the conversation is new.
+8. Do not create a documentation-only “phase” after every small action. Update this file at major gate closure, Production change, rollback, incident, or executive decision.
+9. Do not add a new launch gate unless a concrete failure, dependency, compliance obligation, or operational risk requires it.
 
 ### New-chat prompt
 
@@ -349,8 +350,8 @@ Do not update it after every small fix. Never let it become a competing roadmap.
 
 Required updated fields:
 
-- state date and `main` SHA;
-- latest merged PR and implementation commit;
+- business-state verification date and baseline product-state SHA;
+- latest product PR and implementation commit;
 - current Production truth;
 - completed work;
 - remaining blockers;
@@ -359,6 +360,8 @@ Required updated fields:
 - risk-weighted completion estimate when materially changed.
 
 GitHub access depends on the connected app installation, selected repository access, and granted permissions. Verify access at the start of each new chat. ChatGPT cannot silently maintain this file between conversations without an active user-triggered session or task.
+
+Do not try to pin this file to the merge commit that contains the file itself. That creates an impossible self-reference. Record the latest verified product-state baseline instead, and let each new session verify the current repository head.
 
 ## 15. Latest executive decisions
 
