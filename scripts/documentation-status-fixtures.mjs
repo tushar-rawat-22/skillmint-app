@@ -139,7 +139,6 @@ for (const path of phase3StatusPaths) {
     ],
     ["no replacement forecast", "no-replacement-prediction boundary"],
     ["recurring comprehension evidence", "broad Phase 3 deferral evidence gate"],
-    ["Phase 4 has not started", "Phase 4 not-started boundary"],
     ["Controlled-user invitations remain unauthorized", "controlled-user launch boundary"],
     ["Production migrations remain unauthorized", "Production migration boundary"],
   ]) {
@@ -157,6 +156,65 @@ for (const path of phase3StatusPaths) {
     ],
   ]) {
     check(!pattern.test(phase3Status), `${path} retains ${label}`);
+  }
+}
+
+const phase4StatusPaths = [
+  "docs/PROJECT_STATUS.md",
+  "docs/TODO.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
+];
+for (const path of phase4StatusPaths) {
+  const phase4Status = text(path);
+  for (const [needle, label] of [
+    ["completed read-only Phase 4 inspection", "completed read-only inspection"],
+    ["IMPLEMENT_A_BOUNDED_SLICE", "inspection verdict"],
+    ["bounded upload-accessibility repair", "bounded upload-accessibility repair"],
+    ["PR #30", "bounded upload-accessibility pull request"],
+    ["0eb4cd94e1a5e642ab9dd6350bfa4153197dd45c", "implementation commit"],
+    ["6793c946de045d7c1fe3cf45e84d8ed25fe23d5f", "merge commit"],
+    ["30522914931", "successful pull-request CI run"],
+    ["30523438736", "successful main CI run"],
+    ["successful Production deployment", "successful deployment"],
+    ["read-only Production smoke passed", "read-only Production smoke"],
+    ["keyboard-reachable native chooser", "keyboard-reachable native chooser"],
+    ["inaccurate drag-and-drop wording", "removed inaccurate drag-and-drop wording"],
+    ["processing status and busy semantics", "processing status and busy semantics"],
+    ["failure alert semantics", "failure alert semantics"],
+    ["no new onboarding state", "no-new-onboarding-state boundary"],
+    ["no drag-and-drop implementation", "no-drag-and-drop boundary"],
+    [
+      "broader Phase 4 guided-execution and onboarding work is deferred pending recurring controlled-user evidence",
+      "broad Phase 4 deferral evidence gate",
+    ],
+    ["real assistive-technology evidence remains pending", "assistive-technology limit"],
+    [
+      "not authenticated functional accessibility validation",
+      "Production-smoke accessibility limit",
+    ],
+    ["Controlled-user invitations remain unauthorized", "controlled-user launch boundary"],
+    ["Production migrations remain unauthorized", "Production migration boundary"],
+  ]) {
+    check(phase4Status.includes(needle), `${path} is missing ${label}`);
+  }
+
+  for (const [pattern, label] of [
+    [/Phase 4 has not started/i, "obsolete Phase 4 not-started wording"],
+    [/Phase 4 implementation has not started/i, "obsolete Phase 4 implementation wording"],
+    [
+      /(?:Phase 4 inspection[^\n]*next action|next action[^\n]*Phase 4 inspection)/i,
+      "obsolete Phase 4 inspection-next wording",
+    ],
+    [
+      /(?:all|broad) Phase 4[^\n]*(?:work|explainability|onboarding)[^\n]*is complete/i,
+      "unsupported all-Phase-4-complete wording",
+    ],
+    [
+      /controlled[- ]launch (?:is|has been) authorized/i,
+      "unsupported controlled-launch authorization",
+    ],
+  ]) {
+    check(!pattern.test(phase4Status), `${path} retains ${label}`);
   }
 }
 
