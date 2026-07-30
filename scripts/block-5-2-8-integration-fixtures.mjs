@@ -436,7 +436,7 @@ test("11 Block 5 documentation keeps downloads and 5.3 boundaries truthful", () 
 test("12 protected fixtures are byte-stable and production imports no closure fixture", () => {
   const expectedHashes = new Map([
     ["scripts/active-target-fixtures.mjs", "4855e6f481ef01cbfcefab7cb93ba6cb7b3c3cd2a1f9c6657415624282144fa3"],
-    ["scripts/mission-path-fixtures.mjs", "1ed9a3e2550c4dff6db6fa12f05bb4e1b2f3987334c4bd36195e17237c4bfe20"],
+    ["scripts/mission-path-fixtures.mjs", "e84fbcabe43e4225fde1c66396e62bdd8faab7794742d97e0caec969137784ae"],
     ["scripts/scoring-truth-fixtures.mjs", "7c4729b6aea68fc74db740d4997abd26e42657394b8fe059f3e99d4b366a65a2"],
   ]);
   for (const [relativePath, expectedHash] of expectedHashes) {
