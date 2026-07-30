@@ -98,7 +98,6 @@ for (const [needle, label] of [
   ["17b1167d9d01ad2e30bc3ecbab55ddbbc93ef433", "Phase 2 merge commit"],
   ["30469897446", "successful main CI run"],
   ["/resume/compare", "direct Production route verification"],
-  ["Phase 3 has not started", "Phase 3 not-started boundary"],
   ["Controlled-user invitations remain unauthorized", "controlled-user launch boundary"],
   ["Production migrations remain unauthorized", "Production migration boundary"],
   ["public beta is not authorized", "public-beta boundary"],
@@ -113,6 +112,52 @@ for (const [needle, label] of [
   ],
 ]) {
   check(phase2Status.includes(needle), `Phase 2 status is missing ${label}`);
+}
+
+const phase3StatusPaths = [
+  "docs/PROJECT_STATUS.md",
+  "docs/TODO.md",
+  "docs/V2_DYNAMIC_EXECUTION_ROADMAP.md",
+];
+for (const path of phase3StatusPaths) {
+  const phase3Status = text(path);
+  for (const [needle, label] of [
+    ["read-only explainability architecture inspection", "completed read-only inspection"],
+    ["IMPLEMENT_A_BOUNDED_SLICE", "inspection verdict"],
+    ["PR #28", "bounded truth-repair pull request"],
+    ["2f443d4c595e01523015aae3b9b2072eebfba9c6", "Phase 3 merge commit"],
+    ["30513546806", "initial pull-request CI run"],
+    ["stale protected-fixture hash", "initial deterministic hash-pin failure"],
+    ["only that exact hash pin", "narrow protected-fixture repair"],
+    ["30514124663", "replacement pull-request CI run"],
+    ["30514466459", "successful main CI run"],
+    ["successful Production deployment", "successful deployment"],
+    ["read-only Production smoke passed", "read-only Production smoke"],
+    [
+      "removed the unsupported numeric “Projected Readiness Path”",
+      "removed unsupported readiness forecast",
+    ],
+    ["no replacement forecast", "no-replacement-prediction boundary"],
+    ["recurring comprehension evidence", "broad Phase 3 deferral evidence gate"],
+    ["Phase 4 has not started", "Phase 4 not-started boundary"],
+    ["Controlled-user invitations remain unauthorized", "controlled-user launch boundary"],
+    ["Production migrations remain unauthorized", "Production migration boundary"],
+  ]) {
+    check(phase3Status.includes(needle), `${path} is missing ${label}`);
+  }
+
+  for (const [pattern, label] of [
+    [
+      /Phase 3(?: implementation)? has not started|Phase 3[^\n]*but it has not started/i,
+      "obsolete Phase 3 not-started wording",
+    ],
+    [
+      /(?:next action[^\n]*read-only[^\n]*Phase 3|read-only Phase 3[^\n]*next)/i,
+      "obsolete Phase 3 inspection-next wording",
+    ],
+  ]) {
+    check(!pattern.test(phase3Status), `${path} retains ${label}`);
+  }
 }
 
 for (const path of [
