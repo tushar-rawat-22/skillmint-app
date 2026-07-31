@@ -158,7 +158,7 @@ const sourcePath = "supabase/schema_v9_public_function_acl_normalization.sql";
 const migration = text(migrationPath);
 const migrationWithoutComments = migration.replace(/^--.*$/gm, "");
 const migrationHash =
-  "4868c2d50b738db84183184ae70b96b27c9a43da152fd66a14b615e4a703bdea";
+  "171404d422850c935300ad0384cc680a195849847705683c0b05016290e93983";
 equal(Buffer.compare(bytes(sourcePath), bytes(migrationPath)), 0, "V9 source and migration differ");
 equal(sha256(bytes(migrationPath)), migrationHash, "V9 migration hash changed");
 equal(

@@ -99,7 +99,7 @@ begin
         trigger_row.evtname,
         trigger_row.evtevent,
         trigger_row.evtenabled,
-        pg_catalog.coalesce(
+        coalesce(
           (
             select pg_catalog.string_agg(tag_row.tag_name, ',' order by tag_row.tag_name)
             from pg_catalog.unnest(trigger_row.evttags) as tag_row(tag_name)
@@ -161,7 +161,7 @@ begin
         trigger_row.evtname,
         trigger_row.evtevent,
         trigger_row.evtenabled,
-        pg_catalog.coalesce(
+        coalesce(
           (
             select pg_catalog.string_agg(tag_row.tag_name, ',' order by tag_row.tag_name)
             from pg_catalog.unnest(trigger_row.evttags) as tag_row(tag_name)
@@ -189,7 +189,7 @@ begin
     select 1
     from pg_catalog.pg_proc as function_row
     cross join lateral pg_catalog.aclexplode(
-      pg_catalog.coalesce(
+      coalesce(
         function_row.proacl,
         pg_catalog.acldefault('f', function_row.proowner)
       )
