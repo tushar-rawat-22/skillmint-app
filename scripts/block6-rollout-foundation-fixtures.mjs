@@ -164,7 +164,7 @@ const migrations = [
     source: "supabase/schema_v9_public_function_acl_normalization.sql",
     migration:
       "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
-    hash: "4868c2d50b738db84183184ae70b96b27c9a43da152fd66a14b615e4a703bdea",
+    hash: "171404d422850c935300ad0384cc680a195849847705683c0b05016290e93983",
     classification: "pending_public_function_acl_normalization",
   },
 ];
