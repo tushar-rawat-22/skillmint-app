@@ -6,9 +6,9 @@
 
 ```text
 STATE_VERIFIED_DATE=2026-07-31
-STATE_VERIFIED_MAIN=c7d31623532b34beec8d61f731e140683c5ea84a
-LATEST_REPOSITORY_PR=36
-LATEST_REPOSITORY_MERGE=c7d31623532b34beec8d61f731e140683c5ea84a
+MATERIAL_GATE_BASELINE_MAIN=c7d31623532b34beec8d61f731e140683c5ea84a
+LAST_MATERIAL_GATE_PR=36
+LAST_MATERIAL_GATE_MERGE=c7d31623532b34beec8d61f731e140683c5ea84a
 LATEST_PRODUCT_PR=33
 LATEST_PRODUCT_IMPLEMENTATION_COMMIT=7eee335f1abe557047f4e963579cf1776bf0dc9d
 REPOSITORY=tushar-rawat-22/skillmint-app
@@ -51,6 +51,8 @@ PUBLIC_LAUNCH_AUTHORIZED=NO
 ```
 
 The objective is a safe controlled cohort, not another feature cycle. Every remaining gate must remove a demonstrated launch blocker and have an explicit exit condition.
+
+The baseline fields intentionally identify the last material product and launch-gate closure. They do not attempt to name the documentation merge commit that contains this file. Every new session must verify the current repository head; a newer documentation-only context merge does not by itself change product, Production, authorization, or launch state.
 
 ## 2. Mandatory new-chat startup
 
