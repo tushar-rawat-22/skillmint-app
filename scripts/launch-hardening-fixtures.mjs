@@ -97,6 +97,9 @@ const allowSyntheticAuthenticatedRequest = async () => ({
 const { requestPasswordReset } = require(
   "../src/modules/auth/services/passwordResetRequest.ts",
 );
+const { extractProofLinks } = require(
+  "../src/intelligence/proof/proofLinkExtraction.ts",
+);
 
 const tests = [];
 
@@ -140,6 +143,59 @@ test("shared upload limits and finite public error contract are exact", () => {
   assert.equal(
     contract.RESUME_EXTRACTION_ERRORS.scanned_pdf_unsupported.status,
     422,
+  );
+});
+
+test("proof-link classification requires exact provider hostname boundaries", () => {
+  const deceptiveProviderHosts = [
+    "github.com",
+    "leetcode.com",
+    "linkedin.com",
+    "kaggle.com",
+    "behance.net",
+    "figma.com",
+    "dribbble.com",
+    "medium.com",
+    "hashnode.com",
+    "dev.to",
+    "huggingface.co",
+    "drive.google.com",
+    "credly.com",
+    "coursera.org",
+    "udemy.com",
+    "public.tableau.com",
+    "powerbi.com",
+    "lookerstudio.google.com",
+    "datastudio.google.com",
+    "apps.apple.com",
+    "play.google.com",
+    "vercel.app",
+    "netlify.app",
+    "github.io",
+    "pages.dev",
+    "firebaseapp.com",
+    "web.app",
+    "onrender.com",
+    "railway.app",
+    "herokuapp.com",
+  ];
+  const deceptiveLinks = extractProofLinks(
+    deceptiveProviderHosts
+      .map((hostname) => `https://${hostname}.attacker.invalid/proof`)
+      .join(" "),
+  );
+
+  assert.equal(deceptiveLinks.length, deceptiveProviderHosts.length);
+  assert.ok(deceptiveLinks.every((link) => link.type === "other"));
+
+  const trustedLinks = extractProofLinks(
+    "https://github.com/skillmint-synthetic/project " +
+      "https://portfolio.vercel.app " +
+      "https://subdomain.dev.to/proof",
+  );
+  assert.deepEqual(
+    trustedLinks.map((link) => link.type),
+    ["github_repo", "live_project", "devto"],
   );
 });
 

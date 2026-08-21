@@ -142,26 +142,26 @@ function classifyProofLink(url: string, sourceKey?: string): ProofLinkType {
     return "portfolio";
   }
 
-  if (hostname.includes("github.com")) {
+  if (matchesHostname(hostname, "github.com")) {
     return isGitHubRepoPath(pathname) ? "github_repo" : "github_profile";
   }
 
-  if (hostname.includes("leetcode.com")) return "leetcode";
-  if (hostname.includes("linkedin.com")) return "linkedin";
-  if (hostname.includes("kaggle.com")) return "kaggle";
-  if (hostname.includes("behance.net")) return "behance";
-  if (hostname.includes("figma.com")) return "figma";
-  if (hostname.includes("dribbble.com")) return "dribbble";
-  if (hostname.includes("medium.com")) return "medium";
-  if (hostname.includes("hashnode")) return "hashnode";
-  if (hostname === "dev.to" || hostname.endsWith(".dev.to")) return "devto";
-  if (hostname.includes("huggingface.co")) return "huggingface";
-  if (hostname.includes("drive.google.com")) return "google_drive";
+  if (matchesHostname(hostname, "leetcode.com")) return "leetcode";
+  if (matchesHostname(hostname, "linkedin.com")) return "linkedin";
+  if (matchesHostname(hostname, "kaggle.com")) return "kaggle";
+  if (matchesHostname(hostname, "behance.net")) return "behance";
+  if (matchesHostname(hostname, "figma.com")) return "figma";
+  if (matchesHostname(hostname, "dribbble.com")) return "dribbble";
+  if (matchesHostname(hostname, "medium.com")) return "medium";
+  if (matchesHostname(hostname, "hashnode.com")) return "hashnode";
+  if (matchesHostname(hostname, "dev.to")) return "devto";
+  if (matchesHostname(hostname, "huggingface.co")) return "huggingface";
+  if (matchesHostname(hostname, "drive.google.com")) return "google_drive";
 
   if (
-    hostname.includes("credly.com") ||
-    hostname.includes("coursera.org") ||
-    hostname.includes("udemy.com") ||
+    matchesHostname(hostname, "credly.com") ||
+    matchesHostname(hostname, "coursera.org") ||
+    matchesHostname(hostname, "udemy.com") ||
     hostname.includes("certificate") ||
     pathname.includes("certificate") ||
     pathname.includes("certification")
@@ -170,28 +170,31 @@ function classifyProofLink(url: string, sourceKey?: string): ProofLinkType {
   }
 
   if (
-    hostname.includes("public.tableau.com") ||
-    hostname.includes("powerbi.com") ||
-    hostname.includes("lookerstudio.google.com") ||
-    hostname.includes("datastudio.google.com")
+    matchesHostname(hostname, "public.tableau.com") ||
+    matchesHostname(hostname, "powerbi.com") ||
+    matchesHostname(hostname, "lookerstudio.google.com") ||
+    matchesHostname(hostname, "datastudio.google.com")
   ) {
     return "dashboard";
   }
 
-  if (hostname.includes("apps.apple.com") || hostname.includes("play.google.com")) {
+  if (
+    matchesHostname(hostname, "apps.apple.com") ||
+    matchesHostname(hostname, "play.google.com")
+  ) {
     return "app_store";
   }
 
   if (
-    hostname.includes("vercel.app") ||
-    hostname.includes("netlify.app") ||
-    hostname.includes("github.io") ||
-    hostname.includes("pages.dev") ||
-    hostname.includes("firebaseapp.com") ||
-    hostname.includes("web.app") ||
-    hostname.includes("onrender.com") ||
-    hostname.includes("railway.app") ||
-    hostname.includes("herokuapp.com")
+    matchesHostname(hostname, "vercel.app") ||
+    matchesHostname(hostname, "netlify.app") ||
+    matchesHostname(hostname, "github.io") ||
+    matchesHostname(hostname, "pages.dev") ||
+    matchesHostname(hostname, "firebaseapp.com") ||
+    matchesHostname(hostname, "web.app") ||
+    matchesHostname(hostname, "onrender.com") ||
+    matchesHostname(hostname, "railway.app") ||
+    matchesHostname(hostname, "herokuapp.com")
   ) {
     return "live_project";
   }
@@ -231,6 +234,10 @@ function getReadableHost(url: string): string {
   const parsedUrl = parseUrl(url);
 
   return parsedUrl?.hostname.replace(/^www\./, "") ?? "Proof link";
+}
+
+function matchesHostname(hostname: string, expectedHostname: string): boolean {
+  return hostname === expectedHostname || hostname.endsWith(`.${expectedHostname}`);
 }
 
 function isGitHubRepoPath(pathname: string): boolean {
