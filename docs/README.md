@@ -8,6 +8,7 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
 - [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented Phase 1A contract, its local verification history, the bounded isolated-hosted Phase 1B evidence, and the real-user evidence still required before expansion.
 - [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and current approved sequence.
+- [Pilot Charter](PILOT_CHARTER.md) defines the private-pilot audience, synthetic-demo boundary, non-claims, data handling, and validation exit criteria.
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is a preserved historical execution roadmap and frozen-contract boundary; its former launch sequence is superseded for current planning.
 - [TODO](TODO.md) distinguishes current Version 2 authority from completed, deferred, and historical work.

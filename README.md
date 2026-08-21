@@ -1,8 +1,9 @@
 # SkillMint
 
-SkillMint is a proof-aware career-planning application that analyses a résumé,
-separates claims from supporting evidence, compares the profile with one
-optional job description, and turns the gaps into a focused roadmap.
+SkillMint shows students and fresh graduates what their résumé currently
+supports, which evidence matters most, what is missing for the role they want,
+and what to build next. It turns the résumé into an evidence map and a focused
+action loop instead of treating a document score as the outcome.
 
 SkillMint is the internal project codename. The public brand has not been finalized.
 
@@ -14,6 +15,10 @@ I also wanted to keep general profile fit separate from one real job description
 
 ## What the application does today
 
+- **Offers a no-login synthetic demo:** when its server-only gate is enabled,
+  `/demo` presents a fixed, unmistakably synthetic evidence analysis and a
+  before/after comparison without Supabase, analytics, uploads, browser writes,
+  or external requests.
 - **Extracts and analyzes resumes:** PDF, DOCX, and TXT uploads are converted to text, parsed into a structured profile, and evaluated by deterministic TypeScript modules.
 - **Calculates Career IQ:** a bounded, explainable readiness signal based on resume-internal profile fit, claimed-versus-backed skills, applied evidence, and scoring caps. It is not hiring probability.
 - **Calculates Proof Confidence:** a measure of support visible inside the resume, including evidence candidates such as project, experience, certification, and proof-link signals. These are not independently verified claims, and missing proof means unverified rather than false.
@@ -31,17 +36,20 @@ I also wanted to keep general profile fit separate from one real job description
 ## Product flow
 
 ```text
-Resume Reality
--> Profile-fit Roles
--> Active Target
--> Proof Confidence
--> Career IQ
--> Latest JD Match
--> Roadmap and Missions
+Resume
+-> Evidence map
+-> Gap
+-> Next action
+-> New evidence
 -> Re-analysis
+-> Compare progress
 ```
 
-These concepts are separate because they answer different questions. Resume Reality records what the current resume supports; Profile-fit Roles describe general alignment; Active Target selects a focus; Proof Confidence and Career IQ summarize different evidence and readiness dimensions; Latest JD Match adds one job-specific comparison; missions guide work; and only re-analysis can detect changed evidence.
+Resume Reality records what the current résumé supports. Profile-fit Roles and
+one Latest JD Match remain separate contexts, while Active Target selects focus
+without changing truth or scores. Career IQ, Proof Confidence, ATS, and JD
+calculations remain explainable supporting detail. Missions guide work, but only
+later re-analysis can detect changed evidence.
 
 ## Technical architecture
 
@@ -119,7 +127,7 @@ npm ci
 npm run dev
 ```
 
-Eligible browser-local flows can run without Supabase configuration. Copying `.env.example` to `.env.local` is required only when configuring Supabase authentication and account persistence. Do not display or commit real environment values.
+Eligible browser-local flows can run without Supabase configuration. Copying `.env.example` to `.env.local` is required only when configuring Supabase authentication and account persistence. The public synthetic demo remains disabled unless `SKILLMINT_PUBLIC_DEMO_ENABLED` is the exact case-insensitive value `true`; public signup remains independently closed by default. Do not display or commit real environment values.
 
 Administrative account deletion also requires the documented server-only configuration and the expected database contract. A local UI running without those prerequisites must fail safely; it does not provide operational account deletion.
 
@@ -137,11 +145,17 @@ Playwright is an additional browser-testing layer with Chromium, Firefox, and We
 ## Current status
 
 - Blocks 1–5 are implemented and frozen for engineering preservation.
+- The private-pilot homepage and synthetic public demo use an evidence-first
+  hierarchy. Real résumé analysis requires a server-confirmed account; public
+  signup, analytics, and external verification claims remain off.
+- Resume Progress and Comparison reuses the deterministic analysis contracts to
+  show evidence change across user-selected reports. It does not claim that a
+  score change predicts a hiring outcome.
 - GitHub CI and `main` branch protection are active; the required repository check is the `quality` job.
 - Block 6 implementation and isolated verification are complete. The isolated hosted migration and ACL checks and the live-security gate passed; these results do not prove Production behavior.
 - Production schema rollout and analytics activation have not occurred, and analytics collection remains disabled.
 - Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The former broad Beta v1 public-launch path, including its Block 7.2 sequencing, is superseded as current authority by the July 27, 2026 Version 2 transition decision.
-- Phase 1 — Resume Workspace is complete. Its historical Phase 1A local gate and isolated hosted Phase 1B gate passed on July 28, 2026. Saved history, account Workspace selection, and the browser-active report remain separate; V8 is applied and verified only on isolated staging and remains unapplied to Production. The later July 28 founder sequencing amendment makes bounded Phase 2 — Resume Progress and Comparison implementation the next repository work.
+- Phase 1 — Resume Workspace and the bounded Phase 2A Resume Progress and Comparison implementation are complete. Saved history, account Workspace selection, and the browser-active report remain separate; V8 is applied and verified only on isolated staging and remains unapplied to Production.
 - Public beta and unrestricted acquisition are not authorized.
 - Payments remain deferred; the public brand, logo, and domain remain undecided.
 - Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
