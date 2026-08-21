@@ -89,6 +89,10 @@ export default function DashboardPreview() {
             All information in this preview is invented. SkillMint has not
             externally verified any source or candidate claim.
           </p>
+          <p className="mt-2 border-l-2 border-emerald-600 pl-3 text-xs font-semibold leading-5 text-slate-700">
+            After the resume changes, saved reports can compare detected
+            evidence. Completing an action alone never creates proof.
+          </p>
         </div>
       </div>
     </section>

@@ -35,7 +35,7 @@ export default function CTA({
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
           {publicDemoEnabled
-            ? "The live demo uses one fixed synthetic resume and synthetic job description. Real-resume analysis remains limited to authenticated existing users."
+            ? "The live demo uses two fixed synthetic resume states and one synthetic job description to show evidence, a gap, a next action, and re-analysis. Real-resume analysis remains limited to authenticated existing users."
             : publicSignupEnabled
               ? "Registration is open for early access. Create an account to save your career direction, resume proof, job matches, and roadmap."
               : "SkillMint is preparing a controlled early-access cohort. Existing users can continue to log in."}

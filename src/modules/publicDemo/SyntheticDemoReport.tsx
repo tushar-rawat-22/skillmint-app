@@ -7,7 +7,10 @@ import {
   premiumSurface,
 } from "@/components/ui/premium";
 import { ROUTES } from "@/constants/routes";
-import { SYNTHETIC_DEMO } from "@/modules/publicDemo/syntheticDemo";
+import {
+  SYNTHETIC_DEMO,
+  SYNTHETIC_PROGRESS_COMPARISON,
+} from "@/modules/publicDemo/syntheticDemo";
 
 export default function SyntheticDemoReport() {
   return (
@@ -102,6 +105,70 @@ export default function SyntheticDemoReport() {
           </div>
         </section>
 
+        <section
+          className={premiumSurface}
+          aria-labelledby="demo-progress-title"
+        >
+          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+            <div>
+              <p className={premiumEyebrow}>Re-analysis · synthetic comparison</p>
+              <h2 id="demo-progress-title" className="mt-2 text-3xl font-black">
+                What changed after stronger evidence was added?
+              </h2>
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                The fixed second resume state follows the recommended action:
+                it makes ownership clearer, adds a testing outcome, and names
+                an inspectable synthetic evidence candidate.
+              </p>
+              <p className="mt-4 border-l-4 border-amber-300 pl-4 text-sm leading-6 text-slate-700">
+                This comparison detects changes in resume evidence. It does not
+                prove that a person gained a skill or became more likely to be
+                hired.
+              </p>
+            </div>
+
+            <div className="overflow-hidden border-y border-slate-200">
+              <ComparisonRow
+                label="Newly detected skill evidence"
+                before="No testing or API-ownership evidence detected"
+                after={SYNTHETIC_PROGRESS_COMPARISON.skills.status === "available"
+                  ? SYNTHETIC_PROGRESS_COMPARISON.skills.onlyInSourceB.join(", ")
+                  : "Evidence unavailable"}
+              />
+              <ComparisonRow
+                label="Project evidence entries"
+                before={formatComparisonCount(
+                  SYNTHETIC_PROGRESS_COMPARISON.counts.projects,
+                  "sourceA",
+                )}
+                after={formatComparisonCount(
+                  SYNTHETIC_PROGRESS_COMPARISON.counts.projects,
+                  "sourceB",
+                )}
+              />
+              <ComparisonRow
+                label="Inspectable evidence candidate"
+                before="Not detected"
+                after={SYNTHETIC_PROGRESS_COMPARISON.links.portfolio.change ===
+                  "only_in_source_b"
+                  ? "Synthetic portfolio-link category detected"
+                  : "No change detected"}
+              />
+              <ComparisonRow
+                label="Experience entries"
+                before={formatComparisonCount(
+                  SYNTHETIC_PROGRESS_COMPARISON.counts.experience,
+                  "sourceA",
+                )}
+                after={formatComparisonCount(
+                  SYNTHETIC_PROGRESS_COMPARISON.counts.experience,
+                  "sourceB",
+                )}
+              />
+            </div>
+          </div>
+        </section>
+
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <section className={premiumSurface} aria-labelledby="demo-jd-title">
             <p className={premiumEyebrow}>Synthetic JD relevance</p>
@@ -109,8 +176,9 @@ export default function SyntheticDemoReport() {
               {SYNTHETIC_DEMO.jobDescription.label}
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              This compares two fixed synthetic text fixtures. It is not an
-              employer assessment or a prediction of selection.
+              This compares the first fixed synthetic resume state with one
+              fixed synthetic job description. It is not an employer
+              assessment or a prediction of selection.
             </p>
 
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
@@ -267,4 +335,41 @@ function Calculation({
       <p className="mt-2 text-xs leading-5 text-slate-600">{detail}</p>
     </article>
   );
+}
+
+function ComparisonRow({
+  label,
+  before,
+  after,
+}: {
+  label: string;
+  before: string;
+  after: string;
+}) {
+  return (
+    <div className="grid gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[0.8fr_1fr_1fr] sm:items-start">
+      <p className="text-sm font-bold text-slate-950">{label}</p>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+          Before action
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{before}</p>
+      </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">
+          After re-analysis
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-800">{after}</p>
+      </div>
+    </div>
+  );
+}
+
+function formatComparisonCount(
+  comparison: typeof SYNTHETIC_PROGRESS_COMPARISON.counts.projects,
+  source: "sourceA" | "sourceB",
+): string {
+  return comparison.status === "available"
+    ? `${comparison[source]} detected`
+    : "Evidence unavailable";
 }
