@@ -5,6 +5,7 @@ import {
   premiumHeroSurface,
   premiumSecondaryCta,
 } from "@/components/ui/premium";
+import { ROUTES } from "@/constants/routes";
 import type { ProofScoreResult } from "@/intelligence/proof";
 import type { UserProfile } from "@/intelligence/types/profile";
 import type { RoleMatchResult } from "@/intelligence/types/results";
@@ -80,6 +81,23 @@ export default function EvidenceSummaryCard({
           externally verify links, repositories, employment, education,
           identity, or candidate truthfulness.
         </p>
+        <div className="mt-5 flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-bold text-slate-950">
+              What changed since a prior analysis?
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+              Compare two saved reports to see changed resume evidence. A
+              difference does not prove that you gained or lost a skill.
+            </p>
+          </div>
+          <Link
+            href={ROUTES.RESUME_COMPARE}
+            className={`${premiumSecondaryCta} w-fit shrink-0`}
+          >
+            Compare saved evidence
+          </Link>
+        </div>
       </div>
     </section>
   );

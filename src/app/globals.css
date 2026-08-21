@@ -22,6 +22,11 @@ button {
   cursor: pointer;
 }
 
+:where(a, button, summary, input, textarea, select):focus-visible {
+  outline: 2px solid #047857;
+  outline-offset: 3px;
+}
+
 @keyframes skillmint-scan {
   0% {
     transform: translateX(-120%);

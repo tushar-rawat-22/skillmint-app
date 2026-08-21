@@ -132,6 +132,9 @@ test("demo is structurally isolated from Supabase, storage, analytics, parsing, 
   assert.match(demoSources, /All candidate, resume, evidence, and job-description information[\s\S]*synthetic demo data/u);
   assert.match(demoSources, /How this analysis was calculated/u);
   assert.match(demoSources, /Proof Brief/u);
+  assert.match(demoSources, /compareResumeEvidence/u);
+  assert.match(demoSources, /validateResumeComparisonEvidence/u);
+  assert.match(demoSources, /What changed after stronger evidence was added\?/u);
 });
 
 test("every synthetic demo navigation link disables automatic prefetch", () => {

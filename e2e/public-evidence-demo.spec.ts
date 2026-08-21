@@ -92,6 +92,18 @@ test("@public-demo @demo-enabled demo is synthetic, evidence-first, accessible, 
   await expect(page.getByRole("heading", { name: "Main evidence gap" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Best next move" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Selected synthetic evidence sources" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "What changed after stronger evidence was added?",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("API integration, Component testing", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Synthetic portfolio-link category detected", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/does not prove that a person gained a skill or became more likely to be hired/i),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Proof Brief" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/Recruiter Confidence|recruiter confidence/i);
   await page.waitForTimeout(1_500);
@@ -130,6 +142,69 @@ test("@public-demo @demo-enabled homepage and logged-out upload route to the ena
   await page.goto("/upload");
   await expect(page.locator('input[type="file"]')).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Explore synthetic demo" })).toHaveAttribute("href", "/demo");
+});
+
+test("@public-demo @demo-enabled investor journey works at 320px with reduced motion", async ({
+  page,
+  request,
+}) => {
+  await page.setViewportSize({ width: 320, height: 760 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: /Know what your resume supports/i,
+    }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page, 320);
+
+  const demoLink = page.getByRole("link", { name: "Explore live demo" }).first();
+  await demoLink.focus();
+  expect(await demoLink.evaluate((element) =>
+    getComputedStyle(element).outlineStyle
+  )).not.toBe("none");
+
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  await demoLink.click();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(
+    page.getByRole("heading", { name: "Main evidence gap" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "What changed after stronger evidence was added?",
+    }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page, 320);
+
+  const undersizedControls = await page.locator("a, button, summary").evaluateAll(
+    (elements) => elements.flatMap((element) => {
+      const rectangle = element.getBoundingClientRect();
+      return rectangle.width < 24 || rectangle.height < 24
+        ? [{
+            text: element.textContent?.trim() ?? "",
+            width: rectangle.width,
+            height: rectangle.height,
+          }]
+        : [];
+    }),
+  );
+  expect(undersizedControls).toEqual([]);
+
+  await page.waitForTimeout(1_500);
+  expect(await readServerRequestCounts(request)).toEqual({
+    applicationRequests: 0,
+    authUserRequests: 0,
+  });
+
+  const accessibility = await new AxeBuilder({ page }).analyze();
+  expect(
+    accessibility.violations.filter((violation) =>
+      violation.impact === "critical" || violation.impact === "serious"
+    ),
+  ).toEqual([]);
 });
 
 test("@public-demo @demo-enabled authenticated upload remains available through server verification", async ({
@@ -181,6 +256,12 @@ test("@public-demo @demo-enabled authenticated dashboard is evidence-first and h
   await expect(page.getByRole("heading", { name: "Strongest support" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Main evidence gap" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Best next move" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "What changed since a prior analysis?" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Compare saved evidence" }),
+  ).toHaveAttribute("href", "/resume/compare");
   const calculationDetails = page.locator("details").filter({
     has: page.getByText("How this analysis was calculated", { exact: true }),
   });
@@ -202,4 +283,21 @@ async function readServerRequestCounts(
   const response = await request.get(`${PROVIDER_ORIGIN}/__requests`);
   expect(response.status()).toBe(200);
   return response.json();
+}
+
+async function expectNoHorizontalOverflow(
+  page: import("@playwright/test").Page,
+  viewportWidth: number,
+): Promise<void> {
+  const overflow = await page.evaluate(() => ({
+    body: document.body.scrollWidth - document.body.clientWidth,
+    document:
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
+  }));
+  expect(overflow.body).toBeLessThanOrEqual(1);
+  expect(overflow.document).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(
+    viewportWidth + 1,
+  );
 }
