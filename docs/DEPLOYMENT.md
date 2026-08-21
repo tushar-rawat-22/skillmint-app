@@ -24,9 +24,54 @@ During Block 7, Preview and Production scopes must be reviewed separately, and t
 
 Reserving a domain does not make any of these settings safe or complete. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
-## Deployment target and remote-push boundary
+## Investor-demo hosting target
 
-Vercel is the preferred deployment target, but a Git-connected host may create preview deployments from branch pushes. Before any remote branch push, independently review the actual Git/Vercel project linkage, deployment protection, preview access, ignored-build settings, and environment-variable scopes. Unknown remote deployment behavior blocks remote push readiness even when a local commit is safe.
+The Git-connected Vercel project remains a development and Preview integration;
+Vercel Hobby is not the company hosting answer for a commercial investor demo.
+As of August 21, 2026, Netlify Free is the selected zero-cost target for the
+private investor surface. Its current Free plan permits commercial projects,
+has a hard 300-credit monthly limit with no auto recharge, and pauses at the
+limit instead of creating a charge. Netlify's current Next.js adapter documents
+support for the App Router, Server Components, route handlers, middleware, and
+SSR without adding an application dependency.
+
+Cloudflare Workers Free remains a fallback, but it is not the current target:
+its 10 ms CPU limit per invocation and 3 MB compressed Worker limit create
+material risk for this repository's authenticated PDF/DOCX extraction path.
+Do not add a Cloudflare adapter until that path is measured against the actual
+bundle and runtime.
+
+The Netlify CLI is not authenticated on the current operator machine, so no
+Netlify site has been created or deployed. After the account owner completes
+`netlify login`, the operator must verify the team is on Free with no billing
+method or recharge path, connect this repository, and configure only the
+minimum investor-demo values:
+
+```text
+SKILLMINT_PUBLIC_DEMO_ENABLED=true
+SKILLMINT_PUBLIC_SIGNUP_ENABLED=false
+NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=false
+ANALYTICS_COLLECTION_ENABLED=false
+```
+
+Do not configure a service-role/secret key for the investor demo. If existing
+user login is intentionally included, add only the environment-specific public
+Supabase URL and publishable key after verifying the target; that is a separate
+operational decision and does not authorize a migration. Keep `noindex` and
+`nofollow`, use the provider subdomain, and run the production-mode synthetic
+demo isolation smoke before sharing the URL.
+
+Provider references:
+
+- [Netlify pricing](https://www.netlify.com/pricing/)
+- [Netlify credit-based Free plan](https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/credit-based-pricing-plans/)
+- [Netlify Next.js support](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/)
+- [Cloudflare Workers limits](https://developers.cloudflare.com/workers/platform/limits/)
+- [Cloudflare Next.js support](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)
+
+## Remote-push boundary
+
+A Git-connected host may create preview deployments from branch pushes. Before any remote branch push, independently review the actual project linkage, deployment protection, preview access, ignored-build settings, and environment-variable scopes. Unknown remote deployment behavior blocks remote push readiness even when a local commit is safe.
 
 Environment separation was independently verified on July 27, 2026: Preview uses the Version 2 staging target and Production uses the Production target. Preview is not connected to the Production backend. This closure does not authorize destructive, migration, or isolated-security testing outside separately approved staging work.
 
