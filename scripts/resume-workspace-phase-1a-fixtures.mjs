@@ -57,8 +57,10 @@ const V8_SHA256 =
   "233c4aa2d7f7fbf0fa8a034f763cbe38cd2399054641b6023a66c11cc730a3a1";
 const ACL_NORMALIZATION_SHA256 =
   "6536263fd8cceb15e04daa60509a5923aff8562b50e4f19810fd59948dc89154";
-const PACKAGE_LOCK_SHA256 =
+const BASELINE_PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
+const SECURITY_PACKAGE_LOCK_SHA256 =
+  "def66e9eafb72856d1c4f9f6f6244d97cc7bb6ee368c57bb207fd7c0a7ad67ee";
 
 const FROZEN_MIGRATIONS = [
   {
@@ -1596,7 +1598,7 @@ test("frozen product and analytics contracts have zero diff and no new taxonomy"
   );
 });
 
-test("package metadata permits only authorized fixture scripts and lock stays exact", () => {
+test("package metadata permits only authorized fixture scripts and audited lock stays exact", () => {
   const currentPackage = JSON.parse(readText("package.json"));
   const baselinePackage = JSON.parse(
     gitShow(`${authorizedBaseline}:package.json`),
@@ -1703,13 +1705,26 @@ test("package metadata permits only authorized fixture scripts and lock stays ex
   );
   assert.equal(
     sha256(readBuffer("package-lock.json")),
-    PACKAGE_LOCK_SHA256,
+    SECURITY_PACKAGE_LOCK_SHA256,
   );
   assert.equal(
     sha256(Buffer.from(gitShow(`${authorizedBaseline}:package-lock.json`))),
-    PACKAGE_LOCK_SHA256,
+    BASELINE_PACKAGE_LOCK_SHA256,
   );
-  assertGitZeroDiff(["package-lock.json"]);
+
+  const currentLock = JSON.parse(readText("package-lock.json"));
+  assert.equal(currentLock.packages["node_modules/nanoid"].version, "3.3.18");
+  assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.1");
+  assert.equal(
+    currentLock.packages["node_modules/brace-expansion"].version,
+    "1.1.18",
+  );
+  assert.equal(
+    currentLock.packages[
+      "node_modules/@typescript-eslint/typescript-estree/node_modules/brace-expansion"
+    ].version,
+    "5.0.9",
+  );
 });
 
 for (const [index, { name, callback }] of tests.entries()) {
