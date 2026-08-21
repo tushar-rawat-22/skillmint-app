@@ -21,6 +21,9 @@ Module._resolveFilename = function resolveAlias(
   isMain,
   options,
 ) {
+  if (request === "server-only") {
+    return path.join(root, "scripts", "server-only-fixture-stub.cjs");
+  }
   return request.startsWith("@/")
     ? originalResolveFilename.call(
       this,
@@ -36,6 +39,20 @@ Module._resolveFilename = function resolveAlias(
       isMain,
       options,
     );
+};
+
+const serverOnlyStub = path.join(
+  root,
+  "scripts",
+  "server-only-fixture-stub.cjs",
+);
+require.cache[serverOnlyStub] = {
+  id: serverOnlyStub,
+  filename: serverOnlyStub,
+  loaded: true,
+  exports: {},
+  children: [],
+  paths: [],
 };
 
 for (const extension of [".ts", ".tsx"]) {
@@ -70,9 +87,13 @@ const {
 const { GET: getHealth } = require(
   "../src/app/api/health/config/route.ts",
 );
-const { POST: extractRoute } = require(
+const { handleResumeExtraction } = require(
   "../src/app/api/resume/extract/route.ts",
 );
+const allowSyntheticAuthenticatedRequest = async () => ({
+  status: "authenticated",
+  userId: "11111111-1111-4111-8111-111111111111",
+});
 const { requestPasswordReset } = require(
   "../src/modules/auth/services/passwordResetRequest.ts",
 );
@@ -1029,7 +1050,10 @@ test("route rejects missing files, oversized multipart declarations, and signatu
       duplex: "half",
     },
   );
-  const bounded = await extractRoute(unboundedFallback);
+  const bounded = await handleResumeExtraction(
+    unboundedFallback,
+    allowSyntheticAuthenticatedRequest,
+  );
   assert.equal(bounded.status, 413);
   assert.equal((await bounded.json()).code, "file_too_large");
   assert.match(
@@ -1134,6 +1158,7 @@ test("analysis rejects before parsing, scoring, publication, or persistence", as
           new File(["resume"], "resume.txt", {
             type: "text/plain",
           }),
+          "synthetic-access-token",
         ),
       (error) => error.code === "empty_document",
     );
@@ -1144,11 +1169,11 @@ test("analysis rejects before parsing, scoring, publication, or persistence", as
     });
 
     const uploadSource = fs.readFileSync(
-      path.join(root, "src/app/upload/page.tsx"),
+      path.join(root, "src/components/upload/AuthenticatedUploadWorkspace.tsx"),
       "utf8",
     );
     const analysisIndex = uploadSource.indexOf(
-      "await runResumeAnalysis(file)",
+      "await runResumeAnalysis(file, accessToken)",
     );
     const persistenceIndex = uploadSource.indexOf(
       "saveResumeAnalysisForOperation(",
@@ -1195,7 +1220,7 @@ test("upload accessibility preserves native chooser, truthful status, and failur
     "utf8",
   );
   const uploadPageSource = fs.readFileSync(
-    path.join(root, "src/app/upload/page.tsx"),
+    path.join(root, "src/components/upload/AuthenticatedUploadWorkspace.tsx"),
     "utf8",
   );
   const fileInput = dropZoneSource.match(
@@ -1250,7 +1275,7 @@ test("upload accessibility preserves native chooser, truthful status, and failur
     /role="alert"[\s\S]*?aria-atomic="true"/u,
   );
   const analysisIndex = uploadPageSource.indexOf(
-    "await runResumeAnalysis(file)",
+    "await runResumeAnalysis(file, accessToken)",
   );
   const persistenceIndex = uploadPageSource.indexOf(
     "saveResumeAnalysisForOperation(",
@@ -1499,7 +1524,10 @@ async function extractionRequest({
       body: formData,
     },
   );
-  return extractRoute(request);
+  return handleResumeExtraction(
+    request,
+    allowSyntheticAuthenticatedRequest,
+  );
 }
 
 function createDocx(

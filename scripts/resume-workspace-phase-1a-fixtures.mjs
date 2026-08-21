@@ -1617,16 +1617,19 @@ test("package metadata permits only authorized fixture scripts and lock stays ex
     [
       "check:controlled-access-client-bundles",
       "check:production-rollout-readiness",
+      "check:public-evidence-demo-client-bundles",
       "check:secret-paths",
       "fixtures:controlled-access",
       "fixtures:launch-hardening",
       "fixtures:production-rollout-foundation",
+      "fixtures:public-evidence-demo",
       "fixtures:resume-comparison",
       "fixtures:resume-workspace-phase-1a",
       "test:e2e:controlled-access",
       "test:e2e:forgot-password",
       "test:e2e:launch-hardening",
       "test:e2e:password-recovery",
+      "test:e2e:public-evidence-demo",
       "test:e2e:resume-comparison",
       "test:e2e:resume-comparison:firefox",
       "test:e2e:resume-comparison:race",
@@ -1637,6 +1640,10 @@ test("package metadata permits only authorized fixture scripts and lock stays ex
   assert.equal(
     currentPackage.scripts["check:controlled-access-client-bundles"],
     "node scripts/controlled-access-fixtures.mjs --require-client-build",
+  );
+  assert.equal(
+    currentPackage.scripts["check:public-evidence-demo-client-bundles"],
+    "node scripts/public-evidence-demo-fixtures.mjs --require-client-build",
   );
   assert.equal(
     currentPackage.scripts["check:secret-paths"],

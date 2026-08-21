@@ -74,6 +74,9 @@ jobs:
       - name: Run controlled-access fixtures
         run: npm run fixtures:controlled-access
 
+      - name: Run public evidence demo fixtures
+        run: npm run fixtures:public-evidence-demo
+
       - name: Run Resume Comparison fixtures
         run: npm run fixtures:resume-comparison
 
@@ -85,6 +88,9 @@ jobs:
 
       - name: Run controlled-access browser coverage
         run: npm run test:e2e:controlled-access
+
+      - name: Run public evidence demo browser coverage
+        run: npm run test:e2e:public-evidence-demo
 
       - name: Run forgot-password coverage
         run: npm run test:e2e:forgot-password
@@ -112,6 +118,9 @@ jobs:
 
       - name: Verify controlled-access client bundle boundary
         run: npm run check:controlled-access-client-bundles
+
+      - name: Verify public evidence demo client bundle boundary
+        run: npm run check:public-evidence-demo-client-bundles
 
       - name: Run offline contract fixtures
         run: |

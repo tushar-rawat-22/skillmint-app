@@ -4,10 +4,12 @@ import { ROUTES } from "@/constants/routes";
 
 type NavbarProps = {
   publicSignupEnabled: boolean;
+  publicDemoEnabled: boolean;
 };
 
 export default function Navbar({
   publicSignupEnabled,
+  publicDemoEnabled,
 }: NavbarProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
@@ -32,10 +34,14 @@ export default function Navbar({
         </div>
 
         <Link
-          href={ROUTES.SIGNUP}
+          href={publicDemoEnabled ? ROUTES.DEMO : ROUTES.SIGNUP}
           className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
         >
-          {publicSignupEnabled ? "Create account" : "View early access"}
+          {publicDemoEnabled
+            ? "Explore live demo"
+            : publicSignupEnabled
+              ? "Create account"
+              : "View early access"}
         </Link>
       </nav>
     </header>

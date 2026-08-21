@@ -4,16 +4,20 @@ import { ROUTES } from "@/constants/routes";
 
 type HeroProps = {
   publicSignupEnabled: boolean;
+  publicDemoEnabled: boolean;
 };
 
 export default function Hero({
   publicSignupEnabled,
+  publicDemoEnabled,
 }: HeroProps) {
   return (
     <section className="relative overflow-hidden border-b border-slate-200 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.14),transparent_38%),linear-gradient(180deg,#ffffff,#f7f5ef)]">
       <div className="mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center md:py-32">
         <div className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800">
-          Career Operating System for students and freshers
+          {publicDemoEnabled
+            ? "Private pilot · synthetic demo"
+            : "Private pilot · controlled access"}
         </div>
 
         <h1 className="mt-10 max-w-5xl text-5xl font-black leading-[0.98] tracking-tight text-slate-950 md:text-7xl">
@@ -55,18 +59,22 @@ export default function Hero({
 
         <div className="mt-12 flex flex-wrap justify-center gap-4">
           <Link
-            href={ROUTES.SIGNUP}
+            href={publicDemoEnabled ? ROUTES.DEMO : ROUTES.SIGNUP}
             className="rounded-xl bg-emerald-600 px-8 py-4 font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
           >
-            {publicSignupEnabled ? "Create account" : "View early access"}
+            {publicDemoEnabled
+              ? "Explore live demo"
+              : publicSignupEnabled
+                ? "Create account"
+                : "View early access"}
           </Link>
 
-          <a
-            href="#preview"
+          <Link
+            href={ROUTES.LOGIN}
             className="rounded-xl border border-slate-200 bg-white px-8 py-4 font-semibold text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition hover:border-emerald-300 hover:text-emerald-800"
           >
-            See Product Preview
-          </a>
+            Existing user login
+          </Link>
         </div>
 
         <p className="mt-6 text-sm text-slate-500">

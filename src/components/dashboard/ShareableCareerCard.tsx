@@ -12,14 +12,12 @@ import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
   CareerIQResult,
-  RecruiterResult,
   RoleMatchResult,
 } from "@/intelligence/types/results";
 
 type Props = {
   careerIQ: CareerIQResult;
   ats: ATSResult;
-  recruiter: RecruiterResult;
   bestMatch?: RoleMatchResult;
   isReady: boolean;
   nextProofMove: string;
@@ -33,7 +31,6 @@ type Props = {
 export default function ShareableCareerCard({
   careerIQ,
   ats,
-  recruiter,
   bestMatch,
   isReady,
   nextProofMove,
@@ -45,7 +42,6 @@ export default function ShareableCareerCard({
   const summary = buildShareSummary({
     careerIQ,
     ats,
-    recruiter,
     bestMatch,
     latestJobMatch,
     proof,
@@ -174,10 +170,8 @@ export default function ShareableCareerCard({
             )}
 
             <SnapshotTile
-              label="ATS / Recruiter"
-              value={`${Math.round(ats.score)}% ATS · ${Math.round(
-                recruiter.score,
-              )}% recruiter`}
+              label="ATS readiness"
+              value={`${Math.round(ats.score)}% · base resume scan`}
             />
 
             <SnapshotTile
@@ -216,7 +210,6 @@ export default function ShareableCareerCard({
 function buildShareSummary({
   careerIQ,
   ats,
-  recruiter,
   bestMatch,
   latestJobMatch,
   proof,
@@ -225,7 +218,6 @@ function buildShareSummary({
   Props,
   | "careerIQ"
   | "ats"
-  | "recruiter"
   | "bestMatch"
   | "latestJobMatch"
   | "nextProofMove"
@@ -236,7 +228,6 @@ function buildShareSummary({
     `Career IQ: ${Math.round(careerIQ.score)} (${careerIQ.grade})`,
     `Profile-fit role: ${bestMatch?.role ?? "Not enough data"}`,
     `ATS readiness: ${Math.round(ats.score)}%`,
-    `Recruiter confidence: ${Math.round(recruiter.score)}%`,
     latestJobMatch
       ? `Latest JD Match: ${Math.round(latestJobMatch.matchScore)}% (${latestJobMatch.title})`
       : null,

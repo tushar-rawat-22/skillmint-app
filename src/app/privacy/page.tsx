@@ -8,6 +8,7 @@ import {
   premiumPageStack,
   premiumSurface,
 } from "@/components/ui/premium";
+import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPrivacyContact } from "@/config/privacyContact";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 
@@ -52,10 +53,14 @@ const sections = [
 export default function PrivacyPage() {
   const privacyContact = getPrivacyContact();
   const { enabled } = getPublicSignupConfiguration();
+  const { enabled: publicDemoEnabled } = getPublicDemoConfiguration();
 
   return (
     <>
-      <Navbar publicSignupEnabled={enabled} />
+      <Navbar
+        publicSignupEnabled={enabled}
+        publicDemoEnabled={publicDemoEnabled}
+      />
 
       <main className="bg-[#f7f5ef] px-4 py-10 text-slate-950 md:px-8">
         <div className={premiumPageStack}>
@@ -122,7 +127,7 @@ export default function PrivacyPage() {
         </div>
       </main>
 
-      <Footer />
+      <Footer publicDemoEnabled={publicDemoEnabled} />
     </>
   );
 }

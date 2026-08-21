@@ -402,6 +402,26 @@ export class SyntheticProvider {
     const table = url.pathname.match(/^\/rest\/v1\/([^/]+)$/)?.[1];
     if (table) {
       const accountId = bearerAccount?.id ?? null;
+      if (
+        table === "resume_analyses" &&
+        request.method() === "POST" &&
+        bearerAccount
+      ) {
+        const input = parseJson(request.postData());
+        this.record("resume:insert", accountId, url);
+        await this.releaseGate("resume:insert");
+        await json(route, 200, {
+          id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          user_id: bearerAccount.id,
+          file_name: input.file_name,
+          file_type: input.file_type,
+          extracted_text: input.extracted_text,
+          parsed_profile: input.parsed_profile,
+          user_profile: input.user_profile,
+          created_at: CREATED_AT,
+        });
+        return;
+      }
       if (request.method() === "HEAD" || request.headers().prefer?.includes("count=exact")) {
         const kind = `count:${table}`;
         this.record(kind, accountId, url);

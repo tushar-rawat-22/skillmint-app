@@ -28,8 +28,9 @@ export type ResumeAnalysisResult = {
 
 export async function analyzeResume(
   file: File,
+  accessToken: string,
 ): Promise<ResumeAnalysisResult> {
-  const extractedText = await extractTextFromResume(file);
+  const extractedText = await extractTextFromResume(file, accessToken);
   const parsedProfile = parseResumeText(extractedText);
   const userProfile = buildUserProfileFromParsedResume(
     parsedProfile,

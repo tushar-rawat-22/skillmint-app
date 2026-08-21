@@ -27,10 +27,12 @@ const productLoopSteps = [
 
 type ProductLoopProps = {
   publicSignupEnabled: boolean;
+  publicDemoEnabled: boolean;
 };
 
 export default function ProductLoop({
   publicSignupEnabled,
+  publicDemoEnabled,
 }: ProductLoopProps) {
   return (
     <section
@@ -76,17 +78,21 @@ export default function ProductLoop({
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href={ROUTES.SIGNUP}
+            href={publicDemoEnabled ? ROUTES.DEMO : ROUTES.SIGNUP}
             className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
           >
-            {publicSignupEnabled ? "Create account" : "View early access"}
+            {publicDemoEnabled
+              ? "Explore live demo"
+              : publicSignupEnabled
+                ? "Create account"
+                : "View early access"}
           </Link>
 
           <a
             href="#preview"
             className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-800"
           >
-            See Preview
+            See evidence preview
           </a>
         </div>
       </div>

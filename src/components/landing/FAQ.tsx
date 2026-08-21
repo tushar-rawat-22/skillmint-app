@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: "Do I need an account?",
-    a: "No. SkillMint works in this browser first. Sign in when you want supported analyses and roadmap progress saved to your account.",
+    a: "The public demo needs no account and uses synthetic data. An existing authenticated account is required to upload and analyze a real resume during the private pilot.",
   },
   {
     q: "Is SkillMint paid?",

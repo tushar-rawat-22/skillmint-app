@@ -8,6 +8,10 @@ import {
   type ResumeExtractionErrorCode,
   validateResumeFileMetadata,
 } from "@/lib/resume/resumeUploadContract";
+import {
+  verifyBearerAuthorization,
+  type ServerAuthorizationResult,
+} from "@/lib/supabase/serverAuth";
 
 export const runtime = "nodejs";
 
@@ -17,10 +21,33 @@ const EXTRACTION_RESPONSE_HEADERS = {
   Pragma: "no-cache",
 } as const;
 
+type ResumeRequestVerifier = (
+  authorization: string | null,
+) => Promise<ServerAuthorizationResult>;
+
 export async function POST(request: Request) {
+  return handleResumeExtraction(request, verifyBearerAuthorization);
+}
+
+export async function handleResumeExtraction(
+  request: Request,
+  verifyRequest: ResumeRequestVerifier,
+) {
   const originError = getOriginError(request);
   if (originError) {
     return errorResponse(originError);
+  }
+
+  const authorization = await verifyRequest(
+    request.headers.get("authorization"),
+  );
+  if (authorization.status !== "authenticated") {
+    return errorResponse(
+      authorization.status === "not_configured" ||
+          authorization.status === "temporarily_unavailable"
+        ? "authentication_unavailable"
+        : "authentication_required",
+    );
   }
 
   const contentLength = request.headers.get("content-length");

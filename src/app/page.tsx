@@ -8,26 +8,40 @@ import ProductLoop from "@/components/landing/ProductLoop";
 import DashboardPreview from "@/components/landing/DashboardPreview";
 import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
+import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 
 export default function HomePage() {
-  const { enabled } = getPublicSignupConfiguration();
+  const { enabled: publicSignupEnabled } = getPublicSignupConfiguration();
+  const { enabled: publicDemoEnabled } = getPublicDemoConfiguration();
 
   return (
     <>
-      <Navbar publicSignupEnabled={enabled} />
+      <Navbar
+        publicSignupEnabled={publicSignupEnabled}
+        publicDemoEnabled={publicDemoEnabled}
+      />
 
       <main className="overflow-x-hidden bg-[#f7f5ef] text-slate-950">
-        <Hero publicSignupEnabled={enabled} />
+        <Hero
+          publicSignupEnabled={publicSignupEnabled}
+          publicDemoEnabled={publicDemoEnabled}
+        />
         <Problem />
         <DashboardPreview />
-        <ProductLoop publicSignupEnabled={enabled} />
+        <ProductLoop
+          publicSignupEnabled={publicSignupEnabled}
+          publicDemoEnabled={publicDemoEnabled}
+        />
         <Features />
         <FAQ />
-        <CTA publicSignupEnabled={enabled} />
+        <CTA
+          publicSignupEnabled={publicSignupEnabled}
+          publicDemoEnabled={publicDemoEnabled}
+        />
       </main>
 
-      <Footer />
+      <Footer publicDemoEnabled={publicDemoEnabled} />
     </>
   );
 }
