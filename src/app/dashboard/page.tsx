@@ -12,7 +12,7 @@ import {
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import ActiveTargetCard from "@/components/dashboard/ActiveTargetCard";
-import CareerReportHero from "@/components/dashboard/CareerReportHero";
+import EvidenceSummaryCard from "@/components/dashboard/EvidenceSummaryCard";
 import MetricStrip from "@/components/dashboard/MetricStrip";
 import RealityCheckCard from "@/components/dashboard/RealityCheckCard";
 import CareerMatchCard from "@/components/dashboard/CareerMatchCard";
@@ -465,12 +465,6 @@ export default function DashboardPage() {
   const atsMissingSkills = latestJobMatch?.missingSkills ?? [];
   const hasUserProgress = hasResumeAnalysis || hasJobMatch;
   const bestMatch = data.roleMatches[0];
-  const activeRole = getActiveRole(latestJobMatch, bestMatch);
-  const heroCta = getHeroCta(
-    hasResumeAnalysis,
-    hasJobMatch,
-    data.proof,
-  );
   const readinessBars = getReadinessBars(
     data.careerIQ.score,
     data.careerIQ.grade,
@@ -479,8 +473,6 @@ export default function DashboardPage() {
     data.proof.proofCoverageLabel,
     data.ats.score,
     data.ats.verdict,
-    data.recruiter.score,
-    data.recruiter.confidence,
   );
   const proofDistribution = getProofDistribution(data.profile, data.proof);
   const hasAccountResumeOption =
@@ -846,45 +838,55 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className={premiumPageStack}>
-        <CareerReportHero
-          careerIQ={data.careerIQ}
+        <EvidenceSummaryCard
+          profile={data.profile}
           proof={data.proof}
-          cta={heroCta}
-          activeRole={activeRole}
+          bestMatch={bestMatch}
         />
 
         <OnboardingChecklist />
 
         <NextBestActionPanel />
 
-        <ActiveTargetCard result={dashboardActiveTarget} />
+        <details className={premiumSurface}>
+          <summary className="cursor-pointer text-xl font-black text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600">
+            How this analysis was calculated
+          </summary>
+          <p className="mt-4 max-w-4xl text-sm leading-6 text-slate-600">
+            Supporting calculations are deterministic resume signals. They do
+            not externally verify evidence or predict an employer decision.
+          </p>
 
-        <MetricStrip
-          proof={data.proof}
-          ats={data.ats}
-          recruiter={data.recruiter}
-          bestMatch={bestMatch}
-          latestJobMatch={latestJobMatch}
-        />
-
-        <ReportReadingGuide />
-
-        <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-          <ScoreRing
-            score={data.careerIQ.score}
-            grade={data.careerIQ.grade}
-            label="Career IQ"
-            caption="Career IQ uses weighted resume-evidence categories, and weak proof can apply explainable caps."
-          />
-
-          <div className="grid gap-6">
-            <ScoreBars
-              title="Readiness Signals"
-              subtitle="A proof-aware comparison of the signals powering your career report."
-              items={readinessBars}
+          <div className="mt-6 space-y-6">
+            <MetricStrip
+              proof={data.proof}
+              ats={data.ats}
+              bestMatch={bestMatch}
+              latestJobMatch={latestJobMatch}
             />
+
+            <ReportReadingGuide />
+
+            <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+              <ScoreRing
+                score={data.careerIQ.score}
+                grade={data.careerIQ.grade}
+                label="Career IQ"
+                caption="Career IQ uses weighted resume-evidence categories, and weak proof can apply explainable caps."
+              />
+
+              <div className="grid gap-6">
+                <ScoreBars
+                  title="Readiness Signals"
+                  subtitle="A proof-aware comparison of the calculations supporting your career report."
+                  items={readinessBars}
+                />
+              </div>
+            </section>
           </div>
-        </section>
+        </details>
+
+        <ActiveTargetCard result={dashboardActiveTarget} />
 
         <SkillDistribution
           title="Proof Evidence"
@@ -903,7 +905,6 @@ export default function DashboardPage() {
         <RealityCheckCard
           careerIQ={data.careerIQ}
           ats={data.ats}
-          recruiter={data.recruiter}
           roleMatches={data.roleMatches}
           missions={data.missions}
           recommendations={data.recommendations}
@@ -932,7 +933,6 @@ export default function DashboardPage() {
         <ShareableCareerCard
           careerIQ={data.careerIQ}
           ats={data.ats}
-          recruiter={data.recruiter}
           bestMatch={bestMatch}
           isReady={hasResumeAnalysis}
           nextProofMove={getShareableProofMove(data.proof.nextProofMove)}
@@ -1355,71 +1355,6 @@ function isOperationalShareTask(value: string): boolean {
   ].some((phrase) => normalizedValue.includes(phrase));
 }
 
-function getHeroCta(
-  hasResumeAnalysis: boolean,
-  hasJobMatch: boolean,
-  proof: ReturnType<typeof useCareerData>["proof"],
-): {
-  label: string;
-  href: string;
-} {
-  if (!hasResumeAnalysis) {
-    return {
-      label: "Upload Resume",
-      href: "/upload",
-    };
-  }
-
-  if (
-    proof.proofCoverageLabel === "Missing" ||
-    proof.proofCoverageLabel === "Weak" ||
-    proof.proofCoverageLabel === "Moderate"
-  ) {
-    return {
-      label: "Review Proof",
-      href: "/resume",
-    };
-  }
-
-  if (!hasJobMatch) {
-    return {
-      label: "Match a Job",
-      href: "/ats",
-    };
-  }
-
-  return {
-    label: "Improve Proof",
-    href: "/resume",
-  };
-}
-
-function getActiveRole(
-  latestJobMatch: LatestJobMatchSummary | null,
-  bestMatch: ReturnType<typeof useCareerData>["roleMatches"][number] | undefined,
-): {
-  label: string;
-  value: string;
-  metricLabel: string;
-  metricValue: string;
-} {
-  if (latestJobMatch) {
-    return {
-      label: "Latest JD",
-      value: latestJobMatch.title,
-      metricLabel: "Latest JD Match",
-      metricValue: `${Math.round(latestJobMatch.matchScore)}%`,
-    };
-  }
-
-  return {
-    label: "Profile-fit role",
-    value: bestMatch?.role ?? "Not enough data",
-    metricLabel: "Profile-fit match",
-    metricValue: bestMatch ? `${Math.round(bestMatch.matchScore)}%` : "--",
-  };
-}
-
 function getReadinessBars(
   careerIQScore: number,
   careerIQGrade: string,
@@ -1428,8 +1363,6 @@ function getReadinessBars(
   proofLabel: string,
   atsScore: number,
   atsVerdict: string,
-  recruiterScore: number,
-  recruiterConfidence: string,
 ): ScoreBarItem[] {
   return [
     {
@@ -1449,12 +1382,6 @@ function getReadinessBars(
       value: atsScore,
       detail: atsVerdict,
       tone: "sky",
-    },
-    {
-      label: "Recruiter Confidence",
-      value: recruiterScore,
-      detail: recruiterConfidence,
-      tone: "amber",
     },
   ];
 }

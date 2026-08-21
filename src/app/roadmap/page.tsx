@@ -1026,7 +1026,7 @@ function MissionCard({
         </span>
 
         <span className={premiumBadge}>
-          {mission.linkedScore}
+          {getVisibleLinkedScore(mission.linkedScore)}
         </span>
 
         <span className={premiumBadge}>
@@ -1680,11 +1680,19 @@ function buildPhaseCopyText(phase: CareerPathPhase): string {
 function buildMissionCopyText(mission: Mission): string {
   return [
     `SkillMint mission: ${mission.title}`,
-    `Linked score: ${mission.linkedScore}`,
+    `Linked score: ${getVisibleLinkedScore(mission.linkedScore)}`,
     `Why: ${mission.whyThisMatters}`,
     `Evidence needed: ${mission.evidenceNeeded}`,
     `Completion check: ${mission.completionCheck}`,
   ].join("\n");
+}
+
+function getVisibleLinkedScore(
+  linkedScore: Mission["linkedScore"],
+): string {
+  return linkedScore === "Recruiter Confidence"
+    ? "Resume evidence"
+    : linkedScore;
 }
 
 function isJobDescriptionMatchResult(

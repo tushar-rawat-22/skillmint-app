@@ -26,6 +26,8 @@ export const RESUME_FILE_TYPES = {
 export type SupportedResumeFileType = keyof typeof RESUME_FILE_TYPES;
 
 export const RESUME_EXTRACTION_ERROR_CODES = [
+  "authentication_required",
+  "authentication_unavailable",
   "missing_file",
   "unsupported_type",
   "file_too_large",
@@ -59,6 +61,14 @@ export const RESUME_EXTRACTION_ERRORS: Readonly<
     Readonly<{ message: string; status: number }>
   >
 > = {
+  authentication_required: {
+    message: "Log in to analyze a real resume.",
+    status: 401,
+  },
+  authentication_unavailable: {
+    message: "Resume analysis is temporarily unavailable.",
+    status: 503,
+  },
   missing_file: {
     message: "Choose a resume file to analyze.",
     status: 400,

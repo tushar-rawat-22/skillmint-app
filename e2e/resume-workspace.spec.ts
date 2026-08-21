@@ -688,8 +688,7 @@ test(
     await page.keyboard.press("Enter");
     await expect(
       page.getByRole("heading", {
-        name:
-          "Honest career readiness, based on your current proof.",
+        name: "What your resume currently supports",
       }),
     ).toBeVisible();
     const activeValue = asRecord(
@@ -845,8 +844,7 @@ test(
 
     await expect(
       page.getByRole("heading", {
-        name:
-          "Honest career readiness, based on your current proof.",
+        name: "What your resume currently supports",
       }),
     ).toBeVisible();
     await expect(

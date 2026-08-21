@@ -55,9 +55,12 @@ SUPABASE_SECRET_KEY=
 ANALYTICS_COLLECTION_ENABLED=
 ANALYTICS_FOUNDER_USER_ID=
 SKILLMINT_PUBLIC_SIGNUP_ENABLED=
+SKILLMINT_PUBLIC_DEMO_ENABLED=
 ```
 
 `SUPABASE_SECRET_KEY` is server-only. It must never use a `NEXT_PUBLIC_` prefix, enter browser bundles, appear in logs or test artifacts, or be exposed to client code. It is required only by trusted server functionality that needs administrative authority, including the protected account-deletion route. Scope and protect it independently for each deployment environment.
+
+`SKILLMINT_PUBLIC_DEMO_ENABLED` is a separate server-only, default-off gate for the fixed synthetic `/demo` route. Only the exact value `true`, matched case-insensitively without whitespace normalization, enables the route. The demo is excluded from Supabase session refresh and must remain free of uploads, parsing, browser persistence, analytics, and external requests. Adding the setting to the repository does not authorize enabling it in a hosted environment.
 
 Do not configure the account-deletion route in a Preview environment unless that preview is protected, explicitly authorized, and connected to an appropriately migrated nonproduction Supabase project.
 

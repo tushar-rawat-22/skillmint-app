@@ -407,11 +407,16 @@ async function waitForOperationSettlement(
     STALE_RESUME_OPERATION_MESSAGE,
     { exact: true },
   );
+  const accountChangedGate = page.getByText(
+    "Your authenticated account changed or expired. Log in again before uploading a real resume.",
+    { exact: true },
+  );
 
   await expect.poll(async () => {
     return (
       page.url().endsWith("/resume") ||
-      await staleMessage.isVisible()
+      await staleMessage.isVisible() ||
+      await accountChangedGate.isVisible()
     );
   }, {
     message:

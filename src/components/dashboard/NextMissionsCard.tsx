@@ -139,7 +139,7 @@ function MissionActionCard({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                {mission.linkedScore}
+                {getVisibleLinkedScore(mission.linkedScore)}
               </p>
 
               <h3 className="mt-2 break-words text-lg font-black leading-snug text-slate-950">
@@ -251,4 +251,12 @@ function formatStatus(status: Mission["status"]): string {
   if (status === "evidence_detected") return "Evidence detected";
 
   return status.replace(/_/g, " ");
+}
+
+function getVisibleLinkedScore(
+  linkedScore: Mission["linkedScore"],
+): string {
+  return linkedScore === "Recruiter Confidence"
+    ? "Resume evidence"
+    : linkedScore;
 }

@@ -1,8 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 
 import {
+  ACCOUNT_A,
   APP_ORIGIN,
   expect,
+  login,
   test,
 } from "./support/runtime";
 
@@ -14,35 +16,27 @@ const SAFE_EXTRACTION_FALLBACK =
 test(
   "@launch-hardening @resume-extraction valid same-origin TXT succeeds and explicit cross-origin submission fails",
   async ({ page }) => {
+    await login(page, ACCOUNT_A);
     await page.goto("/upload");
-    const sameOrigin = await page.evaluate(async () => {
-      const formData = new FormData();
-      formData.set(
-        "file",
-        new File(
-          [
-            "Skills: TypeScript\nProjects: Built an accessible app.",
-          ],
-          "resume.txt",
-          { type: "text/plain" },
-        ),
-      );
-      const response = await fetch("/api/resume/extract", {
-        method: "POST",
-        body: formData,
-      });
-      return {
-        status: response.status,
-        cacheControl: response.headers.get("cache-control"),
-        body: await response.json(),
-      };
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "resume.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from(
+        "Skills: TypeScript\nProjects: Built an accessible app.",
+      ),
     });
-    expect(sameOrigin.status).toBe(200);
-    expect(sameOrigin.cacheControl).toContain("no-store");
-    expect(sameOrigin.body).toEqual({
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().endsWith("/api/resume/extract"),
+    );
+    await page.getByRole("button", { name: "Analyze Resume" }).click();
+    const sameOrigin = await responsePromise;
+    expect(sameOrigin.status()).toBe(200);
+    expect(sameOrigin.headers()["cache-control"]).toContain("no-store");
+    expect(await sameOrigin.json()).toEqual({
       extractedText:
         "Skills: TypeScript\nProjects: Built an accessible app.",
     });
+    await expect(page).toHaveURL(/\/resume$/);
 
     const crossOrigin = await page.request.post(
       `${APP_ORIGIN}/api/resume/extract`,
@@ -98,6 +92,7 @@ test(
         }),
       });
     });
+    await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
       name: "previous-valid-resume.txt",
@@ -115,10 +110,9 @@ test(
       ACTIVE_REPORT_KEY,
     );
     expect(previousActiveReport).not.toBeNull();
+    await page.goto("/upload");
     const authRequestsBeforeFailure =
       provider.count("auth:user");
-
-    await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
       name: "resume.pdf",
       mimeType: "application/pdf",
@@ -156,6 +150,7 @@ test(
         body: "RAW_PROXY_OR_PROVIDER_DETAIL",
       });
     });
+    await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
       name: "resume.txt",
@@ -199,6 +194,7 @@ test(
         }),
       });
     });
+    await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
       name: "late.txt",
@@ -276,6 +272,7 @@ test(
       });
     });
 
+    await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await expect(
       page.getByRole("heading", {
@@ -418,6 +415,7 @@ test(
       });
     });
 
+    await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
       name: "dashboard-truth-resume.txt",
@@ -431,6 +429,16 @@ test(
 
     await page.goto("/dashboard");
 
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "What your resume currently supports",
+      }),
+    ).toBeVisible();
+    await page.getByText(
+      "How this analysis was calculated",
+      { exact: true },
+    ).click();
     await expect(
       page.getByText("Current readiness signal", { exact: true }),
     ).toBeVisible();

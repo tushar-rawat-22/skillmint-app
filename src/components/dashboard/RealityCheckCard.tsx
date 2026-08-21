@@ -7,14 +7,12 @@ import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
   CareerIQResult,
-  RecruiterResult,
   RoleMatchResult,
 } from "@/intelligence/types/results";
 
 type Props = {
   careerIQ: CareerIQResult;
   ats: ATSResult;
-  recruiter: RecruiterResult;
   roleMatches: RoleMatchResult[];
   missions: string[];
   recommendations: string[];
@@ -26,7 +24,6 @@ type Props = {
 export default function RealityCheckCard({
   careerIQ,
   ats,
-  recruiter,
   roleMatches,
   missions,
   recommendations,
@@ -43,12 +40,12 @@ export default function RealityCheckCard({
     },
     {
       label: "Weakest signal",
-      text: getWeakSignal(profile, ats, recruiter),
+      text: getWeakSignal(profile, ats),
       tone: "border-amber-200 bg-amber-50 text-amber-950",
     },
     {
-      label: "Biggest risk",
-      text: getHiringBlocker(profile, careerIQ, missions, recommendations),
+      label: "Main evidence risk",
+      text: getEvidenceRisk(profile, careerIQ, missions, recommendations),
       tone: "border-rose-200 bg-rose-50 text-rose-950",
     },
     {
@@ -72,7 +69,7 @@ export default function RealityCheckCard({
           </p>
 
           <h2 className="mt-2 text-2xl font-black text-slate-950">
-            The honest read before applying
+            The honest read before your next move
           </h2>
         </div>
 
@@ -126,41 +123,36 @@ function getStrongSignal(
   }
 
   if (profile.skillsScore >= 12) {
-    return "Your skill coverage is visible, but skills alone will not convince recruiters.";
+    return "Your skill coverage is visible, but skills alone do not establish applied evidence.";
   }
 
   if (profile.educationScore >= 8) {
     return "Your education signal is clear. Now the profile needs stronger proof of ability.";
   }
 
-  return "The profile has a starting point, but no standout hiring signal yet.";
+  return "The profile has a starting point, but no standout evidence area yet.";
 }
 
 function getWeakSignal(
   profile: UserProfile,
   ats: ATSResult,
-  recruiter: RecruiterResult,
 ): string {
   if (profile.projectsScore < 9) {
-    return "Project evidence is too thin or too generic for confident shortlisting.";
+    return "Project evidence is too thin or too generic to support the strongest claims.";
   }
 
   if (profile.experienceScore === 0) {
-    return "There is no real internship or work signal yet, so recruiter confidence stays capped.";
+    return "No internship or work context is visible, so experience support remains limited.";
   }
 
   if (ats.score < 60) {
     return "ATS readiness is weak because key resume sections or proof signals are missing.";
   }
 
-  if (recruiter.score < 55) {
-    return "Recruiter confidence is low because proof is not strong enough beyond keywords.";
-  }
-
   return "The profile is decent, but needs sharper outcomes, numbers, and public proof.";
 }
 
-function getHiringBlocker(
+function getEvidenceRisk(
   profile: UserProfile,
   careerIQ: CareerIQResult,
   missions: string[],
@@ -169,7 +161,7 @@ function getHiringBlocker(
   const firstAction = [...missions, ...recommendations][0];
 
   if (!profile.github && !profile.linkedin) {
-    return "No GitHub or LinkedIn proof makes the profile harder to trust quickly.";
+    return "No portfolio or professional-profile link is visible as an evidence candidate.";
   }
 
   if (!profile.analysisFlags?.hasMeasurableImpact) {
@@ -177,7 +169,7 @@ function getHiringBlocker(
   }
 
   if (profile.projectsScore < 12) {
-    return "The next hiring blocker is project quality. Build one stronger, deployed project.";
+    return "The next evidence blocker is project quality. Build one stronger, deployed project.";
   }
 
   if (careerIQ.score < 70 && firstAction) {
@@ -222,15 +214,15 @@ function getHarshTruthSummary(
   const sentenceAction = formatSentenceAction(nextAction);
 
   if (!profile.projects.length) {
-    return `Your resume shows skills, but not enough project proof. Before applying to stronger roles, ${sentenceAction}`;
+    return `Your resume shows skills, but not enough project proof. To strengthen the supported direction, ${sentenceAction}`;
   }
 
   if (proof.unverifiedSkills.length >= 3) {
-    return `Your resume shows activity, but too many claimed skills are still unverified. Before applying to stronger roles, ${sentenceAction}`;
+    return `Your resume shows activity, but too many claimed skills are still unverified. To strengthen the supported direction, ${sentenceAction}`;
   }
 
   if (!profile.analysisFlags?.hasMeasurableImpact) {
-    return `Your resume has signals, but the outcomes are thin. Before applying to stronger roles, ${sentenceAction}`;
+    return `Your resume has signals, but the outcomes are thin. To strengthen the supported direction, ${sentenceAction}`;
   }
 
   return `Your resume has usable signals, but trust still depends on evidence candidates. The next move is clear: ${nextAction}`;

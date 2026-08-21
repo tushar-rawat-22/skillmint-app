@@ -2,14 +2,12 @@ import { premiumCompactSurface } from "@/components/ui/premium";
 import type { ProofScoreResult } from "@/intelligence/proof";
 import type {
   ATSResult,
-  RecruiterResult,
   RoleMatchResult,
 } from "@/intelligence/types/results";
 
 type Props = {
   proof: ProofScoreResult;
   ats: ATSResult;
-  recruiter: RecruiterResult;
   bestMatch?: RoleMatchResult;
   latestJobMatch?: {
     title: string;
@@ -20,7 +18,6 @@ type Props = {
 export default function MetricStrip({
   proof,
   ats,
-  recruiter,
   bestMatch,
   latestJobMatch,
 }: Props) {
@@ -36,12 +33,6 @@ export default function MetricStrip({
       value: `${Math.round(ats.score)}%`,
       detail: `${ats.verdict} · base resume scan`,
       tone: "text-sky-700",
-    },
-    {
-      label: "Recruiter Confidence",
-      value: `${Math.round(recruiter.score)}%`,
-      detail: `${recruiter.confidence} · inferred shortlist signal`,
-      tone: "text-amber-700",
     },
     {
       label: latestJobMatch ? "Latest JD Match" : "Profile-fit role",
@@ -60,7 +51,7 @@ export default function MetricStrip({
   ];
 
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-4 md:grid-cols-3">
       {metrics.map((metric) => (
         <article
           key={metric.label}

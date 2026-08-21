@@ -2032,11 +2032,6 @@ function CareerIntelligenceReady({
       value: scaleSignal(profile.atsScore, 5),
       detail: "Resume structure before job-specific matching.",
     },
-    {
-      label: "Recruiter Base Signal",
-      value: scaleSignal(profile.recruiterScore, 5),
-      detail: "Initial shortlisting signal before proof verification.",
-    },
     ...(proof
       ? [
           {
