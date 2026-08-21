@@ -1573,7 +1573,7 @@ test("UI copy and actions keep saved, Workspace, and browser-active concepts dis
   assert.match(dashboardPageSource, /aria-live=/);
 });
 
-test("frozen product and analytics contracts have zero diff and no new taxonomy", () => {
+test("frozen product and analytics contracts allow only the reviewed hostname fix", () => {
   const frozenProductPaths = [
     "src/intelligence",
     "src/platform/analytics",
@@ -1582,8 +1582,21 @@ test("frozen product and analytics contracts have zero diff and no new taxonomy"
     "src/app/founder/analytics/page.tsx",
     "src/config/founderAnalytics.ts",
   ];
-  assertGitZeroDiff(frozenProductPaths);
+  assert.equal(
+    gitChangedPaths(frozenProductPaths),
+    "src/intelligence/proof/proofLinkExtraction.ts",
+  );
   assert.equal(gitUntracked(frozenProductPaths), "");
+  assert.equal(
+    sha256(readBuffer("src/intelligence/proof/proofLinkExtraction.ts")),
+    "7bee6025dd80f12db9e16253f515e8cfe4ec7b5f8f4d296bb4cc74f053e947a9",
+  );
+  assert.equal(
+    sha256(Buffer.from(gitShow(
+      `${authorizedBaseline}:src/intelligence/proof/proofLinkExtraction.ts`,
+    ))),
+    "bbb5b2bc3792b700463c31dc805c55760a2510b15ff40e77e987ba8288410d89",
+  );
   assert.equal(
     sha256(readBuffer("src/platform/analytics/eventContract.ts")),
     "1839287ffe53b8cb000764d06b4c152a9d4394811cf0dff7566624f2a27bd086",
@@ -1768,7 +1781,12 @@ function gitShow(objectName) {
 }
 
 function assertGitZeroDiff(paths) {
-  const changed = execFileSync(
+  const changed = gitChangedPaths(paths);
+  assert.equal(changed, "", `Unexpected baseline diff:\n${changed}`);
+}
+
+function gitChangedPaths(paths) {
+  return execFileSync(
     "git",
     [
       "diff",
@@ -1783,7 +1801,6 @@ function assertGitZeroDiff(paths) {
       encoding: "utf8",
     },
   ).trim();
-  assert.equal(changed, "", `Unexpected baseline diff:\n${changed}`);
 }
 
 function gitUntracked(paths) {
