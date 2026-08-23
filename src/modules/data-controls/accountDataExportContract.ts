@@ -22,13 +22,16 @@ import type {
   UserProfile,
 } from "@/intelligence/types/profile";
 import type {
+  AccountPersonaExportRow,
   AccountExportTableName,
   BetaFeedbackExportRow,
   JobMatchExportRow,
   ProfileExportRow,
+  ProofBriefExportRow,
   ResumeAnalysisExportRow,
   WorkspaceResumeSelectionExportRow,
 } from "@/modules/data-controls/types";
+import { parseProofBriefPayload } from "@/modules/proofBrief/proofBriefContract";
 
 export type AccountExportCardinality = "zero_or_one" | "zero_or_many";
 export type AccountExportPagination = "none" | "id_keyset" | "count_only";
@@ -60,6 +63,8 @@ export const ACCOUNT_EXPORT_TABLE_ORDER = [
   "job_matches",
   "career_snapshots",
   "beta_feedback",
+  "account_personas",
+  "proof_briefs",
 ] as const satisfies readonly AccountExportTableName[];
 
 export const ACCOUNT_EXPORT_TABLE_CONTRACTS = {
@@ -127,6 +132,27 @@ export const ACCOUNT_EXPORT_TABLE_CONTRACTS = {
     internalFieldsExcluded: ["user_id", "status"],
     reconstructRow: reconstructBetaFeedbackExportRow,
   },
+  account_personas: {
+    tableName: "account_personas",
+    ownerColumn: "user_id",
+    cardinality: "zero_or_one",
+    selectedColumns: "user_id,persona,created_at,updated_at",
+    primaryKey: "user_id",
+    pagination: "none",
+    internalFieldsExcluded: ["user_id"],
+    reconstructRow: reconstructAccountPersonaExportRow,
+  },
+  proof_briefs: {
+    tableName: "proof_briefs",
+    ownerColumn: "user_id",
+    cardinality: "zero_or_many",
+    selectedColumns:
+      "id,user_id,source_resume_analysis_id,brief_payload,visibility,share_created_at,revoked_at,created_at,updated_at",
+    primaryKey: "id",
+    pagination: "id_keyset",
+    internalFieldsExcluded: ["user_id", "share_token_hash"],
+    reconstructRow: reconstructProofBriefExportRow,
+  },
 } as const satisfies Record<
   AccountExportTableName,
   AccountExportTableContract<unknown>
@@ -138,6 +164,8 @@ export const SUPPORTED_ACCOUNT_EXPORT_TABLES = [
   "active_resume_selections",
   "job_matches",
   "beta_feedback",
+  "account_personas",
+  "proof_briefs",
 ] as const satisfies readonly SupportedAccountExportTableName[];
 
 export function reconstructProfileExportRow(
@@ -251,6 +279,56 @@ export function reconstructBetaFeedbackExportRow(
       message: requireString(row, "message"),
       page_path: requireNullableString(row, "page_path"),
       created_at: requireIsoTimestamp(row, "created_at"),
+    };
+  });
+}
+
+export function reconstructAccountPersonaExportRow(
+  value: unknown,
+): AccountExportReconstructionResult<AccountPersonaExportRow> {
+  return reconstruct(() => {
+    const row = requireExactRecord(value, [
+      "user_id",
+      "persona",
+      "created_at",
+      "updated_at",
+    ]);
+    requireUuid(row, "user_id");
+    return {
+      persona: requireEnum(row, "persona", ["CANDIDATE", "RECRUITER"] as const),
+      created_at: requireIsoTimestamp(row, "created_at"),
+      updated_at: requireIsoTimestamp(row, "updated_at"),
+    };
+  });
+}
+
+export function reconstructProofBriefExportRow(
+  value: unknown,
+): AccountExportReconstructionResult<ProofBriefExportRow> {
+  return reconstruct(() => {
+    const row = requireExactRecord(value, [
+      "id",
+      "user_id",
+      "source_resume_analysis_id",
+      "brief_payload",
+      "visibility",
+      "share_created_at",
+      "revoked_at",
+      "created_at",
+      "updated_at",
+    ]);
+    requireUuid(row, "user_id");
+    const briefPayload = parseProofBriefPayload(row.brief_payload);
+    if (!briefPayload) throw new InvalidContractValueError();
+    return {
+      id: requireUuid(row, "id"),
+      source_resume_analysis_id: requireUuid(row, "source_resume_analysis_id"),
+      brief_payload: briefPayload,
+      visibility: requireEnum(row, "visibility", ["PRIVATE", "LINK_ONLY"] as const),
+      share_created_at: requireNullableIsoTimestamp(row, "share_created_at"),
+      revoked_at: requireNullableIsoTimestamp(row, "revoked_at"),
+      created_at: requireIsoTimestamp(row, "created_at"),
+      updated_at: requireIsoTimestamp(row, "updated_at"),
     };
   });
 }
@@ -850,6 +928,14 @@ function requireIsoTimestamp(
     throw new InvalidContractValueError();
   }
   return value;
+}
+
+function requireNullableIsoTimestamp(
+  record: Record<string, unknown>,
+  key: string,
+): string | null {
+  requireOwnProperty(record, key);
+  return record[key] === null ? null : requireIsoTimestamp(record, key);
 }
 
 function requireNullableNested<T>(

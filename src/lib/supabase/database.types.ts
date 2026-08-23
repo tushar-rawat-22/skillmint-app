@@ -34,6 +34,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_personas: {
+        Row: {
+          created_at: string
+          persona: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          persona: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          persona?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       active_resume_selections: {
         Row: {
           resume_analysis_id: string
@@ -231,6 +252,53 @@ export type Database = {
         }
         Relationships: []
       }
+      proof_briefs: {
+        Row: {
+          brief_payload: Json
+          created_at: string
+          id: string
+          revoked_at: string | null
+          share_created_at: string | null
+          share_token_hash: string | null
+          source_resume_analysis_id: string
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          brief_payload: Json
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          share_created_at?: string | null
+          share_token_hash?: string | null
+          source_resume_analysis_id: string
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          brief_payload?: Json
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          share_created_at?: string | null
+          share_token_hash?: string | null
+          source_resume_analysis_id?: string
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_briefs_source_owner_fkey"
+            columns: ["user_id", "source_resume_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "resume_analyses"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
       resume_analyses: {
         Row: {
           created_at: string
@@ -282,6 +350,10 @@ export type Database = {
         Returns: {
           summary: Json
         }[]
+      }
+      get_shared_proof_brief: {
+        Args: { requested_token_hash: string }
+        Returns: Json
       }
       is_active_skillmint_user: { Args: never; Returns: boolean }
       prepare_account_deletion: {

@@ -129,7 +129,7 @@ SkillMint has no configured seed dataset. The generic `https://supabase.com/docs
 
 The current authority is [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md). The bounded July 30 inventory verified the exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift. It did not establish migration history or complete table grants; both remain unknown. It exposed the drift function but did not capture its live function owner, exact event-trigger contract, or body.
 
-V9's repository preflight fails closed unless the exact expected function-owner and event-trigger contract is present, including `postgres` ownership for both the function and its sole attached event trigger, and it intentionally does not inspect the body. Authorized rehearsal and postflight must verify the body separately. V3–V8 and the new post-V8 ACL repair are unapplied catalog targets, not authorized work.
+V9's repository preflight fails closed unless the exact expected function-owner and event-trigger contract is present, including `postgres` ownership for both the function and its sole attached event trigger, and it intentionally does not inspect the body. Authorized rehearsal and postflight must verify the body separately. V3–V10 are unapplied catalog targets, not authorized Production work. V10 adds the server-owned persona and candidate-controlled Proof Brief foundation; repository presence does not authorize applying it.
 
 For an empty isolated environment, the committed forward order is:
 
@@ -143,8 +143,9 @@ For an empty isolated environment, the committed forward order is:
 8. `supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql`
 9. `supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql`
 10. `supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql`
+11. `supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql`
 
-The timestamped files are byte-identical to their source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. V1–V8 remain unchanged; later corrections require a separately reviewed forward migration.
+The timestamped files are byte-identical to their source schemas and recorded in `supabase/migrations/manifest.json`. Applied SQL is immutable evidence. V1–V9 remain unchanged; later corrections require a separately reviewed forward migration.
 
 The isolated project received V1–V7 during Block 6 verification, and its ACL and live-security checks passed. This result is not Production proof. The outer `BEGIN`/`COMMIT` wrappers in V4–V7 remain unchanged unless a separately authorized execution with pinned Supabase CLI 2.109.1 proves a specific incompatibility.
 

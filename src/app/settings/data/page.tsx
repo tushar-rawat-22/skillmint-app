@@ -1219,7 +1219,7 @@ export default function DataSettingsPage() {
 
           {accountCountsPresentation.status !== "signed_out" ? (
             <>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <OverviewCard
                   label="Profile"
                   value={accountCountsPresentation.countDisplay.profile}
@@ -1257,6 +1257,18 @@ export default function DataSettingsPage() {
                   label="Feedback"
                   value={accountCountsPresentation.countDisplay.betaFeedback}
                   detail="Preserved by Delete saved reports."
+                />
+
+                <OverviewCard
+                  label="Account persona"
+                  value={accountCountsPresentation.countDisplay.accountPersona}
+                  detail="Preserved by Delete saved reports."
+                />
+
+                <OverviewCard
+                  label="Proof Briefs"
+                  value={accountCountsPresentation.countDisplay.proofBriefs}
+                  detail="Deleted by Delete saved reports."
                 />
               </div>
 

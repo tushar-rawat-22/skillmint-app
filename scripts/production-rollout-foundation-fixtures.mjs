@@ -71,6 +71,7 @@ equal(
     "20260727000750",
     "20260727000800",
     "20260730000900",
+    "20260823001000",
   ],
   "migration order is not exact",
 );
@@ -90,6 +91,7 @@ equal(
     "20260727000750",
     "20260727000800",
     "20260730000900",
+    "20260823001000",
   ],
   "Production pending order is not exact",
 );
@@ -110,6 +112,7 @@ const expectedClassifications = new Map([
   ["20260727000750", "pending_lifecycle_function_acl_normalization"],
   ["20260727000800", "pending_resume_workspace_phase_1a"],
   ["20260730000900", "pending_public_function_acl_normalization"],
+  ["20260823001000", "pending_two_sided_beta_foundation"],
 ]);
 equal(
   new Map(
@@ -162,7 +165,7 @@ const migrationHash =
 equal(Buffer.compare(bytes(sourcePath), bytes(migrationPath)), 0, "V9 source and migration differ");
 equal(sha256(bytes(migrationPath)), migrationHash, "V9 migration hash changed");
 equal(
-  manifest.ordered_migrations.at(-1),
+  manifest.ordered_migrations.find((entry) => entry.version === "20260730000900"),
   {
     version: "20260730000900",
     source_path: sourcePath,
@@ -172,6 +175,46 @@ equal(
   },
   "V9 manifest entry changed",
 );
+
+const v10MigrationPath =
+  "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql";
+const v10SourcePath = "supabase/schema_v10_two_sided_beta_foundation.sql";
+const v10Migration = text(v10MigrationPath);
+const v10Hash =
+  "d358e97fe0065d2062619e475e00bc146f0cf62f79c75081c5bbd994fc42b78d";
+equal(
+  Buffer.compare(bytes(v10SourcePath), bytes(v10MigrationPath)),
+  0,
+  "V10 source and migration differ",
+);
+equal(sha256(bytes(v10MigrationPath)), v10Hash, "V10 migration hash changed");
+equal(
+  manifest.ordered_migrations.at(-1),
+  {
+    version: "20260823001000",
+    source_path: v10SourcePath,
+    migration_path: v10MigrationPath,
+    sha256: v10Hash,
+    rollout_classification: "pending_two_sided_beta_foundation",
+  },
+  "V10 manifest entry changed",
+);
+check(/^begin;[\s\S]*commit;\s*$/m.test(v10Migration.replace(/^--.*$/gm, "").trim()), "V10 is not transactional");
+for (const table of ["account_personas", "proof_briefs"]) {
+  check(v10Migration.includes(`create table public.${table}`), `V10 is missing ${table}`);
+  check(new RegExp(`alter table public\\.${table} enable row level security`, "i").test(v10Migration), `${table} RLS is missing`);
+  check(new RegExp(`revoke all on table public\\.${table}[\\s\\S]*from public, anon, authenticated, service_role`, "i").test(v10Migration), `${table} baseline ACL is missing`);
+}
+check(/visibility text not null default 'PRIVATE'/i.test(v10Migration), "Proof Briefs are not private by default");
+check(/visibility in \('PRIVATE', 'LINK_ONLY'\)/i.test(v10Migration), "Proof Brief visibility is not bounded");
+check(/unique \(share_token_hash\)/i.test(v10Migration), "Proof Brief token hashes are not unique");
+check(/requested_token_hash ~ '\^\[0-9a-f\]\{64\}\$'/i.test(v10Migration), "Shared Proof Brief lookup does not validate the token hash");
+check(/security definer[\s\S]*set search_path = pg_catalog/i.test(v10Migration), "V10 security-definer search path is not pinned");
+check(/grant execute on function public\.get_shared_proof_brief\(text\)[\s\S]*to anon, authenticated/i.test(v10Migration), "Public brief lookup grant is missing");
+assert.doesNotMatch(v10Migration, /grant select[^;]*proof_briefs[^;]*anon/i, "Anonymous users can select the Proof Brief table");
+assert.doesNotMatch(v10Migration, /grant (?:insert|update|delete)[^;]*proof_briefs[^;]*authenticated/i, "Authenticated clients can mutate the Proof Brief table directly");
+check(/delete from public\.proof_briefs where user_id = target_user_id/i.test(v10Migration), "Account deletion does not remove Proof Briefs");
+check(/delete from public\.account_personas where user_id = target_user_id/i.test(v10Migration), "Account deletion does not remove persona state");
 
 check(/^begin;[\s\S]*commit;\s*$/m.test(migrationWithoutComments.trim()), "V9 is not transactional");
 check(/target_count = 0[\s\S]*return;/i.test(migration), "absent function is not a safe no-op");

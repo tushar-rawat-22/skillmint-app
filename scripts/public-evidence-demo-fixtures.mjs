@@ -165,7 +165,7 @@ test("every synthetic demo navigation link disables automatic prefetch", () => {
 
 test("proxy matcher excludes demo before the Supabase refresh path", () => {
   const proxySource = source("proxy.ts");
-  assert.match(proxySource, /\(\?:demo\|recruiters\/demo\)\(\?:\/\|\$\)/u);
+  assert.match(proxySource, /\(\?:demo\|recruiters\/demo\|brief\)\(\?:\/\|\$\)/u);
   assert.equal(
     (proxySource.match(/updateSupabaseSession\(request\)/gu) ?? []).length,
     1,

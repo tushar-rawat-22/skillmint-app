@@ -79,6 +79,8 @@ function countState(ownerKey, overrides = {}) {
       jobMatches: 0,
       careerSnapshots: 0,
       betaFeedback: 0,
+      accountPersona: 0,
+      proofBriefs: 0,
     },
     error: null,
     ...overrides,
@@ -191,6 +193,8 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
         jobMatches: 99,
         careerSnapshots: 99,
         betaFeedback: 99,
+        accountPersona: 99,
+        proofBriefs: 99,
       },
     }),
   });
@@ -214,6 +218,8 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
         jobMatches: 3,
         careerSnapshots: 4,
         betaFeedback: 5,
+        accountPersona: 1,
+        proofBriefs: 6,
       },
     }),
   });
@@ -224,6 +230,8 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
     jobMatches: "3",
     careerSnapshots: "4",
     betaFeedback: "5",
+    accountPersona: "1",
+    proofBriefs: "6",
   });
   for (const invalid of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
     const malformed = accountPresentation({
@@ -235,6 +243,8 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
           jobMatches: 0,
           careerSnapshots: 0,
           betaFeedback: 0,
+          accountPersona: 0,
+          proofBriefs: 0,
         },
       }),
     });
@@ -250,6 +260,8 @@ test("4 account counts never invent zero and export eligibility ignores count-qu
         jobMatches: 0,
         careerSnapshots: 0,
         betaFeedback: 0,
+        accountPersona: 0,
+        proofBriefs: 0,
       },
     }),
   });
