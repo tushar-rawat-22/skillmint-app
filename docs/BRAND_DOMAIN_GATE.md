@@ -1,10 +1,14 @@
-# Pre-Block-6 Brand & Domain Decision Gate
+# Public Brand Collision Gate
 
 ## Purpose
 
 This gate selects a public product name, a backup, and a reservable domain before public labels, founder-facing presentation, launch documentation, support identity, metadata, and external communications accumulate naming debt. It is a product and communication sequencing choice, not a technical dependency for analytics.
 
-Historically, this gate was approved as a sequencing step before Block 6. The founder deferred it so brand-neutral Block 6 engineering could proceed. It remains deferred, is required before external beta, and is an input to the Block 7.2 read-only beta-release decision gate. It is not a roadmap block and does not renumber the seven-block roadmap.
+Historically, this gate was approved before Block 6 and then deferred. The
+August 23, 2026 [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md)
+reopened it after a web screen found several overlapping SkillMint career and
+recruiting products. It is now a public-launch gate, not a prerequisite for
+continued repository implementation under the internal codename.
 
 ## Decision rationale
 
@@ -24,7 +28,8 @@ Historically, this gate was approved as a sequencing step before Block 6. The fo
 | Backup public name | `Pending` |
 | Selected domain to reserve | `Pending` |
 
-The working project name remains SkillMint until these fields are decided.
+The repository codename remains SkillMint until these fields are decided. It is
+not an approved broad public-facing name.
 
 The internal private npm package identifier `skillmint-app` is repository hygiene, not a selected public name or a completed brand decision.
 
@@ -89,7 +94,11 @@ Verify the future public-brand foundation in proportion to its changed surfaces:
 - confirm no scoring, mission, Active Target, export, deletion, schema, API, or route behavior changed;
 - run affected Playwright coverage and fixtures only where the changed public surfaces are covered.
 
-A text-only label change does not require every unrelated test. These checks do not authorize a redesign, new routes, storage changes, domain activation, or production work. The earlier instruction to merge this layer before Block 6 began is historical and was superseded by the founder deferral; the gate now remains required before external beta and must inform Block 7.2.
+A text-only label change does not require every unrelated test. These checks do
+not authorize a redesign, new routes, storage changes, domain activation, or
+Production work. The gate must close before broad external branding, while
+brand-neutral two-sided beta engineering may continue under the current
+authority.
 
 ## Domain activation belongs to Block 7
 

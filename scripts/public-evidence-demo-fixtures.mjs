@@ -113,9 +113,13 @@ test("existing public signup configuration remains fail closed", () => {
 
 test("disabled demo uses the App Router not-found boundary", () => {
   const demoPage = source("src/app/demo/page.tsx");
+  const recruiterDemoPage = source("src/app/recruiters/demo/page.tsx");
   assert.match(demoPage, /getPublicDemoConfiguration\(\)/u);
   assert.match(demoPage, /if \(!enabled\) \{\s*notFound\(\);/u);
+  assert.match(recruiterDemoPage, /getPublicDemoConfiguration\(\)/u);
+  assert.match(recruiterDemoPage, /if \(!enabled\) \{\s*notFound\(\);/u);
   assert.match(source("src/constants/routes.ts"), /DEMO: "\/demo"/u);
+  assert.match(source("src/constants/routes.ts"), /RECRUITER_DEMO: "\/recruiters\/demo"/u);
 });
 
 test("demo is structurally isolated from Supabase, storage, analytics, parsing, and network calls", () => {
@@ -123,6 +127,9 @@ test("demo is structurally isolated from Supabase, storage, analytics, parsing, 
     "src/app/demo/page.tsx",
     "src/modules/publicDemo/SyntheticDemoReport.tsx",
     "src/modules/publicDemo/syntheticDemo.ts",
+    "src/app/recruiters/demo/page.tsx",
+    "src/modules/recruiterDemo/SyntheticRecruiterDemo.tsx",
+    "src/modules/recruiterDemo/recruiterDemoFixture.ts",
   ].map(source).join("\n");
 
   assert.doesNotMatch(
@@ -135,23 +142,30 @@ test("demo is structurally isolated from Supabase, storage, analytics, parsing, 
   assert.match(demoSources, /compareResumeEvidence/u);
   assert.match(demoSources, /validateResumeComparisonEvidence/u);
   assert.match(demoSources, /What changed after stronger evidence was added\?/u);
+  assert.match(demoSources, /What evidence supports this candidate for this role\?/u);
+  assert.match(demoSources, /Every role, candidate, evidence item, question, and feedback item[\s\S]*synthetic demo data/u);
+  assert.match(demoSources, /Strong support/u);
+  assert.match(demoSources, /Weak support/u);
+  assert.match(demoSources, /Unclear \/ missing support/u);
+  assert.doesNotMatch(demoSources, /recruiter confidence|hire probability|shortlist probability/iu);
 });
 
 test("every synthetic demo navigation link disables automatic prefetch", () => {
-  const demoReport = source(
-    "src/modules/publicDemo/SyntheticDemoReport.tsx",
-  );
-  const linkTags = demoReport.match(/<Link\b[\s\S]*?>/gu) ?? [];
-
-  assert.equal(linkTags.length, 3);
-  for (const linkTag of linkTags) {
-    assert.match(linkTag, /\bprefetch=\{false\}/u);
+  for (const [relativePath, expectedCount] of [
+    ["src/modules/publicDemo/SyntheticDemoReport.tsx", 3],
+    ["src/modules/recruiterDemo/SyntheticRecruiterDemo.tsx", 4],
+  ]) {
+    const linkTags = source(relativePath).match(/<Link\b[\s\S]*?>/gu) ?? [];
+    assert.equal(linkTags.length, expectedCount);
+    for (const linkTag of linkTags) {
+      assert.match(linkTag, /\bprefetch=\{false\}/u);
+    }
   }
 });
 
 test("proxy matcher excludes demo before the Supabase refresh path", () => {
   const proxySource = source("proxy.ts");
-  assert.match(proxySource, /demo\(\?:\/\|\$\)/u);
+  assert.match(proxySource, /\(\?:demo\|recruiters\/demo\)\(\?:\/\|\$\)/u);
   assert.equal(
     (proxySource.match(/updateSupabaseSession\(request\)/gu) ?? []).length,
     1,
@@ -159,6 +173,26 @@ test("proxy matcher excludes demo before the Supabase refresh path", () => {
   assert.doesNotMatch(
     source("src/app/demo/page.tsx"),
     /updateSupabaseSession/u,
+  );
+  assert.doesNotMatch(
+    source("src/app/recruiters/demo/page.tsx"),
+    /updateSupabaseSession/u,
+  );
+});
+
+test("homepage exposes both public product paths without enabling signup", () => {
+  const homepageSources = [
+    "src/app/page.tsx",
+    "src/components/landing/Hero.tsx",
+    "src/components/landing/AudiencePaths.tsx",
+  ].map(source).join("\n");
+  assert.match(homepageSources, /I&apos;m a Candidate/u);
+  assert.match(homepageSources, /I&apos;m Hiring/u);
+  assert.match(homepageSources, /What does my resume support\?/u);
+  assert.match(homepageSources, /What evidence supports this candidate\?/u);
+  assert.doesNotMatch(
+    homepageSources,
+    /Recruiter Confidence|shortlist probability|hire probability|interview probability/u,
   );
 });
 

@@ -1,6 +1,10 @@
 # SkillMint Deployment Safety Guide
 
-The former Beta v1 production-beta path is superseded as current sequencing by the [Version 2 Transition Gate](V2_TRANSITION_GATE.md). The fail-closed Block 6.2 code was automatically deployed from `main`, but the July 30 inventory verified only a V1+V2 Production catalog and analytics remains disabled. This guide preserves future operator constraints; it is not a Production readiness claim or deployment authorization.
+The [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md) supersedes the
+former investor-only and Version 2 deployment sequence. The July 30 inventory
+verified only a V1+V2 Production catalog and analytics remains disabled. This
+guide preserves operator constraints; it is not a Production readiness claim or
+deployment authorization.
 
 Beta release readiness remains blocked pending Production rollout and an externally verified, monitored privacy/support contact.
 
@@ -24,16 +28,13 @@ During Block 7, Preview and Production scopes must be reviewed separately, and t
 
 Reserving a domain does not make any of these settings safe or complete. See [Brand & Domain Decision Gate](BRAND_DOMAIN_GATE.md).
 
-## Investor-demo hosting target
+## Public-beta hosting target
 
-The Git-connected Vercel project remains a development and Preview integration;
-Vercel Hobby is not the company hosting answer for a commercial investor demo.
-As of August 21, 2026, Netlify Free is the selected zero-cost target for the
-private investor surface. Its current Free plan permits commercial projects,
-has a hard 300-credit monthly limit with no auto recharge, and pauses at the
-limit instead of creating a charge. Netlify's current Next.js adapter documents
-support for the App Router, Server Components, route handlers, middleware, and
-SSR without adding an application dependency.
+The Git-connected Vercel project remains a development and Preview integration.
+The previously prepared private investor-only Netlify configuration must not be
+deployed. Netlify Free remains the preferred zero-cost public-beta candidate,
+subject to a fresh plan, usage-limit, framework, and commercial-use review when
+the product and Production gates are ready.
 
 Cloudflare Workers Free remains a fallback, but it is not the current target:
 its 10 ms CPU limit per invocation and 3 MB compressed Worker limit create
@@ -42,24 +43,11 @@ Do not add a Cloudflare adapter until that path is measured against the actual
 bundle and runtime.
 
 The Netlify CLI is not authenticated on the current operator machine, so no
-Netlify site has been created or deployed. After the account owner completes
-`netlify login`, the operator must verify the team is on Free with no billing
-method or recharge path, connect this repository, and configure only the
-minimum investor-demo values:
-
-```text
-SKILLMINT_PUBLIC_DEMO_ENABLED=true
-SKILLMINT_PUBLIC_SIGNUP_ENABLED=false
-NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=false
-ANALYTICS_COLLECTION_ENABLED=false
-```
-
-Do not configure a service-role/secret key for the investor demo. If existing
-user login is intentionally included, add only the environment-specific public
-Supabase URL and publishable key after verifying the target; that is a separate
-operational decision and does not authorize a migration. Keep `noindex` and
-`nofollow`, use the provider subdomain, and run the production-mode synthetic
-demo isolation smoke before sharing the URL.
+Netlify site has been created or deployed. Do not connect a site or configure
+variables until schema, OAuth, abuse, privacy, analytics, and rollback gates are
+reviewed together. The final operator plan must use the provider subdomain until
+a separate brand/domain decision, avoid automatic billing, and run both
+synthetic-demo isolation smokes before sharing a URL.
 
 Provider references:
 

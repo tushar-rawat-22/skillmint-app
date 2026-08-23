@@ -26,7 +26,7 @@ export default function SyntheticDemoReport() {
           </Link>
 
           <span className="rounded-full border border-violet-300 bg-violet-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-violet-900">
-            Private pilot · synthetic demo
+            Public beta · candidate synthetic demo
           </span>
         </div>
 
@@ -244,7 +244,7 @@ export default function SyntheticDemoReport() {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
           <p className="text-sm leading-6 text-slate-600">
             Real-resume analysis is available only to authenticated existing
-            users during the private pilot. Public signup remains closed.
+            users while public OAuth and abuse controls are being prepared.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link

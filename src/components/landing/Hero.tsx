@@ -17,46 +17,58 @@ export default function Hero({
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
             {publicDemoEnabled
-              ? "Private pilot · synthetic demo"
-              : "Private pilot · controlled access"}
+              ? "Public beta in preparation · synthetic demos"
+              : "Public beta in preparation · controlled access"}
           </p>
 
           <h1 className="mt-6 max-w-3xl text-4xl font-black leading-[1.02] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
-            Know what your resume supports.
+            Make career evidence easier to understand.
             <span className="mt-2 block text-emerald-800">
-              Build the evidence it does not.
+              For candidates and the people reviewing them.
             </span>
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            SkillMint helps students and fresh graduates turn a resume into an
-            evidence map: strongest support, the main gap for a target role,
-            and the next useful action.
+            Candidates can see what a resume supports and what to improve next.
+            Recruiters can review candidate-authorized evidence and ask clearer
+            questions without outsourcing the decision.
           </p>
 
           <p className="mt-5 max-w-2xl border-l-4 border-emerald-700 pl-4 text-sm leading-6 text-slate-700">
-            Not an AI resume writer or a hiring-probability score. The product
-            makes resume-internal evidence easier to inspect and improve.
+            Not an AI shortlist, candidate ranking, or hiring-probability score.
+            The product keeps evidence explainable and human judgment in charge.
           </p>
 
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
-              href={publicDemoEnabled ? ROUTES.DEMO : ROUTES.SIGNUP}
+              href={ROUTES.CANDIDATES}
               className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-7 py-3 font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700"
             >
-              {publicDemoEnabled
-                ? "Explore live demo"
-                : publicSignupEnabled
-                  ? "Create account"
-                  : "View early access"}
+              I&apos;m a Candidate
             </Link>
 
             <Link
-              href={ROUTES.LOGIN}
+              href={ROUTES.RECRUITERS}
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-7 py-3 font-semibold text-slate-800 transition hover:border-emerald-400 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700"
             >
+              I&apos;m Hiring
+            </Link>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold">
+            {publicDemoEnabled ? (
+              <Link className="text-emerald-800 underline-offset-4 hover:underline" href={ROUTES.DEMO}>
+                Explore candidate demo
+              </Link>
+            ) : null}
+            <Link className="text-slate-700 underline-offset-4 hover:underline" href={ROUTES.LOGIN}>
               Existing user login
             </Link>
+            {!publicDemoEnabled && publicSignupEnabled ? (
+              <Link className="text-slate-700 underline-offset-4 hover:underline" href={ROUTES.SIGNUP}>
+                Create account
+              </Link>
+            ) : null}
           </div>
 
           <p className="mt-5 text-sm text-slate-500">
