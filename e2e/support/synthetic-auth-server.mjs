@@ -23,12 +23,16 @@ const accounts = new Map([
 let authUserRequests = 0;
 let applicationRequests = 0;
 const proofBriefs = new Map();
+const accountPersonas = new Map();
+const recruiterRoleMaps = new Map();
+const candidateEvidenceReviews = [];
 let proofSourceMode = "normal";
+let sharedProofBriefDisabled = false;
 
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${HOST}:${PORT}`);
 
-  const isControlRequest = ["/health", "/__reset", "/__requests", "/__proof-brief", "/__proof-source-mode"].includes(
+  const isControlRequest = ["/health", "/__reset", "/__requests", "/__proof-brief", "/__proof-source-mode", "/__seed-shared-proof-brief", "/__seed-recruiter-context", "/__revoke-shared-proof-brief", "/__replace-shared-proof-brief", "/__candidate-reviews"].includes(
     url.pathname,
   );
   if (!isControlRequest) {
@@ -49,7 +53,11 @@ const server = http.createServer(async (request, response) => {
     authUserRequests = 0;
     applicationRequests = 0;
     proofBriefs.clear();
+    accountPersonas.clear();
+    recruiterRoleMaps.clear();
+    candidateEvidenceReviews.length = 0;
     proofSourceMode = "normal";
+    sharedProofBriefDisabled = false;
     send(response, 200, { ok: true });
     return;
   }
@@ -75,6 +83,54 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === "POST" && url.pathname === "/__seed-shared-proof-brief") {
+    const row = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2",
+      user_id: "11111111-1111-4111-8111-111111111111",
+      source_resume_analysis_id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      brief_payload: syntheticSharedProofBrief().payload,
+      visibility: "LINK_ONLY",
+      share_token_hash: SHARED_PROOF_BRIEF_TOKEN_HASH,
+      share_created_at: CREATED_AT,
+      revoked_at: null,
+      created_at: CREATED_AT,
+      updated_at: CREATED_AT,
+    };
+    proofBriefs.set(row.user_id, row);
+    sharedProofBriefDisabled = false;
+    send(response, 200, { ok: true, sourceId: row.source_resume_analysis_id });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/__candidate-reviews") {
+    send(response, 200, candidateEvidenceReviews);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/__seed-recruiter-context") {
+    const body = await readJsonBody(request);
+    const userId = typeof body.userId === "string" && accounts.has(body.userId) ? body.userId : null;
+    if (!userId) { send(response, 400, { message: "Invalid synthetic recruiter" }); return; }
+    accountPersonas.set(userId, { user_id: userId, persona: "RECRUITER", created_at: CREATED_AT, updated_at: CREATED_AT });
+    const suffix = userId.startsWith("1111") ? "1" : "2";
+    const id = `f${suffix.repeat(7)}-${suffix.repeat(4)}-4${suffix.repeat(3)}-8${suffix.repeat(3)}-${suffix.repeat(12)}`;
+    const roleTitle = typeof body.roleTitle === "string" ? body.roleTitle : `Synthetic recruiter ${suffix} role`;
+    const row = syntheticRoleMapRow(id, userId, roleTitle, typeof body.jobDescription === "string" ? body.jobDescription : "Build accessible TypeScript interfaces, validate delivery outcomes, explain ownership decisions, and collaborate with a product team through structured review.");
+    recruiterRoleMaps.set(id, row);
+    send(response, 200, { ok: true, roleMapId: id });
+    return;
+  }
+
+  if (request.method === "POST" && (url.pathname === "/__revoke-shared-proof-brief" || url.pathname === "/__replace-shared-proof-brief")) {
+    const row = [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH);
+    if (row) proofBriefs.set(row.user_id, url.pathname === "/__revoke-shared-proof-brief"
+      ? { ...row, visibility: "PRIVATE", share_token_hash: null, share_created_at: null, revoked_at: CREATED_AT }
+      : { ...row, share_token_hash: "a".repeat(64), share_created_at: CREATED_AT, revoked_at: null });
+    sharedProofBriefDisabled = true;
+    send(response, 200, { ok: true });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/auth/v1/user") {
     authUserRequests += 1;
     const account = accountFromAuthorization(request.headers.authorization);
@@ -91,13 +147,40 @@ const server = http.createServer(async (request, response) => {
     url.pathname === "/rest/v1/rpc/get_shared_proof_brief"
   ) {
     const body = await readJsonBody(request);
+    const row = [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === body.requested_token_hash && candidate.visibility === "LINK_ONLY" && candidate.revoked_at === null);
     send(
       response,
       200,
-      body.requested_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH
+      row || (!sharedProofBriefDisabled && body.requested_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH)
         ? syntheticSharedProofBrief()
         : null,
     );
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/create_recruiter_role_evidence_map") {
+    const body = await readJsonBody(request);
+    const userId = body.expected_recruiter_user_id;
+    if (accountPersonas.get(userId)?.persona !== "RECRUITER") { send(response, 200, null); return; }
+    const owned = [...recruiterRoleMaps.values()].filter((row) => row.user_id === userId);
+    if (owned.length >= 10) { send(response, 200, { status: "LIMIT_REACHED" }); return; }
+    const sequence = owned.length + 1;
+    const id = `f${String(sequence).padStart(7, "0")}-0000-4000-8000-${String(sequence).padStart(12, "0")}`;
+    const row = { id, user_id: userId, role_title: body.requested_role_title, job_description: body.requested_job_description, evidence_map: body.requested_evidence_map, created_at: CREATED_AT, updated_at: CREATED_AT };
+    recruiterRoleMaps.set(id, row);
+    send(response, 200, { status: "CREATED", roleMap: row });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/rest/v1/rpc/submit_candidate_evidence_review") {
+    const body = await readJsonBody(request);
+    const roleMap = recruiterRoleMaps.get(body.requested_role_map_id);
+    const brief = [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === body.requested_token_hash && candidate.visibility === "LINK_ONLY" && candidate.revoked_at === null);
+    if (accountPersonas.get(body.expected_recruiter_user_id)?.persona !== "RECRUITER" || !roleMap || roleMap.user_id !== body.expected_recruiter_user_id || !brief) { send(response, 200, null); return; }
+    if (candidateEvidenceReviews.some((row) => row.proof_brief_id === brief.id && row.role_map_id === roleMap.id)) { send(response, 409, { code: "23505", message: "Synthetic duplicate" }); return; }
+    const row = { id: `99999999-9999-4999-8999-${String(candidateEvidenceReviews.length + 1).padStart(12, "0")}`, user_id: brief.user_id, proof_brief_id: brief.id, role_map_id: roleMap.id, role_title: roleMap.role_title, question_category: body.requested_question_category, question_text: body.requested_question_text, feedback_category: body.requested_feedback_category, review_ease: body.requested_review_ease, review_time_signal: body.requested_review_time_signal, note: body.requested_note, created_at: CREATED_AT };
+    candidateEvidenceReviews.push(row);
+    send(response, 200, publicCandidateReviewRow(row));
     return;
   }
 
@@ -118,7 +201,10 @@ const server = http.createServer(async (request, response) => {
   if (url.pathname === "/rest/v1/proof_briefs") {
     const userId = postgrestEq(url, "user_id");
     if (request.method === "GET") {
-      const row = proofBriefs.get(userId);
+      const tokenHash = postgrestEq(url, "share_token_hash");
+      const row = tokenHash
+        ? [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === tokenHash)
+        : proofBriefs.get(userId);
       const sourceId = postgrestEq(url, "source_resume_analysis_id");
       const briefId = postgrestEq(url, "id");
       send(
@@ -160,6 +246,55 @@ const server = http.createServer(async (request, response) => {
       const updated = { ...row, ...body, updated_at: CREATED_AT };
       proofBriefs.set(userId, updated);
       send(response, 200, [publicProofBriefRow(updated)]);
+      return;
+    }
+  }
+
+  if (url.pathname === "/rest/v1/account_personas") {
+    const userId = postgrestEq(url, "user_id");
+    if (request.method === "GET") {
+      const row = accountPersonas.get(userId);
+      send(response, 200, row ? [{ user_id: row.user_id, persona: row.persona }] : []);
+      return;
+    }
+    if (request.method === "POST") {
+      const body = await readJsonBody(request);
+      const row = { user_id: body.user_id, persona: body.persona, created_at: CREATED_AT, updated_at: CREATED_AT };
+      accountPersonas.set(body.user_id, row);
+      send(response, 200, [{ user_id: row.user_id, persona: row.persona }]);
+      return;
+    }
+  }
+
+  if (url.pathname === "/rest/v1/recruiter_role_evidence_maps") {
+    const userId = postgrestEq(url, "user_id");
+    if (request.method === "GET") {
+      const id = postgrestEq(url, "id");
+      const rows = [...recruiterRoleMaps.values()].filter((row) => (!userId || row.user_id === userId) && (!id || row.id === id));
+      send(response, 200, rows);
+      return;
+    }
+    if (request.method === "POST") {
+      const body = await readJsonBody(request);
+      const row = { id: "ffffffff-ffff-4fff-8fff-ffffffffffff", user_id: body.user_id, role_title: body.role_title, job_description: body.job_description, evidence_map: body.evidence_map, created_at: CREATED_AT, updated_at: CREATED_AT };
+      recruiterRoleMaps.set(row.id, row);
+      send(response, 200, [row]);
+      return;
+    }
+  }
+
+  if (url.pathname === "/rest/v1/candidate_evidence_reviews") {
+    const userId = postgrestEq(url, "user_id");
+    if (request.method === "GET") {
+      const briefId = postgrestEq(url, "proof_brief_id");
+      send(response, 200, candidateEvidenceReviews.filter((row) => (!userId || row.user_id === userId) && (!briefId || row.proof_brief_id === briefId)).map(publicCandidateReviewRow));
+      return;
+    }
+    if (request.method === "POST") {
+      const body = await readJsonBody(request);
+      const row = { id: "99999999-9999-4999-8999-999999999999", ...body, created_at: CREATED_AT };
+      candidateEvidenceReviews.push(row);
+      send(response, 200, [publicCandidateReviewRow(row)]);
       return;
     }
   }
@@ -318,6 +453,42 @@ function publicProofBriefRow(row) {
     revoked_at: row.revoked_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
+  };
+}
+
+function publicCandidateReviewRow(row) {
+  return {
+    id: row.id,
+    role_title: row.role_title,
+    question_category: row.question_category,
+    question_text: row.question_text,
+    feedback_category: row.feedback_category,
+    review_ease: row.review_ease,
+    review_time_signal: row.review_time_signal,
+    note: row.note,
+    created_at: row.created_at,
+  };
+}
+
+function syntheticRoleMapRow(id, userId, roleTitle, jobDescription) {
+  return {
+    id,
+    user_id: userId,
+    role_title: roleTitle,
+    job_description: jobDescription,
+    evidence_map: {
+      schemaVersion: 1,
+      roleTitle,
+      summary: "This synthetic role map organizes evidence questions without scoring candidates.",
+      categories: [
+        { key: "APPLIED_SKILLS", title: "Applied role skills", requirement: "Show role-relevant skills in applied work.", signals: ["TypeScript"] },
+        { key: "DELIVERY", title: "Delivery evidence", requirement: "Connect work to testing and outcomes.", signals: ["Testing"] },
+        { key: "OWNERSHIP", title: "Ownership context", requirement: "Clarify decisions and individual responsibility.", signals: [] },
+        { key: "COLLABORATION", title: "Collaboration context", requirement: "Explain review and team feedback.", signals: [] },
+      ],
+    },
+    created_at: CREATED_AT,
+    updated_at: CREATED_AT,
   };
 }
 

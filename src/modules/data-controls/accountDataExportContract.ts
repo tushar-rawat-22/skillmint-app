@@ -28,10 +28,13 @@ import type {
   JobMatchExportRow,
   ProfileExportRow,
   ProofBriefExportRow,
+  RecruiterRoleMapExportRow,
+  CandidateEvidenceReviewExportRow,
   ResumeAnalysisExportRow,
   WorkspaceResumeSelectionExportRow,
 } from "@/modules/data-controls/types";
 import { parseProofBriefPayload } from "@/modules/proofBrief/proofBriefContract";
+import { parseRoleEvidenceMap } from "@/modules/recruiterEvidence";
 
 export type AccountExportCardinality = "zero_or_one" | "zero_or_many";
 export type AccountExportPagination = "none" | "id_keyset" | "count_only";
@@ -65,6 +68,8 @@ export const ACCOUNT_EXPORT_TABLE_ORDER = [
   "beta_feedback",
   "account_personas",
   "proof_briefs",
+  "recruiter_role_evidence_maps",
+  "candidate_evidence_reviews",
 ] as const satisfies readonly AccountExportTableName[];
 
 export const ACCOUNT_EXPORT_TABLE_CONTRACTS = {
@@ -153,6 +158,26 @@ export const ACCOUNT_EXPORT_TABLE_CONTRACTS = {
     internalFieldsExcluded: ["user_id", "share_token_hash"],
     reconstructRow: reconstructProofBriefExportRow,
   },
+  recruiter_role_evidence_maps: {
+    tableName: "recruiter_role_evidence_maps",
+    ownerColumn: "user_id",
+    cardinality: "zero_or_many",
+    selectedColumns: "id,user_id,role_title,job_description,evidence_map,created_at,updated_at",
+    primaryKey: "id",
+    pagination: "id_keyset",
+    internalFieldsExcluded: ["user_id"],
+    reconstructRow: reconstructRecruiterRoleMapExportRow,
+  },
+  candidate_evidence_reviews: {
+    tableName: "candidate_evidence_reviews",
+    ownerColumn: "user_id",
+    cardinality: "zero_or_many",
+    selectedColumns: "id,user_id,proof_brief_id,role_title,question_category,question_text,feedback_category,review_ease,review_time_signal,note,created_at",
+    primaryKey: "id",
+    pagination: "id_keyset",
+    internalFieldsExcluded: ["user_id", "role_map_id"],
+    reconstructRow: reconstructCandidateEvidenceReviewExportRow,
+  },
 } as const satisfies Record<
   AccountExportTableName,
   AccountExportTableContract<unknown>
@@ -166,6 +191,8 @@ export const SUPPORTED_ACCOUNT_EXPORT_TABLES = [
   "beta_feedback",
   "account_personas",
   "proof_briefs",
+  "recruiter_role_evidence_maps",
+  "candidate_evidence_reviews",
 ] as const satisfies readonly SupportedAccountExportTableName[];
 
 export function reconstructProfileExportRow(
@@ -298,6 +325,40 @@ export function reconstructAccountPersonaExportRow(
       persona: requireEnum(row, "persona", ["CANDIDATE", "RECRUITER"] as const),
       created_at: requireIsoTimestamp(row, "created_at"),
       updated_at: requireIsoTimestamp(row, "updated_at"),
+    };
+  });
+}
+
+export function reconstructRecruiterRoleMapExportRow(value: unknown): AccountExportReconstructionResult<RecruiterRoleMapExportRow> {
+  return reconstruct(() => {
+    const row = requireRecord(value);
+    const evidenceMap = parseRoleEvidenceMap(row.evidence_map);
+    if (!evidenceMap) throw new Error("invalid evidence map");
+    return {
+      id: requireUuid(row, "id"),
+      role_title: requireString(row, "role_title"),
+      job_description: requireString(row, "job_description"),
+      evidence_map: evidenceMap,
+      created_at: requireIsoTimestamp(row, "created_at"),
+      updated_at: requireIsoTimestamp(row, "updated_at"),
+    };
+  });
+}
+
+export function reconstructCandidateEvidenceReviewExportRow(value: unknown): AccountExportReconstructionResult<CandidateEvidenceReviewExportRow> {
+  return reconstruct(() => {
+    const row = requireRecord(value);
+    return {
+      id: requireUuid(row, "id"),
+      proof_brief_id: requireUuid(row, "proof_brief_id"),
+      role_title: requireString(row, "role_title"),
+      question_category: requireEnum(row, "question_category", ["APPLIED_EXAMPLE", "OWNERSHIP_CONTEXT", "OUTCOME_CONTEXT", "VALIDATION_CONTEXT", "TEAM_REVIEW_CONTEXT"] as const),
+      question_text: requireString(row, "question_text"),
+      feedback_category: requireEnum(row, "feedback_category", ["BRIEF_MADE_EVIDENCE_CLEARER", "NEEDS_MORE_OWNERSHIP_CONTEXT", "NEEDS_MORE_OUTCOME_CONTEXT", "NEEDS_MORE_VALIDATION_CONTEXT", "ROLE_RELEVANCE_REMAINS_UNCLEAR"] as const),
+      review_ease: requireEnum(row, "review_ease", ["EASIER", "ABOUT_THE_SAME", "HARDER"] as const),
+      review_time_signal: requireEnum(row, "review_time_signal", ["LESS_TIME", "ABOUT_THE_SAME", "MORE_TIME", "NOT_SURE"] as const),
+      note: requireNullableString(row, "note"),
+      created_at: requireIsoTimestamp(row, "created_at"),
     };
   });
 }

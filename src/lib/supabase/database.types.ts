@@ -252,6 +252,66 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_evidence_reviews: {
+        Row: {
+          user_id: string
+          created_at: string
+          feedback_category: string
+          id: string
+          note: string | null
+          proof_brief_id: string
+          question_category: string
+          question_text: string
+          review_ease: string
+          review_time_signal: string
+          role_map_id: string | null
+          role_title: string
+        }
+        Insert: {
+          user_id: string
+          created_at?: string
+          feedback_category: string
+          id?: string
+          note?: string | null
+          proof_brief_id: string
+          question_category: string
+          question_text: string
+          review_ease: string
+          review_time_signal: string
+          role_map_id?: string | null
+          role_title: string
+        }
+        Update: {
+          user_id?: string
+          created_at?: string
+          feedback_category?: string
+          id?: string
+          note?: string | null
+          proof_brief_id?: string
+          question_category?: string
+          question_text?: string
+          review_ease?: string
+          review_time_signal?: string
+          role_map_id?: string | null
+          role_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_review_proof_brief_owner_fkey"
+            columns: ["user_id", "proof_brief_id"]
+            isOneToOne: false
+            referencedRelation: "proof_briefs"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "candidate_evidence_reviews_role_map_id_fkey"
+            columns: ["role_map_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_role_evidence_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proof_briefs: {
         Row: {
           brief_payload: Json
@@ -299,6 +359,36 @@ export type Database = {
           },
         ]
       }
+      recruiter_role_evidence_maps: {
+        Row: {
+          created_at: string
+          evidence_map: Json
+          id: string
+          job_description: string
+          role_title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_map: Json
+          id?: string
+          job_description: string
+          role_title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          evidence_map?: Json
+          id?: string
+          job_description?: string
+          role_title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       resume_analyses: {
         Row: {
           created_at: string
@@ -337,6 +427,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_recruiter_role_evidence_map: {
+        Args: {
+          expected_recruiter_user_id: string
+          requested_evidence_map: Json
+          requested_job_description: string
+          requested_role_title: string
+        }
+        Returns: Json
+      }
       delete_current_user_saved_reports: {
         Args: never
         Returns: {
@@ -373,6 +472,20 @@ export type Database = {
         Returns: {
           deleted_count: number
         }[]
+      }
+      submit_candidate_evidence_review: {
+        Args: {
+          expected_recruiter_user_id: string
+          requested_feedback_category: string
+          requested_note: string | null
+          requested_question_category: string
+          requested_question_text: string
+          requested_review_ease: string
+          requested_review_time_signal: string
+          requested_role_map_id: string
+          requested_token_hash: string
+        }
+        Returns: Json
       }
     }
     Enums: {

@@ -305,7 +305,9 @@ test("ACL normalization and V8 source, migration, hashes, and frozen order prefi
   );
 
   assert.deepEqual(
-    manifest.generated_for.production.pending_execution.slice(-4, -1),
+    manifest.generated_for.production.pending_execution.filter((version) =>
+      [aclNormalizationVersion, "20260727000800", "20260730000900"].includes(version)
+    ),
     [aclNormalizationVersion, "20260727000800", "20260730000900"],
   );
 
@@ -1006,6 +1008,8 @@ test("account counts expose a separate fail-closed zero-or-one selection count",
         betaFeedback: 3,
         accountPersona: 0,
         proofBriefs: 0,
+        recruiterRoleMaps: 0,
+        candidateEvidenceReviews: 0,
       },
       error: null,
     },
@@ -1036,6 +1040,8 @@ test("account counts expose a separate fail-closed zero-or-one selection count",
         betaFeedback: 3,
         accountPersona: 0,
         proofBriefs: 0,
+        recruiterRoleMaps: 0,
+        candidateEvidenceReviews: 0,
       },
       error: null,
     },
@@ -1044,7 +1050,7 @@ test("account counts expose a separate fail-closed zero-or-one selection count",
   assert.equal(invalid.counts, null);
 });
 
-test("account export v4/v3 validates, reconciles, and omits owner identity", async () => {
+test("account export v5/v4 validates, reconciles, and omits owner identity", async () => {
   assert.deepEqual([...ACCOUNT_EXPORT_TABLE_ORDER], [
     "profiles",
     "resume_analyses",
@@ -1054,6 +1060,8 @@ test("account export v4/v3 validates, reconciles, and omits owner identity", asy
     "beta_feedback",
     "account_personas",
     "proof_briefs",
+    "recruiter_role_evidence_maps",
+    "candidate_evidence_reviews",
   ]);
   assert.deepEqual(ACCOUNT_EXPORT_TABLE_CONTRACTS.active_resume_selections, {
     tableName: "active_resume_selections",
@@ -1075,11 +1083,11 @@ test("account export v4/v3 validates, reconciles, and omits owner identity", asy
   });
   assert.match(
     accountDataTypesSource,
-    /exportVersion: "skillmint-account-export-v4"/,
+    /exportVersion: "skillmint-account-export-v5"/,
   );
   assert.match(
     accountDataTypesSource,
-    /schemaContractVersion: "skillmint-account-contract-v3"/,
+    /schemaContractVersion: "skillmint-account-contract-v4"/,
   );
   assert.match(
     accountDataTypesSource,
@@ -1105,10 +1113,10 @@ test("account export v4/v3 validates, reconciles, and omits owner identity", asy
   );
   assert.equal(result.ok, true);
   const payload = JSON.parse(result.data.json);
-  assert.equal(payload.exportVersion, "skillmint-account-export-v4");
+  assert.equal(payload.exportVersion, "skillmint-account-export-v5");
   assert.equal(
     payload.schemaContractVersion,
-    "skillmint-account-contract-v3",
+    "skillmint-account-contract-v4",
   );
   assert.deepEqual(payload.data.active_resume_selections, [{
     resume_analysis_id: ANALYSIS_TWO.toUpperCase(),
@@ -1582,7 +1590,7 @@ test("UI copy and actions keep saved, Workspace, and browser-active concepts dis
   assert.match(dashboardPageSource, /aria-live=/);
 });
 
-test("frozen product and analytics contracts allow only the reviewed hostname fix", () => {
+test("frozen product and analytics contracts allow the reviewed hostname fix and additive role-map engine", () => {
   const frozenProductPaths = [
     "src/intelligence",
     "src/platform/analytics",
@@ -1591,11 +1599,19 @@ test("frozen product and analytics contracts allow only the reviewed hostname fi
     "src/app/founder/analytics/page.tsx",
     "src/config/founderAnalytics.ts",
   ];
-  assert.equal(
-    gitChangedPaths(frozenProductPaths),
-    "src/intelligence/proof/proofLinkExtraction.ts",
+  const changedFrozenProductPaths = new Set(
+    [gitChangedPaths(frozenProductPaths), gitUntracked(frozenProductPaths)]
+      .flatMap((value) => value.split("\n"))
+      .filter(Boolean),
   );
-  assert.equal(gitUntracked(frozenProductPaths), "");
+  assert.deepEqual([...changedFrozenProductPaths].sort(), [
+    "src/intelligence/core/roleEvidenceMap.ts",
+    "src/intelligence/proof/proofLinkExtraction.ts",
+  ]);
+  assert.equal(
+    sha256(readBuffer("src/intelligence/core/roleEvidenceMap.ts")),
+    "0495e13722053b686719c2f64ec2244e35e3c363098b67d8d0f3938d56bb504d",
+  );
   assert.equal(
     sha256(readBuffer("src/intelligence/proof/proofLinkExtraction.ts")),
     "7bee6025dd80f12db9e16253f515e8cfe4ec7b5f8f4d296bb4cc74f053e947a9",
@@ -1649,6 +1665,8 @@ test("package metadata permits only authorized fixture scripts and audited lock 
       "fixtures:proof-brief",
       "fixtures:proof-brief:database",
       "fixtures:public-evidence-demo",
+      "fixtures:recruiter-evidence",
+      "fixtures:recruiter-evidence:database",
       "fixtures:resume-comparison",
       "fixtures:resume-workspace-phase-1a",
       "test:e2e:controlled-access",
@@ -1657,6 +1675,7 @@ test("package metadata permits only authorized fixture scripts and audited lock 
       "test:e2e:password-recovery",
       "test:e2e:proof-brief",
       "test:e2e:public-evidence-demo",
+      "test:e2e:recruiter-evidence",
       "test:e2e:resume-comparison",
       "test:e2e:resume-comparison:firefox",
       "test:e2e:resume-comparison:race",
@@ -1990,6 +2009,8 @@ function createExportAdapter({
     beta_feedback: [],
     account_personas: [],
     proof_briefs: [],
+    recruiter_role_evidence_maps: [],
+    candidate_evidence_reviews: [],
   };
   const identitySequence = [...identities];
   let identityIndex = 0;

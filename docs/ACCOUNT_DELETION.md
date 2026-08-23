@@ -23,6 +23,13 @@ the protected HTTP contract and generic response do not expose new table names
 or counts. This extension has deterministic repository coverage but has not
 been applied to Production.
 
+The pending V11 migration adds recruiter role maps and candidate evidence
+reviews to the protected cleanup and absence checks. Reviews also disappear
+when their related Proof Brief is deleted. Removing a recruiter-owned role map
+only clears the internal reference, so feedback already delivered to a
+candidate remains candidate-controlled. The frozen public deletion response and
+count fields do not change.
+
 After confirmed server success the Trust Center removes only the captured owner’s browser partitions, preserves anonymous/other-account/global data, and does not let late Account A completion sign out Account B.
 
 Accepted limits remain: isolated test-project proof is not production proof; provider backup/log erasure and complete infrastructure-wide deletion were not proved; legal review is pending; the privacy/support contact is not externally verified; production schema rollout and operational ownership are pending.

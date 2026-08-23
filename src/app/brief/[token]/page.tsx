@@ -130,6 +130,19 @@ export default async function SharedProofBriefPage({
           <p className="mt-4 text-xs text-slate-500">
             Shared {new Date(sharedAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}. The candidate can revoke this link.
           </p>
+          <div className="mt-6 border-t border-slate-200 pt-6">
+            <h2 className="text-lg font-black">Review this evidence for one role</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              A signed-in recruiter can pair this authorized brief with one role evidence map, ask one structured evidence question, and send bounded feedback. SkillMint still makes no hiring decision.
+            </p>
+            <Link
+              href={`/recruiters/review/${token}`}
+              prefetch={false}
+              className={`${premiumSecondaryCta} mt-4`}
+            >
+              Open evidence review
+            </Link>
+          </div>
         </section>
       </div>
     </main>

@@ -1270,6 +1270,18 @@ export default function DataSettingsPage() {
                   value={accountCountsPresentation.countDisplay.proofBriefs}
                   detail="Deleted by Delete saved reports."
                 />
+
+                <OverviewCard
+                  label="Recruiter role maps"
+                  value={accountCountsPresentation.countDisplay.recruiterRoleMaps}
+                  detail="Preserved by Delete saved reports; removed with account deletion."
+                />
+
+                <OverviewCard
+                  label="Evidence reviews received"
+                  value={accountCountsPresentation.countDisplay.candidateEvidenceReviews}
+                  detail="Removed when the related Proof Brief or account is deleted."
+                />
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">

@@ -83,6 +83,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v8_active_resume_selections.sql",
   "supabase/schema_v9_public_function_acl_normalization.sql",
   "supabase/schema_v10_two_sided_beta_foundation.sql",
+  "supabase/schema_v11_recruiter_evidence_review.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -94,6 +95,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
   "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
   "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql",
+  "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -176,6 +178,13 @@ const migrations = [
     hash: "d358e97fe0065d2062619e475e00bc146f0cf62f79c75081c5bbd994fc42b78d",
     classification: "pending_two_sided_beta_foundation",
   },
+  {
+    version: "20260823001100",
+    source: "supabase/schema_v11_recruiter_evidence_review.sql",
+    migration: "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
+    hash: "007c6076a68de87bc96f6e85b886d93add5458dbfdc96da8210c22081ecd8cee",
+    classification: "pending_recruiter_evidence_review",
+  },
 ];
 
 for (const item of migrations) {
@@ -192,7 +201,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered eleven SQL files",
+  "migration directory must contain the exact ordered twelve SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -225,7 +234,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 11, "manifest must contain eleven migrations");
+equal(manifest.ordered_migrations.length, 12, "manifest must contain twelve migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -284,6 +293,11 @@ equal(
   manifest.ordered_migrations[10].version,
   migrations[10].version,
   "two-sided beta foundation must follow public-function ACL normalization",
+);
+equal(
+  manifest.ordered_migrations[11].version,
+  migrations[11].version,
+  "recruiter evidence review must follow the two-sided beta foundation",
 );
 
 const config = text("supabase/config.toml");

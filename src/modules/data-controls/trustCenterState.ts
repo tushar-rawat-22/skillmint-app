@@ -66,6 +66,8 @@ export type AccountCountsPresentation = {
     betaFeedback: string;
     accountPersona: string;
     proofBriefs: string;
+    recruiterRoleMaps: string;
+    candidateEvidenceReviews: string;
   };
   counts: AccountDataCounts | null;
   error: string | null;
@@ -251,6 +253,8 @@ function accountPresentation(
       betaFeedback: countValue,
       accountPersona: countValue,
       proofBriefs: countValue,
+      recruiterRoleMaps: countValue,
+      candidateEvidenceReviews: countValue,
     },
     counts: null,
     error,
@@ -272,6 +276,8 @@ function isValidAccountDataCounts(
     "betaFeedback",
     "accountPersona",
     "proofBriefs",
+    "recruiterRoleMaps",
+    "candidateEvidenceReviews",
   ] as const;
   return Object.keys(record).length === keys.length &&
     keys.every((key) =>
@@ -293,5 +299,7 @@ function mapCountDisplay(data: AccountDataCounts) {
     betaFeedback: data.betaFeedback.toString(),
     accountPersona: data.accountPersona.toString(),
     proofBriefs: data.proofBriefs.toString(),
+    recruiterRoleMaps: data.recruiterRoleMaps.toString(),
+    candidateEvidenceReviews: data.candidateEvidenceReviews.toString(),
   };
 }
