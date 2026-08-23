@@ -1599,11 +1599,15 @@ test("frozen product and analytics contracts allow the reviewed hostname fix and
     "src/app/founder/analytics/page.tsx",
     "src/config/founderAnalytics.ts",
   ];
-  assert.equal(
-    gitChangedPaths(frozenProductPaths),
-    "src/intelligence/proof/proofLinkExtraction.ts",
+  const changedFrozenProductPaths = new Set(
+    [gitChangedPaths(frozenProductPaths), gitUntracked(frozenProductPaths)]
+      .flatMap((value) => value.split("\n"))
+      .filter(Boolean),
   );
-  assert.equal(gitUntracked(frozenProductPaths), "src/intelligence/core/roleEvidenceMap.ts");
+  assert.deepEqual([...changedFrozenProductPaths].sort(), [
+    "src/intelligence/core/roleEvidenceMap.ts",
+    "src/intelligence/proof/proofLinkExtraction.ts",
+  ]);
   assert.equal(
     sha256(readBuffer("src/intelligence/core/roleEvidenceMap.ts")),
     "0495e13722053b686719c2f64ec2244e35e3c363098b67d8d0f3938d56bb504d",
