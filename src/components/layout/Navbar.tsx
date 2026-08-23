@@ -22,14 +22,17 @@ export default function Navbar({
         </Link>
 
         <div className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.CANDIDATES}>
+            Candidates
+          </Link>
+          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.RECRUITERS}>
+            Recruiters
+          </Link>
           <a className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="#preview">
             Product Preview
           </a>
           <a className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="#how-it-works">
             How it works
-          </a>
-          <a className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="#difference">
-            Why different
           </a>
           <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.LOGIN}>
             Log in

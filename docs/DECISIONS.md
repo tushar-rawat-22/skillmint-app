@@ -4,7 +4,13 @@
 
 **Status:** Historical architecture record; superseded where current contracts differ
 
-> This file preserves early decision rationale. Its `Accepted` labels and version section describe their historical state, not current implementation or release authority. Use [Project Status](PROJECT_STATUS.md), the [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md), current source and tests, and frozen contract documents when they differ from this record. In particular, Blocks 1–5 are complete and frozen, Block 6 engineering is complete with analytics disabled, Block 7.1 is complete, and public beta remains unauthorized.
+> This file preserves early decision rationale. Its `Accepted` labels and
+> version section describe their historical state, not current implementation or
+> release authority. Use [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md),
+> [Project Status](PROJECT_STATUS.md), current source and tests, and frozen
+> contract documents when they differ from this record. Blocks 1–5 and Block 7.1
+> remain preserved; public-beta product work is now authorized while hosted
+> activation remains gated.
 
 ---
 

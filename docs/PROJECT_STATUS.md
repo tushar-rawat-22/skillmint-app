@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** July 30, 2026
+**Last updated:** August 23, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -41,7 +41,7 @@ Resume Reality
 | Block 3: Mission Execution + Career Path Engine | Complete and frozen | Missions do not manipulate scores |
 | Block 4: Active Target + JD Workflow | Complete, hardened, merged, and frozen | Target focus, owner isolation, and JD freshness remain locked |
 | Block 5: Data Controls + Trust Center | Complete, verified, merged, synchronized, and frozen | Isolated engineering proof; no production claim |
-| Pre-Block-6 Brand & Domain Decision Gate | Paused by founder decision; still required before external beta | One to two focused working days; not a roadmap block |
+| Public brand collision gate | Reopened for the two-sided beta; collision screen complete, selection pending | Presentation-only shortlist; no domain purchase or internal rename |
 | Block 6: Privacy-safe Analytics + Founder Dashboard | Engineering implementation and isolated verification complete | Production rollout and activation are deferred; no Production-readiness claim |
 | Block 7: Beta Launch Readiness | Historical broad public-launch path stopped; Block 7.1 remains complete | Its former Block 7.2 sequencing is superseded as current authority by the Version 2 transition |
 | Phase 1 — Resume Workspace | Complete; Phase 1A–1B local, isolated hosted, and synthetic Preview gates passed; real-user evidence remains pending during controlled early access | Phase 2 preserves the separate Workspace, browser-active report, export, and deletion contracts |
@@ -95,7 +95,13 @@ Implementation commit `0eb4cd94e1a5e642ab9dd6350bfa4153197dd45c` merged through 
 
 The slice added no new onboarding state, browser-storage key, analytics event, scoring or mission change, ownership or persistence change, schema, migration, dependency, lockfile, or CI change. Local and CI browser semantics do not prove identical audible output across every screen-reader/browser combination, so real assistive-technology evidence remains pending. The general Phase 4 smoke proved route availability only and was not authenticated functional accessibility validation of the Production upload flow, keyboard behavior, screen-reader output, or other assistive technology.
 
-No controlled user was invited, and no real-user onboarding, abandonment, comprehension, or accessibility evidence was collected; broader Phase 4 guided-execution and onboarding work is deferred pending recurring controlled-user evidence that demonstrates a real problem. Controlled-user invitations remain unauthorized, Production migrations remain unauthorized, and public beta, analytics activation, and unrestricted acquisition remain unauthorized.
+No controlled user was invited, and no real-user onboarding, abandonment,
+comprehension, or accessibility evidence was collected during that phase. At
+that closure, broader Phase 4 guided-execution and onboarding work is deferred pending recurring controlled-user evidence. Its
+then-current invitation and public-beta restrictions are historical and were
+superseded by the August 23 founder authority. At that closure,
+**Controlled-user invitations remain unauthorized** and **Production migrations remain unauthorized** recorded the applicable boundary; Production migrations
+and hosted activation still require their current gates.
 
 Phase 5A adds a server-only `SKILLMINT_PUBLIC_SIGNUP_ENABLED` application gate. Public signup defaults closed unless the trimmed, case-insensitive value is exactly `true`; the closed state renders no signup form or account-creation controls, collects no prospective-user data, and directs existing users to login. The shared auth submission path independently refuses disabled signup while preserving existing-user login and sanitized errors.
 
@@ -113,7 +119,17 @@ The supplied fresh Preview verification found zero Production-reference hits. Co
 
 ## Release boundary
 
-Public beta is not authorized. Blocks 5 and 6 passed their applicable isolated engineering gates, but those results are not Production rollout or Production-readiness evidence. The former Beta v1 public-launch sequence is not the current work authority; Version 2 preparation is authorized instead.
+**Founder override — 2026-08-23:** the company objective is now a public
+two-sided product beta for candidates and recruiters. The
+[Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md) supersedes the former
+investor-only deployment sequence and the earlier statement that public-beta
+product work was unauthorized. Blocks 1–5, evidence truth, ownership, privacy,
+and synthetic-demo isolation remain preserved.
+
+This authority permits repository implementation, reviewed branches and pull
+requests, and isolated verification. It does not by itself authorize a
+Production migration, OAuth-provider switch, analytics activation, public
+signup switch, domain change, or deployment before the applicable gates pass.
 
 The retained future Production-readiness boundary is:
 
@@ -128,17 +144,20 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 
 ## Current approved sequence
 
-**Sequencing override — 2026-07-19:** The Brand & Domain Gate remains paused by founder decision. This override permitted Block 6 to proceed using brand-neutral internal identifiers. Final public branding remains required before external beta or public-launch configuration.
+1. Follow the [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md).
+2. Build candidate and recruiter public entry points and isolated synthetic demos.
+3. Build default-private, candidate-authorized Proof Brief sharing and the
+   smallest recruiter evidence-review workflow without ranking or hiring
+   predictions.
+4. Prepare OAuth and server-owned persona boundaries, structured feedback, and
+   privacy-safe first-party analytics while keeping hosted activation off.
+5. Independently review security and privacy changes, then rehearse the
+   Production schema and operational launch gates before any public switch.
+6. Keep payments, candidate discovery, automated decisions, broad rebranding,
+   domain purchase, and third-party analytics outside this beta.
 
-1. Follow the [Version 2 Transition Gate](V2_TRANSITION_GATE.md) and [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md).
-2. Preserve the completed Phase 2 engineering/deployment closure, completed Phase 3 inspection and bounded truth repair, and completed Phase 4 inspection and bounded upload-accessibility repair. Do not expand Phase 3 without recurring comprehension evidence or Phase 4 without recurring controlled-user evidence.
-3. Follow the `NO-GO` gates in [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md). The next schema step is independent review and isolated rehearsal, not Production execution.
-4. Treat separately gated launch-readiness and controlled-user preparation as the next work, not another automatic Phase 4 runtime slice. During any later authorized controlled early access, review comprehension, repeat use, comparison decision value, score-chasing risk, accessibility, and onboarding confusion; the evidence may cause Phase 1 or Phase 2 to be preserved, revised, deferred, or removed.
-5. Invite an approximately 20-user controlled cohort only after every applicable Production-readiness gate passes.
-6. Keep public beta, unrestricted acquisition, Production activation, and payments separately gated and unauthorized until their applicable evidence gates explicitly pass.
-7. Treat the former Block 7.2 and Beta v1 public-launch ordering as historical planning material, not an active instruction.
-
-The public name, backup name, and domain are all pending. The later July 28 amendment authorizes only bounded Phase 2 repository implementation; it does not authorize Production, DNS, hosted Supabase or Vercel configuration, authentication-origin or public-package changes, public beta, payments, deployment, or other launch execution.
+The public name, backup name, and domain remain pending. SkillMint is now a
+collision-screened internal codename, not an approved broad public brand.
 
 ## Question-specific authority
 
@@ -152,6 +171,7 @@ Use the evidence relevant to the question instead of one universal ranking:
 
 ## Authoritative references
 
+- [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md)
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md)
 - [Version 2 Transition Gate](V2_TRANSITION_GATE.md)
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md)

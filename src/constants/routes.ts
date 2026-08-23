@@ -3,6 +3,12 @@ export const ROUTES = {
 
   DEMO: "/demo",
 
+  CANDIDATES: "/candidates",
+
+  RECRUITERS: "/recruiters",
+
+  RECRUITER_DEMO: "/recruiters/demo",
+
   LOGIN: "/login",
 
   SIGNUP: "/signup",

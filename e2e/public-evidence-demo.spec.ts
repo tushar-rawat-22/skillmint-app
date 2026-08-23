@@ -28,6 +28,14 @@ test("@public-demo @demo-disabled demo fails closed without Supabase and homepag
     authUserRequests: 0,
   });
 
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  const recruiterResponse = await page.goto("/recruiters/demo");
+  expect(recruiterResponse?.status()).toBe(404);
+  expect(await readServerRequestCounts(request)).toEqual({
+    applicationRequests: 0,
+    authUserRequests: 0,
+  });
+
   await page.goto("/");
   await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
   await expect(page.getByRole("link", { name: "View early access" }).first()).toBeVisible();
@@ -137,14 +145,16 @@ test("@public-demo @demo-enabled homepage and logged-out upload route to the ena
     await expect(link).toHaveAttribute("href", "/demo");
   }
   await expect(page.getByRole("link", { name: "Existing user login" }).first()).toHaveAttribute("href", "/login");
-  await expect(page.getByText("Private pilot · synthetic demo").first()).toBeVisible();
+  await expect(page.getByText("Public beta in preparation · synthetic demos").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "I'm a Candidate" }).first()).toHaveAttribute("href", "/candidates");
+  await expect(page.getByRole("link", { name: "I'm Hiring" }).first()).toHaveAttribute("href", "/recruiters");
 
   await page.goto("/upload");
   await expect(page.locator('input[type="file"]')).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Explore synthetic demo" })).toHaveAttribute("href", "/demo");
 });
 
-test("@public-demo @demo-enabled investor journey works at 320px with reduced motion", async ({
+test("@public-demo @demo-enabled two-sided entry and candidate demo work at 320px with reduced motion", async ({
   page,
   request,
 }) => {
@@ -155,7 +165,7 @@ test("@public-demo @demo-enabled investor journey works at 320px with reduced mo
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: /Know what your resume supports/i,
+      name: /Make career evidence easier to understand/i,
     }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, 320);
@@ -200,6 +210,61 @@ test("@public-demo @demo-enabled investor journey works at 320px with reduced mo
   });
 
   const accessibility = await new AxeBuilder({ page }).analyze();
+  expect(
+    accessibility.violations.filter((violation) =>
+      violation.impact === "critical" || violation.impact === "serious"
+    ),
+  ).toEqual([]);
+});
+
+test("@public-demo @demo-enabled recruiter demo is synthetic, human-controlled, accessible, and network isolated", async ({
+  page,
+  request,
+}) => {
+  let analyticsRequests = 0;
+  await page.route("**/api/analytics/events", async (route) => {
+    analyticsRequests += 1;
+    await route.fulfill({ status: 202, body: "{}" });
+  });
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+
+  const response = await page.goto("/recruiters/demo");
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByText(
+      "Every role, candidate, evidence item, question, and feedback item on this page is synthetic demo data.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "What evidence supports this candidate for this role?",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("Strong support", { exact: true })).toBeVisible();
+  await expect(page.getByText("Weak support", { exact: true })).toBeVisible();
+  await expect(page.getByText("Unclear / missing support", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Evidence questions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Feedback to the candidate" })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(
+    /Recruiter Confidence|recruiter confidence|hire probability|shortlist probability/i,
+  );
+
+  await page.waitForTimeout(1_500);
+  expect(await readServerRequestCounts(request)).toEqual({
+    applicationRequests: 0,
+    authUserRequests: 0,
+  });
+  expect(analyticsRequests).toBe(0);
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+  expect(await page.evaluate(() =>
+    Object.keys(sessionStorage).filter((key) => key.startsWith("skillmint"))
+  )).toEqual([]);
+
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
   expect(
     accessibility.violations.filter((violation) =>
       violation.impact === "critical" || violation.impact === "serious"

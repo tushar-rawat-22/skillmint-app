@@ -8,6 +8,7 @@ import ProductLoop from "@/components/landing/ProductLoop";
 import DashboardPreview from "@/components/landing/DashboardPreview";
 import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
+import AudiencePaths from "@/components/landing/AudiencePaths";
 import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 
@@ -27,6 +28,7 @@ export default function HomePage() {
           publicSignupEnabled={publicSignupEnabled}
           publicDemoEnabled={publicDemoEnabled}
         />
+        <AudiencePaths publicDemoEnabled={publicDemoEnabled} />
         <Problem />
         <DashboardPreview />
         <ProductLoop

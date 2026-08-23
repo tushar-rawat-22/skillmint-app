@@ -4,7 +4,11 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 
 ## Start here
 
-- [Version 2 Transition Gate](V2_TRANSITION_GATE.md) is the current strategic authority: it preserves Beta v1 engineering, stops the former broad Beta v1 public-launch path, and keeps public beta and payments unauthorized.
+- [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md) is the current
+  strategic authority: it preserves the accepted engineering foundation and
+  authorizes gated implementation of a public candidate-and-recruiter beta.
+- [Version 2 Transition Gate](V2_TRANSITION_GATE.md) is the superseded strategic
+  sequence retained for its product evidence and preservation rationale.
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
 - [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented Phase 1A contract, its local verification history, the bounded isolated-hosted Phase 1B evidence, and the real-user evidence still required before expansion.
 - [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and current approved sequence.
@@ -70,7 +74,10 @@ Frozen evidence must not be casually rewritten. The Phase 1B closure is isolated
 - [Changelog](CHANGELOG.md)
 - [Beta Tester Script](BETA_TESTER_SCRIPT.md), currently a draft rather than outreach authorization
 
-Local builds, isolated Supabase verification, browser-test passes, or a Vercel deployment do not independently authorize public beta or prove production readiness. Follow the release blockers and explicit authorization boundaries in the current status and deployment documents.
+Local builds, isolated Supabase verification, browser-test passes, or a host
+deployment do not independently authorize the public switch or prove production
+readiness. Follow the release blockers and explicit authorization boundaries in
+the current status and deployment documents.
 
 ## Historical planning documents
 
