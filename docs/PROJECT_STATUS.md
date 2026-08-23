@@ -121,7 +121,9 @@ same-origin server route that reloads the exact account-owned saved analysis
 and derives the public payload; browsers retain owner-only read access and
 cannot supply payloads or token hashes. Client-writable saved-profile labels are
 not publication authority; only server-owned canonical skill labels can enter
-the public payload. Proof Briefs contain only a strict derived
+the public payload.
+
+Proof Briefs contain only a strict derived
 evidence payload, default to `PRIVATE`, and can be shared through a revocable
 `LINK_ONLY` token whose raw value is never stored. Public lookup exposes no
 table access and returns only the payload and sharing timestamp. Account export
