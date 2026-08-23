@@ -35,6 +35,7 @@ export default defineConfig({
         NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "synthetic-playwright-publishable-key",
         NEXT_PUBLIC_APP_URL: appOrigin,
+        SUPABASE_SECRET_KEY: "synthetic-local-key",
         NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED: "true",
         SKILLMINT_PUBLIC_SIGNUP_ENABLED:
           process.env.SKILLMINT_E2E_PUBLIC_SIGNUP_ENABLED === "true"

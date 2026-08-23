@@ -8,6 +8,10 @@ import type {
   FeedbackSentiment,
   FeedbackType,
 } from "@/modules/feedback/types";
+import type {
+  ProofBriefPayload,
+  ProofBriefVisibility,
+} from "@/modules/proofBrief/types";
 
 export type AccountDataErrorCode =
   | "not_authenticated"
@@ -49,6 +53,8 @@ export type AccountDataCounts = {
   jobMatches: number;
   careerSnapshots: number;
   betaFeedback: number;
+  accountPersona: number;
+  proofBriefs: number;
 };
 
 export type ProfileExportRow = {
@@ -96,13 +102,32 @@ export type BetaFeedbackExportRow = {
   created_at: string;
 };
 
+export type AccountPersonaExportRow = {
+  persona: "CANDIDATE" | "RECRUITER";
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProofBriefExportRow = {
+  id: string;
+  source_resume_analysis_id: string;
+  brief_payload: ProofBriefPayload;
+  visibility: ProofBriefVisibility;
+  share_created_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AccountExportTableName =
   | "profiles"
   | "resume_analyses"
   | "active_resume_selections"
   | "job_matches"
   | "career_snapshots"
-  | "beta_feedback";
+  | "beta_feedback"
+  | "account_personas"
+  | "proof_briefs";
 
 export type AccountExportSharedIntegrity = {
   preCount: number;
@@ -153,11 +178,13 @@ export type AccountExportManifestTables = {
   job_matches: AccountExportKeysetPaginationIntegrity;
   career_snapshots: AccountExportCountOnlyIntegrity;
   beta_feedback: AccountExportKeysetPaginationIntegrity;
+  account_personas: AccountExportNoPaginationIntegrity;
+  proof_briefs: AccountExportKeysetPaginationIntegrity;
 };
 
 export type AccountDataExport = {
-  exportVersion: "skillmint-account-export-v3";
-  schemaContractVersion: "skillmint-account-contract-v2";
+  exportVersion: "skillmint-account-export-v4";
+  schemaContractVersion: "skillmint-account-contract-v3";
   source: "account";
   exportedAt: string;
   accountScope: "current_authenticated_account";
@@ -182,6 +209,8 @@ export type AccountDataExport = {
     job_matches: JobMatchExportRow[];
     career_snapshots: [];
     beta_feedback: BetaFeedbackExportRow[];
+    account_personas: AccountPersonaExportRow[];
+    proof_briefs: ProofBriefExportRow[];
   };
 };
 

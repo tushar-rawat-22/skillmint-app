@@ -231,7 +231,7 @@ test("V1-V7 retain their authorized hashes, byte identity, and zero diff", () =>
   assertGitZeroDiff(frozenPaths);
 });
 
-test("ACL normalization and V8 source, migration, hashes, order, and manifest entries are exact", () => {
+test("ACL normalization and V8 source, migration, hashes, and frozen order prefix are exact", () => {
   assert.equal(aclNormalizationSource, aclNormalizationMigration);
   assert.equal(
     Buffer.compare(
@@ -265,7 +265,9 @@ test("ACL normalization and V8 source, migration, hashes, order, and manifest en
   ];
 
   assert.deepEqual(
-    manifest.ordered_migrations.map((entry) => entry.version),
+    manifest.ordered_migrations
+      .map((entry) => entry.version)
+      .slice(0, expectedVersions.length),
     expectedVersions,
   );
 
@@ -297,12 +299,13 @@ test("ACL normalization and V8 source, migration, hashes, order, and manifest en
   );
 
   assert.deepEqual(
-    manifest.generated_for.empty_isolated_project.apply_in_order,
+    manifest.generated_for.empty_isolated_project.apply_in_order
+      .slice(0, expectedVersions.length),
     expectedVersions,
   );
 
   assert.deepEqual(
-    manifest.generated_for.production.pending_execution.slice(-3),
+    manifest.generated_for.production.pending_execution.slice(-4, -1),
     [aclNormalizationVersion, "20260727000800", "20260730000900"],
   );
 
@@ -1001,6 +1004,8 @@ test("account counts expose a separate fail-closed zero-or-one selection count",
         jobMatches: 2,
         careerSnapshots: 0,
         betaFeedback: 3,
+        accountPersona: 0,
+        proofBriefs: 0,
       },
       error: null,
     },
@@ -1029,6 +1034,8 @@ test("account counts expose a separate fail-closed zero-or-one selection count",
         jobMatches: 2,
         careerSnapshots: 0,
         betaFeedback: 3,
+        accountPersona: 0,
+        proofBriefs: 0,
       },
       error: null,
     },
@@ -1037,7 +1044,7 @@ test("account counts expose a separate fail-closed zero-or-one selection count",
   assert.equal(invalid.counts, null);
 });
 
-test("account export v3/v2 validates, reconciles, and omits owner identity", async () => {
+test("account export v4/v3 validates, reconciles, and omits owner identity", async () => {
   assert.deepEqual([...ACCOUNT_EXPORT_TABLE_ORDER], [
     "profiles",
     "resume_analyses",
@@ -1045,6 +1052,8 @@ test("account export v3/v2 validates, reconciles, and omits owner identity", asy
     "job_matches",
     "career_snapshots",
     "beta_feedback",
+    "account_personas",
+    "proof_briefs",
   ]);
   assert.deepEqual(ACCOUNT_EXPORT_TABLE_CONTRACTS.active_resume_selections, {
     tableName: "active_resume_selections",
@@ -1066,11 +1075,11 @@ test("account export v3/v2 validates, reconciles, and omits owner identity", asy
   });
   assert.match(
     accountDataTypesSource,
-    /exportVersion: "skillmint-account-export-v3"/,
+    /exportVersion: "skillmint-account-export-v4"/,
   );
   assert.match(
     accountDataTypesSource,
-    /schemaContractVersion: "skillmint-account-contract-v2"/,
+    /schemaContractVersion: "skillmint-account-contract-v3"/,
   );
   assert.match(
     accountDataTypesSource,
@@ -1096,10 +1105,10 @@ test("account export v3/v2 validates, reconciles, and omits owner identity", asy
   );
   assert.equal(result.ok, true);
   const payload = JSON.parse(result.data.json);
-  assert.equal(payload.exportVersion, "skillmint-account-export-v3");
+  assert.equal(payload.exportVersion, "skillmint-account-export-v4");
   assert.equal(
     payload.schemaContractVersion,
-    "skillmint-account-contract-v2",
+    "skillmint-account-contract-v3",
   );
   assert.deepEqual(payload.data.active_resume_selections, [{
     resume_analysis_id: ANALYSIS_TWO.toUpperCase(),
@@ -1119,7 +1128,7 @@ test("account export v3/v2 validates, reconciles, and omits owner identity", asy
   );
   assert.equal(adapter.observed.selectionLimit, 2);
   assert.equal(adapter.observed.resumePageCalls, 2);
-  assert.equal(adapter.observed.identityCalls, 9);
+  assert.equal(adapter.observed.identityCalls, 11);
   assert(
     adapter.observed.ownerFilters.some(
       (filter) =>
@@ -1637,6 +1646,8 @@ test("package metadata permits only authorized fixture scripts and audited lock 
       "fixtures:controlled-access",
       "fixtures:launch-hardening",
       "fixtures:production-rollout-foundation",
+      "fixtures:proof-brief",
+      "fixtures:proof-brief:database",
       "fixtures:public-evidence-demo",
       "fixtures:resume-comparison",
       "fixtures:resume-workspace-phase-1a",
@@ -1644,6 +1655,7 @@ test("package metadata permits only authorized fixture scripts and audited lock 
       "test:e2e:forgot-password",
       "test:e2e:launch-hardening",
       "test:e2e:password-recovery",
+      "test:e2e:proof-brief",
       "test:e2e:public-evidence-demo",
       "test:e2e:resume-comparison",
       "test:e2e:resume-comparison:firefox",
@@ -1976,6 +1988,8 @@ function createExportAdapter({
     job_matches: [],
     career_snapshots: [],
     beta_feedback: [],
+    account_personas: [],
+    proof_briefs: [],
   };
   const identitySequence = [...identities];
   let identityIndex = 0;
@@ -2027,6 +2041,14 @@ function createExportAdapter({
         data: selections.slice(0, input.limit),
         error: null,
       };
+    },
+    async getAccountPersonaRows(input) {
+      observed.ownerFilters.push([
+        "account_personas",
+        "user_id",
+        input.expectedUserId,
+      ]);
+      return { data: [], error: null };
     },
     async getKeysetPage(input) {
       observed.ownerFilters.push([

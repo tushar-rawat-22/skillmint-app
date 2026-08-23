@@ -68,7 +68,9 @@ import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import {
   ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR,
+  RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
 } from "@/modules/resume/services/activeResumeReportStorage";
+import ProofBriefControlCard from "@/modules/proofBrief/components/ProofBriefControlCard";
 import {
   fireAndForgetAnalytics,
   getBrowserAnalyticsRuntime,
@@ -133,6 +135,11 @@ export default function DashboardPage() {
   const storedResume = useSyncExternalStore(
     subscribeToStoredData,
     () => readStoredResume(currentUserId),
+    getServerSnapshot,
+  );
+  const storedResumeSyncStatus = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredResumeSyncStatus(currentUserId),
     getServerSnapshot,
   );
   const storedJobMatch = useSyncExternalStore(
@@ -465,6 +472,9 @@ export default function DashboardPage() {
   const atsMissingSkills = latestJobMatch?.missingSkills ?? [];
   const hasUserProgress = hasResumeAnalysis || hasJobMatch;
   const bestMatch = data.roleMatches[0];
+  const sourceResumeAnalysisId = getSyncedResumeAnalysisId(
+    storedResumeSyncStatus,
+  );
   const readinessBars = getReadinessBars(
     data.careerIQ.score,
     data.careerIQ.grade,
@@ -844,6 +854,11 @@ export default function DashboardPage() {
           bestMatch={bestMatch}
         />
 
+        <ProofBriefControlCard
+          currentUserId={currentUserId}
+          sourceResumeAnalysisId={sourceResumeAnalysisId}
+        />
+
         <OnboardingChecklist />
 
         <NextBestActionPanel />
@@ -1149,6 +1164,23 @@ function readStoredResume(
   return readVisibleStorageValue(ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR, {
     currentUserId,
   });
+}
+
+function readStoredResumeSyncStatus(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
+}
+
+function getSyncedResumeAnalysisId(storedValue: string | null): string | null {
+  const parsedValue = parseRecord(storedValue);
+  const databaseId = parsedValue?.databaseId;
+  return typeof databaseId === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(databaseId)
+    ? databaseId
+    : null;
 }
 
 function readStoredJobMatch(

@@ -124,3 +124,34 @@ environment must prove:
 Until those checks pass, implementation and isolated verification may continue,
 but Production migrations, analytics activation, signup activation, and public
 deployment remain blocked.
+
+## Current implementation progress
+
+The public candidate/recruiter entry paths and both isolated synthetic demos are
+implemented. The candidate product now has a derived-data-only Proof Brief with
+`PRIVATE` default and revocable `LINK_ONLY` sharing. The raw token is returned
+only when a link is created; the database stores its SHA-256 hash. Public brief
+lookup returns only the exact derived payload and sharing timestamp, and the
+page makes the non-verification and human-decision boundary explicit.
+
+Create, refresh, share, and revoke actions cross an authenticated same-origin
+server boundary. That server reloads the exact account-owned saved analysis and
+derives the public payload; browser callers cannot write a payload or token hash
+directly. Because saved-analysis JSON is client-writable, it is not treated as
+publication authority: public evidence labels must resolve through the
+server-owned canonical skill vocabulary, and free-form labels are discarded.
+
+V10 also establishes the server-owned persona table needed by the later OAuth
+entry flow. It is pending and has not been applied to Production. Candidate
+discovery and `DISCOVERABLE_TO_VERIFIED_RECRUITERS` remain deliberately
+unimplemented.
+
+An isolated local replay applies the full V1–V10 migration chain from empty and
+runs rollback-contained adversarial probes for Proof Brief grants, RLS, public
+projection, revocation, and source-deletion cascade. This is executable local
+database evidence, not a claim about Production schema state.
+
+The candidate sharing boundary completed an independent security/privacy review
+after adversarial saved-source, origin, ownership, response-binding, token,
+projection, revocation, export, and deletion repairs. That review found no
+remaining material pre-commit blocker; it does not authorize Production rollout.

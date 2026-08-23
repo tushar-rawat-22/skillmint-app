@@ -82,6 +82,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v7_1_lifecycle_function_acl_normalization.sql",
   "supabase/schema_v8_active_resume_selections.sql",
   "supabase/schema_v9_public_function_acl_normalization.sql",
+  "supabase/schema_v10_two_sided_beta_foundation.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -92,6 +93,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql",
   "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
   "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
+  "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -167,6 +169,13 @@ const migrations = [
     hash: "171404d422850c935300ad0384cc680a195849847705683c0b05016290e93983",
     classification: "pending_public_function_acl_normalization",
   },
+  {
+    version: "20260823001000",
+    source: "supabase/schema_v10_two_sided_beta_foundation.sql",
+    migration: "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql",
+    hash: "d358e97fe0065d2062619e475e00bc146f0cf62f79c75081c5bbd994fc42b78d",
+    classification: "pending_two_sided_beta_foundation",
+  },
 ];
 
 for (const item of migrations) {
@@ -183,7 +192,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered ten SQL files",
+  "migration directory must contain the exact ordered eleven SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -216,7 +225,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 10, "manifest must contain ten migrations");
+equal(manifest.ordered_migrations.length, 11, "manifest must contain eleven migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -270,6 +279,11 @@ equal(
   manifest.ordered_migrations[9].version,
   migrations[9].version,
   "public-function ACL normalization must follow V8",
+);
+equal(
+  manifest.ordered_migrations[10].version,
+  migrations[10].version,
+  "two-sided beta foundation must follow public-function ACL normalization",
 );
 
 const config = text("supabase/config.toml");

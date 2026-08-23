@@ -63,7 +63,7 @@ function test(name, callback) {
   tests.push({ name, callback });
 }
 
-test("central contracts declare the six known account tables in reconciliation order", () => {
+test("central contracts declare the eight known account tables in reconciliation order", () => {
   assert.deepEqual(Object.keys(ACCOUNT_EXPORT_TABLE_CONTRACTS), [
     "profiles",
     "resume_analyses",
@@ -71,6 +71,8 @@ test("central contracts declare the six known account tables in reconciliation o
     "job_matches",
     "career_snapshots",
     "beta_feedback",
+    "account_personas",
+    "proof_briefs",
   ]);
   assert.deepEqual(
     [...ACCOUNT_EXPORT_TABLE_ORDER],
@@ -100,8 +102,8 @@ test("empty valid account exports every table with zero integrity counts", async
     assert.equal(payload.manifest.tables[table].exportedCount, 0);
     assert.equal(payload.manifest.tables[table].postCount, 0);
   }
-  assert.equal(payload.exportVersion, "skillmint-account-export-v3");
-  assert.equal(payload.schemaContractVersion, "skillmint-account-contract-v2");
+  assert.equal(payload.exportVersion, "skillmint-account-export-v4");
+  assert.equal(payload.schemaContractVersion, "skillmint-account-contract-v3");
   assert.deepEqual(payload.data.active_resume_selections, []);
   assert.deepEqual(payload.data.career_snapshots, []);
 });
@@ -127,7 +129,7 @@ test("manifest reports only applicable pagination integrity checks", async () =>
     strategy: "count_only",
     pagesFetched: 0,
   });
-  for (const table of ["resume_analyses", "job_matches", "beta_feedback"]) {
+  for (const table of ["resume_analyses", "job_matches", "beta_feedback", "proof_briefs"]) {
     assert.deepEqual(payload.manifest.tables[table].pagination, {
       strategy: "id_keyset",
       pagesFetched: 1,
@@ -175,6 +177,10 @@ test("an invalid explicit expected account fails before any adapter call", async
       return { data: [], error: null };
     },
     async getActiveResumeSelectionRows() {
+      adapterCalls += 1;
+      return { data: [], error: null };
+    },
+    async getAccountPersonaRows() {
       adapterCalls += 1;
       return { data: [], error: null };
     },
@@ -831,6 +837,38 @@ test("account ownership ids do not enter successful JSON", async () => {
   assert.equal(result.data.json.includes('"user_id"'), false);
 });
 
+test("persona and Proof Brief export are owner-scoped and omit share secrets", async () => {
+  const resume = createResumeAnalysis(91);
+  const payload = parseSuccess(await build(createAdapter({
+    resume_analyses: [resume],
+    account_personas: [createAccountPersona()],
+    proof_briefs: [createProofBrief(92, resume.id)],
+  })));
+
+  assert.deepEqual(payload.data.account_personas, [{
+    persona: "CANDIDATE",
+    created_at: "2026-08-23T00:00:00.000Z",
+    updated_at: "2026-08-23T00:00:00.000Z",
+  }]);
+  assert.equal(payload.data.proof_briefs.length, 1);
+  assert.equal(payload.data.proof_briefs[0].source_resume_analysis_id, resume.id);
+  assert.equal(payload.data.proof_briefs[0].brief_payload.schemaVersion, 1);
+  assert.equal("user_id" in payload.data.proof_briefs[0], false);
+  assert.equal("share_token_hash" in payload.data.proof_briefs[0], false);
+  assert.equal(JSON.stringify(payload).includes("secret-token-hash"), false);
+  assert.equal(
+    ACCOUNT_EXPORT_TABLE_CONTRACTS.proof_briefs.selectedColumns.includes("share_token_hash"),
+    false,
+  );
+});
+
+test("Proof Brief export fails when its complete source analysis is absent", async () => {
+  const result = await build(createAdapter({
+    proof_briefs: [createProofBrief(93, uuid(999))],
+  }));
+  assertFailure(result, "count_mismatch");
+});
+
 test("one collector failure never returns partial successful file data", async () => {
   const result = await build(createAdapter({
     profiles: [createProfile()],
@@ -890,6 +928,8 @@ function createAdapter(input = {}) {
     job_matches: input.job_matches ?? [],
     career_snapshots: input.career_snapshots ?? [],
     beta_feedback: input.beta_feedback ?? [],
+    account_personas: input.account_personas ?? [],
+    proof_briefs: input.proof_briefs ?? [],
   };
   const identitySequence = [...(input.identitySequence ?? [EXPECTED_USER_ID])];
   const countSequences = Object.fromEntries(
@@ -906,6 +946,7 @@ function createAdapter(input = {}) {
     pageTables: [],
     profileLimits: [],
     selectionLimits: [],
+    personaLimits: [],
     ownerFilters: [],
   };
 
@@ -954,6 +995,18 @@ function createAdapter(input = {}) {
           : resolved,
         error: null,
       };
+    },
+    async getAccountPersonaRows(query) {
+      observed.personaLimits.push(query.limit);
+      observed.ownerFilters.push([
+        "account_personas",
+        "user_id",
+        query.expectedUserId,
+      ]);
+      const error = input.queryErrors?.["persona"];
+      return error
+        ? { data: null, error }
+        : { data: tables.account_personas.slice(0, query.limit), error: null };
     },
     async getKeysetPage(query) {
       observed.pageTables.push(query.tableName);
@@ -1219,6 +1272,48 @@ function createFeedback(index, overrides = {}) {
     page_path: "/settings/data",
     status: "new",
     created_at: "2026-04-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function createAccountPersona(overrides = {}) {
+  return {
+    user_id: EXPECTED_USER_ID,
+    persona: "CANDIDATE",
+    created_at: "2026-08-23T00:00:00.000Z",
+    updated_at: "2026-08-23T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function createProofBrief(index, sourceResumeAnalysisId, overrides = {}) {
+  return {
+    id: uuid(index),
+    user_id: EXPECTED_USER_ID,
+    source_resume_analysis_id: sourceResumeAnalysisId,
+    brief_payload: {
+      schemaVersion: 1,
+      direction: "Software Engineer",
+      currentSupport: "The current resume supports an evidence review.",
+      strongestSupport: "One selected skill has applied support.",
+      mainEvidenceGap: "One claim needs a clearer example.",
+      bestNextMove: "Add a concrete outcome to the strongest project.",
+      evidenceSignals: [{
+        state: "STRONG",
+        label: "TypeScript",
+        detail: "Connected to applied resume context; the source is not independently verified.",
+      }],
+      sourceSummary: {
+        projectEntries: 1,
+        experienceEntries: 1,
+        evidenceCandidateLinks: 0,
+      },
+    },
+    visibility: "LINK_ONLY",
+    share_created_at: "2026-08-23T00:00:00.000Z",
+    revoked_at: null,
+    created_at: "2026-08-23T00:00:00.000Z",
+    updated_at: "2026-08-23T00:00:00.000Z",
     ...overrides,
   };
 }

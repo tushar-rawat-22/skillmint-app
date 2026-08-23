@@ -158,6 +158,15 @@ const KNOWN_SKILLS: SkillDefinition[] = [
   },
 ];
 
+const CANONICAL_SKILL_NAMES = new Map(
+  KNOWN_SKILLS.map((skill) => [skill.name.toLocaleLowerCase("en"), skill.name]),
+);
+
+export function getCanonicalSkillLabel(value: string): string | null {
+  const normalized = value.trim().replace(/\s+/gu, " ");
+  return CANONICAL_SKILL_NAMES.get(normalized.toLocaleLowerCase("en")) ?? null;
+}
+
 export function extractSkills(text: string): string[] {
   if (!text.trim()) {
     return [];

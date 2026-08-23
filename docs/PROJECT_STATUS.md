@@ -50,6 +50,8 @@ Resume Reality
 | Phase 4 — Guided execution and onboarding | Read-only inspection and one bounded upload-accessibility repair complete through PR #30 | Broader Phase 4 work is deferred pending recurring controlled-user evidence; no controlled invitation or launch authorization |
 | Phase 5A — Controlled Access Foundation | Engineering implementation complete | Application signup defaults closed; the later bounded inventory verified provider signup disabled and email login enabled |
 | Phase 5B — Production Rollout Foundation | Offline validator, forward ACL repair, rollout authority, and deterministic repository coverage implemented | Readiness remains `NO-GO`; no Production or hosted change is authorized or claimed |
+| Two-sided beta — public IA and synthetic recruiter demo | Implemented and merged through PR #45 | Both demos remain deterministic, gated, and structurally isolated from Supabase session refresh, analytics, storage, and external requests |
+| Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; Production migration remains unapplied |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -112,6 +114,29 @@ Phase 5B records a verified Production exact V1+V2 versioned catalog baseline pl
 The inventory did not capture that function's live owner, exact event-trigger contract, or body. The forward migration after V8 therefore fails closed unless an authorized preflight matches the exact repository function-owner and event-trigger-owner contract, including `postgres` ownership for both; it snapshots that contract across the ACL-only change but intentionally does not inspect the body. Exact body verification remains an authorized rehearsal and postflight requirement. See [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md).
 
 This repository foundation does not resolve a blocker, apply V3–V8, normalize the live function, repair migration history, change Auth, enable analytics, contact a hosted service, or authorize invitations. Production rollout remains `NO-GO`.
+
+The pending V10 foundation adds owner-qualified candidate Proof Briefs and a
+server-owned account persona. Proof Brief mutations use an authenticated
+same-origin server route that reloads the exact account-owned saved analysis
+and derives the public payload; browsers retain owner-only read access and
+cannot supply payloads or token hashes. Client-writable saved-profile labels are
+not publication authority; only server-owned canonical skill labels can enter
+the public payload.
+
+Proof Briefs contain only a strict derived
+evidence payload, default to `PRIVATE`, and can be shared through a revocable
+`LINK_ONLY` token whose raw value is never stored. Public lookup exposes no
+table access and returns only the payload and sharing timestamp. Account export
+v4 includes the persona and brief without the owner or token hash; saved-report
+and account deletion remove the new records without changing their frozen
+public return contracts. This is repository and synthetic-browser evidence,
+not a Production schema claim.
+
+The August 23 isolated database rehearsal replayed V1 through V10 from an empty
+local PostgreSQL database. Ten rollback-contained probes then confirmed owner
+read isolation, denial of browser DML and token-hash reads, denial of anonymous
+table reads, exact allowlisted public RPC projection, revocation, and cascade
+deletion. No hosted database was contacted; V10 remains unapplied to Production.
 
 Analytics collection remains disabled. The Phase 2 application deployment did not perform a Production database rollout, enable analytics, or satisfy the broader Production-readiness gate. Persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; that earlier environment-separation action did not redeploy the then-live application or contact the Production Supabase database.
 

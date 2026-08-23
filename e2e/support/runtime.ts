@@ -55,6 +55,7 @@ export class SyntheticProvider {
   private authUserOverrides: string[] = [];
   private usedRecoveryCodes = new Set<string>();
   private passwordResetBodies: Record<string, unknown>[] = [];
+  private proofBriefs = new Map<string, Record<string, unknown>>();
 
   async install(context: BrowserContext) {
     await context.route("**/*", async (route) => {
@@ -101,6 +102,10 @@ export class SyntheticProvider {
     return this.requests.filter((request) =>
       request.kind === kind && (accountId === undefined || request.accountId === accountId)
     ).length;
+  }
+
+  proofBriefFor(accountId: string): Record<string, unknown> | null {
+    return this.proofBriefs.get(accountId) ?? null;
   }
 
   async waitFor(kind: string, count = 1, accountId?: string) {
@@ -403,6 +408,55 @@ export class SyntheticProvider {
     if (table) {
       const accountId = bearerAccount?.id ?? null;
       if (
+        table === "proof_briefs" &&
+        request.method() === "POST" &&
+        bearerAccount
+      ) {
+        const input = parseJson(request.postData());
+        const row = {
+          id: bearerAccount.id === ACCOUNT_A.id
+            ? "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+            : "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+          user_id: bearerAccount.id,
+          source_resume_analysis_id: input.source_resume_analysis_id,
+          brief_payload: input.brief_payload,
+          visibility: "PRIVATE",
+          share_token_hash: null,
+          share_created_at: null,
+          revoked_at: null,
+          created_at: CREATED_AT,
+          updated_at: CREATED_AT,
+        };
+        this.proofBriefs.set(bearerAccount.id, row);
+        this.record("proof-brief:insert", accountId, url);
+        await this.releaseGate("proof-brief:insert");
+        await json(route, 200, row);
+        return;
+      }
+      if (
+        table === "proof_briefs" &&
+        request.method() === "PATCH" &&
+        bearerAccount
+      ) {
+        const current = this.proofBriefs.get(bearerAccount.id);
+        if (!current) {
+          await json(route, 404, { message: "Synthetic Proof Brief missing" });
+          return;
+        }
+        const input = parseJson(request.postData());
+        const row = { ...current, ...input, updated_at: CREATED_AT };
+        this.proofBriefs.set(bearerAccount.id, row);
+        const kind = input.visibility === "LINK_ONLY"
+          ? "proof-brief:publish"
+          : input.revoked_at
+            ? "proof-brief:revoke-or-refresh"
+            : "proof-brief:update";
+        this.record(kind, accountId, url);
+        await this.releaseGate(kind);
+        await json(route, 200, row);
+        return;
+      }
+      if (
         table === "resume_analyses" &&
         request.method() === "POST" &&
         bearerAccount
@@ -494,6 +548,10 @@ export class SyntheticProvider {
         id: `cccccccc-cccc-4ccc-8ccc-${String(index + 1).padStart(12, "0")}`,
         user_id: account.id,
       }));
+    }
+    if (table === "proof_briefs") {
+      const row = this.proofBriefs.get(account.id);
+      return row ? [row] : [];
     }
     return [];
   }

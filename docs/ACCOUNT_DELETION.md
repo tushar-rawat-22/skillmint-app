@@ -16,6 +16,13 @@ Every browser table policy also requires `is_active_skillmint_user()`, so an abs
 
 The final two-process repaired-runtime race returned two equivalent safe HTTP 200 successes, left no owned rows or Auth identity, denied all six stale-access operations and refresh reuse, made a later retry safely return 401 `not_authenticated`, and finished at independent exact zero. Production contact and credential exposure were both zero.
 
+The pending V10 forward migration extends both database cleanup functions to
+remove `proof_briefs` and `account_personas` and verify their absence. It keeps
+the frozen saved-report and account-preparation return signatures unchanged, so
+the protected HTTP contract and generic response do not expose new table names
+or counts. This extension has deterministic repository coverage but has not
+been applied to Production.
+
 After confirmed server success the Trust Center removes only the captured owner’s browser partitions, preserves anonymous/other-account/global data, and does not let late Account A completion sign out Account B.
 
 Accepted limits remain: isolated test-project proof is not production proof; provider backup/log erasure and complete infrastructure-wide deletion were not proved; legal review is pending; the privacy/support contact is not externally verified; production schema rollout and operational ownership are pending.

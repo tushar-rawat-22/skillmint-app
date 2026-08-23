@@ -16,6 +16,7 @@ import type {
   AccountDataExport,
   AccountDataExportFile,
   AccountDataRepositoryError,
+  AccountPersonaExportRow,
   AccountExportCountOnlyIntegrity,
   AccountExportKeysetPaginationIntegrity,
   AccountExportNoPaginationIntegrity,
@@ -23,6 +24,7 @@ import type {
   BetaFeedbackExportRow,
   JobMatchExportRow,
   ProfileExportRow,
+  ProofBriefExportRow,
   RepositoryResult,
   ResumeAnalysisExportRow,
   SavedReportsDeletionCounts,
@@ -62,8 +64,13 @@ export type AccountDataExportQueryAdapter = {
     selectedColumns: string;
     limit: 2;
   }) => Promise<AdapterResponse>;
+  getAccountPersonaRows: (input: {
+    expectedUserId: string;
+    selectedColumns: string;
+    limit: 2;
+  }) => Promise<AdapterResponse>;
   getKeysetPage: (input: {
-    tableName: "resume_analyses" | "job_matches" | "beta_feedback";
+    tableName: "resume_analyses" | "job_matches" | "beta_feedback" | "proof_briefs";
     ownerColumn: "user_id";
     expectedUserId: string;
     selectedColumns: string;
@@ -127,6 +134,8 @@ export async function getCurrentUserAccountDataCounts(
       jobMatchesCount,
       careerSnapshotsCount,
       betaFeedbackCount,
+      accountPersonaCount,
+      proofBriefsCount,
     ] = await Promise.all([
       getCount(supabase, "profiles", "id", userId),
       getCount(supabase, "resume_analyses", "user_id", userId),
@@ -134,6 +143,8 @@ export async function getCurrentUserAccountDataCounts(
       getCount(supabase, "job_matches", "user_id", userId),
       getCount(supabase, "career_snapshots", "user_id", userId),
       getCount(supabase, "beta_feedback", "user_id", userId),
+      getCount(supabase, "account_personas", "user_id", userId),
+      getCount(supabase, "proof_briefs", "user_id", userId),
     ]);
 
     const counts = [
@@ -143,6 +154,8 @@ export async function getCurrentUserAccountDataCounts(
       jobMatchesCount,
       careerSnapshotsCount,
       betaFeedbackCount,
+      accountPersonaCount,
+      proofBriefsCount,
     ];
     const failedCount = counts.find((count) => !count.ok);
 
@@ -154,11 +167,13 @@ export async function getCurrentUserAccountDataCounts(
       !workspaceResumeSelectionCount.ok ||
       !jobMatchesCount.ok ||
       !careerSnapshotsCount.ok ||
-      !betaFeedbackCount.ok
+      !betaFeedbackCount.ok ||
+      !accountPersonaCount.ok ||
+      !proofBriefsCount.ok
     ) {
       return failure("unknown");
     }
-    if (workspaceResumeSelectionCount.data > 1) {
+    if (workspaceResumeSelectionCount.data > 1 || accountPersonaCount.data > 1) {
       return failure("cardinality_violation");
     }
 
@@ -174,6 +189,8 @@ export async function getCurrentUserAccountDataCounts(
         jobMatches: jobMatchesCount.data,
         careerSnapshots: careerSnapshotsCount.data,
         betaFeedback: betaFeedbackCount.data,
+        accountPersona: accountPersonaCount.data,
+        proofBriefs: proofBriefsCount.data,
       },
     };
   } catch {
@@ -311,12 +328,43 @@ export async function buildAccountDataExportWithAdapter(
   );
   if (!betaFeedback.ok) return betaFeedback;
 
+  const afterBetaFeedback = await checkExpectedIdentity(adapter, expectedUserId);
+  if (!afterBetaFeedback.ok) return afterBetaFeedback;
+
+  const accountPersona = await collectAccountPersonaTable(
+    adapter,
+    expectedUserId,
+    limits,
+    resourceState,
+  );
+  if (!accountPersona.ok) return accountPersona;
+
+  const afterAccountPersona = await checkExpectedIdentity(adapter, expectedUserId);
+  if (!afterAccountPersona.ok) return afterAccountPersona;
+
+  const proofBriefs = await collectKeysetTable<ProofBriefExportRow>(
+    adapter,
+    ACCOUNT_EXPORT_TABLE_CONTRACTS.proof_briefs,
+    expectedUserId,
+    limits,
+    resourceState,
+  );
+  if (!proofBriefs.ok) return proofBriefs;
+  const exportedResumeIds = new Set(
+    resumeAnalyses.data.rows.map((row) => getUuidComparisonKey(row.id)),
+  );
+  if (proofBriefs.data.rows.some((row) =>
+    !exportedResumeIds.has(getUuidComparisonKey(row.source_resume_analysis_id))
+  )) {
+    return failure("count_mismatch");
+  }
+
   const afterCollectors = await checkExpectedIdentity(adapter, expectedUserId);
   if (!afterCollectors.ok) return afterCollectors;
 
   const payload: AccountDataExport = {
-    exportVersion: "skillmint-account-export-v3",
-    schemaContractVersion: "skillmint-account-contract-v2",
+    exportVersion: "skillmint-account-export-v4",
+    schemaContractVersion: "skillmint-account-contract-v3",
     source: "account",
     exportedAt,
     accountScope: "current_authenticated_account",
@@ -333,6 +381,8 @@ export async function buildAccountDataExportWithAdapter(
         job_matches: jobMatches.data.integrity,
         career_snapshots: careerSnapshots.data.integrity,
         beta_feedback: betaFeedback.data.integrity,
+        account_personas: accountPersona.data.integrity,
+        proof_briefs: proofBriefs.data.integrity,
       },
       allCollectorsSucceeded: true,
       serializationSucceeded: true,
@@ -349,6 +399,8 @@ export async function buildAccountDataExportWithAdapter(
       job_matches: jobMatches.data.rows,
       career_snapshots: [],
       beta_feedback: betaFeedback.data.rows,
+      account_personas: accountPersona.data.rows,
+      proof_briefs: proofBriefs.data.rows,
     },
   };
 
@@ -466,6 +518,14 @@ function createSupabaseAccountExportAdapter(
     async getActiveResumeSelectionRows(input) {
       const { data, error, status } = await supabase
         .from("active_resume_selections")
+        .select(input.selectedColumns)
+        .eq("user_id", input.expectedUserId)
+        .limit(input.limit);
+      return { data, error, status };
+    },
+    async getAccountPersonaRows(input) {
+      const { data, error, status } = await supabase
+        .from("account_personas")
         .select(input.selectedColumns)
         .eq("user_id", input.expectedUserId)
         .limit(input.limit);
@@ -624,7 +684,7 @@ async function collectActiveResumeSelectionTable(
 async function collectKeysetTable<T>(
   adapter: AccountDataExportQueryAdapter,
   contract: AccountExportTableContract<T> & {
-    tableName: "resume_analyses" | "job_matches" | "beta_feedback";
+    tableName: "resume_analyses" | "job_matches" | "beta_feedback" | "proof_briefs";
     ownerColumn: "user_id";
     reconstructRow: (value: unknown) => { ok: true; value: T } | { ok: false };
   },
@@ -737,6 +797,64 @@ async function collectKeysetTable<T>(
         rows.length,
         postCount.data,
         pagesFetched,
+      ),
+    },
+  };
+}
+
+async function collectAccountPersonaTable(
+  adapter: AccountDataExportQueryAdapter,
+  expectedUserId: string,
+  limits: AccountExportLimits,
+  resourceState: ResourceState,
+): Promise<RepositoryResult<CollectedTable<
+  AccountPersonaExportRow,
+  AccountExportNoPaginationIntegrity
+>>> {
+  const contract = ACCOUNT_EXPORT_TABLE_CONTRACTS.account_personas;
+  const preCount = await getAdapterCount(adapter, contract, expectedUserId);
+  if (!preCount.ok) return preCount;
+  if (preCount.data > 1) return failure("cardinality_violation");
+
+  const responseResult = await safeAdapterCall(() =>
+    adapter.getAccountPersonaRows({
+      expectedUserId,
+      selectedColumns: contract.selectedColumns,
+      limit: 2,
+    })
+  );
+  if (!responseResult.ok) return responseResult;
+  const response = responseResult.data;
+  if (response.error) return providerFailure(response.error, response.status);
+  if (!Array.isArray(response.data)) return failure("invalid_response");
+  if (response.data.length > 1) return failure("cardinality_violation");
+
+  const rows: AccountPersonaExportRow[] = [];
+  for (const providerRow of response.data) {
+    if (!providerRowBelongsToExpectedAccount(providerRow, "user_id", expectedUserId)) {
+      return failure("invalid_response");
+    }
+    const reconstructed = contract.reconstructRow(providerRow);
+    if (!reconstructed.ok) return failure("invalid_response");
+    const guard = recordResourceUse(reconstructed.value, resourceState, limits, 1);
+    if (!guard.ok) return guard;
+    rows.push(reconstructed.value);
+  }
+
+  const postCount = await getAdapterCount(adapter, contract, expectedUserId);
+  if (!postCount.ok) return postCount;
+  if (postCount.data > 1) return failure("cardinality_violation");
+  const reconciled = reconcileCounts(preCount.data, rows.length, postCount.data);
+  if (!reconciled.ok) return reconciled;
+
+  return {
+    ok: true,
+    data: {
+      rows,
+      integrity: createNoPaginationIntegrity(
+        preCount.data,
+        rows.length,
+        postCount.data,
       ),
     },
   };
@@ -895,6 +1013,13 @@ async function getExactSupabaseCount(
   if (tableName === "active_resume_selections") {
     return supabase
       .from("active_resume_selections")
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", expectedUserId);
+  }
+
+  if (tableName === "account_personas") {
+    return supabase
+      .from("account_personas")
       .select("user_id", { count: "exact", head: true })
       .eq("user_id", expectedUserId);
   }
