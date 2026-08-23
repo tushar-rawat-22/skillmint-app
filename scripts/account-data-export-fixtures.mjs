@@ -63,7 +63,7 @@ function test(name, callback) {
   tests.push({ name, callback });
 }
 
-test("central contracts declare the eight known account tables in reconciliation order", () => {
+test("central contracts declare the ten known account tables in reconciliation order", () => {
   assert.deepEqual(Object.keys(ACCOUNT_EXPORT_TABLE_CONTRACTS), [
     "profiles",
     "resume_analyses",
@@ -73,6 +73,8 @@ test("central contracts declare the eight known account tables in reconciliation
     "beta_feedback",
     "account_personas",
     "proof_briefs",
+    "recruiter_role_evidence_maps",
+    "candidate_evidence_reviews",
   ]);
   assert.deepEqual(
     [...ACCOUNT_EXPORT_TABLE_ORDER],
@@ -102,8 +104,8 @@ test("empty valid account exports every table with zero integrity counts", async
     assert.equal(payload.manifest.tables[table].exportedCount, 0);
     assert.equal(payload.manifest.tables[table].postCount, 0);
   }
-  assert.equal(payload.exportVersion, "skillmint-account-export-v4");
-  assert.equal(payload.schemaContractVersion, "skillmint-account-contract-v3");
+  assert.equal(payload.exportVersion, "skillmint-account-export-v5");
+  assert.equal(payload.schemaContractVersion, "skillmint-account-contract-v4");
   assert.deepEqual(payload.data.active_resume_selections, []);
   assert.deepEqual(payload.data.career_snapshots, []);
 });
@@ -129,7 +131,7 @@ test("manifest reports only applicable pagination integrity checks", async () =>
     strategy: "count_only",
     pagesFetched: 0,
   });
-  for (const table of ["resume_analyses", "job_matches", "beta_feedback", "proof_briefs"]) {
+  for (const table of ["resume_analyses", "job_matches", "beta_feedback", "proof_briefs", "recruiter_role_evidence_maps", "candidate_evidence_reviews"]) {
     assert.deepEqual(payload.manifest.tables[table].pagination, {
       strategy: "id_keyset",
       pagesFetched: 1,
@@ -862,6 +864,22 @@ test("persona and Proof Brief export are owner-scoped and omit share secrets", a
   );
 });
 
+test("recruiter role maps and candidate reviews export owned data without internal owner or role-map ids", async () => {
+  const resume = createResumeAnalysis(94);
+  const brief = createProofBrief(95, resume.id);
+  const payload = parseSuccess(await build(createAdapter({
+    resume_analyses: [resume],
+    proof_briefs: [brief],
+    recruiter_role_evidence_maps: [createRecruiterRoleMap(96)],
+    candidate_evidence_reviews: [createCandidateEvidenceReview(97, brief.id)],
+  })));
+  assert.equal(payload.data.recruiter_role_evidence_maps[0].evidence_map.schemaVersion, 1);
+  assert.equal(payload.data.candidate_evidence_reviews[0].proof_brief_id, brief.id);
+  assert.equal("user_id" in payload.data.recruiter_role_evidence_maps[0], false);
+  assert.equal("user_id" in payload.data.candidate_evidence_reviews[0], false);
+  assert.equal("role_map_id" in payload.data.candidate_evidence_reviews[0], false);
+});
+
 test("Proof Brief export fails when its complete source analysis is absent", async () => {
   const result = await build(createAdapter({
     proof_briefs: [createProofBrief(93, uuid(999))],
@@ -930,6 +948,8 @@ function createAdapter(input = {}) {
     beta_feedback: input.beta_feedback ?? [],
     account_personas: input.account_personas ?? [],
     proof_briefs: input.proof_briefs ?? [],
+    recruiter_role_evidence_maps: input.recruiter_role_evidence_maps ?? [],
+    candidate_evidence_reviews: input.candidate_evidence_reviews ?? [],
   };
   const identitySequence = [...(input.identitySequence ?? [EXPECTED_USER_ID])];
   const countSequences = Object.fromEntries(
@@ -1315,6 +1335,36 @@ function createProofBrief(index, sourceResumeAnalysisId, overrides = {}) {
     created_at: "2026-08-23T00:00:00.000Z",
     updated_at: "2026-08-23T00:00:00.000Z",
     ...overrides,
+  };
+}
+
+function createRecruiterRoleMap(index, overrides = {}) {
+  const roleTitle = "Junior frontend contributor";
+  return {
+    id: uuid(index), user_id: EXPECTED_USER_ID, role_title: roleTitle,
+    job_description: "Build accessible TypeScript interfaces, test changes, review delivery constraints, and explain implementation outcomes with the product team.",
+    evidence_map: {
+      schemaVersion: 1, roleTitle,
+      summary: `Evidence requirements for ${roleTitle}, derived deterministically from the supplied role description.`,
+      categories: [
+        { key: "APPLIED_SKILLS", title: "Applied role skills", requirement: "Look for a concrete example showing how the named role skills were used, not only listed.", signals: ["TypeScript"] },
+        { key: "DELIVERY", title: "Delivery and validation", requirement: "Look for how work was tested, reviewed, released, or checked against a real constraint.", signals: ["Testing", "Accessibility"] },
+        { key: "OWNERSHIP", title: "Ownership and outcomes", requirement: "Look for the candidate's specific contribution, decisions, constraints, and observable outcome.", signals: [] },
+        { key: "COLLABORATION", title: "Collaboration context", requirement: "Look for who was involved, how feedback changed the work, and how trade-offs were communicated.", signals: [] },
+      ],
+    },
+    created_at: "2026-08-23T00:00:00.000Z", updated_at: "2026-08-23T00:00:00.000Z", ...overrides,
+  };
+}
+
+function createCandidateEvidenceReview(index, proofBriefId, overrides = {}) {
+  return {
+    id: uuid(index), user_id: EXPECTED_USER_ID, proof_brief_id: proofBriefId,
+    role_title: "Junior frontend contributor", question_category: "OWNERSHIP_CONTEXT",
+    question_text: "What part of the strongest example did you own, and which decisions were yours?",
+    feedback_category: "NEEDS_MORE_OWNERSHIP_CONTEXT", review_ease: "EASIER",
+    review_time_signal: "LESS_TIME", note: "Please add one concrete decision.",
+    created_at: "2026-08-23T00:00:00.000Z", ...overrides,
   };
 }
 

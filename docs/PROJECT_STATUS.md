@@ -52,6 +52,7 @@ Resume Reality
 | Phase 5B — Production Rollout Foundation | Offline validator, forward ACL repair, rollout authority, and deterministic repository coverage implemented | Readiness remains `NO-GO`; no Production or hosted change is authorized or claimed |
 | Two-sided beta — public IA and synthetic recruiter demo | Implemented and merged through PR #45 | Both demos remain deterministic, gated, and structurally isolated from Supabase session refresh, analytics, storage, and external requests |
 | Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; Production migration remains unapplied |
+| Two-sided beta — recruiter evidence review | Engineering implementation, isolated verification, and independent security/privacy review complete | Server-owned recruiter persona, deterministic role maps, atomic live-token review submission, and candidate-owned structured feedback; V11 remains unapplied |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -137,6 +138,16 @@ local PostgreSQL database. Ten rollback-contained probes then confirmed owner
 read isolation, denial of browser DML and token-hash reads, denial of anonymous
 table reads, exact allowlisted public RPC projection, revocation, and cascade
 deletion. No hosted database was contacted; V10 remains unapplied to Production.
+
+The subsequent local V1–V11 replay passed. Twenty additional database probes
+confirmed that authenticated browsers cannot mutate personas, role maps,
+candidate reviews, or the service-only mutation functions directly. The probes
+also exercised the owner-qualified review-to-brief foreign key, internal-column
+denials, a concurrent ten-map cap, and review submissions racing both link
+revocation and replacement. Role maps and reviews remain owner-isolated; anon
+reads are denied; candidate feedback survives removal of the recruiter-owned
+map without retaining recruiter identity; and Proof Brief deletion cascades the
+candidate review. This remains isolated evidence, not a Production schema claim.
 
 Analytics collection remains disabled. The Phase 2 application deployment did not perform a Production database rollout, enable analytics, or satisfy the broader Production-readiness gate. Persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; that earlier environment-separation action did not redeploy the then-live application or contact the Production Supabase database.
 

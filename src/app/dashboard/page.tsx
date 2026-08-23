@@ -71,6 +71,7 @@ import {
   RESUME_SYNC_STATUS_STORAGE_DESCRIPTOR,
 } from "@/modules/resume/services/activeResumeReportStorage";
 import ProofBriefControlCard from "@/modules/proofBrief/components/ProofBriefControlCard";
+import CandidateRecruiterFeedbackCard from "@/modules/recruiterEvidence/components/CandidateRecruiterFeedbackCard";
 import {
   fireAndForgetAnalytics,
   getBrowserAnalyticsRuntime,
@@ -855,6 +856,11 @@ export default function DashboardPage() {
         />
 
         <ProofBriefControlCard
+          currentUserId={currentUserId}
+          sourceResumeAnalysisId={sourceResumeAnalysisId}
+        />
+
+        <CandidateRecruiterFeedbackCard
           currentUserId={currentUserId}
           sourceResumeAnalysisId={sourceResumeAnalysisId}
         />

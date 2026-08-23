@@ -9,6 +9,8 @@ export const ROUTES = {
 
   RECRUITER_DEMO: "/recruiters/demo",
 
+  RECRUITER_WORKSPACE: "/recruiters/workspace",
+
   PROOF_BRIEF: "/brief",
 
   LOGIN: "/login",

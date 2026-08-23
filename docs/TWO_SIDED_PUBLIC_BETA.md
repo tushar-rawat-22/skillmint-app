@@ -155,3 +155,29 @@ The candidate sharing boundary completed an independent security/privacy review
 after adversarial saved-source, origin, ownership, response-binding, token,
 projection, revocation, export, and deletion repairs. That review found no
 remaining material pre-commit blocker; it does not authorize Production rollout.
+
+The recruiter evidence workflow uses authenticated, server-verified account
+state. A recruiter can create up to ten bounded role maps from supplied JDs;
+the server derives four inspectable evidence categories without changing any
+candidate score. A service-only database mutation serializes role-map creation
+per recruiter so concurrent requests cannot exceed the ten-map bound. Review
+submission atomically locks and rechecks the live share token, the exact
+recruiter-owned role map, and an immutable `RECRUITER` persona before creating
+one candidate-owned review for that brief/map pair. A committed revocation or
+link replacement therefore prevents a stale token from creating feedback.
+
+The review contains a generated evidence question, structured usefulness and
+time signals, one feedback category, and an optional 1,000-character note. It
+does not retain the recruiter account identifier or copy the raw JD into the
+candidate record. Recruiters and anonymous users cannot read candidate-owned
+reviews, and the review owner is bound to its Proof Brief by a composite foreign
+key. Authenticated candidates cannot select the internal recruiter role-map
+reference. Revoking a link prevents new review access; delivered feedback remains
+until the related Proof Brief, saved report, or account is deleted. V11 remains
+unapplied to Production.
+
+The recruiter milestone completed an independent security/privacy review after
+the transaction, owner-transition, composite-ownership, internal-column, and
+adversarial test repairs. The final review found no remaining material
+pre-commit blocker. This is an engineering gate only; it does not authorize a
+Production migration, recruiter invitation, or public launch.

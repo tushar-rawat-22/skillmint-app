@@ -186,7 +186,9 @@ function ProofBriefControlCardForSource({
                   <h3 className="font-bold">This brief currently has an active link.</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     Anyone who has the link can view the derived brief. It is
-                    not listed or searchable. Revoke it at any time.
+                    not listed or searchable. A signed-in recruiter can send
+                    one structured review for a role map. Revoke the link to
+                    stop further viewing and review submissions.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" disabled={isLoading} onClick={handleRevoke} className={premiumSecondaryCta}>Revoke link</button>
@@ -204,7 +206,7 @@ function ProofBriefControlCardForSource({
               )}
               <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-slate-700">
                 <input type="checkbox" checked={shareConfirmed} onChange={(event) => setShareConfirmed(event.target.checked)} className="mt-1 h-4 w-4 rounded border-slate-300 accent-emerald-700" />
-                <span>I understand that anyone with the new link can view this derived brief until I revoke or replace it.</span>
+                <span>I understand that anyone with the new link can view this derived brief, and a signed-in recruiter can send bounded structured feedback, until I revoke or replace it.</span>
               </label>
             </div>
           ) : null}
@@ -232,7 +234,9 @@ function ProofBriefControlCardForSource({
 
       <p className="mt-5 text-xs leading-5 text-slate-500">
         Evidence signals are deterministic resume-internal interpretations, not
-        independent verification or a hiring recommendation.
+        independent verification or a hiring recommendation. Feedback already
+        received remains in your account until the related Proof Brief, saved
+        report, or account is deleted.
       </p>
     </section>
   );

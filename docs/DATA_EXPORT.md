@@ -10,7 +10,7 @@ Privacy transformations are explicit and contract-specific. They exclude known s
 
 ## Account export
 
-The current account format is `skillmint-account-export-v4` with contract `skillmint-account-contract-v3`. The UI supplies its captured expected account ID, and the collector verifies exact authenticated identity before collection, between table collectors, and immediately before return. Ownership IDs are used for queries and validation but excluded from the JSON.
+The current account format is `skillmint-account-export-v5` with contract `skillmint-account-contract-v4`. The UI supplies its captured expected account ID, and the collector verifies exact authenticated identity before collection, between table collectors, and immediately before return. Ownership IDs are used for queries and validation but excluded from the JSON.
 
 The export allowlists profiles, resume analyses, the Workspace-resume selection, JD matches, beta feedback, the account persona, and candidate Proof Briefs. Feedback moderation `status` is not exported. Proof Brief token hashes are never exported; the derived brief payload, visibility, source-analysis reference, and lifecycle timestamps are included. `career_snapshots` is intentionally count-only: a zero count produces an explicit empty array; any nonzero count blocks the entire export as an unsupported data contract. Keyset-paginated tables use ascending UUID IDs, conservative row/page/total/byte guards, duplicate detection, strictly increasing cursors, and pre/post count reconciliation. Profile, Workspace-selection, and persona cardinality are independently zero-or-one.
 
@@ -20,6 +20,13 @@ Proof Brief collection follows the same source-integrity rule. If a brief points
 to an analysis that is absent from the complete owned resume collection, the
 whole export fails. This prevents an apparently complete export from carrying
 an orphaned sharing record.
+
+Recruiter role-map export includes the owner-created role title, supplied JD,
+derived evidence map, and timestamps. Candidate evidence-review export includes
+the related Proof Brief identifier, role title, generated question, structured
+feedback choices, optional note, and timestamp. Owner identifiers and the
+internal recruiter role-map reference are excluded. A review whose Proof Brief
+is absent from the complete export fails the whole export.
 
 Collectors use separate authenticated requests. Stable observed counts do not prove a complete historical provider export or an atomic point-in-time transactional snapshot; concurrent changes can remain undetected. Any identity, query, count, contract, pagination, serialization, or size failure returns no partial JSON.
 

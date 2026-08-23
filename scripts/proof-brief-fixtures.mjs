@@ -337,8 +337,8 @@ test("public Proof Brief routes bypass unrelated auth-session refresh", () => {
   );
   assert.match(proxy, /\(\?:demo\|recruiters\/demo\|brief\)\(\?:\/\|\$\)/u);
   assert.equal((proxy.match(/updateSupabaseSession\(request\)/gu) ?? []).length, 1);
-  assert.equal((page.match(/<Link\b/gu) ?? []).length, 2);
-  assert.equal((page.match(/prefetch=\{false\}/gu) ?? []).length, 2);
+  assert.equal((page.match(/<Link\b/gu) ?? []).length, 3);
+  assert.equal((page.match(/prefetch=\{false\}/gu) ?? []).length, 3);
 });
 
 for (const { name, callback } of tests) {

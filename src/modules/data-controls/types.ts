@@ -12,6 +12,8 @@ import type {
   ProofBriefPayload,
   ProofBriefVisibility,
 } from "@/modules/proofBrief/types";
+import type { RoleEvidenceMap } from "@/intelligence/core/roleEvidenceMap";
+import type { EvidenceQuestionCategory, ReviewEase, ReviewTimeSignal, StructuredFeedbackCategory } from "@/modules/recruiterEvidence/types";
 
 export type AccountDataErrorCode =
   | "not_authenticated"
@@ -55,6 +57,8 @@ export type AccountDataCounts = {
   betaFeedback: number;
   accountPersona: number;
   proofBriefs: number;
+  recruiterRoleMaps: number;
+  candidateEvidenceReviews: number;
 };
 
 export type ProfileExportRow = {
@@ -119,6 +123,28 @@ export type ProofBriefExportRow = {
   updated_at: string;
 };
 
+export type RecruiterRoleMapExportRow = {
+  id: string;
+  role_title: string;
+  job_description: string;
+  evidence_map: RoleEvidenceMap;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CandidateEvidenceReviewExportRow = {
+  id: string;
+  proof_brief_id: string;
+  role_title: string;
+  question_category: EvidenceQuestionCategory;
+  question_text: string;
+  feedback_category: StructuredFeedbackCategory;
+  review_ease: ReviewEase;
+  review_time_signal: ReviewTimeSignal;
+  note: string | null;
+  created_at: string;
+};
+
 export type AccountExportTableName =
   | "profiles"
   | "resume_analyses"
@@ -127,7 +153,9 @@ export type AccountExportTableName =
   | "career_snapshots"
   | "beta_feedback"
   | "account_personas"
-  | "proof_briefs";
+  | "proof_briefs"
+  | "recruiter_role_evidence_maps"
+  | "candidate_evidence_reviews";
 
 export type AccountExportSharedIntegrity = {
   preCount: number;
@@ -180,11 +208,13 @@ export type AccountExportManifestTables = {
   beta_feedback: AccountExportKeysetPaginationIntegrity;
   account_personas: AccountExportNoPaginationIntegrity;
   proof_briefs: AccountExportKeysetPaginationIntegrity;
+  recruiter_role_evidence_maps: AccountExportKeysetPaginationIntegrity;
+  candidate_evidence_reviews: AccountExportKeysetPaginationIntegrity;
 };
 
 export type AccountDataExport = {
-  exportVersion: "skillmint-account-export-v4";
-  schemaContractVersion: "skillmint-account-contract-v3";
+  exportVersion: "skillmint-account-export-v5";
+  schemaContractVersion: "skillmint-account-contract-v4";
   source: "account";
   exportedAt: string;
   accountScope: "current_authenticated_account";
@@ -211,6 +241,8 @@ export type AccountDataExport = {
     beta_feedback: BetaFeedbackExportRow[];
     account_personas: AccountPersonaExportRow[];
     proof_briefs: ProofBriefExportRow[];
+    recruiter_role_evidence_maps: RecruiterRoleMapExportRow[];
+    candidate_evidence_reviews: CandidateEvidenceReviewExportRow[];
   };
 };
 

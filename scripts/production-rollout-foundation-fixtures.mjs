@@ -72,6 +72,7 @@ equal(
     "20260727000800",
     "20260730000900",
     "20260823001000",
+    "20260823001100",
   ],
   "migration order is not exact",
 );
@@ -92,6 +93,7 @@ equal(
     "20260727000800",
     "20260730000900",
     "20260823001000",
+    "20260823001100",
   ],
   "Production pending order is not exact",
 );
@@ -113,6 +115,7 @@ const expectedClassifications = new Map([
   ["20260727000800", "pending_resume_workspace_phase_1a"],
   ["20260730000900", "pending_public_function_acl_normalization"],
   ["20260823001000", "pending_two_sided_beta_foundation"],
+  ["20260823001100", "pending_recruiter_evidence_review"],
 ]);
 equal(
   new Map(
@@ -189,7 +192,7 @@ equal(
 );
 equal(sha256(bytes(v10MigrationPath)), v10Hash, "V10 migration hash changed");
 equal(
-  manifest.ordered_migrations.at(-1),
+  manifest.ordered_migrations.find((entry) => entry.version === "20260823001000"),
   {
     version: "20260823001000",
     source_path: v10SourcePath,

@@ -2,7 +2,6 @@
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
-import type { Database } from "@/lib/supabase/database.types";
 import {
   ACCOUNT_EXPORT_TABLE_CONTRACTS,
   getUuidComparisonKey,
@@ -25,6 +24,8 @@ import type {
   JobMatchExportRow,
   ProfileExportRow,
   ProofBriefExportRow,
+  RecruiterRoleMapExportRow,
+  CandidateEvidenceReviewExportRow,
   RepositoryResult,
   ResumeAnalysisExportRow,
   SavedReportsDeletionCounts,
@@ -70,7 +71,7 @@ export type AccountDataExportQueryAdapter = {
     limit: 2;
   }) => Promise<AdapterResponse>;
   getKeysetPage: (input: {
-    tableName: "resume_analyses" | "job_matches" | "beta_feedback" | "proof_briefs";
+    tableName: "resume_analyses" | "job_matches" | "beta_feedback" | "proof_briefs" | "recruiter_role_evidence_maps" | "candidate_evidence_reviews";
     ownerColumn: "user_id";
     expectedUserId: string;
     selectedColumns: string;
@@ -136,6 +137,8 @@ export async function getCurrentUserAccountDataCounts(
       betaFeedbackCount,
       accountPersonaCount,
       proofBriefsCount,
+      recruiterRoleMapsCount,
+      candidateEvidenceReviewsCount,
     ] = await Promise.all([
       getCount(supabase, "profiles", "id", userId),
       getCount(supabase, "resume_analyses", "user_id", userId),
@@ -145,6 +148,8 @@ export async function getCurrentUserAccountDataCounts(
       getCount(supabase, "beta_feedback", "user_id", userId),
       getCount(supabase, "account_personas", "user_id", userId),
       getCount(supabase, "proof_briefs", "user_id", userId),
+      getCount(supabase, "recruiter_role_evidence_maps", "user_id", userId),
+      getCount(supabase, "candidate_evidence_reviews", "user_id", userId),
     ]);
 
     const counts = [
@@ -156,6 +161,8 @@ export async function getCurrentUserAccountDataCounts(
       betaFeedbackCount,
       accountPersonaCount,
       proofBriefsCount,
+      recruiterRoleMapsCount,
+      candidateEvidenceReviewsCount,
     ];
     const failedCount = counts.find((count) => !count.ok);
 
@@ -169,7 +176,9 @@ export async function getCurrentUserAccountDataCounts(
       !careerSnapshotsCount.ok ||
       !betaFeedbackCount.ok ||
       !accountPersonaCount.ok ||
-      !proofBriefsCount.ok
+      !proofBriefsCount.ok ||
+      !recruiterRoleMapsCount.ok ||
+      !candidateEvidenceReviewsCount.ok
     ) {
       return failure("unknown");
     }
@@ -191,6 +200,8 @@ export async function getCurrentUserAccountDataCounts(
         betaFeedback: betaFeedbackCount.data,
         accountPersona: accountPersonaCount.data,
         proofBriefs: proofBriefsCount.data,
+        recruiterRoleMaps: recruiterRoleMapsCount.data,
+        candidateEvidenceReviews: candidateEvidenceReviewsCount.data,
       },
     };
   } catch {
@@ -359,12 +370,19 @@ export async function buildAccountDataExportWithAdapter(
     return failure("count_mismatch");
   }
 
+  const recruiterRoleMaps = await collectKeysetTable<RecruiterRoleMapExportRow>(adapter, ACCOUNT_EXPORT_TABLE_CONTRACTS.recruiter_role_evidence_maps, expectedUserId, limits, resourceState);
+  if (!recruiterRoleMaps.ok) return recruiterRoleMaps;
+  const candidateEvidenceReviews = await collectKeysetTable<CandidateEvidenceReviewExportRow>(adapter, ACCOUNT_EXPORT_TABLE_CONTRACTS.candidate_evidence_reviews, expectedUserId, limits, resourceState);
+  if (!candidateEvidenceReviews.ok) return candidateEvidenceReviews;
+  const exportedBriefIds = new Set(proofBriefs.data.rows.map((row) => getUuidComparisonKey(row.id)));
+  if (candidateEvidenceReviews.data.rows.some((row) => !exportedBriefIds.has(getUuidComparisonKey(row.proof_brief_id)))) return failure("count_mismatch");
+
   const afterCollectors = await checkExpectedIdentity(adapter, expectedUserId);
   if (!afterCollectors.ok) return afterCollectors;
 
   const payload: AccountDataExport = {
-    exportVersion: "skillmint-account-export-v4",
-    schemaContractVersion: "skillmint-account-contract-v3",
+    exportVersion: "skillmint-account-export-v5",
+    schemaContractVersion: "skillmint-account-contract-v4",
     source: "account",
     exportedAt,
     accountScope: "current_authenticated_account",
@@ -383,6 +401,8 @@ export async function buildAccountDataExportWithAdapter(
         beta_feedback: betaFeedback.data.integrity,
         account_personas: accountPersona.data.integrity,
         proof_briefs: proofBriefs.data.integrity,
+        recruiter_role_evidence_maps: recruiterRoleMaps.data.integrity,
+        candidate_evidence_reviews: candidateEvidenceReviews.data.integrity,
       },
       allCollectorsSucceeded: true,
       serializationSucceeded: true,
@@ -401,6 +421,8 @@ export async function buildAccountDataExportWithAdapter(
       beta_feedback: betaFeedback.data.rows,
       account_personas: accountPersona.data.rows,
       proof_briefs: proofBriefs.data.rows,
+      recruiter_role_evidence_maps: recruiterRoleMaps.data.rows,
+      candidate_evidence_reviews: candidateEvidenceReviews.data.rows,
     },
   };
 
@@ -684,7 +706,7 @@ async function collectActiveResumeSelectionTable(
 async function collectKeysetTable<T>(
   adapter: AccountDataExportQueryAdapter,
   contract: AccountExportTableContract<T> & {
-    tableName: "resume_analyses" | "job_matches" | "beta_feedback" | "proof_briefs";
+    tableName: "resume_analyses" | "job_matches" | "beta_feedback" | "proof_briefs" | "recruiter_role_evidence_maps" | "candidate_evidence_reviews";
     ownerColumn: "user_id";
     reconstructRow: (value: unknown) => { ok: true; value: T } | { ok: false };
   },
@@ -1030,10 +1052,17 @@ async function getExactSupabaseCount(
     .eq("user_id", expectedUserId);
 }
 
-type AccountOwnedTableName = Exclude<
-  keyof Database["public"]["Tables"],
-  "analytics_events"
->;
+type AccountOwnedTableName =
+  | "profiles"
+  | "resume_analyses"
+  | "active_resume_selections"
+  | "job_matches"
+  | "career_snapshots"
+  | "beta_feedback"
+  | "account_personas"
+  | "proof_briefs"
+  | "recruiter_role_evidence_maps"
+  | "candidate_evidence_reviews";
 
 function reconcileCounts(
   preCount: number,

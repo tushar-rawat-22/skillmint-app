@@ -98,6 +98,9 @@ jobs:
       - name: Run Proof Brief browser coverage
         run: npm run test:e2e:proof-brief
 
+      - name: Run recruiter evidence browser coverage
+        run: npm run test:e2e:recruiter-evidence
+
       - name: Run forgot-password coverage
         run: npm run test:e2e:forgot-password
 
@@ -148,5 +151,6 @@ jobs:
           node scripts/analytics-acl-fixtures.mjs
           node scripts/block6-rollout-foundation-fixtures.mjs
           node scripts/proof-brief-fixtures.mjs
+          node scripts/recruiter-evidence-fixtures.mjs
           node scripts/production-rollout-foundation-fixtures.mjs
           node scripts/documentation-status-fixtures.mjs
