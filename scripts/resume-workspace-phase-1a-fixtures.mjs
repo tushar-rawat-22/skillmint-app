@@ -60,7 +60,7 @@ const ACL_NORMALIZATION_SHA256 =
 const BASELINE_PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
 const SECURITY_PACKAGE_LOCK_SHA256 =
-  "def66e9eafb72856d1c4f9f6f6244d97cc7bb6ee368c57bb207fd7c0a7ad67ee";
+  "4e20c5c5db9198a8a00efbaba9d56f10cd7835ac652d3f3493a1d85b98f264a8";
 
 const FROZEN_MIGRATIONS = [
   {
@@ -1646,7 +1646,14 @@ test("package metadata permits only authorized fixture scripts and audited lock 
   delete currentWithoutScripts.scripts;
   delete baselineWithoutScripts.scripts;
 
-  assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);
+  assert.equal(currentPackage.dependencies.next, "16.3.3");
+assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
+const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
+normalizedCurrentWithoutScripts.dependencies.next =
+  baselineWithoutScripts.dependencies.next;
+normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
+  baselineWithoutScripts.devDependencies["eslint-config-next"];
+assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);
   for (const [name, command] of Object.entries(baselinePackage.scripts)) {
     assert.equal(currentPackage.scripts[name], command, name);
   }
