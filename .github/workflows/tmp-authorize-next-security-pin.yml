@@ -24,8 +24,14 @@ jobs:
           fixture = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
           text = fixture.read_text()
 
-          old = '  assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'
-          new = '''  assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
+          old = '''  delete currentWithoutScripts.scripts;
+          delete baselineWithoutScripts.scripts;
+
+          assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
+          new = '''  delete currentWithoutScripts.scripts;
+          delete baselineWithoutScripts.scripts;
+
+          assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
           assert.equal(
             currentWithoutScripts.devDependencies["eslint-config-next"],
             "16.3.3",
@@ -35,7 +41,7 @@ jobs:
             baselineWithoutScripts.devDependencies["eslint-config-next"];
           assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
           if text.count(old) != 1:
-              raise SystemExit('package metadata assertion anchor changed')
+              raise SystemExit('package metadata assertion block changed')
           text = text.replace(old, new, 1)
 
           old_hash = '''const SECURITY_PACKAGE_LOCK_SHA256 =
