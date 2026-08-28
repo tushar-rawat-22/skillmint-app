@@ -16,7 +16,7 @@
     "check:production-rollout-readiness": "node scripts/production-rollout-readiness.mjs",
     "fixtures:controlled-access": "node scripts/controlled-access-fixtures.mjs",
     "check:controlled-access-client-bundles": "node scripts/controlled-access-fixtures.mjs --require-client-build",
-    "fixtures:public-evidence-demo": "node scripts/public-evidence-demo-fixtures.mjs",
+    "fixtures:public-evidence-demo": "node scripts/public-evidence-demo-fixtures.mjs && node scripts/candidate-entry-hierarchy-fixture.mjs",
     "fixtures:proof-brief": "node scripts/proof-brief-fixtures.mjs",
     "fixtures:recruiter-evidence": "node scripts/recruiter-evidence-fixtures.mjs",
     "fixtures:recruiter-evidence:database": "node scripts/recruiter-evidence-database-integration.mjs",
