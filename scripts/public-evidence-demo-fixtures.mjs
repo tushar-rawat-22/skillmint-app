@@ -196,6 +196,23 @@ test("homepage exposes both public product paths without enabling signup", () =>
   );
 });
 
+test("recruiter public entry prioritizes the usable demo while signup is closed", () => {
+  const recruiterPage = source("src/app/recruiters/page.tsx");
+  assert.match(
+    recruiterPage,
+    /const demoIsPublicEntry = publicDemoEnabled && !publicSignupEnabled;/u,
+  );
+  assert.match(
+    recruiterPage,
+    /demoIsPublicEntry[\s\S]*RECRUITER_DEMO[\s\S]*premiumPrimaryCta/u,
+  );
+  assert.match(
+    recruiterPage,
+    /demoIsPublicEntry[\s\S]*RECRUITER_WORKSPACE[\s\S]*premiumSecondaryCta/u,
+  );
+  assert.match(recruiterPage, /Existing recruiter workspace/u);
+});
+
 test("server-only demo configuration has no client importer or public-prefixed alias", () => {
   const configSource = source("src/config/publicDemo.ts");
   assert.match(configSource, /^import "server-only";/u);
