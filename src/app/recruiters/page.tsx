@@ -22,6 +22,7 @@ const recruiterSteps = [
 export default function RecruitersPage() {
   const { enabled: publicDemoEnabled } = getPublicDemoConfiguration();
   const { enabled: publicSignupEnabled } = getPublicSignupConfiguration();
+  const demoIsPublicEntry = publicDemoEnabled && !publicSignupEnabled;
 
   return (
     <>
@@ -39,10 +40,16 @@ export default function RecruitersPage() {
               human conversation.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={ROUTES.RECRUITER_WORKSPACE} className={premiumPrimaryCta}>
-                Open recruiter workspace
-              </Link>
-              {publicDemoEnabled ? (
+              {demoIsPublicEntry ? (
+                <Link href={ROUTES.RECRUITER_DEMO} className={premiumPrimaryCta}>
+                  Explore recruiter demo
+                </Link>
+              ) : (
+                <Link href={ROUTES.RECRUITER_WORKSPACE} className={premiumPrimaryCta}>
+                  Open recruiter workspace
+                </Link>
+              )}
+              {publicDemoEnabled && !demoIsPublicEntry ? (
                 <Link href={ROUTES.RECRUITER_DEMO} className={premiumSecondaryCta}>
                   Explore recruiter demo
                 </Link>
