@@ -15,53 +15,40 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authorize only the reviewed framework pin
+      - name: Repair exact frozen-package authorization
         run: |
           python - <<'PY'
           from pathlib import Path
-          import hashlib
 
           fixture = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
-          lines = fixture.read_text().splitlines()
-
-          marker_index = next(
-              i for i, line in enumerate(lines)
-              if 'package metadata permits only authorized fixture scripts' in line
-          )
-          assertion_index = next(
-              i for i, line in enumerate(lines[marker_index + 1:], marker_index + 1)
-              if 'assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);' in line
-          )
-          indent = lines[assertion_index][:len(lines[assertion_index]) - len(lines[assertion_index].lstrip())]
-          replacement = [
-              indent + 'assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");',
-              indent + 'assert.equal(',
-              indent + '  currentWithoutScripts.devDependencies["eslint-config-next"],',
-              indent + '  "16.3.3",',
-              indent + ');',
-              indent + 'const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);',
-              indent + 'normalizedCurrentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;',
-              indent + 'normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =',
-              indent + '  baselineWithoutScripts.devDependencies["eslint-config-next"];',
-              indent + 'assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);',
-          ]
-          lines[assertion_index:assertion_index + 1] = replacement
-
-          lock_hash = hashlib.sha256(Path('package-lock.json').read_bytes()).hexdigest()
-          hash_index = next(i for i, line in enumerate(lines) if 'const SECURITY_PACKAGE_LOCK_SHA256' in line)
-          if hash_index + 1 >= len(lines):
-              raise SystemExit('security lock hash line missing')
-          hash_indent = lines[hash_index + 1][:len(lines[hash_index + 1]) - len(lines[hash_index + 1].lstrip())]
-          lines[hash_index + 1] = hash_indent + '"' + lock_hash + '";'
-
-          fixture.write_text('\n'.join(lines) + '\n')
-          print('authorized lock sha256:', lock_hash)
+          text = fixture.read_text()
+          old = '''  assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
+          assert.equal(
+            currentWithoutScripts.devDependencies["eslint-config-next"],
+            "16.3.3",
+          );
+          currentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;
+          currentWithoutScripts.devDependencies["eslint-config-next"] =
+            baselineWithoutScripts.devDependencies["eslint-config-next"];
+          assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
+          new = '''  assert.equal(currentPackage.dependencies.next, "16.3.3");
+          assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
+          const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
+          normalizedCurrentWithoutScripts.dependencies.next =
+            baselineWithoutScripts.dependencies.next;
+          normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
+            baselineWithoutScripts.devDependencies["eslint-config-next"];
+          assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);'''
+          if text.count(old) != 1:
+              raise SystemExit('expected reviewed package authorization block not found exactly once')
+          fixture.write_text(text.replace(old, new, 1))
           PY
       - name: Verify focused frozen-contract fixture
         run: |
           npm ci
           npm run fixtures:resume-workspace-phase-1a
-      - name: Commit fixture repair and remove helper
+          npm audit --audit-level=high
+      - name: Commit verified repair and remove temporary helper
         run: |
           rm .github/workflows/tmp-authorize-next-security-pin.yml .github/tmp-next-security-trigger.txt
           git config user.name "github-actions[bot]"
