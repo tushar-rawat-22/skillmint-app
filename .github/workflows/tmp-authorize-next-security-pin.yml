@@ -20,32 +20,40 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import hashlib
-          import re
 
           fixture = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
-          text = fixture.read_text()
+          lines = fixture.read_text().splitlines()
 
-          test_marker = 'test("package metadata permits only authorized fixture scripts and audited lock stays exact", () => {'
-          start = text.index(test_marker)
-          needle = '  assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'
-          pos = text.index(needle, start)
-          replacement = '''  assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
-          assert.equal(
-            currentWithoutScripts.devDependencies["eslint-config-next"],
-            "16.3.3",
-          );
-          currentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;
-          currentWithoutScripts.devDependencies["eslint-config-next"] =
-            baselineWithoutScripts.devDependencies["eslint-config-next"];
-          assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
-          text = text[:pos] + replacement + text[pos + len(needle):]
+          marker_index = next(
+              i for i, line in enumerate(lines)
+              if 'package metadata permits only authorized fixture scripts' in line
+          )
+          assertion_index = next(
+              i for i, line in enumerate(lines[marker_index + 1:], marker_index + 1)
+              if 'assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);' in line
+          )
+          indent = lines[assertion_index][:len(lines[assertion_index]) - len(lines[assertion_index].lstrip())]
+          replacement = [
+              indent + 'assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");',
+              indent + 'assert.equal(',
+              indent + '  currentWithoutScripts.devDependencies["eslint-config-next"],',
+              indent + '  "16.3.3",',
+              indent + ');',
+              indent + 'currentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;',
+              indent + 'currentWithoutScripts.devDependencies["eslint-config-next"] =',
+              indent + '  baselineWithoutScripts.devDependencies["eslint-config-next"];',
+              indent + 'assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);',
+          ]
+          lines[assertion_index:assertion_index + 1] = replacement
 
           lock_hash = hashlib.sha256(Path('package-lock.json').read_bytes()).hexdigest()
-          pattern = r'(const SECURITY_PACKAGE_LOCK_SHA256 =\s*\n\s*")[0-9a-f]{64}(";)'
-          text, count = re.subn(pattern, lambda m: m.group(1) + lock_hash + m.group(2), text, count=1)
-          if count != 1:
-              raise SystemExit('security lock hash anchor changed')
-          fixture.write_text(text)
+          hash_index = next(i for i, line in enumerate(lines) if 'const SECURITY_PACKAGE_LOCK_SHA256' in line)
+          if hash_index + 1 >= len(lines):
+              raise SystemExit('security lock hash line missing')
+          hash_indent = lines[hash_index + 1][:len(lines[hash_index + 1]) - len(lines[hash_index + 1].lstrip())]
+          lines[hash_index + 1] = hash_indent + '"' + lock_hash + '";'
+
+          fixture.write_text('\n'.join(lines) + '\n')
           print('authorized lock sha256:', lock_hash)
           PY
       - name: Verify focused frozen-contract fixture
