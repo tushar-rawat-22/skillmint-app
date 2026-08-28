@@ -1,1 +1,0 @@
-Trigger the exact reviewed Next.js security fixture repair.

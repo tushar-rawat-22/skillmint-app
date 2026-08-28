@@ -1646,15 +1646,14 @@ test("package metadata permits only authorized fixture scripts and audited lock 
   delete currentWithoutScripts.scripts;
   delete baselineWithoutScripts.scripts;
 
-  assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
-assert.equal(
-  currentWithoutScripts.devDependencies["eslint-config-next"],
-  "16.3.3",
-);
-currentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;
-currentWithoutScripts.devDependencies["eslint-config-next"] =
+  assert.equal(currentPackage.dependencies.next, "16.3.3");
+assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
+const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
+normalizedCurrentWithoutScripts.dependencies.next =
+  baselineWithoutScripts.dependencies.next;
+normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
   baselineWithoutScripts.devDependencies["eslint-config-next"];
-assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);
+assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);
   for (const [name, command] of Object.entries(baselinePackage.scripts)) {
     assert.equal(currentPackage.scripts[name], command, name);
   }
