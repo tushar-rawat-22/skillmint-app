@@ -54,11 +54,6 @@ export default function RecruitersPage() {
                   Explore recruiter demo
                 </Link>
               ) : null}
-              {demoIsPublicEntry ? (
-                <Link href={ROUTES.RECRUITER_WORKSPACE} className={premiumSecondaryCta}>
-                  Existing recruiter workspace
-                </Link>
-              ) : null}
               <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
                 Existing user login
               </Link>
