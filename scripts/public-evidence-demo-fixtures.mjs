@@ -208,9 +208,9 @@ test("recruiter public entry prioritizes the usable demo while signup is closed"
   );
   assert.match(
     recruiterPage,
-    /demoIsPublicEntry[\s\S]*RECRUITER_WORKSPACE[\s\S]*premiumSecondaryCta/u,
+    /publicDemoEnabled && !demoIsPublicEntry[\s\S]*RECRUITER_DEMO[\s\S]*premiumSecondaryCta/u,
   );
-  assert.match(recruiterPage, /Existing recruiter workspace/u);
+  assert.doesNotMatch(recruiterPage, /Existing recruiter workspace/u);
 });
 
 test("server-only demo configuration has no client importer or public-prefixed alias", () => {
