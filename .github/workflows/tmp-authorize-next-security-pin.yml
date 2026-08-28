@@ -39,10 +39,11 @@ jobs:
               indent + '  currentWithoutScripts.devDependencies["eslint-config-next"],',
               indent + '  "16.3.3",',
               indent + ');',
-              indent + 'currentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;',
-              indent + 'currentWithoutScripts.devDependencies["eslint-config-next"] =',
+              indent + 'const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);',
+              indent + 'normalizedCurrentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;',
+              indent + 'normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =',
               indent + '  baselineWithoutScripts.devDependencies["eslint-config-next"];',
-              indent + 'assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);',
+              indent + 'assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);',
           ]
           lines[assertion_index:assertion_index + 1] = replacement
 
