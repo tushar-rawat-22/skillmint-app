@@ -1,1 +1,1 @@
-Trigger the reviewed Next.js security fixture authorization helper after the exact assertion-block repair.
+Trigger the reviewed Next.js security fixture authorization helper with the anchor-safe updater.
