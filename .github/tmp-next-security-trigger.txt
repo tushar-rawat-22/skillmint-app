@@ -1,1 +1,1 @@
-Trigger the one-shot reviewed Next.js security fixture authorization helper.
+Trigger the reviewed Next.js security fixture authorization helper after the exact assertion-block repair.
