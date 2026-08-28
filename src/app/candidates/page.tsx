@@ -12,11 +12,19 @@ import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 import { ROUTES } from "@/constants/routes";
 
-const candidateLoop = [
-  ["Understand", "See what the current resume supports, where evidence is strongest, and what remains unclear."],
-  ["Focus", "Choose a target role and compare one job description without changing the underlying scores."],
-  ["Act", "Use one evidence-building next action, then update the work or resume truthfully."],
-  ["Re-analyse", "Run the same deterministic analysis later and compare evidence changes rather than score-chasing."],
+const syntheticEvidencePreview = [
+  [
+    "Strongest support",
+    "Typed interface delivery, accessibility checks, and component testing are clearly supported by the resume.",
+  ],
+  [
+    "Main evidence gap",
+    "API ownership and one inspectable team-delivery example are still unclear.",
+  ],
+  [
+    "Best next move",
+    "Rewrite one project entry around contribution, result, and the evidence someone can inspect.",
+  ],
 ] as const;
 
 export default function CandidatesPage() {
@@ -61,21 +69,51 @@ export default function CandidatesPage() {
             ) : null}
           </section>
 
-          <section className={premiumSurface} aria-labelledby="candidate-loop-title">
-            <p className={premiumEyebrow}>Candidate loop</p>
-            <h2 id="candidate-loop-title" className="mt-3 text-3xl font-black">
-              Evidence changes before the analysis changes.
-            </h2>
-            <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {candidateLoop.map(([title, description], index) => (
-                <article key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="font-mono text-xs font-bold text-emerald-800">
-                    {String(index + 1).padStart(2, "0")}
+          <section className={premiumSurface} aria-labelledby="candidate-preview-title">
+            <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+              <div>
+                <p className={premiumEyebrow}>Synthetic example</p>
+                <h2 id="candidate-preview-title" className="mt-3 text-3xl font-black">
+                  See the evidence before the score.
+                </h2>
+                <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600">
+                  A useful analysis should tell you what the resume supports,
+                  where the evidence is weak, and what to improve next. The
+                  example on this page is synthetic and is not a real candidate
+                  assessment.
+                </p>
+                {publicDemoEnabled ? (
+                  <Link
+                    href={ROUTES.DEMO}
+                    className="mt-6 inline-flex min-h-11 items-center font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+                  >
+                    See the full evidence loop
+                  </Link>
+                ) : null}
+              </div>
+
+              <div className="border-y border-slate-200">
+                {syntheticEvidencePreview.map(([title, description], index) => (
+                  <article
+                    key={title}
+                    className="grid gap-2 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[2.5rem_10rem_1fr] sm:items-start sm:gap-4"
+                  >
+                    <p className="font-mono text-xs font-bold text-emerald-800">
+                      {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h3 className="text-sm font-bold text-slate-950">{title}</h3>
+                    <p className="text-sm leading-6 text-slate-600">{description}</p>
+                  </article>
+                ))}
+                <article className="grid gap-2 py-5 sm:grid-cols-[2.5rem_10rem_1fr] sm:items-start sm:gap-4">
+                  <p className="font-mono text-xs font-bold text-emerald-800">04</p>
+                  <h3 className="text-sm font-bold text-slate-950">After re-analysis</h3>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Compare a later resume state with the earlier one to see what
+                    evidence actually changed instead of chasing a score.
                   </p>
-                  <h3 className="mt-3 font-bold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
                 </article>
-              ))}
+              </div>
             </div>
           </section>
 
