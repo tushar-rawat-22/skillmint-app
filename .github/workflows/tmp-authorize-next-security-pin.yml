@@ -20,18 +20,16 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import hashlib
+          import re
 
           fixture = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
           text = fixture.read_text()
 
-          old = '''  delete currentWithoutScripts.scripts;
-          delete baselineWithoutScripts.scripts;
-
-          assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
-          new = '''  delete currentWithoutScripts.scripts;
-          delete baselineWithoutScripts.scripts;
-
-          assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
+          test_marker = 'test("package metadata permits only authorized fixture scripts and audited lock stays exact", () => {'
+          start = text.index(test_marker)
+          needle = '  assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'
+          pos = text.index(needle, start)
+          replacement = '''  assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
           assert.equal(
             currentWithoutScripts.devDependencies["eslint-config-next"],
             "16.3.3",
@@ -40,18 +38,13 @@ jobs:
           currentWithoutScripts.devDependencies["eslint-config-next"] =
             baselineWithoutScripts.devDependencies["eslint-config-next"];
           assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
-          if text.count(old) != 1:
-              raise SystemExit('package metadata assertion block changed')
-          text = text.replace(old, new, 1)
+          text = text[:pos] + replacement + text[pos + len(needle):]
 
-          old_hash = '''const SECURITY_PACKAGE_LOCK_SHA256 =
-            "def66e9eafb72856d1c4f9f6f6244d97cc7bb6ee368c57bb207fd7c0a7ad67ee";'''
           lock_hash = hashlib.sha256(Path('package-lock.json').read_bytes()).hexdigest()
-          new_hash = f'''const SECURITY_PACKAGE_LOCK_SHA256 =
-            "{lock_hash}";'''
-          if text.count(old_hash) != 1:
+          pattern = r'(const SECURITY_PACKAGE_LOCK_SHA256 =\s*\n\s*")[0-9a-f]{64}(";)'
+          text, count = re.subn(pattern, lambda m: m.group(1) + lock_hash + m.group(2), text, count=1)
+          if count != 1:
               raise SystemExit('security lock hash anchor changed')
-          text = text.replace(old_hash, new_hash, 1)
           fixture.write_text(text)
           print('authorized lock sha256:', lock_hash)
           PY
