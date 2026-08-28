@@ -1,0 +1,1 @@
+Trigger the one-shot reviewed Next.js security fixture authorization helper.
