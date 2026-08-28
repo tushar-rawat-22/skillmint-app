@@ -1,0 +1,33 @@
+name: Temporary Next lockfile generator
+
+on:
+  push:
+    branches:
+      - security/next-16-3-3
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Generate patched lockfile
+        run: npm install --package-lock-only --ignore-scripts --save-exact next@16.3.3 eslint-config-next@16.3.3
+      - name: Show dependency state
+        run: |
+          node -e "const p=require('./package.json'); console.log({next:p.dependencies.next, eslintConfigNext:p.devDependencies['eslint-config-next'], sharpOverride:p.overrides?.next?.sharp})"
+          npm audit --audit-level=high
+      - name: Upload generated package files
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-16-3-3-package-files
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
