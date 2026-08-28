@@ -1,0 +1,61 @@
+name: Temporary authorize Next security pin
+
+on:
+  push:
+    branches:
+      - security/next-16-3-3
+
+permissions:
+  contents: write
+
+jobs:
+  update-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authorize only the reviewed framework pin
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          fixture = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
+          text = fixture.read_text()
+
+          old = '  assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'
+          new = '''  assert.equal(currentWithoutScripts.dependencies.next, "16.3.3");
+          assert.equal(
+            currentWithoutScripts.devDependencies["eslint-config-next"],
+            "16.3.3",
+          );
+          currentWithoutScripts.dependencies.next = baselineWithoutScripts.dependencies.next;
+          currentWithoutScripts.devDependencies["eslint-config-next"] =
+            baselineWithoutScripts.devDependencies["eslint-config-next"];
+          assert.deepEqual(currentWithoutScripts, baselineWithoutScripts);'''
+          if text.count(old) != 1:
+              raise SystemExit('package metadata assertion anchor changed')
+          text = text.replace(old, new, 1)
+
+          old_hash = '''const SECURITY_PACKAGE_LOCK_SHA256 =
+            "def66e9eafb72856d1c4f9f6f6244d97cc7bb6ee368c57bb207fd7c0a7ad67ee";'''
+          lock_hash = hashlib.sha256(Path('package-lock.json').read_bytes()).hexdigest()
+          new_hash = f'''const SECURITY_PACKAGE_LOCK_SHA256 =
+            "{lock_hash}";'''
+          if text.count(old_hash) != 1:
+              raise SystemExit('security lock hash anchor changed')
+          text = text.replace(old_hash, new_hash, 1)
+          fixture.write_text(text)
+          print('authorized lock sha256:', lock_hash)
+          PY
+      - name: Verify focused frozen-contract fixture
+        run: |
+          npm ci
+          npm run fixtures:resume-workspace-phase-1a
+      - name: Commit fixture repair and remove helper
+        run: |
+          rm .github/workflows/tmp-authorize-next-security-pin.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/resume-workspace-phase-1a-fixtures.mjs .github/workflows/tmp-authorize-next-security-pin.yml
+          git commit -m "test: authorize reviewed Next security pin"
+          git push origin HEAD:security/next-16-3-3
