@@ -12,7 +12,7 @@
     "fixtures:analytics-dashboard": "node scripts/analytics-dashboard-fixtures.mjs",
     "fixtures:analytics-acl": "node scripts/analytics-acl-fixtures.mjs",
     "fixtures:block6-rollout-foundation": "node scripts/block6-rollout-foundation-fixtures.mjs",
-    "fixtures:production-rollout-foundation": "node scripts/production-rollout-foundation-fixtures.mjs",
+    "fixtures:production-rollout-foundation": "node scripts/production-rollout-foundation-fixtures.mjs && node scripts/production-pending-migration-integrity-fixtures.mjs",
     "check:production-rollout-readiness": "node scripts/production-rollout-readiness.mjs",
     "fixtures:controlled-access": "node scripts/controlled-access-fixtures.mjs",
     "check:controlled-access-client-bundles": "node scripts/controlled-access-fixtures.mjs --require-client-build",
