@@ -49,7 +49,7 @@ assert.doesNotMatch(
 assert.doesNotMatch(recruiterWorkspace, /setRecruiterPersona|set_persona|Use recruiter persona/);
 assert.match(recruiterWorkspace, /href="\/auth\/persona"/);
 assert.match(recruiterWorkspace, /Recruiter evidence actions cannot create or change persona authority themselves/);
-assert.match(personaCompletionRoute, /ensureAccountPersona\(authorization\.userId, requestedPersona\)/);
+assert.match(personaCompletionRoute, /ensureAccountPersona\(userId, personaValues\[0\]\)/);
 
 assert.match(proofBriefRoute, /import \{ getAccountPersona \} from "@\/modules\/accountPersona";/);
 assert.match(proofBriefRoute, /const personaFailure = await requireCandidatePersona\(authorization\.userId\);/);
