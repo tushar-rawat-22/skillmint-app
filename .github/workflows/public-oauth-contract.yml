@@ -1,0 +1,47 @@
+name: Public OAuth contract
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  oauth-contract:
+    name: oauth-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.17.0
+          package-manager-cache: false
+
+      - name: Pin npm
+        run: npm install --global npm@11.13.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify fail-closed OAuth configuration
+        run: node scripts/public-oauth-fixtures.mjs
