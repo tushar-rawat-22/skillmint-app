@@ -11,6 +11,7 @@ import {
 } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 import { getServerAuthorization } from "@/lib/supabase/serverAuth";
+import { getAccountPersona } from "@/modules/accountPersona";
 import {
   deriveProofBriefPayload,
   parseCandidateProofBriefRow,
@@ -38,6 +39,9 @@ export async function GET(request: Request) {
   ) return jsonError("invalid_request", 400);
   const sourceResumeAnalysisId = url.searchParams.get("source");
   if (!isUuid(sourceResumeAnalysisId)) return jsonError("invalid_request", 400);
+
+  const personaFailure = await requireCandidatePersona(authorization.userId);
+  if (personaFailure) return personaFailure;
 
   try {
     const admin = createSupabaseAdminClient();
@@ -87,6 +91,9 @@ export async function POST(request: Request) {
   if (authorization.status !== "authenticated") {
     return authorizationFailure(authorization.status);
   }
+
+  const personaFailure = await requireCandidatePersona(authorization.userId);
+  if (personaFailure) return personaFailure;
 
   const operationKey = `${authorization.userId}:${
     mutation.action === "create_or_refresh"
@@ -270,6 +277,17 @@ function parseMutation(text: string): Mutation | null {
     hasExactKeys(value, ["action", "briefId"]) &&
     isUuid(value.briefId)
   ) return { action: value.action, briefId: value.briefId };
+  return null;
+}
+
+async function requireCandidatePersona(userId: string): Promise<Response | null> {
+  const persona = await getAccountPersona(userId);
+  if (persona.status === "unavailable") {
+    return jsonError("temporarily_unavailable", 503);
+  }
+  if (persona.status !== "resolved" || persona.persona !== "CANDIDATE") {
+    return jsonError("candidate_persona_required", 403);
+  }
   return null;
 }
 
