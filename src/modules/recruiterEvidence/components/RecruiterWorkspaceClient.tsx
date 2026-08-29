@@ -54,16 +54,6 @@ export default function RecruiterWorkspaceClient() {
     return () => controller.abort();
   }, [currentUserId, load]);
 
-  async function setRecruiterPersona() {
-    if (typeof currentUserId !== "string") return;
-    const expectedUserId = currentUserId;
-    setSaving(true);
-    const result = await mutate({ action: "set_persona", expectedUserId, persona: "RECRUITER" });
-    if (activeOwnerRef.current !== expectedUserId) return;
-    setSaving(false);
-    if (result.ok) void load(expectedUserId); else setState((current) => current.ownerId === expectedUserId ? { ...current, message: result.message } : current);
-  }
-
   async function createRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (typeof currentUserId !== "string") return;
@@ -84,10 +74,9 @@ export default function RecruiterWorkspaceClient() {
   if (state.persona === null) return (
     <section className={premiumSurface}>
       <p className={premiumEyebrow}>Server-owned persona</p>
-      <h2 className="mt-3 text-2xl font-black">Set up this account for recruiter evidence review</h2>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">This selection is stored through a verified server route and cannot be changed from the browser database client. It does not verify identity, employer, or hiring authority.</p>
-      <button type="button" disabled={saving} onClick={() => void setRecruiterPersona()} className={`${premiumPrimaryCta} mt-5 disabled:opacity-60`}>{saving ? "Setting up…" : "Use recruiter persona"}</button>
-      {state.message ? <p role="alert" className="mt-3 text-sm text-rose-700">{state.message}</p> : null}
+      <h2 className="mt-3 text-2xl font-black">Finish account setup before using recruiter tools</h2>
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">Choose your account persona through the same protected setup flow used after first sign-in. Recruiter evidence actions cannot create or change persona authority themselves.</p>
+      <Link href="/auth/persona" className={`${premiumSecondaryCta} mt-5`}>Finish account setup</Link>
     </section>
   );
 

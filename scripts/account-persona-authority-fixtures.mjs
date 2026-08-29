@@ -12,6 +12,8 @@ const migrationPath = "supabase/migrations/20260829001200_schema_v12_account_per
 const source = read(sourcePath);
 const migration = read(migrationPath);
 const recruiterRoute = read("src/app/api/recruiter-evidence/route.ts");
+const recruiterWorkspace = read("src/modules/recruiterEvidence/components/RecruiterWorkspaceClient.tsx");
+const personaCompletionRoute = read("src/app/auth/persona/complete/route.ts");
 const proofBriefRoute = read("src/app/api/proof-brief/route.ts");
 const manifest = JSON.parse(read("supabase/migrations/manifest.json"));
 
@@ -37,8 +39,17 @@ assert.equal(manifest.generated_for.production.pending_execution.at(-1), "202608
 assert.match(recruiterRoute, /const authorization = await getServerAuthorization\(\)/);
 assert.match(recruiterRoute, /authorization\.userId !== mutation\.expectedUserId/);
 assert.match(recruiterRoute, /const admin = createSupabaseAdminClient\(\)/);
-assert.match(recruiterRoute, /admin\.from\("account_personas"\)[\s\S]*\.insert\(\{ user_id: authorization\.userId, persona: mutation\.persona \}\)/);
-assert.match(recruiterRoute, /persona\.value && persona\.value !== mutation\.persona/);
+assert.match(recruiterRoute, /persona\.value !== "RECRUITER"/);
+assert.doesNotMatch(recruiterRoute, /set_persona/);
+assert.doesNotMatch(
+  recruiterRoute,
+  /admin\.from\("account_personas"\)[\s\S]*\.insert\(/,
+  "recruiter evidence API must never create persona authority",
+);
+assert.doesNotMatch(recruiterWorkspace, /setRecruiterPersona|set_persona|Use recruiter persona/);
+assert.match(recruiterWorkspace, /href="\/auth\/persona"/);
+assert.match(recruiterWorkspace, /Recruiter evidence actions cannot create or change persona authority themselves/);
+assert.match(personaCompletionRoute, /ensureAccountPersona\(userId, personaValues\[0\]\)/);
 
 assert.match(proofBriefRoute, /import \{ getAccountPersona \} from "@\/modules\/accountPersona";/);
 assert.match(proofBriefRoute, /const personaFailure = await requireCandidatePersona\(authorization\.userId\);/);
