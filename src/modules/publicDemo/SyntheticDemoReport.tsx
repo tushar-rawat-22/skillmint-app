@@ -75,36 +75,6 @@ export default function SyntheticDemoReport() {
           </div>
         </section>
 
-        <section className={premiumSurface} aria-labelledby="demo-evidence-title">
-          <p className={premiumEyebrow}>Synthetic evidence only</p>
-          <h2 id="demo-evidence-title" className="mt-2 text-2xl font-black">
-            Selected synthetic evidence sources
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            These are invented resume-internal evidence candidates. They are
-            not repository scans, identity checks, or third-party verification.
-          </p>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {SYNTHETIC_DEMO.evidenceSources.map((source) => (
-              <article
-                key={source.label}
-                className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-              >
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-                  {source.support}
-                </p>
-                <h3 className="mt-3 font-bold text-slate-950">
-                  {source.label}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {source.detail}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section
           className={premiumSurface}
           aria-labelledby="demo-progress-title"
@@ -166,6 +136,36 @@ export default function SyntheticDemoReport() {
                 )}
               />
             </div>
+          </div>
+        </section>
+
+        <section className={premiumSurface} aria-labelledby="demo-evidence-title">
+          <p className={premiumEyebrow}>Synthetic evidence only</p>
+          <h2 id="demo-evidence-title" className="mt-2 text-2xl font-black">
+            Selected synthetic evidence sources
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            These are invented resume-internal evidence candidates. They are
+            not repository scans, identity checks, or third-party verification.
+          </p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {SYNTHETIC_DEMO.evidenceSources.map((source) => (
+              <article
+                key={source.label}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+              >
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                  {source.support}
+                </p>
+                <h3 className="mt-3 font-bold text-slate-950">
+                  {source.label}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {source.detail}
+                </p>
+              </article>
+            ))}
           </div>
         </section>
 
