@@ -10,9 +10,9 @@ const JD = "Build accessible TypeScript and React interfaces, test changes, impr
 test("@recruiter-evidence recruiter creates a role map and sends bounded candidate feedback", async ({ page, request }) => {
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
   await request.post(`${PROVIDER_ORIGIN}/__seed-shared-proof-brief`);
+  await seedPersona(request, ACCOUNT_B.id, "RECRUITER");
   await login(page, ACCOUNT_B);
   await page.goto("/recruiters/workspace");
-  await page.getByRole("button", { name: "Use recruiter persona" }).click();
   await expect(page.getByRole("heading", { name: /Translate one role description/u })).toBeVisible();
   await page.getByLabel("Role title").fill("Junior frontend contributor");
   await page.getByLabel("Job description").fill(JD);
@@ -56,26 +56,28 @@ test("@recruiter-evidence mutation boundaries fail closed without writing", asyn
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
   await request.post(`${PROVIDER_ORIGIN}/__seed-shared-proof-brief`);
   const originHeaders = { origin: APP_ORIGIN, "content-type": "application/json", "sec-fetch-site": "same-origin" };
-  const loggedOut = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: originHeaders, data: { action: "set_persona", expectedUserId: ACCOUNT_B.id, persona: "RECRUITER" } });
+  const roleMutation = { action: "create_role_map", expectedUserId: ACCOUNT_B.id, roleTitle: "Frontend role", jobDescription: JD };
+  const loggedOut = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: originHeaders, data: roleMutation });
   expect(loggedOut.status()).toBe(401);
-  const crossOrigin = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { ...originHeaders, origin: "https://cross-origin.invalid" }, data: { action: "set_persona", expectedUserId: ACCOUNT_B.id, persona: "RECRUITER" } });
+  const crossOrigin = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { ...originHeaders, origin: "https://cross-origin.invalid" }, data: roleMutation });
   expect(crossOrigin.status()).toBe(403);
-  const missingOrigin = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { "content-type": "application/json" }, data: { action: "set_persona", expectedUserId: ACCOUNT_B.id, persona: "RECRUITER" } });
+  const missingOrigin = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { "content-type": "application/json" }, data: roleMutation });
   expect(missingOrigin.status()).toBe(403);
-  const crossSite = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { ...originHeaders, "sec-fetch-site": "cross-site" }, data: { action: "set_persona", expectedUserId: ACCOUNT_B.id, persona: "RECRUITER" } });
+  const crossSite = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { ...originHeaders, "sec-fetch-site": "cross-site" }, data: roleMutation });
   expect(crossSite.status()).toBe(403);
   const wrongMedia = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: { ...originHeaders, "content-type": "text/plain" }, data: "{}" });
   expect(wrongMedia.status()).toBe(415);
-  const oversized = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: originHeaders, data: { action: "set_persona", expectedUserId: ACCOUNT_B.id, persona: "RECRUITER", padding: "x".repeat(17_000) } });
+  const oversized = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: originHeaders, data: { ...roleMutation, padding: "x".repeat(17_000) } });
   expect(oversized.status()).toBe(413);
   const malformed = await request.post(`${APP_ORIGIN}/api/recruiter-evidence`, { headers: originHeaders, data: "{" });
   expect(malformed.status()).toBe(400);
 
+  await seedPersona(request, ACCOUNT_A.id, "CANDIDATE");
   await login(page, ACCOUNT_A);
   await page.goto("/recruiters/workspace");
-  const candidatePersona = await page.evaluate(async (expectedUserId) => fetch("/api/recruiter-evidence", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "set_persona", expectedUserId, persona: "CANDIDATE" }) }).then(async (response) => ({ status: response.status, body: await response.json() })), ACCOUNT_A.id);
-  expect(candidatePersona.status).toBe(201);
-  const staleOwner = await page.evaluate(async (expectedUserId) => fetch("/api/recruiter-evidence", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "set_persona", expectedUserId, persona: "RECRUITER" }) }).then((response) => response.status), ACCOUNT_B.id);
+  const removedPersonaMutation = await page.evaluate(async (expectedUserId) => fetch("/api/recruiter-evidence", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "set_persona", expectedUserId, persona: "RECRUITER" }) }).then((response) => response.status), ACCOUNT_A.id);
+  expect(removedPersonaMutation).toBe(400);
+  const staleOwner = await page.evaluate(async ({ jobDescription, expectedUserId }) => fetch("/api/recruiter-evidence", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "create_role_map", expectedUserId, roleTitle: "Frontend role", jobDescription }) }).then((response) => response.status), { jobDescription: JD, expectedUserId: ACCOUNT_B.id });
   expect(staleOwner).toBe(409);
   const forbiddenRole = await page.evaluate(async ({ jobDescription, expectedUserId }) => fetch("/api/recruiter-evidence", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "create_role_map", expectedUserId, roleTitle: "Frontend role", jobDescription }) }).then((response) => response.status), { jobDescription: JD, expectedUserId: ACCOUNT_A.id });
   expect(forbiddenRole).toBe(403);
@@ -147,6 +149,17 @@ test("@recruiter-evidence account transitions never render or mutate a stale rec
   await expect(page.getByLabel("Role evidence map")).toContainText("Account A evidence role");
   await expect(page.getByLabel("Role evidence map")).not.toContainText("Account B private evidence role");
 });
+
+async function seedPersona(
+  request: import("@playwright/test").APIRequestContext,
+  userId: string,
+  persona: "CANDIDATE" | "RECRUITER",
+) {
+  const response = await request.post(`${PROVIDER_ORIGIN}/rest/v1/account_personas`, {
+    data: { user_id: userId, persona },
+  });
+  expect(response.ok()).toBeTruthy();
+}
 
 async function switchRecruiterAccount(context: BrowserContext, account: typeof ACCOUNT_A) {
   const controlPage = await context.newPage();
