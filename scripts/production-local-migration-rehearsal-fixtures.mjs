@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 import {
   BASELINE_VERSION,
-  LOCAL_DATABASE_URL,
+  LOCAL_DATABASE_CONFIG,
   ORDERED_VERSIONS,
   buildRehearsalPlan,
   validateLocalOnlyPlan,
@@ -37,8 +37,18 @@ equal(
   "rehearsal no longer ends at V12",
 );
 equal(
-  LOCAL_DATABASE_URL,
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+  {
+    host: LOCAL_DATABASE_CONFIG.host,
+    port: LOCAL_DATABASE_CONFIG.port,
+    database: LOCAL_DATABASE_CONFIG.database,
+    user: LOCAL_DATABASE_CONFIG.user,
+  },
+  {
+    host: "127.0.0.1",
+    port: 54322,
+    database: "postgres",
+    user: "postgres",
+  },
   "rehearsal database is not the committed local Supabase database",
 );
 
@@ -96,10 +106,14 @@ check(
   "dry-run does not identify its destructive target",
 );
 check(
+  dryRun.stdout.includes('"database": "127.0.0.1:54322/postgres"'),
+  "dry-run does not identify the fixed local database target",
+);
+check(
   dryRun.stdout.includes('"scenario": "incompatible-v9-drift"'),
   "dry-run omits the fail-closed scenario",
 );
-check(!dryRun.stdout.includes("postgres:postgres@"), "dry-run prints local database credentials");
+check(!dryRun.stdout.includes("postgresql://"), "dry-run prints a PostgreSQL connection string");
 check(!dryRun.stdout.includes("--linked"), "dry-run exposes linked execution");
 check(!dryRun.stdout.includes("--db-url"), "dry-run exposes arbitrary database execution");
 
