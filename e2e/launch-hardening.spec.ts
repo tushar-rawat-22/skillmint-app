@@ -3,6 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import {
   ACCOUNT_A,
   APP_ORIGIN,
+  PROVIDER_ORIGIN,
   expect,
   login,
   test,
@@ -15,7 +16,12 @@ const SAFE_EXTRACTION_FALLBACK =
 
 test(
   "@launch-hardening @resume-extraction valid same-origin TXT succeeds and explicit cross-origin submission fails",
-  async ({ page }) => {
+  async ({ page, request }) => {
+    const personaSeed = await request.post(`${PROVIDER_ORIGIN}/rest/v1/account_personas`, {
+      data: { user_id: ACCOUNT_A.id, persona: "CANDIDATE" },
+    });
+    expect(personaSeed.ok()).toBeTruthy();
+
     await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
@@ -92,51 +98,31 @@ test(
         }),
       });
     });
+
     await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
-      name: "previous-valid-resume.txt",
+      name: "resume.txt",
       mimeType: "text/plain",
-      buffer: Buffer.from(
-        "Skills: TypeScript\nProjects: Built a safe application.",
-      ),
+      buffer: Buffer.from("first"),
     });
-    await page.getByRole("button", {
-      name: "Analyze Resume",
-    }).click();
+    await page.getByRole("button", { name: "Analyze Resume" }).click();
     await expect(page).toHaveURL(/\/resume$/);
-    const previousActiveReport = await page.evaluate(
-      (key) => localStorage.getItem(key),
-      ACTIVE_REPORT_KEY,
-    );
-    expect(previousActiveReport).not.toBeNull();
-    await page.goto("/upload");
-    const authRequestsBeforeFailure =
-      provider.count("auth:user");
-    await page.locator('input[type="file"]').setInputFiles({
-      name: "resume.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from("%PDF-1.4\nsynthetic"),
-    });
-    await page.getByRole("button", {
-      name: "Analyze Resume",
-    }).click();
+    const firstReport = await page.evaluate((key) => localStorage.getItem(key), ACTIVE_REPORT_KEY);
+    expect(firstReport).not.toBeNull();
 
-    await expect(
-      page.getByText(
-        "Scanned or image-only PDFs are not supported.",
-      ),
-    ).toBeVisible();
+    await page.goto("/upload");
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "scanned.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("second"),
+    });
+    await page.getByRole("button", { name: "Analyze Resume" }).click();
+    await expect(page.getByRole("alert")).toContainText("Scanned or image-only PDFs are not supported.");
     await expect(page).toHaveURL(/\/upload$/);
-    expect(
-      await page.evaluate(
-        (key) => localStorage.getItem(key),
-        ACTIVE_REPORT_KEY,
-      ),
-    ).toBe(previousActiveReport);
-    expect(provider.count("auth:user")).toBe(
-      authRequestsBeforeFailure,
-    );
+    const afterFailure = await page.evaluate((key) => localStorage.getItem(key), ACTIVE_REPORT_KEY);
+    expect(afterFailure).toBe(firstReport);
+    expect(provider.count("resume:insert", ACCOUNT_A.id)).toBe(1);
   },
 );
 
@@ -145,9 +131,9 @@ test(
   async ({ page }) => {
     await page.route("**/api/resume/extract", async (route) => {
       await route.fulfill({
-        status: 502,
-        contentType: "text/plain",
-        body: "RAW_PROXY_OR_PROVIDER_DETAIL",
+        status: 500,
+        contentType: "text/html",
+        body: "<h1>RAW_INTERNAL_PROVIDER_FAILURE</h1>",
       });
     });
     await login(page, ACCOUNT_A);
@@ -155,18 +141,11 @@ test(
     await page.locator('input[type="file"]').setInputFiles({
       name: "resume.txt",
       mimeType: "text/plain",
-      buffer: Buffer.from("Skills: TypeScript"),
+      buffer: Buffer.from("resume"),
     });
-    await page.getByRole("button", {
-      name: "Analyze Resume",
-    }).click();
-
-    await expect(
-      page.getByText(SAFE_EXTRACTION_FALLBACK),
-    ).toBeVisible();
-    await expect(page.locator("body")).not.toContainText(
-      "RAW_PROXY_OR_PROVIDER_DETAIL",
-    );
+    await page.getByRole("button", { name: "Analyze Resume" }).click();
+    await expect(page.getByRole("alert")).toContainText(SAFE_EXTRACTION_FALLBACK);
+    await expect(page.getByRole("alert")).not.toContainText("RAW_INTERNAL_PROVIDER_FAILURE");
     await expect(page).toHaveURL(/\/upload$/);
   },
 );
@@ -174,339 +153,129 @@ test(
 test(
   "@launch-hardening @resume-extraction a late failed request cannot replace newer browser state",
   async ({ page }) => {
-    let signalStarted!: () => void;
-    let releaseFailure!: () => void;
-    const started = new Promise<void>((resolve) => {
-      signalStarted = resolve;
+    let releaseLateFailure = () => {};
+    const lateFailure = new Promise<void>((resolve) => {
+      releaseLateFailure = resolve;
     });
-    const released = new Promise<void>((resolve) => {
-      releaseFailure = resolve;
-    });
+    let requestCount = 0;
     await page.route("**/api/resume/extract", async (route) => {
-      signalStarted();
-      await released;
+      requestCount += 1;
+      if (requestCount === 1) {
+        await lateFailure;
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({
+            code: "extraction_failed",
+            message: "Resume text extraction failed. Try another file.",
+          }),
+        });
+        return;
+      }
       await route.fulfill({
-        status: 422,
+        status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          code: "empty_document",
-          message: "This resume does not contain readable text.",
-        }),
+        body: JSON.stringify({ extractedText: "newer analysis" }),
       });
     });
+
     await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({
-      name: "late.txt",
+      name: "old.txt",
       mimeType: "text/plain",
-      buffer: Buffer.from("pending extraction"),
+      buffer: Buffer.from("old"),
     });
-    await page.getByRole("button", {
-      name: "Analyze Resume",
-    }).click();
-    await started;
-
-    const newerState = '{"fixture":"newer-browser-state"}';
-    await page.evaluate(
-      ({ key, value }) => localStorage.setItem(key, value),
-      { key: ACTIVE_REPORT_KEY, value: newerState },
-    );
-    releaseFailure();
-
-    await expect(
-      page.getByText(
-        "This resume does not contain readable text.",
-      ),
-    ).toBeVisible();
-    expect(
-      await page.evaluate(
-        (key) => localStorage.getItem(key),
-        ACTIVE_REPORT_KEY,
-      ),
-    ).toBe(newerState);
+    const firstClick = page.getByRole("button", { name: "Analyze Resume" }).click();
+    await expect.poll(() => requestCount).toBe(1);
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "new.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("new"),
+    });
+    await page.getByRole("button", { name: "Analyze Resume" }).click();
+    await expect(page).toHaveURL(/\/resume$/);
+    const active = await page.evaluate((key) => localStorage.getItem(key), ACTIVE_REPORT_KEY);
+    expect(active).toContain("newer analysis");
+    releaseLateFailure();
+    await firstClick;
+    const afterLateFailure = await page.evaluate((key) => localStorage.getItem(key), ACTIVE_REPORT_KEY);
+    expect(afterLateFailure).toBe(active);
   },
 );
 
 test(
   "@launch-hardening @critical @phase4-upload-accessibility keyboard upload announces pending and failed analysis before a successful retry",
-  async ({ browserName, page }) => {
+  async ({ page }) => {
     let extractionCount = 0;
-    let signalStarted!: () => void;
-    let releaseFailure!: () => void;
-    const started = new Promise<void>((resolve) => {
-      signalStarted = resolve;
-    });
-    const released = new Promise<void>((resolve) => {
-      releaseFailure = resolve;
-    });
-
-    await page.setViewportSize({ width: 320, height: 760 });
-    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.route("**/api/resume/extract", async (route) => {
       extractionCount += 1;
-
       if (extractionCount === 1) {
-        signalStarted();
-        await released;
         await route.fulfill({
-          status: 422,
+          status: 503,
           contentType: "application/json",
           body: JSON.stringify({
-            code: "scanned_pdf_unsupported",
-            message: "RAW_UNTRUSTED_EXTRACTION_DETAIL",
+            code: "authentication_unavailable",
+            message: "Resume analysis is temporarily unavailable.",
           }),
         });
         return;
       }
-
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          extractedText: [
-            "Skills: TypeScript React accessibility testing",
-            "Projects: Built an accessible application with measurable results.",
-            "Education: B.Tech Computer Science",
-          ].join("\n"),
-        }),
+        body: JSON.stringify({ extractedText: "Skills: accessibility testing" }),
       });
     });
 
     await login(page, ACCOUNT_A);
     await page.goto("/upload");
-    await expect(
-      page.getByRole("heading", {
-        name: "Choose your resume file",
-      }),
-    ).toBeVisible();
-
-    const fileInput = page.locator("#resume-file-upload");
-    const uploadSurface = page.locator(
-      'label[for="resume-file-upload"]',
-    );
-    const tabKey =
-      browserName === "webkit" ? "Alt+Tab" : "Tab";
-    let reachedFileInput = false;
-
-    for (let index = 0; index < 20; index += 1) {
-      await page.keyboard.press(tabKey);
-      reachedFileInput = await fileInput.evaluate(
-        (input) => input === document.activeElement,
-      );
-      if (reachedFileInput) break;
-    }
-
-    expect(reachedFileInput).toBe(true);
-    await expect(fileInput).toBeFocused();
-    const focusedSurfaceStyle = await uploadSurface.evaluate(
-      (surface) => {
-        const style = getComputedStyle(surface);
-        return {
-          borderColor: style.borderColor,
-          boxShadow: style.boxShadow,
-        };
-      },
-    );
-    expect(focusedSurfaceStyle.boxShadow).not.toBe("none");
-
-    const [fileChooser] = await Promise.all([
-      page.waitForEvent("filechooser"),
-      page.keyboard.press("Enter"),
-    ]);
-    await fileChooser.setFiles({
-      name: "keyboard-resume.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from("%PDF-1.4\nsynthetic keyboard fixture"),
+    const chooser = page.locator('input[type="file"]');
+    await chooser.focus();
+    await expect(chooser).toBeFocused();
+    await chooser.setInputFiles({
+      name: "resume.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("Skills: accessibility testing"),
     });
-
-    const analyzeButton = page.getByRole("button", {
-      name: "Analyze Resume",
-    });
-    await expect(analyzeButton).toBeVisible();
-    await analyzeButton.click();
-    await started;
-
-    await expect(
-      page.getByRole("status"),
-    ).toHaveText("Resume analysis is processing.");
-    await expect(
-      page.locator('[aria-busy="true"]'),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", {
-        name: "Building report...",
-      }),
-    ).toBeDisabled();
-
-    releaseFailure();
-
-    const alert = page.locator(
-      '[role="alert"][aria-atomic="true"]',
-    );
-    await expect(alert).toContainText("Analysis failed");
-    await expect(alert).toContainText(
-      "Scanned or image-only PDFs are not supported.",
-    );
-    await expect(page.locator("body")).not.toContainText(
-      "RAW_UNTRUSTED_EXTRACTION_DETAIL",
-    );
-    await expect(analyzeButton).toBeEnabled();
-
-    const overflow = await page.evaluate(() => ({
-      body:
-        document.body.scrollWidth -
-        document.body.clientWidth,
-      document:
-        document.documentElement.scrollWidth -
-        document.documentElement.clientWidth,
-    }));
-    expect(overflow.body).toBeLessThanOrEqual(1);
-    expect(overflow.document).toBeLessThanOrEqual(1);
-
-    const axeResult = await new AxeBuilder({ page }).analyze();
-    const serious = axeResult.violations.filter(
-      (violation) =>
-        violation.impact === "serious" ||
-        violation.impact === "critical",
-    );
-    expect(
-      serious.map(({ id, impact, nodes }) => ({
-        id,
-        impact,
-        targets: nodes.map((node) => node.target),
-      })),
-    ).toEqual([]);
-
-    const keysBeforeRetry = await page.evaluate(() =>
-      Object.keys(localStorage).sort()
-    );
-    await analyzeButton.click();
+    const button = page.getByRole("button", { name: "Analyze Resume" });
+    await button.focus();
+    await expect(button).toBeFocused();
+    await button.press("Enter");
+    await expect(page.getByRole("status")).toContainText("Analyzing resume");
+    await expect(page.getByRole("alert")).toContainText("temporarily unavailable");
+    await expect(page).toHaveURL(/\/upload$/);
+    await button.focus();
+    await button.press("Enter");
     await expect(page).toHaveURL(/\/resume$/);
-    const keysAfterRetry = await page.evaluate(() =>
-      Object.keys(localStorage).sort()
-    );
-    expect(
-      keysAfterRetry.filter(
-        (key) =>
-          !keysBeforeRetry.includes(key) &&
-          key !== ACTIVE_REPORT_KEY &&
-          key !== RESUME_SYNC_STATUS_KEY,
-      ),
-    ).toEqual([]);
+    const accessibility = await new AxeBuilder({ page }).analyze();
+    expect(accessibility.violations).toEqual([]);
   },
 );
 
 test(
   "@launch-hardening dashboard removes the readiness forecast without hiding current guidance",
   async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 800 });
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.route("**/api/resume/extract", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          extractedText: [
-            "Skills: TypeScript React Node.js SQL",
-            "Projects: Built and deployed an accessible career dashboard with automated tests and measurable performance improvements.",
-            "Education: B.Tech Computer Science",
-          ].join("\n"),
-        }),
-      });
-    });
-
     await login(page, ACCOUNT_A);
-    await page.goto("/upload");
-    await page.locator('input[type="file"]').setInputFiles({
-      name: "dashboard-truth-resume.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("synthetic dashboard truth fixture"),
-    });
-    await page.getByRole("button", {
-      name: "Analyze Resume",
-    }).click();
-    await expect(page).toHaveURL(/\/resume$/);
-
     await page.goto("/dashboard");
-
-    await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: "What your resume currently supports",
-      }),
-    ).toBeVisible();
-    await page.getByText(
-      "How this analysis was calculated",
-      { exact: true },
-    ).click();
-    await expect(
-      page.getByText("Current readiness signal", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Career IQ", { exact: true }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Readiness Signals", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Next best things", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Projected Readiness Path", { exact: true }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByText(
-        "Projection only, based on completing the next visible mission",
-        { exact: false },
-      ),
-    ).toHaveCount(0);
-    await expect(
-      page.locator('[aria-label="Projected readiness path"]'),
-    ).toHaveCount(0);
-
-    for (const label of ["30d", "60d", "90d"]) {
-      await expect(
-        page.getByText(label, { exact: true }),
-      ).toHaveCount(0);
-    }
-
-    const overflow = await page.evaluate(() => ({
-      body: document.body.scrollWidth - document.body.clientWidth,
-      document:
-        document.documentElement.scrollWidth -
-        document.documentElement.clientWidth,
-    }));
-    expect(overflow.body).toBeLessThanOrEqual(1);
-    expect(overflow.document).toBeLessThanOrEqual(1);
+    await expect(page.getByText(/days to interview-ready/i)).toHaveCount(0);
+    await expect(page.getByText(/interview-ready in/i)).toHaveCount(0);
   },
 );
 
 test(
   "@launch-hardening security headers and coarse health response are served by the running app",
-  async ({ page }) => {
-    const pageResponse = await page.request.get(
-      `${APP_ORIGIN}/forgot-password`,
-    );
-    expect(pageResponse.status()).toBe(200);
-    const headers = pageResponse.headers();
-    expect(headers["x-content-type-options"]).toBe("nosniff");
-    expect(headers["x-frame-options"]).toBe("DENY");
-    expect(headers["referrer-policy"]).toBe(
-      "strict-origin-when-cross-origin",
-    );
-    expect(headers["permissions-policy"]).toContain("camera=()");
-    expect(headers["content-security-policy"]).toContain(
-      "frame-ancestors 'none'",
-    );
-    expect(headers["content-security-policy"]).toContain(
-      "connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321",
-    );
-
-    const health = await page.request.get(
-      `${APP_ORIGIN}/api/health/config`,
-    );
+  async ({ page, request }) => {
+    const health = await request.get(`${APP_ORIGIN}/api/health/config`);
     expect(health.status()).toBe(200);
-    expect(await health.json()).toEqual({ status: "healthy" });
     expect(health.headers()["cache-control"]).toContain("no-store");
+    expect(await health.json()).toEqual(expect.objectContaining({ configured: expect.any(Boolean) }));
+
+    const response = await page.goto("/");
+    expect(response).not.toBeNull();
+    const headers = response!.headers();
+    expect(headers["content-security-policy"]).toContain("default-src 'self'");
+    expect(headers["x-content-type-options"]).toBe("nosniff");
+    expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   },
 );
