@@ -12,6 +12,7 @@ import {
   verifyBearerAuthorization,
   type ServerAuthorizationResult,
 } from "@/lib/supabase/serverAuth";
+import { getAccountPersona } from "@/modules/accountPersona";
 
 export const runtime = "nodejs";
 
@@ -48,6 +49,14 @@ export async function handleResumeExtraction(
         ? "authentication_unavailable"
         : "authentication_required",
     );
+  }
+
+  const persona = await getAccountPersona(authorization.userId);
+  if (persona.status === "unavailable") {
+    return errorResponse("authentication_unavailable");
+  }
+  if (persona.status !== "resolved" || persona.persona !== "CANDIDATE") {
+    return errorResponse("candidate_persona_required");
   }
 
   const contentLength = request.headers.get("content-length");
