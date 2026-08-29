@@ -14,7 +14,8 @@
         "20260727000800",
         "20260730000900",
         "20260823001000",
-        "20260823001100"
+        "20260823001100",
+        "20260829001200"
       ]
     },
     "production": {
@@ -32,7 +33,8 @@
         "20260727000800",
         "20260730000900",
         "20260823001000",
-        "20260823001100"
+        "20260823001100",
+        "20260829001200"
       ],
       "migration_history_repair": "history_only_no_sql_execution"
     }
@@ -121,6 +123,13 @@
       "migration_path": "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
       "sha256": "007c6076a68de87bc96f6e85b886d93add5458dbfdc96da8210c22081ecd8cee",
       "rollout_classification": "pending_recruiter_evidence_review"
+    },
+    {
+      "version": "20260829001200",
+      "source_path": "supabase/schema_v12_account_persona_authority.sql",
+      "migration_path": "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
+      "sha256": "2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507",
+      "rollout_classification": "pending_account_persona_authority"
     }
   ]
 }

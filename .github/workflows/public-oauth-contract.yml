@@ -48,3 +48,6 @@ jobs:
 
       - name: Verify OAuth PKCE route boundaries
         run: node scripts/public-oauth-route-fixtures.mjs
+
+      - name: Verify server-owned persona authority
+        run: node scripts/account-persona-authority-fixtures.mjs

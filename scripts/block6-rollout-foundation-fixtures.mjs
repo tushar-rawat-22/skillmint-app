@@ -84,6 +84,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v9_public_function_acl_normalization.sql",
   "supabase/schema_v10_two_sided_beta_foundation.sql",
   "supabase/schema_v11_recruiter_evidence_review.sql",
+  "supabase/schema_v12_account_persona_authority.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -96,6 +97,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
   "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql",
   "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
+  "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -185,6 +187,13 @@ const migrations = [
     hash: "007c6076a68de87bc96f6e85b886d93add5458dbfdc96da8210c22081ecd8cee",
     classification: "pending_recruiter_evidence_review",
   },
+  {
+    version: "20260829001200",
+    source: "supabase/schema_v12_account_persona_authority.sql",
+    migration: "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
+    hash: "2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507",
+    classification: "pending_account_persona_authority",
+  },
 ];
 
 for (const item of migrations) {
@@ -201,7 +210,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered twelve SQL files",
+  "migration directory must contain the exact ordered thirteen SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -234,7 +243,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 12, "manifest must contain twelve migrations");
+equal(manifest.ordered_migrations.length, 13, "manifest must contain thirteen migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -298,6 +307,11 @@ equal(
   manifest.ordered_migrations[11].version,
   migrations[11].version,
   "recruiter evidence review must follow the two-sided beta foundation",
+);
+equal(
+  manifest.ordered_migrations[12].version,
+  migrations[12].version,
+  "account persona authority must follow recruiter evidence review",
 );
 
 const config = text("supabase/config.toml");
