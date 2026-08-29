@@ -56,6 +56,9 @@ export async function GET(request: Request) {
     const admin = createSupabaseAdminClient();
     if (source !== null) {
       if (!isUuid(source)) return error("invalid_request", 400);
+      const persona = await getPersona(admin, authorization.userId);
+      if (persona.status === "error") return error("temporarily_unavailable", 503);
+      if (persona.value !== "CANDIDATE") return error("candidate_persona_required", 403);
       const briefResponse = await admin.from("proof_briefs")
         .select("id,user_id,source_resume_analysis_id")
         .eq("user_id", authorization.userId)
