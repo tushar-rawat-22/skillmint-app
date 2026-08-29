@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { getPublicOAuthConfiguration } from "@/config/publicOAuth";
 import { getTrustedAppOrigin } from "@/lib/supabase/config";
 import { createRouteSupabaseClient } from "@/lib/supabase/routeClient";
+import {
+  accountPersonaDestination,
+  getAccountPersona,
+} from "@/modules/accountPersona";
 
 const MAX_CODE_LENGTH = 4_096;
 
@@ -33,11 +37,23 @@ export async function GET(request: Request) {
     }
 
     const { data, error: userError } = await supabase.auth.getUser();
-    if (userError || !data.user?.id?.trim()) {
+    const userId = data.user?.id?.trim();
+    if (userError || !userId) {
       return redirectToLogin(appOrigin, "unavailable");
     }
 
-    return NextResponse.redirect(new URL("/", appOrigin), 303);
+    const persona = await getAccountPersona(userId);
+    if (persona.status === "resolved") {
+      return NextResponse.redirect(
+        new URL(accountPersonaDestination(persona.persona), appOrigin),
+        303,
+      );
+    }
+    if (persona.status === "missing") {
+      return NextResponse.redirect(new URL("/auth/persona", appOrigin), 303);
+    }
+
+    return redirectToLogin(appOrigin, "unavailable");
   } catch {
     return redirectToLogin(appOrigin, "unavailable");
   }
