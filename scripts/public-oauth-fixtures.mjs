@@ -145,7 +145,7 @@ const clientImporters = sourceFiles.filter((filePath) => {
 });
 assert.deepEqual(clientImporters, []);
 
-console.log("Public OAuth fixtures: 8/8 passed.");
+console.log("Public OAuth configuration fixtures: PASS.");
 
 function collectFiles(directory) {
   return fs.readdirSync(directory, { withFileTypes: true })
