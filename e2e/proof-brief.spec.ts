@@ -22,6 +22,7 @@ test("@proof-brief candidate creates, shares, and revokes a derived-only brief",
   request,
 }) => {
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  await seedPersona(request, ACCOUNT_A.id, "CANDIDATE");
   await page.route("**/api/resume/extract", async (route) => {
     await route.fulfill({
       status: 200,
@@ -106,6 +107,7 @@ test("@proof-brief mutation API rejects untrusted request shapes without writing
   });
   expect(loggedOut.status()).toBe(401);
 
+  await seedPersona(request, ACCOUNT_A.id, "CANDIDATE");
   await login(page, ACCOUNT_A);
   const cases = [
     page.request.post(`${APP_ORIGIN}/api/proof-brief`, { data: body }),
@@ -147,12 +149,53 @@ test("@proof-brief mutation API rejects untrusted request shapes without writing
   expect(await readStoredBrief(request)).toBeNull();
 });
 
+test("@proof-brief recruiter persona cannot use candidate Proof Brief API", async ({
+  page,
+  request,
+}) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  await seedPersona(request, ACCOUNT_A.id, "RECRUITER");
+  await login(page, ACCOUNT_A);
+
+  const read = await page.request.get(
+    `${APP_ORIGIN}/api/proof-brief?source=dddddddd-dddd-4ddd-8ddd-dddddddddddd`,
+  );
+  expect(read.status()).toBe(403);
+  expect(await read.json()).toEqual(expect.objectContaining({
+    code: "candidate_persona_required",
+  }));
+
+  const mutation = await page.request.post(`${APP_ORIGIN}/api/proof-brief`, {
+    headers: { Origin: APP_ORIGIN },
+    data: {
+      action: "create_or_refresh",
+      sourceResumeAnalysisId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    },
+  });
+  expect(mutation.status()).toBe(403);
+  expect(await mutation.json()).toEqual(expect.objectContaining({
+    code: "candidate_persona_required",
+  }));
+  expect(await readStoredBrief(request)).toBeNull();
+});
+
 async function readStoredBrief(request: import("@playwright/test").APIRequestContext) {
   const response = await request.get(
     `${PROVIDER_ORIGIN}/__proof-brief?user=${encodeURIComponent(ACCOUNT_A.id)}`,
   );
   const text = await response.text();
   return text ? JSON.parse(text) : null;
+}
+
+async function seedPersona(
+  request: import("@playwright/test").APIRequestContext,
+  userId: string,
+  persona: "CANDIDATE" | "RECRUITER",
+) {
+  const response = await request.post(`${PROVIDER_ORIGIN}/rest/v1/account_personas`, {
+    data: { user_id: userId, persona },
+  });
+  expect(response.ok()).toBeTruthy();
 }
 
 test("@proof-brief public candidate-authorized brief is minimal and human-controlled", async ({
