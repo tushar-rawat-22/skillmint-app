@@ -155,15 +155,25 @@ async function readBoundedBody(request: Request): Promise<ArrayBuffer> {
   const chunks: Uint8Array[] = [];
   let totalBytes = 0;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    totalBytes += value.byteLength;
-    if (totalBytes > RESUME_UPLOAD_LIMITS.maxMultipartBytes) {
-      await reader.cancel();
-      throw new ResumeExtractionError("file_too_large");
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      totalBytes += value.byteLength;
+      if (totalBytes > RESUME_UPLOAD_LIMITS.maxMultipartBytes) {
+        throw new ResumeExtractionError("file_too_large");
+      }
+      chunks.push(value);
     }
-    chunks.push(value);
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (totalBytes === 0) {
+    throw new ResumeExtractionError("malformed_request");
   }
 
   const body = new Uint8Array(totalBytes);
@@ -172,27 +182,36 @@ async function readBoundedBody(request: Request): Promise<ArrayBuffer> {
     body.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return body.buffer;
+  return body.buffer as ArrayBuffer;
 }
 
-function getOriginError(request: Request): ResumeExtractionErrorCode | null {
-  let expectedOrigin: string;
-  try {
-    const requestUrl = new URL(request.url);
-    expectedOrigin = requestUrl.origin;
-  } catch {
-    return "malformed_request";
-  }
-
-  const secFetchSite = request.headers.get("sec-fetch-site");
-  if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "none") {
+function getOriginError(
+  request: Request,
+): ResumeExtractionErrorCode | null {
+  const fetchSite = request.headers.get("sec-fetch-site")
+    ?.trim()
+    .toLowerCase();
+  if (fetchSite === "cross-site") {
     return "cross_origin_request";
   }
 
   const origin = request.headers.get("origin");
-  if (origin) {
+  if (origin !== null) {
     try {
-      if (new URL(origin).origin !== expectedOrigin) {
+      const parsedOrigin = new URL(origin);
+      const suppliedOrigin = parsedOrigin.origin;
+      if (
+        !["http:", "https:"].includes(parsedOrigin.protocol) ||
+        parsedOrigin.username ||
+        parsedOrigin.password ||
+        parsedOrigin.pathname !== "/" ||
+        parsedOrigin.search ||
+        parsedOrigin.hash ||
+        suppliedOrigin !== origin
+      ) {
+        return "cross_origin_request";
+      }
+      if (!getRequestOrigins(request).has(suppliedOrigin)) {
         return "cross_origin_request";
       }
     } catch {
@@ -203,19 +222,68 @@ function getOriginError(request: Request): ResumeExtractionErrorCode | null {
   return null;
 }
 
+function getRequestOrigins(request: Request): Set<string> {
+  const requestUrl = new URL(request.url);
+  const origins = new Set([requestUrl.origin]);
+  const hostOrigin = getStrictHostOrigin(
+    request.headers.get("host"),
+    requestUrl.protocol,
+  );
+  if (hostOrigin) {
+    origins.add(hostOrigin);
+  }
+
+  return origins;
+}
+
+function getStrictHostOrigin(
+  host: string | null,
+  protocol: string,
+): string | null {
+  if (
+    !host ||
+    !["http:", "https:"].includes(protocol) ||
+    host.length > 255 ||
+    /[\u0000-\u0020\u007f@,\/\\?#]/u.test(host)
+  ) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(`${protocol}//${host}`);
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== "/" ||
+      parsed.search ||
+      parsed.hash ||
+      parsed.host.toLowerCase() !== host.toLowerCase()
+    ) {
+      return null;
+    }
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
 function errorResponse(code: ResumeExtractionErrorCode) {
-  const error = RESUME_EXTRACTION_ERRORS[code];
-  return NextResponse.json(
-    { code, message: error.message },
+  const contract = RESUME_EXTRACTION_ERRORS[code];
+  return jsonResponse(
     {
-      status: error.status,
-      headers: EXTRACTION_RESPONSE_HEADERS,
+      code,
+      message: contract.message,
     },
+    contract.status,
   );
 }
 
-function jsonResponse(body: { extractedText: string }) {
+function jsonResponse(
+  body: object,
+  status = 200,
+) {
   return NextResponse.json(body, {
+    status,
     headers: EXTRACTION_RESPONSE_HEADERS,
   });
 }
