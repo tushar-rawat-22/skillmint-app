@@ -1,0 +1,63 @@
+name: Production migration rehearsal
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/production-migration-rehearsal.yml"
+      - "scripts/production-local-migration-rehearsal.mjs"
+      - "scripts/production-local-migration-rehearsal-fixtures.mjs"
+      - "scripts/production-pending-migration-integrity-fixtures.mjs"
+      - "supabase/migrations/**"
+      - "supabase/sources/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-migration-rehearsal-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rehearsal:
+    name: production-migration-rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "1"
+      SKILLMINT_ALLOW_LOCAL_DB_RESET: "YES_RESET_LOCAL_SKILLMINT_DB"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.17.0
+          package-manager-cache: false
+
+      - name: Install repository dependencies
+        run: npm ci
+
+      - name: Install pinned Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false supabase@2.109.1
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+          test "$(./node_modules/.bin/supabase --version)" = "2.109.1"
+
+      - name: Start isolated local Supabase
+        run: supabase start
+
+      - name: Execute V1-V12 rehearsal
+        run: node scripts/production-local-migration-rehearsal.mjs --execute
+
+      - name: Stop isolated local Supabase
+        if: always()
+        run: supabase stop --no-backup
