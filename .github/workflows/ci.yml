@@ -153,4 +153,5 @@ jobs:
           node scripts/proof-brief-fixtures.mjs
           node scripts/recruiter-evidence-fixtures.mjs
           node scripts/production-rollout-foundation-fixtures.mjs
+          node scripts/production-pending-migration-integrity-fixtures.mjs
           node scripts/documentation-status-fixtures.mjs
