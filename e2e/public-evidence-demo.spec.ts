@@ -105,6 +105,13 @@ test("@public-demo @demo-enabled demo is synthetic, evidence-first, accessible, 
       name: "What changed after stronger evidence was added?",
     }),
   ).toBeVisible();
+  expect(
+    await page.locator(
+      'section[aria-labelledby="demo-progress-title"], section[aria-labelledby="demo-evidence-title"]',
+    ).evaluateAll((sections) =>
+      sections.map((section) => section.getAttribute("aria-labelledby"))
+    ),
+  ).toEqual(["demo-progress-title", "demo-evidence-title"]);
   await expect(page.getByText("API integration, Component testing", { exact: true })).toBeVisible();
   await expect(
     page.getByText("Synthetic portfolio-link category detected", { exact: true }),
