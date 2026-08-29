@@ -26,6 +26,11 @@ type ResumeRequestVerifier = (
   authorization: string | null,
 ) => Promise<ServerAuthorizationResult>;
 
+type AuthenticatedServerAuthorization = Extract<
+  ServerAuthorizationResult,
+  { readonly status: "authenticated" }
+>;
+
 export async function POST(request: Request) {
   const authorization = await authorizeResumeRequest(
     request,
@@ -62,7 +67,7 @@ export async function handleResumeExtraction(
 async function authorizeResumeRequest(
   request: Request,
   verifyRequest: ResumeRequestVerifier,
-): Promise<ServerAuthorizationResult | Response> {
+): Promise<AuthenticatedServerAuthorization | Response> {
   const originError = getOriginError(request);
   if (originError) {
     return errorResponse(originError);
@@ -150,25 +155,15 @@ async function readBoundedBody(request: Request): Promise<ArrayBuffer> {
   const chunks: Uint8Array[] = [];
   let totalBytes = 0;
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-
-      totalBytes += value.byteLength;
-      if (totalBytes > RESUME_UPLOAD_LIMITS.maxMultipartBytes) {
-        throw new ResumeExtractionError("file_too_large");
-      }
-      chunks.push(value);
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > RESUME_UPLOAD_LIMITS.maxMultipartBytes) {
+      await reader.cancel();
+      throw new ResumeExtractionError("file_too_large");
     }
-  } finally {
-    reader.releaseLock();
-  }
-
-  if (totalBytes === 0) {
-    throw new ResumeExtractionError("malformed_request");
+    chunks.push(value);
   }
 
   const body = new Uint8Array(totalBytes);
@@ -177,36 +172,27 @@ async function readBoundedBody(request: Request): Promise<ArrayBuffer> {
     body.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return body.buffer as ArrayBuffer;
+  return body.buffer;
 }
 
-function getOriginError(
-  request: Request,
-): ResumeExtractionErrorCode | null {
-  const fetchSite = request.headers.get("sec-fetch-site")
-    ?.trim()
-    .toLowerCase();
-  if (fetchSite === "cross-site") {
+function getOriginError(request: Request): ResumeExtractionErrorCode | null {
+  let expectedOrigin: string;
+  try {
+    const requestUrl = new URL(request.url);
+    expectedOrigin = requestUrl.origin;
+  } catch {
+    return "malformed_request";
+  }
+
+  const secFetchSite = request.headers.get("sec-fetch-site");
+  if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "none") {
     return "cross_origin_request";
   }
 
   const origin = request.headers.get("origin");
-  if (origin !== null) {
+  if (origin) {
     try {
-      const parsedOrigin = new URL(origin);
-      const suppliedOrigin = parsedOrigin.origin;
-      if (
-        !["http:", "https:"].includes(parsedOrigin.protocol) ||
-        parsedOrigin.username ||
-        parsedOrigin.password ||
-        parsedOrigin.pathname !== "/" ||
-        parsedOrigin.search ||
-        parsedOrigin.hash ||
-        suppliedOrigin !== origin
-      ) {
-        return "cross_origin_request";
-      }
-      if (!getRequestOrigins(request).has(suppliedOrigin)) {
+      if (new URL(origin).origin !== expectedOrigin) {
         return "cross_origin_request";
       }
     } catch {
@@ -217,68 +203,19 @@ function getOriginError(
   return null;
 }
 
-function getRequestOrigins(request: Request): Set<string> {
-  const requestUrl = new URL(request.url);
-  const origins = new Set([requestUrl.origin]);
-  const hostOrigin = getStrictHostOrigin(
-    request.headers.get("host"),
-    requestUrl.protocol,
-  );
-  if (hostOrigin) {
-    origins.add(hostOrigin);
-  }
-
-  return origins;
-}
-
-function getStrictHostOrigin(
-  host: string | null,
-  protocol: string,
-): string | null {
-  if (
-    !host ||
-    !["http:", "https:"].includes(protocol) ||
-    host.length > 255 ||
-    /[\u0000-\u0020\u007f@,\/\\?#]/u.test(host)
-  ) {
-    return null;
-  }
-
-  try {
-    const parsed = new URL(`${protocol}//${host}`);
-    if (
-      parsed.username ||
-      parsed.password ||
-      parsed.pathname !== "/" ||
-      parsed.search ||
-      parsed.hash ||
-      parsed.host.toLowerCase() !== host.toLowerCase()
-    ) {
-      return null;
-    }
-    return parsed.origin;
-  } catch {
-    return null;
-  }
-}
-
 function errorResponse(code: ResumeExtractionErrorCode) {
-  const contract = RESUME_EXTRACTION_ERRORS[code];
-  return jsonResponse(
+  const error = RESUME_EXTRACTION_ERRORS[code];
+  return NextResponse.json(
+    { code, message: error.message },
     {
-      code,
-      message: contract.message,
+      status: error.status,
+      headers: EXTRACTION_RESPONSE_HEADERS,
     },
-    contract.status,
   );
 }
 
-function jsonResponse(
-  body: object,
-  status = 200,
-) {
+function jsonResponse(body: { extractedText: string }) {
   return NextResponse.json(body, {
-    status,
     headers: EXTRACTION_RESPONSE_HEADERS,
   });
 }
