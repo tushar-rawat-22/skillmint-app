@@ -55,13 +55,13 @@ export default async function PersonaPage({ searchParams }: PersonaPageProps) {
             </div>
           ) : (
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <form action="/auth/persona" method="post">
+              <form action="/auth/persona/complete" method="post">
                 <input type="hidden" name="persona" value="CANDIDATE" />
                 <button type="submit" className={`${premiumPrimaryCta} w-full justify-center`}>
                   I am a candidate
                 </button>
               </form>
-              <form action="/auth/persona" method="post">
+              <form action="/auth/persona/complete" method="post">
                 <input type="hidden" name="persona" value="RECRUITER" />
                 <button type="submit" className={`${premiumSecondaryCta} w-full justify-center`}>
                   I am reviewing candidate evidence
