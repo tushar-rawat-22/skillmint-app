@@ -42,6 +42,7 @@ test("@recruiter-evidence recruiter creates a role map and sends bounded candida
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
 
+  await seedPersona(request, ACCOUNT_A.id, "CANDIDATE");
   await login(page, ACCOUNT_A);
   const candidateResult = await page.evaluate(async ({ source, expectedUserId }) => {
     const response = await fetch(`/api/recruiter-evidence?candidateSource=${source}&expectedUserId=${expectedUserId}`, { credentials: "same-origin" });

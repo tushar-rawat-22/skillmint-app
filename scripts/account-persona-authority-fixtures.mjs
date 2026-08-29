@@ -39,6 +39,7 @@ assert.equal(manifest.generated_for.production.pending_execution.at(-1), "202608
 assert.match(recruiterRoute, /const authorization = await getServerAuthorization\(\)/);
 assert.match(recruiterRoute, /authorization\.userId !== mutation\.expectedUserId/);
 assert.match(recruiterRoute, /const admin = createSupabaseAdminClient\(\)/);
+assert.match(recruiterRoute, /if \(source !== null\) \{[\s\S]*persona\.value !== "CANDIDATE"[\s\S]*"candidate_persona_required", 403[\s\S]*admin\.from\("proof_briefs"\)/);
 assert.match(recruiterRoute, /persona\.value !== "RECRUITER"/);
 assert.doesNotMatch(recruiterRoute, /set_persona/);
 assert.doesNotMatch(
