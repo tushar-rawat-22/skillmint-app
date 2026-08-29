@@ -12,6 +12,7 @@ const migrationPath = "supabase/migrations/20260829001200_schema_v12_account_per
 const source = read(sourcePath);
 const migration = read(migrationPath);
 const recruiterRoute = read("src/app/api/recruiter-evidence/route.ts");
+const proofBriefRoute = read("src/app/api/proof-brief/route.ts");
 const manifest = JSON.parse(read("supabase/migrations/manifest.json"));
 
 assert.equal(source, migration, "V12 source and migration must remain byte-identical");
@@ -38,6 +39,19 @@ assert.match(recruiterRoute, /authorization\.userId !== mutation\.expectedUserId
 assert.match(recruiterRoute, /const admin = createSupabaseAdminClient\(\)/);
 assert.match(recruiterRoute, /admin\.from\("account_personas"\)[\s\S]*\.insert\(\{ user_id: authorization\.userId, persona: mutation\.persona \}\)/);
 assert.match(recruiterRoute, /persona\.value && persona\.value !== mutation\.persona/);
+
+assert.match(proofBriefRoute, /import \{ getAccountPersona \} from "@\/modules\/accountPersona";/);
+assert.match(proofBriefRoute, /const personaFailure = await requireCandidatePersona\(authorization\.userId\);/);
+assert.match(proofBriefRoute, /if \(personaFailure\) return personaFailure;/);
+assert.match(proofBriefRoute, /const persona = await getAccountPersona\(userId\);/);
+assert.match(proofBriefRoute, /persona\.status === "unavailable"[\s\S]*"temporarily_unavailable", 503/);
+assert.match(proofBriefRoute, /persona\.status !== "resolved" \|\| persona\.persona !== "CANDIDATE"/);
+assert.match(proofBriefRoute, /"candidate_persona_required", 403/);
+assert.equal(
+  proofBriefRoute.match(/requireCandidatePersona\(authorization\.userId\)/g)?.length,
+  2,
+  "Proof Brief GET and POST must both fail closed on candidate persona",
+);
 
 console.log("Account persona authority fixtures: PASS.");
 
