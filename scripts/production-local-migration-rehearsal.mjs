@@ -21,8 +21,13 @@ export const ORDERED_VERSIONS = [
   "20260823001100",
   "20260829001200",
 ];
-export const LOCAL_DATABASE_URL =
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+export const LOCAL_DATABASE_CONFIG = Object.freeze({
+  host: "127.0.0.1",
+  port: 54322,
+  database: "postgres",
+  user: "postgres",
+  password: "postgres",
+});
 
 const V9_VERSION = "20260730000900";
 const REQUIRED_CONFIRMATION = "YES_RESET_LOCAL_SKILLMINT_DB";
@@ -95,6 +100,21 @@ export function buildRehearsalPlan() {
 }
 
 export function validateLocalOnlyPlan(plan) {
+  assert.deepEqual(
+    {
+      host: LOCAL_DATABASE_CONFIG.host,
+      port: LOCAL_DATABASE_CONFIG.port,
+      database: LOCAL_DATABASE_CONFIG.database,
+      user: LOCAL_DATABASE_CONFIG.user,
+    },
+    {
+      host: "127.0.0.1",
+      port: 54322,
+      database: "postgres",
+      user: "postgres",
+    },
+    "rehearsal database target changed",
+  );
   for (const scenario of plan) {
     for (const args of [scenario.reset, scenario.migrate]) {
       assert.ok(args.includes("--local"), `${scenario.scenario} is not local-only`);
@@ -126,7 +146,7 @@ function runSupabase(args, { expectSuccess = true } = {}) {
 }
 
 async function withDatabase(callback) {
-  const client = new Client({ connectionString: LOCAL_DATABASE_URL });
+  const client = new Client(LOCAL_DATABASE_CONFIG);
   await client.connect();
   try {
     return await callback(client);
@@ -241,7 +261,7 @@ function printPlan() {
       destructive_target: "local SkillMint Supabase database only",
       confirmation_env: `SKILLMINT_ALLOW_LOCAL_DB_RESET=${REQUIRED_CONFIRMATION}`,
       cli_version: "2.109.1",
-      database: LOCAL_DATABASE_URL.replace("postgres:postgres@", "***@"),
+      database: `${LOCAL_DATABASE_CONFIG.host}:${LOCAL_DATABASE_CONFIG.port}/${LOCAL_DATABASE_CONFIG.database}`,
       baseline_version: BASELINE_VERSION,
       final_version: ORDERED_VERSIONS.at(-1),
       scenarios: plan.map(({ scenario, reset, migrate, expectMigrationSuccess }) => ({
