@@ -29,7 +29,6 @@ const ROLE_MAP_COLUMNS = "id,user_id,role_title,job_description,evidence_map,cre
 const REVIEW_COLUMNS = "id,role_title,question_category,question_text,feedback_category,review_ease,review_time_signal,note,created_at";
 
 type Mutation =
-  | { readonly action: "set_persona"; readonly expectedUserId: string; readonly persona: "CANDIDATE" | "RECRUITER" }
   | { readonly action: "create_role_map"; readonly expectedUserId: string; readonly roleTitle: string; readonly jobDescription: string }
   | {
     readonly action: "submit_review";
@@ -111,16 +110,6 @@ export async function POST(request: Request) {
     const admin = createSupabaseAdminClient();
     const persona = await getPersona(admin, authorization.userId);
     if (persona.status === "error") return error("temporarily_unavailable", 503);
-    if (mutation.action === "set_persona") {
-      if (persona.value && persona.value !== mutation.persona) return error("persona_locked", 409);
-      if (persona.value === mutation.persona) return json({ persona: persona.value }, 200);
-      const response = await admin.from("account_personas")
-        .insert({ user_id: authorization.userId, persona: mutation.persona })
-        .select("user_id,persona");
-      if (response.error || !Array.isArray(response.data) || response.data.length !== 1) return error("temporarily_unavailable", 503);
-      const inserted = parsePersonaRow(response.data[0], authorization.userId);
-      return inserted === mutation.persona ? json({ persona: inserted }, 201) : error("temporarily_unavailable", 503);
-    }
     if (persona.value !== "RECRUITER") return error("recruiter_persona_required", 403);
 
     if (mutation.action === "create_role_map") {
@@ -188,7 +177,6 @@ function parseMutation(raw: string): Mutation | null {
   try { value = JSON.parse(raw); } catch { return null; }
   if (!isRecord(value) || typeof value.action !== "string") return null;
   if (!isUuid(value.expectedUserId)) return null;
-  if (value.action === "set_persona" && exact(value, ["action", "expectedUserId", "persona"]) && (value.persona === "CANDIDATE" || value.persona === "RECRUITER")) return { action: value.action, expectedUserId: value.expectedUserId, persona: value.persona };
   if (value.action === "create_role_map" && exact(value, ["action", "expectedUserId", "roleTitle", "jobDescription"]) && typeof value.roleTitle === "string" && typeof value.jobDescription === "string") return { action: value.action, expectedUserId: value.expectedUserId, roleTitle: value.roleTitle, jobDescription: value.jobDescription };
   if (value.action === "submit_review" && exact(value, ["action", "expectedUserId", "shareToken", "roleMapId", "questionCategory", "evidenceLabel", "feedbackCategory", "reviewEase", "reviewTimeSignal", "note"]) && typeof value.shareToken === "string" && isValidProofBriefShareToken(value.shareToken) && isUuid(value.roleMapId) && includes(QUESTION_CATEGORIES, value.questionCategory) && (value.evidenceLabel === null || (typeof value.evidenceLabel === "string" && value.evidenceLabel.length <= 80)) && includes(FEEDBACK_CATEGORIES, value.feedbackCategory) && includes(REVIEW_EASE_OPTIONS, value.reviewEase) && includes(REVIEW_TIME_OPTIONS, value.reviewTimeSignal)) {
     const note = normalizeReviewNote(value.note);
