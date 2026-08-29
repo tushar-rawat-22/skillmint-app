@@ -45,3 +45,6 @@ jobs:
 
       - name: Verify fail-closed OAuth configuration
         run: node scripts/public-oauth-fixtures.mjs
+
+      - name: Verify OAuth PKCE route boundaries
+        run: node scripts/public-oauth-route-fixtures.mjs
