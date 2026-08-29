@@ -12,6 +12,7 @@ import {
   verifyBearerAuthorization,
   type ServerAuthorizationResult,
 } from "@/lib/supabase/serverAuth";
+import { getAccountPersona } from "@/modules/accountPersona";
 
 export const runtime = "nodejs";
 
@@ -25,14 +26,48 @@ type ResumeRequestVerifier = (
   authorization: string | null,
 ) => Promise<ServerAuthorizationResult>;
 
+type AuthenticatedServerAuthorization = Extract<
+  ServerAuthorizationResult,
+  { readonly status: "authenticated" }
+>;
+
 export async function POST(request: Request) {
-  return handleResumeExtraction(request, verifyBearerAuthorization);
+  const authorization = await authorizeResumeRequest(
+    request,
+    verifyBearerAuthorization,
+  );
+  if (authorization instanceof Response) {
+    return authorization;
+  }
+
+  const persona = await getAccountPersona(authorization.userId);
+  if (persona.status === "unavailable") {
+    return errorResponse("authentication_unavailable");
+  }
+  if (persona.status !== "resolved" || persona.persona !== "CANDIDATE") {
+    return errorResponse("candidate_persona_required");
+  }
+
+  return handleAuthenticatedResumeExtraction(request);
 }
 
+// Deterministic route-contract seam used by the launch-hardening fixtures.
+// Next.js serves POST above; production requests cannot bypass persona authority.
 export async function handleResumeExtraction(
   request: Request,
   verifyRequest: ResumeRequestVerifier,
 ) {
+  const authorization = await authorizeResumeRequest(request, verifyRequest);
+  if (authorization instanceof Response) {
+    return authorization;
+  }
+  return handleAuthenticatedResumeExtraction(request);
+}
+
+async function authorizeResumeRequest(
+  request: Request,
+  verifyRequest: ResumeRequestVerifier,
+): Promise<AuthenticatedServerAuthorization | Response> {
   const originError = getOriginError(request);
   if (originError) {
     return errorResponse(originError);
@@ -49,7 +84,10 @@ export async function handleResumeExtraction(
         : "authentication_required",
     );
   }
+  return authorization;
+}
 
+async function handleAuthenticatedResumeExtraction(request: Request) {
   const contentLength = request.headers.get("content-length");
   if (contentLength !== null) {
     const parsedLength = Number(contentLength);

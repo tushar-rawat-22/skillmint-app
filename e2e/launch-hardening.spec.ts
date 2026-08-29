@@ -3,6 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import {
   ACCOUNT_A,
   APP_ORIGIN,
+  PROVIDER_ORIGIN,
   expect,
   login,
   test,
@@ -15,7 +16,13 @@ const SAFE_EXTRACTION_FALLBACK =
 
 test(
   "@launch-hardening @resume-extraction valid same-origin TXT succeeds and explicit cross-origin submission fails",
-  async ({ page }) => {
+  async ({ page, request }) => {
+    await request.post(`${PROVIDER_ORIGIN}/__reset`);
+    const persona = await request.post(
+      `${PROVIDER_ORIGIN}/rest/v1/account_personas`,
+      { data: { user_id: ACCOUNT_A.id, persona: "CANDIDATE" } },
+    );
+    expect(persona.ok()).toBeTruthy();
     await login(page, ACCOUNT_A);
     await page.goto("/upload");
     await page.locator('input[type="file"]').setInputFiles({

@@ -28,6 +28,7 @@ export type SupportedResumeFileType = keyof typeof RESUME_FILE_TYPES;
 export const RESUME_EXTRACTION_ERROR_CODES = [
   "authentication_required",
   "authentication_unavailable",
+  "candidate_persona_required",
   "missing_file",
   "unsupported_type",
   "file_too_large",
@@ -68,6 +69,10 @@ export const RESUME_EXTRACTION_ERRORS: Readonly<
   authentication_unavailable: {
     message: "Resume analysis is temporarily unavailable.",
     status: 503,
+  },
+  candidate_persona_required: {
+    message: "Resume analysis is available to candidate accounts.",
+    status: 403,
   },
   missing_file: {
     message: "Choose a resume file to analyze.",

@@ -51,3 +51,6 @@ jobs:
 
       - name: Verify server-owned persona authority
         run: node scripts/account-persona-authority-fixtures.mjs
+
+      - name: Verify resume persona authority
+        run: node scripts/resume-persona-authority-fixtures.mjs
