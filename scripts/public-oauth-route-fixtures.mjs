@@ -8,7 +8,7 @@ const root = path.resolve(dirname, "..");
 
 const initiation = read("src/app/auth/oauth/route.ts");
 const callback = read("src/app/auth/callback/route.ts");
-const personaRoute = read("src/app/auth/persona/route.ts");
+const personaRoute = read("src/app/auth/persona/complete/route.ts");
 const personaPage = read("src/app/auth/persona/page.tsx");
 const personaAuthority = read("src/modules/accountPersona.ts");
 const login = read("src/app/login/page.tsx");
@@ -54,6 +54,7 @@ assert.doesNotMatch(personaRoute, /\.from\("account_personas"\)/);
 
 assert.match(personaPage, /getServerAuthorization\(\)/);
 assert.match(personaPage, /getAccountPersona\(authorization\.userId\)/);
+assert.match(personaPage, /action="\/auth\/persona\/complete" method="post"/);
 assert.match(personaPage, /name="persona" value="CANDIDATE"/);
 assert.match(personaPage, /name="persona" value="RECRUITER"/);
 assert.match(personaPage, /product context, not employer verification/);
