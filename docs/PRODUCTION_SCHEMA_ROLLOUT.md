@@ -8,9 +8,9 @@ This is the current authority for any future SkillMint Production schema rollout
 
 Before any rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest owns migration order and Production classification. This document explains the operational gates around that sequence; if the two ever disagree, stop and repair the repository before touching Production.
 
-The bounded July 30, 2026 inventory verified the `skillmint-beta` Production catalog as the exact V1+V2 versioned catalog baseline plus known untracked `public.rls_auto_enable()` drift. Migration-history visibility and complete table-grant visibility were not available to the read-only inventory role, so both remain **unknown** rather than inferred.
+The bounded July 30, 2026 inventory verified the `skillmint-beta` Production catalog as the exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift. Migration history is **unknown**, not absent, because the read-only inventory role could not see it. Complete table-grant visibility is **unknown** for the same reason. The function owner and event-trigger contract were not captured, and the function body was not captured either.
 
-Provider signup was verified disabled and existing email login enabled. Preserve both states. Analytics remains disabled.
+Provider signup is disabled and email login is enabled. Preserve both states. Analytics remains disabled. Public launch, invitations, hosted Auth changes, and analytics activation remain separately gated. Changing default function privileges was rejected as part of the V9 repair model. The expected write downtime is **unknown** until the full pending sequence is rehearsed and measured.
 
 ## Current migration boundary
 
