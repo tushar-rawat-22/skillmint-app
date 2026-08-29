@@ -48,9 +48,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm install --no-save --package-lock=false supabase@2.109.1
-          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
-          test "$(./node_modules/.bin/supabase --version)" = "2.109.1"
+          CLI_PREFIX="$RUNNER_TEMP/skillmint-supabase-cli"
+          mkdir -p "$CLI_PREFIX"
+          npm install \
+            --prefix "$CLI_PREFIX" \
+            --no-save \
+            --package-lock=false \
+            supabase@2.109.1
+          echo "$CLI_PREFIX/node_modules/.bin" >> "$GITHUB_PATH"
+          test "$("$CLI_PREFIX/node_modules/.bin/supabase" --version)" = "2.109.1"
 
       - name: Start isolated local Supabase
         run: supabase start
@@ -60,4 +66,8 @@ jobs:
 
       - name: Stop isolated local Supabase
         if: always()
-        run: supabase stop --no-backup
+        shell: bash
+        run: |
+          if command -v supabase >/dev/null 2>&1; then
+            supabase stop --no-backup
+          fi
