@@ -2,11 +2,16 @@ import Link from "next/link";
 
 import { premiumPrimaryCta } from "@/components/ui/premium";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
+import { getTrustedAppOrigin } from "@/lib/supabase/config";
 import AuthForm from "@/modules/auth/components/AuthForm";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
 
 export default function SignupPage() {
   const { enabled } = getPublicSignupConfiguration();
+  const appOrigin = getTrustedAppOrigin();
+  const emailRedirectTo = appOrigin
+    ? new URL("/auth/callback", appOrigin).toString()
+    : null;
 
   if (!enabled) {
     return (
@@ -50,6 +55,7 @@ export default function SignupPage() {
       <AuthForm
         mode="signup"
         publicSignupEnabled={enabled}
+        emailRedirectTo={emailRedirectTo}
       />
 
       <p className="mt-6 text-sm text-slate-600">

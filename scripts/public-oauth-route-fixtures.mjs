@@ -8,6 +8,8 @@ const root = path.resolve(dirname, "..");
 
 const initiation = read("src/app/auth/oauth/route.ts");
 const callback = read("src/app/auth/callback/route.ts");
+const signup = read("src/app/signup/page.tsx");
+const authCredentials = read("src/modules/auth/services/authCredentials.ts");
 const personaRoute = read("src/app/auth/persona/complete/route.ts");
 const personaPage = read("src/app/auth/persona/page.tsx");
 const personaAuthority = read("src/modules/accountPersona.ts");
@@ -28,6 +30,8 @@ assert.doesNotMatch(initiation, /searchParams\.get\(["']next["']\)/);
 assert.doesNotMatch(initiation, /provider_token|provider_refresh_token/);
 
 assert.match(callback, /getPublicOAuthConfiguration\(\)/);
+assert.match(callback, /getPublicSignupConfiguration\(\)/);
+assert.match(callback, /!oauth\.enabled && !signup\.enabled/);
 assert.match(callback, /searchParams\.getAll\("code"\)/);
 assert.match(callback, /codes\.length === 1/);
 assert.match(callback, /code\.length > MAX_CODE_LENGTH/);
@@ -38,8 +42,15 @@ assert.match(callback, /persona\.status === "resolved"/);
 assert.match(callback, /accountPersonaDestination\(persona\.persona\)/);
 assert.match(callback, /persona\.status === "missing"/);
 assert.match(callback, /new URL\("\/auth\/persona", appOrigin\)/);
+assert.match(callback, /searchParams\.set\("oauth", reason\)/);
 assert.doesNotMatch(callback, /searchParams\.get\(["']next["']\)/);
 assert.doesNotMatch(callback, /provider_token|provider_refresh_token/);
+
+assert.match(signup, /getTrustedAppOrigin\(\)/);
+assert.match(signup, /new URL\("\/auth\/callback", appOrigin\)/);
+assert.match(signup, /emailRedirectTo=\{emailRedirectTo\}/);
+assert.match(authCredentials, /emailRedirectTo: string \| null/);
+assert.match(authCredentials, /options:\s*\{\s*emailRedirectTo: request\.emailRedirectTo/);
 
 assert.match(personaRoute, /export async function POST\(request: Request\)/);
 assert.match(personaRoute, /request\.headers\.get\("origin"\) !== appOrigin/);

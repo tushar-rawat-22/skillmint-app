@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getPublicOAuthConfiguration } from "@/config/publicOAuth";
+import { getPublicSignupConfiguration } from "@/config/publicSignup";
 import { getTrustedAppOrigin } from "@/lib/supabase/config";
 import { createRouteSupabaseClient } from "@/lib/supabase/routeClient";
 import {
@@ -12,8 +13,9 @@ const MAX_CODE_LENGTH = 4_096;
 
 export async function GET(request: Request) {
   const appOrigin = getTrustedAppOrigin();
-  const { enabled } = getPublicOAuthConfiguration();
-  if (!appOrigin || !enabled) {
+  const oauth = getPublicOAuthConfiguration();
+  const signup = getPublicSignupConfiguration();
+  if (!appOrigin || (!oauth.enabled && !signup.enabled)) {
     return new NextResponse(null, { status: 404 });
   }
 

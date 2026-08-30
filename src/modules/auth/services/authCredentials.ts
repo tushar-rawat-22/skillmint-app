@@ -7,6 +7,9 @@ type AuthCredentialClient = {
     signUp(input: {
       email: string;
       password: string;
+      options?: {
+        emailRedirectTo?: string;
+      };
     }): PromiseLike<{
       data: { session: unknown | null };
       error: unknown;
@@ -25,6 +28,7 @@ export type AuthCredentialRequest =
       email: string;
       password: string;
       publicSignupEnabled: boolean;
+      emailRedirectTo: string | null;
     };
 
 export type AuthCredentialResult =
@@ -58,6 +62,13 @@ export async function submitAuthCredentials(
     const { data, error } = await client.auth.signUp({
       email: request.email.trim(),
       password: request.password,
+      ...(request.emailRedirectTo
+        ? {
+            options: {
+              emailRedirectTo: request.emailRedirectTo,
+            },
+          }
+        : {}),
     });
 
     return error
