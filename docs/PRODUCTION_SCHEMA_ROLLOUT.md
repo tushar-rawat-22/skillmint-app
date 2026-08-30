@@ -10,7 +10,7 @@ Before any rollout work, fetch current `main` and re-read `supabase/migrations/m
 
 The bounded July 30, 2026 inventory verified the `skillmint-beta` Production catalog as the exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift. Migration history is **unknown**, not absent, because the read-only inventory role could not see it. Complete table-grant visibility is **unknown** for the same reason. The function owner and event-trigger contract were not captured, and the function body was not captured either.
 
-Provider signup is disabled and email login is enabled. Preserve both states. Analytics remains disabled. Public launch, invitations, hosted Auth changes, and analytics activation remain separately gated. Changing default function privileges was rejected as part of the V9 repair model. The expected write downtime is **unknown** until the full pending sequence is rehearsed and measured.
+Provider signup is disabled and email login is enabled. Preserve both states. Analytics remains disabled. Public launch, invitations, hosted Auth changes, and analytics activation remain separately gated. Changing default function privileges was rejected as part of the V9 repair model. Migration duration and lock behavior against Production-representative data are still **unknown** even though the repository-controlled V1+V2 → V12 transition now passes in isolated CI.
 
 ## Current migration boundary
 
@@ -34,6 +34,20 @@ Production catalog evidence currently proves only V1+V2. The manifest classifies
 
 V1–V12 are repository-controlled migration artifacts. Never edit an applied migration in place. Recompute and compare hashes against the manifest before rehearsal or execution.
 
+## Isolated rehearsal evidence
+
+PR #64 executed the repository-controlled V1+V2 → V12 migration rehearsal in an isolated local Supabase stack at reviewed head `bca0b234cf11bbf6d2796f0f69fcaa91499a347d`. The dedicated rehearsal workflow completed successfully before merge. The merged workflow and harness are now part of `main` at `f2c31da553135168a0ff74274cbd20afd4bba7e9`.
+
+The rehearsal covers three bounded V9 states:
+
+- `public.rls_auto_enable()` absent: V3–V12 apply successfully;
+- exact-compatible V9 drift: V3–V12 apply successfully while preserving the object/event-trigger contract modeled by the harness and removing unintended API-role `EXECUTE`;
+- incompatible V9 drift: migration fails closed before V10–V12 can be recorded as applied.
+
+The harness also verifies the exact V1+V2 starting migration history and exact history through V12 for successful cases. It is deliberately local-only and requires an explicit destructive-local-reset confirmation.
+
+This closes the repository-transition rehearsal gap. It does **not** prove the current Production migration history, grants, live V9 function body/owner/event-trigger contract, Production data shape, Production lock duration, backup integrity, restore viability, hosted Auth behavior, or end-to-end authenticated Production usability. Any migration artifact or rehearsal-harness change must trigger and pass the dedicated rehearsal again before merge.
+
 ## What the pending sequence changes
 
 - **V3–V4:** data-control and account-deletion security foundations.
@@ -52,6 +66,7 @@ The application already contains runtime that expects the V10–V12 data model i
 | Control | Verified state | Gate |
 | --- | --- | --- |
 | Production catalog | V1+V2 proven; V3–V12 pending by repository manifest | `NO-GO` until exact history/catalog reconciliation and approved execution |
+| Isolated V1+V2 → V12 transition | Three-case repository rehearsal passed on PR #64 | Closed for current migration artifacts; must rerun if migration or harness inputs change |
 | Migration history | Unknown to the read-only inventory role | `NO-GO` until an authorized operator establishes exact history |
 | Table grants | Complete visibility not established | `NO-GO` until exact privileges are verified |
 | `public.rls_auto_enable()` | Known untracked `SECURITY DEFINER` drift; full live contract/body not captured | `NO-GO` until read-only preflight proves the complete object contract |
@@ -79,19 +94,19 @@ No Production migration may begin until an accountable owner approves a complete
 
 Backup files and user data must never enter Git, CI artifacts, application logs, email, or chat. Store them encrypted with restricted access. Record checksums, ownership, retention, and deletion. Rehearse restoration into an isolated recovery environment and verify row counts, ownership links, functions, triggers, RLS, grants, and authentication implications. A successful backup command without restore proof is not sufficient.
 
-## Required rehearsal
+## Required pre-execution sequence
 
 Before any maintenance window:
 
 1. Re-fetch current `main`, migration manifest, migration hashes, this authority document, and the current launch/status docs.
 2. Obtain authorized read-only Production visibility into migration history, complete table grants, and the full live `public.rls_auto_enable()` plus attached event-trigger contract. Do not print credentials or secret URLs.
 3. Reconcile history and catalog against the proven V1+V2 baseline. Do not infer migration history from schema similarity.
-4. Rehearse the complete pending V3→V12 sequence against an isolated V1+V2-equivalent copy with representative synthetic data.
-5. Exercise both the absent and exact-compatible V9 drift cases plus every fail-closed mismatch case. Verify the live function body separately because V9 intentionally does not inspect or redefine it.
-6. Verify V10 default-private Proof Brief behavior, owner constraints, token-hash boundaries, and account-deletion cleanup.
-7. Verify V11 recruiter-review ownership, token-consumption, and candidate-feedback isolation.
-8. Verify V12 immutable persona constraints and the Candidate/Recruiter authorization assumptions used by the application.
-9. Measure migration duration, lock behavior, and the V3 partial-application risk. Publish the measured maintenance-window estimate; the estimate is currently unknown.
+4. Confirm the dedicated V1+V2 → V12 rehearsal is green for the exact unchanged migration/harness inputs intended for execution. The current repository state has passed this control; rerun it after any relevant change.
+5. Verify the live V9 function body separately because V9 intentionally does not inspect or redefine it.
+6. Verify V10 default-private Proof Brief behavior, owner constraints, token-hash boundaries, and account-deletion cleanup against the execution candidate.
+7. Verify V11 recruiter-review ownership, token-consumption, and candidate-feedback isolation against the execution candidate.
+8. Verify V12 immutable persona constraints and the Candidate/Recruiter authorization assumptions used by the application against the execution candidate.
+9. Measure migration duration, lock behavior, and the V3 partial-application risk against an isolated Production-representative dataset. Publish the measured maintenance-window estimate; the estimate is currently unknown.
 10. Complete and pass a restore drill from the approved backup set.
 11. Assign incident commander, database operator, application owner, security/privacy owner, and communications/support ownership before execution.
 12. Review exact SQL, hashes, abort thresholds, postflight worksheet, rollback/forward-fix decision tree, and user communications.
@@ -148,4 +163,4 @@ The incident commander owns the stop/resume decision with database, security/pri
 
 ## Next gate
 
-The next legitimate gate is **not** a Production migration. It is a fresh read-only Production inventory with enough privilege to establish exact migration history, table grants, and the full V9 drift contract, followed by an isolated V1+V2 → V12 rehearsal and restore drill. Production remains `NO-GO` until those results are reviewed and explicitly authorized.
+The next legitimate gate is **not** a Production migration. The repository-transition rehearsal is now green for the current V1–V12 artifacts. The critical path is a fresh read-only Production inventory with enough privilege to establish exact migration history, complete table grants, and the full live V9 drift contract; then Production-representative timing/lock verification and a verified backup → restore drill. Production remains `NO-GO` until those results are reviewed and explicitly authorized.
