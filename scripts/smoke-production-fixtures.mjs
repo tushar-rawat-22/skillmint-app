@@ -12,6 +12,7 @@ const smokeScript = path.join(root, "scripts", "smoke-production.mjs");
 const state = {
   exposeSignup: false,
   exposeProofBrief: false,
+  publishPrivacyContact: true,
 };
 
 const server = http.createServer((request, response) => {
@@ -60,6 +61,15 @@ const server = http.createServer((request, response) => {
     return;
   }
 
+  if (pathname === "/privacy") {
+    response.end(
+      state.publishPrivacyContact
+        ? "<!doctype html><html><body><a href=\"mailto:privacy@example.com\">privacy@example.com</a></body></html>"
+        : "<!doctype html><html><body><p>A verified privacy/support contact is not currently published.</p></body></html>",
+    );
+    return;
+  }
+
   response.end("<!doctype html><html><body>SkillMint synthetic route</body></html>");
 });
 
@@ -80,6 +90,7 @@ try {
     `closed controlled-beta contract should pass:\n${closed.output}`,
   );
   assert.match(closed.output, /PASS \/signup/);
+  assert.match(closed.output, /PASS \/privacy/);
   assert.match(closed.output, /PASS \/api\/proof-brief \(401\)/);
   assert.match(closed.output, /PASS \/api\/recruiter-evidence \(401\)/);
   assert.match(closed.output, /Smoke test passed\./);
@@ -99,6 +110,15 @@ try {
   assert.match(
     exposedProofBrief.output,
     /\/api\/proof-brief: expected 401, received 200/,
+  );
+  state.exposeProofBrief = false;
+
+  state.publishPrivacyContact = false;
+  const missingPrivacyContact = await runSmoke(baseUrl);
+  assert.notEqual(missingPrivacyContact.code, 0);
+  assert.match(
+    missingPrivacyContact.output,
+    /\/privacy: verified privacy\/support contact is not published/,
   );
 
   console.log("Production smoke fixtures passed.");
