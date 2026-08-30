@@ -23,10 +23,26 @@ const queries = [
   {
     name: "table_grants",
     sql: `
-      select table_schema, table_name, grantor, grantee, privilege_type, is_grantable
-      from information_schema.table_privileges
-      where table_schema = 'public'
-      order by table_name, grantee, privilege_type, grantor
+      select
+        n.nspname as table_schema,
+        c.relname as table_name,
+        pg_get_userbyid(c.relowner) as owner_name,
+        c.relacl::text[] as explicit_acl,
+        pg_get_userbyid(a.grantor) as grantor,
+        case
+          when a.grantee = 0 then 'PUBLIC'
+          else pg_get_userbyid(a.grantee)
+        end as grantee,
+        a.privilege_type,
+        a.is_grantable
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      left join lateral aclexplode(
+        coalesce(c.relacl, acldefault('r', c.relowner))
+      ) a on true
+      where n.nspname = 'public'
+        and c.relkind in ('r', 'p')
+      order by c.relname, grantee, a.privilege_type, grantor
     `,
   },
   {
