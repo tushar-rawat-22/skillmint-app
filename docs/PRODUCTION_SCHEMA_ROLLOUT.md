@@ -10,7 +10,7 @@ Before any rollout work, fetch current `main` and re-read `supabase/migrations/m
 
 The bounded July 30, 2026 inventory verified the `skillmint-beta` Production catalog as the exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift. Migration history is **unknown**, not absent, because the read-only inventory role could not see it. Complete table-grant visibility is **unknown** for the same reason. The function owner and event-trigger contract were not captured, and the function body was not captured either.
 
-Provider signup is disabled and email login is enabled. Preserve both states. Analytics remains disabled. Public launch, invitations, hosted Auth changes, and analytics activation remain separately gated. Changing default function privileges was rejected as part of the V9 repair model. Migration duration and lock behavior against Production-representative data are still **unknown** even though the repository-controlled V1+V2 → V12 transition now passes in isolated CI.
+Provider signup is disabled and email login is enabled. Preserve both states. Analytics remains disabled. Public launch, invitations, hosted Auth changes, and analytics activation remain separately gated. Changing default function privileges was rejected as part of the V9 repair model. The expected write downtime is **unknown** because the successful isolated rehearsal did not use Production-representative data or measure Production lock behavior.
 
 ## Current migration boundary
 
