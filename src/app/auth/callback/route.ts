@@ -66,6 +66,6 @@ function redirectToLogin(
   reason: "invalid_callback" | "unavailable",
 ) {
   const destination = new URL("/login", origin);
-  destination.searchParams.set("auth", reason);
+  destination.searchParams.set("oauth", reason);
   return NextResponse.redirect(destination, 303);
 }
