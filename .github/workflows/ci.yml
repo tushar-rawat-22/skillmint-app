@@ -154,4 +154,5 @@ jobs:
           node scripts/recruiter-evidence-fixtures.mjs
           node scripts/production-rollout-foundation-fixtures.mjs
           node scripts/production-pending-migration-integrity-fixtures.mjs
+          node scripts/production-readonly-inventory-fixtures.mjs
           node scripts/documentation-status-fixtures.mjs
