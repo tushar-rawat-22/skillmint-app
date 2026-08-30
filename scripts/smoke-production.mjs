@@ -213,7 +213,7 @@ function checkPrivacyContact(html) {
     return false;
   }
 
-  if (!/href=["']mailto:[^"']+@[^"]+["']/i.test(html)) {
+  if (!/href=(["'])mailto:[^"'<>\s@]+@[^"'<>\s]+\1/i.test(html)) {
     fail("/privacy: expected a published privacy/support mailto contact");
     return false;
   }
