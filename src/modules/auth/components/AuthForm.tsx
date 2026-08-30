@@ -19,6 +19,7 @@ type AuthFormProps =
   | {
       mode: "signup";
       publicSignupEnabled: boolean;
+      emailRedirectTo: string | null;
     };
 
 export default function AuthForm(props: AuthFormProps) {
@@ -72,6 +73,7 @@ export default function AuthForm(props: AuthFormProps) {
             email,
             password,
             publicSignupEnabled: props.publicSignupEnabled,
+            emailRedirectTo: props.emailRedirectTo,
           },
     );
 
