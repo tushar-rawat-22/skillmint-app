@@ -15,6 +15,7 @@ const htmlRoutes = [
   "/roadmap",
   "/profile",
   "/settings",
+  "/privacy",
 ];
 
 const protectedApiRoutes = [
@@ -82,6 +83,10 @@ async function checkHtmlRoute(route) {
     }
 
     if (route === "/signup" && !checkClosedSignup(html)) {
+      return;
+    }
+
+    if (route === "/privacy" && !checkPrivacyContact(html)) {
       return;
     }
 
@@ -192,6 +197,24 @@ function checkClosedSignup(html) {
 
   if (/<form(?:\s|>)/i.test(html)) {
     fail("/signup: a signup form is exposed while public registration must stay closed");
+    return false;
+  }
+
+  return true;
+}
+
+function checkPrivacyContact(html) {
+  if (
+    html.includes(
+      "A verified privacy/support contact is not currently published.",
+    )
+  ) {
+    fail("/privacy: verified privacy/support contact is not published");
+    return false;
+  }
+
+  if (!/href=["']mailto:[^"']+@[^"]+["']/i.test(html)) {
+    fail("/privacy: expected a published privacy/support mailto contact");
     return false;
   }
 
