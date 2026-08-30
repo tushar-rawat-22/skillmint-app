@@ -39,12 +39,27 @@ for (const sql of sqlBodies) {
 const joinedSql = sqlBodies.join("\n");
 for (const required of [
   "supabase_migrations.schema_migrations",
-  "information_schema.table_privileges",
+  "pg_class",
+  "pg_namespace",
+  "aclexplode",
+  "pg_get_userbyid",
+  "relacl",
   "pg_get_functiondef",
   "pg_event_trigger",
 ]) {
   assert.match(joinedSql, new RegExp(required.replaceAll(".", "\\."), "i"), `missing ${required}`);
 }
+assert.doesNotMatch(
+  joinedSql,
+  /information_schema\.table_privileges/i,
+  "grant inventory must not depend on role-filtered information_schema visibility",
+);
+assert.match(
+  joinedSql,
+  /coalesce\(c\.relacl,\s*acldefault\('r',\s*c\.relowner\)\)/i,
+  "grant inventory must expose effective default owner ACL when relacl is null",
+);
+assert.match(joinedSql, /c\.relkind in \('r', 'p'\)/i, "grant inventory must stay scoped to public tables");
 
 for (const userTable of [
   "profiles",
