@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getPublicOAuthConfiguration } from "@/config/publicOAuth";
+import { getPublicSignupConfiguration } from "@/config/publicSignup";
 import { getTrustedAppOrigin } from "@/lib/supabase/config";
 import { createRouteSupabaseClient } from "@/lib/supabase/routeClient";
 import {
@@ -12,8 +13,9 @@ const MAX_CODE_LENGTH = 4_096;
 
 export async function GET(request: Request) {
   const appOrigin = getTrustedAppOrigin();
-  const { enabled } = getPublicOAuthConfiguration();
-  if (!appOrigin || !enabled) {
+  const oauth = getPublicOAuthConfiguration();
+  const signup = getPublicSignupConfiguration();
+  if (!appOrigin || (!oauth.enabled && !signup.enabled)) {
     return new NextResponse(null, { status: 404 });
   }
 
@@ -64,6 +66,6 @@ function redirectToLogin(
   reason: "invalid_callback" | "unavailable",
 ) {
   const destination = new URL("/login", origin);
-  destination.searchParams.set("oauth", reason);
+  destination.searchParams.set("auth", reason);
   return NextResponse.redirect(destination, 303);
 }
