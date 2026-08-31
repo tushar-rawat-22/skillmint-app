@@ -49,7 +49,9 @@ No Production writes were performed to obtain this evidence.
 
 ## Source of truth
 
-Before any rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest owns migration order and Production classification. This document records the operational gates around that sequence. If manifest, connected Production evidence, and this authority disagree, stop and repair the repository authority before any Production write.
+Before any rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest remains authoritative for migration file order, paths, and hashes. Its `generated_for.production` classifications were written before the August 31 connected inspection and are stale where they still describe V3–V9 as pending or Production history as unknown. Connected read-only Production evidence plus this authority govern current applied/pending state until that manifest contract is deliberately revised with its fixtures. A stale classification must never override direct current Production evidence.
+
+If migration order/hashes, connected Production evidence, and this authority disagree, stop and repair repository authority before any Production write.
 
 The repository manifest currently defines this exact ordered chain:
 
@@ -70,6 +72,14 @@ The repository manifest currently defines this exact ordered chain:
 Production is reconciled through V9, with **V10–V12 pending**. Never edit an applied migration in place. Recompute and compare hashes against the manifest before rehearsal or execution.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately authorized controls.
+
+## Superseded July evidence record
+
+The statements in this section are retained only to preserve the historical evidence contract and must not be used as current rollout facts. The July inventory described an `exact V1+V2 versioned catalog baseline plus the known untracked` drift, said migration `history is **unknown**, not absent`, and said `table-grant visibility is **unknown**`. It also recorded that the `function owner and event-trigger contract were not captured` and that the function body had not been captured.
+
+That same July record said: `Provider signup is disabled and email login is enabled`, `Analytics remains disabled`, `Public launch, invitations` and hosted configuration changes were not authorized, and `Changing default function privileges was rejected`. It also stated `The expected write downtime is **unknown**` because Production-representative timing had not been measured. The August 31 connected inspection supersedes those July catalog/history visibility limits; any hosted Auth or operational setting must still be freshly re-verified before execution rather than assumed from this historical note.
+
+Backup files and user data must never enter Git, CI artifacts, application logs, email, or chat.
 
 ## Rehearsal evidence
 
