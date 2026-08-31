@@ -1,4 +1,4 @@
-import { isNewPasswordAllowed } from "@/modules/auth/services/passwordPolicy";
+import { isNewPasswordAllowed } from "./passwordPolicy";
 
 type AuthCredentialClient = {
   auth: {
