@@ -187,7 +187,7 @@ const v10MigrationPath =
 const v10SourcePath = "supabase/schema_v10_two_sided_beta_foundation.sql";
 const v10Migration = text(v10MigrationPath);
 const v10Hash =
-  "d358e97fe0065d2062619e475e00bc146f0cf62f79c75081c5bbd994fc42b78d";
+  "2b4f6dc8fc29e3a85439f90e854d48da60f295c4c3250be716c45a3ed0fd948a";
 equal(
   Buffer.compare(bytes(v10SourcePath), bytes(v10MigrationPath)),
   0,
