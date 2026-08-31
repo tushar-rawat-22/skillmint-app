@@ -6,7 +6,7 @@ This is the current authority for any future SkillMint Production schema rollout
 
 ## Current connected Production evidence
 
-A direct connected, read-only inspection of the canonical Supabase Production project `skillmint-beta` on August 31, 2026 supersedes the older July inventory assumptions that Production was only V1+V2 and that migration history was unknown.
+A fresh direct connected, read-only inspection of the canonical Supabase project `skillmint-beta` on August 31, 2026 supersedes the older July assumptions that Production was only V1+V2 and that migration history was unknown.
 
 The observed Production migration history is exactly:
 
@@ -21,17 +21,29 @@ The observed Production migration history is exactly:
 9. `20260727000800`
 10. `20260730000900`
 
-This establishes Production through **V9**. The repository migrations below remain **pending** in Production:
+Production is therefore reconciled through **V9**. The repository migrations below remain **pending** in Production:
 
 - `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 - `20260823001100_schema_v11_recruiter_evidence_review.sql`
 - `20260829001200_schema_v12_account_persona_authority.sql`
 
-The same read-only catalog inspection observed four user/application tables in `public`: `analytics_events`, `career_feedback`, `resume_active_selections`, and `user_profiles`.
+The same read-only catalog inspection observed these seven ordinary `public` tables: `active_resume_selections`, `analytics_events`, `beta_feedback`, `career_snapshots`, `job_matches`, `profiles`, and `resume_analyses`. These names are consistent with the repository-controlled V1–V9 migration lineage; do not substitute later V10–V12 model names before those migrations are actually applied.
 
-The live `public.rls_auto_enable()` contract was observed as present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog, public`. The enabled `enable_rls_on_new_table` event trigger is attached to `ddl_command_end` for `CREATE TABLE`.
+The live `public.rls_auto_enable()` contract was observed as present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog`. Its attached enabled event trigger is `ensure_rls`, on `ddl_command_end`, for `CREATE TABLE`, `CREATE TABLE AS`, and `SELECT INTO`. That shape matches the exact contract guarded by the repository V9 migration. V9 remains an ACL normalization migration; it does not redefine the function body or trigger.
 
-Catalog ACL inspection observed no direct public-table ACL grants to `PUBLIC`, `anon`, `authenticated`, or `service_role`. This is a statement about the inspected catalog ACLs only; it must not be generalized into claims about every effective privilege path or every hosted authorization boundary.
+Direct catalog ACL inspection observed table-specific grants rather than an all-zero API-role ACL surface:
+
+| Table | Observed direct API-role table ACLs |
+| --- | --- |
+| `active_resume_selections` | `authenticated=DELETE` |
+| `analytics_events` | `service_role=INSERT` |
+| `beta_feedback` | `authenticated=SELECT,INSERT`; `service_role=ALL` |
+| `career_snapshots` | `authenticated=SELECT`; `service_role=ALL` |
+| `job_matches` | `authenticated=SELECT,INSERT,UPDATE,DELETE`; `service_role=ALL` |
+| `profiles` | `authenticated=SELECT,INSERT,UPDATE`; `service_role=ALL` |
+| `resume_analyses` | `authenticated=SELECT,INSERT,DELETE`; `service_role=ALL` |
+
+This table records only the observed direct table ACL entries. It does not by itself prove effective privilege after column grants, RLS, functions, role inheritance, or other PostgreSQL/Supabase authorization layers. Those boundaries must be verified through the exact preflight and postflight probes before migration authorization.
 
 No Production writes were performed to obtain this evidence.
 
@@ -55,9 +67,9 @@ The repository manifest currently defines this exact ordered chain:
 12. `20260823001100_schema_v11_recruiter_evidence_review.sql`
 13. `20260829001200_schema_v12_account_persona_authority.sql`
 
-Production is therefore reconciled through V9, with **V10–V12 pending**. Never edit an applied migration in place. Recompute and compare hashes against the manifest before rehearsal or execution.
+Production is reconciled through V9, with **V10–V12 pending**. Never edit an applied migration in place. Recompute and compare hashes against the manifest before rehearsal or execution.
 
-Provider signup remains separately gated. Analytics remains disabled. Public launch, invitations, hosted Auth changes, analytics activation, SMTP, domains, billing, and account-level provider configuration remain separately authorized controls.
+Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately authorized controls.
 
 ## Rehearsal evidence
 
@@ -72,16 +84,16 @@ Those rehearsals remain valid engineering evidence for unchanged migration/harne
 | Control | Current verified state | Gate |
 | --- | --- | --- |
 | Migration history | Exact connected read-only history through V9 | V10–V12 remain pending |
-| Public application tables | `analytics_events`, `career_feedback`, `resume_active_selections`, `user_profiles` observed | Re-check immediately before execution |
-| Public table ACLs | No direct ACL grants to `PUBLIC`, `anon`, `authenticated`, or `service_role` observed | Re-check before and after execution; do not overclaim effective privileges |
-| `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; pinned search path observed | Re-check exact function/body and attached trigger contract before execution and postflight |
-| Event trigger | `enable_rls_on_new_table` enabled on `ddl_command_end` for `CREATE TABLE` | Re-check before execution and postflight |
+| Public ordinary tables | Seven V1–V9 lineage tables observed | Re-check immediately before execution |
+| Public table ACLs | Exact direct table ACL entries observed and recorded above | Verify expected effective privileges through RLS/column/function probes before and after execution |
+| `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | Re-check exact body and attached trigger contract before execution and postflight |
+| Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | Re-check before execution and postflight |
 | Isolated migration rehearsal | V1–V12 transition rehearsal passed for current artifacts | Re-run after migration/harness changes |
 | Lock/timing rehearsal | Bounded isolated lock failure and recovery passed on PR #73 | Production-representative V10–V12 data-shape/window evidence still required |
 | Backups/recovery | No verified backup → isolated restore drill recorded | **Blocks every Production migration** |
 | V10–V12 execution plan | Pending exact execution/postflight authorization | **Blocks migration** |
 | Hosted Auth/security | Must preserve reviewed authentication/privacy boundaries | Must pass current preflight/postflight controls |
-| Analytics | Disabled | Must remain disabled unless separately authorized |
+| Analytics | Disabled by current launch authority | Must remain disabled unless separately authorized |
 
 Cost or schedule pressure does not waive recovery, security, privacy, or authorization gates.
 
@@ -107,10 +119,10 @@ Until that drill succeeds, Production remains `NO-GO`.
 
 Before any maintenance window:
 
-1. Fetch current `main`, the migration manifest, exact migration hashes, this authority, and current status docs.
+1. Fetch current `main`, migration manifest, exact migration hashes, this authority, and current status docs.
 2. Re-run connected read-only Production preflight and require exact history through `20260730000900` with V10–V12 still absent.
-3. Re-verify the four observed public application tables and the live V9 function/trigger/owner/search-path contract.
-4. Re-verify observed public-table ACL state and the effective privilege checks required by the migration postflight; do not infer one from the other.
+3. Re-verify the seven observed V1–V9 `public` tables and the live V9 function/trigger/owner/search-path contract.
+4. Re-verify direct ACLs and the effective RLS/column/function privilege checks required by postflight. Do not infer effective access from `relacl` alone.
 5. Re-run the dedicated isolated migration and lock/timing gates for the exact unchanged migration/harness inputs intended for execution.
 6. Complete Production-representative, non-sensitive data-shape/timing evidence sufficient to set an explicit abort threshold and maintenance-window bound for V10–V12.
 7. Complete and pass the approved backup → isolated restore drill.
@@ -134,6 +146,6 @@ Redeploying an older application does not reverse schema. Resume after an incide
 
 ## Next gate
 
-The old V1+V2/unknown-history inventory blocker is closed by the August 31 connected read-only evidence. Do **not** reopen collector development unless a future authorized inspection exposes a concrete missing field or incompatible catalog state.
+The old V1+V2/unknown-history blocker is closed by the August 31 connected read-only migration-history evidence. Do **not** reopen collector development unless a future authorized inspection exposes a concrete missing field or incompatible catalog state.
 
 The next launch-critical gate is a **verified backup → isolated restore/recovery proof**, followed by the remaining Production-representative V10–V12 window evidence and exact execution/postflight review. Production remains `NO-GO`; this reconciliation is not migration authorization.
