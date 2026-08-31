@@ -84,7 +84,10 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await page.getByRole("button", { name: "Set as Active Target" }).click();
   await expect(page.getByText(/Latest JD set as Active Target/u)).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Frontend Developer at Synthetic Co" }),
+    page.getByRole("heading", {
+      name: "Frontend Developer at Synthetic Co",
+      exact: true,
+    }),
   ).toBeVisible();
 
   const activeTargetBeforeNavigation = await page.evaluate(
@@ -102,7 +105,10 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     ),
   ).toBe(activeTargetBeforeNavigation);
   await expect(
-    page.getByRole("heading", { name: "Frontend Developer at Synthetic Co" }),
+    page.getByRole("heading", {
+      name: "Frontend Developer at Synthetic Co",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Proof Brief" })).toBeVisible();
 
