@@ -66,6 +66,13 @@ const {
   root,
   "src/modules/auth/services/authCredentials.ts",
 ));
+const {
+  MIN_NEW_PASSWORD_LENGTH,
+  isNewPasswordAllowed,
+} = require(path.join(
+  root,
+  "src/modules/auth/services/passwordPolicy.ts",
+));
 
 const tests = [];
 
@@ -105,6 +112,12 @@ test("public signup configuration defaults closed and accepts only true", () => 
   );
 });
 
+test("new-password policy requires at least twelve characters", () => {
+  assert.equal(MIN_NEW_PASSWORD_LENGTH, 12);
+  assert.equal(isNewPasswordAllowed("12345678901"), false);
+  assert.equal(isNewPasswordAllowed("123456789012"), true);
+});
+
 test("disabled signup cannot invoke the provider signup method", async () => {
   const calls = { login: 0, signup: 0 };
   const client = createCredentialClient(calls);
@@ -119,14 +132,31 @@ test("disabled signup cannot invoke the provider signup method", async () => {
   assert.deepEqual(calls, { login: 0, signup: 0 });
 });
 
-test("login remains available independently of public signup", async () => {
+test("weak signup password cannot invoke the provider signup method", async () => {
+  const calls = { login: 0, signup: 0 };
+  const result = await submitAuthCredentials(
+    createCredentialClient(calls),
+    {
+      mode: "signup",
+      email: "person@example.test",
+      password: "short1",
+      publicSignupEnabled: true,
+      emailRedirectTo: null,
+    },
+  );
+
+  assert.deepEqual(result, { status: "failure" });
+  assert.deepEqual(calls, { login: 0, signup: 0 });
+});
+
+test("login remains available independently of public signup and new-password policy", async () => {
   const calls = { login: 0, signup: 0 };
   const result = await submitAuthCredentials(
     createCredentialClient(calls),
     {
       mode: "login",
       email: "  existing@example.test ",
-      password: "synthetic-password",
+      password: "short1",
     },
   );
 
@@ -257,6 +287,20 @@ test("signup rendering requires an explicit boolean and fails closed twice", () 
     "AuthForm must guard both submission and accidental rendering",
   );
   assert.doesNotMatch(authForm, /auth\.signUp/);
+});
+
+test("signup and recovery use the shared new-password policy", () => {
+  const authForm = source("src/modules/auth/components/AuthForm.tsx");
+  const recoveryPage = source("src/app/reset-password/page.tsx");
+  const recoveryHook = source(
+    "src/modules/auth/hooks/usePasswordRecovery.ts",
+  );
+
+  assert.match(authForm, /isNewPasswordAllowed\(password\)/);
+  assert.match(recoveryPage, /isNewPasswordAllowed\(newPassword\)/);
+  assert.match(recoveryHook, /isNewPasswordAllowed\(newPassword\)/);
+  assert.doesNotMatch(authForm, /password\.length < 6/);
+  assert.doesNotMatch(recoveryPage, /MIN_PASSWORD_LENGTH = 6/);
 });
 
 function createCredentialClient(calls) {
