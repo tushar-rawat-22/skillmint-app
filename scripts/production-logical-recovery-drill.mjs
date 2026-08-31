@@ -13,7 +13,13 @@ const { Client } = pg;
 const EXPECTED_PROJECT_REF = "iylxqtpnhgckdbomfvtz";
 const EXPECTED_CLI_VERSION = "2.109.1";
 const RESTORE_CONFIRMATION = "YES_RESTORE_SKILLMINT_BACKUP_TO_ISOLATED_LOCAL_DB";
-const LOCAL_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const LOCAL_DATABASE = Object.freeze({
+  host: "127.0.0.1",
+  port: 54322,
+  database: "postgres",
+  user: "postgres",
+  password: "postgres",
+});
 const EXPECTED_MIGRATIONS = Object.freeze([
   "20260723000100",
   "20260723000200",
@@ -47,6 +53,16 @@ function fail(message) {
   throw new Error(message);
 }
 
+function redact(text, values = []) {
+  let output = String(text ?? "");
+  for (const value of values) {
+    if (typeof value === "string" && value.length > 0) {
+      output = output.split(value).join("[REDACTED]");
+    }
+  }
+  return output;
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? process.cwd(),
@@ -55,9 +71,10 @@ function run(command, args, options = {}) {
     stdio: options.stdio ?? ["ignore", "pipe", "pipe"],
     timeout: options.timeout ?? 180000,
   });
-  if (result.error) fail(`${command}_unavailable:${result.error.message}`);
+  const redactions = options.redact ?? [];
+  if (result.error) fail(`${command}_unavailable:${redact(result.error.message, redactions)}`);
   if (result.status !== 0) {
-    const detail = String(result.stderr || result.stdout || "command failed").trim();
+    const detail = redact(result.stderr || result.stdout || "command failed", redactions).trim();
     fail(`${command}_failed:${detail.slice(0, 1200)}`);
   }
   return result;
@@ -101,7 +118,9 @@ function assertProductionUrl(raw) {
   } catch {
     fail("production_database_url_invalid");
   }
-  if (!new Set(["postgres:", "postgresql:"]).has(parsed.protocol)) fail("production_database_url_protocol_invalid");
+  if (!new Set(["postgres:", "postgresql:"]).has(parsed.protocol)) {
+    fail("production_database_url_protocol_invalid");
+  }
   const hostMatches = parsed.hostname === `db.${EXPECTED_PROJECT_REF}.supabase.co`;
   const userMatches = decodeURIComponent(parsed.username).includes(`postgres.${EXPECTED_PROJECT_REF}`);
   if (!hostMatches && !userMatches) fail("production_database_url_project_ref_mismatch");
@@ -132,8 +151,12 @@ async function sourceEvidence(connectionString) {
   await client.connect();
   try {
     await client.query("begin read only");
-    const history = await client.query("select version::text from supabase_migrations.schema_migrations order by version");
-    const tables = await client.query("select tablename from pg_tables where schemaname = 'public' order by tablename");
+    const history = await client.query(
+      "select version::text from supabase_migrations.schema_migrations order by version",
+    );
+    const tables = await client.query(
+      "select tablename from pg_tables where schemaname = 'public' order by tablename",
+    );
     const rowCounts = {};
     for (const table of EXPECTED_PUBLIC_TABLES) {
       const result = await client.query(`select count(*)::bigint::text as count from public.${table}`);
@@ -152,13 +175,36 @@ async function sourceEvidence(connectionString) {
   }
 }
 
+function assertExpectedSource(evidence) {
+  assert.deepEqual(evidence.migrations, EXPECTED_MIGRATIONS, "production_migration_history_drift");
+  assert.deepEqual(evidence.public_tables, EXPECTED_PUBLIC_TABLES, "production_public_table_catalog_drift");
+}
+
 function dump(connectionString, directory) {
   const common = ["db", "dump", "--db-url", connectionString];
-  run("supabase", [...common, "-f", path.join(directory, "roles.sql"), "--role-only"]);
-  run("supabase", [...common, "-f", path.join(directory, "schema.sql")]);
-  run("supabase", [...common, "-f", path.join(directory, "data.sql"), "--use-copy", "--data-only", "-x", "storage.buckets_vectors", "-x", "storage.vector_indexes"]);
-  run("supabase", [...common, "-f", path.join(directory, "history_schema.sql"), "--schema", "supabase_migrations"]);
-  run("supabase", [...common, "-f", path.join(directory, "history_data.sql"), "--use-copy", "--data-only", "--schema", "supabase_migrations"]);
+  const options = { redact: [connectionString] };
+  run("supabase", [...common, "-f", path.join(directory, "roles.sql"), "--role-only"], options);
+  run("supabase", [...common, "-f", path.join(directory, "schema.sql")], options);
+  run("supabase", [
+    ...common,
+    "-f", path.join(directory, "data.sql"),
+    "--use-copy",
+    "--data-only",
+    "-x", "storage.buckets_vectors",
+    "-x", "storage.vector_indexes",
+  ], options);
+  run("supabase", [
+    ...common,
+    "-f", path.join(directory, "history_schema.sql"),
+    "--schema", "supabase_migrations",
+  ], options);
+  run("supabase", [
+    ...common,
+    "-f", path.join(directory, "history_data.sql"),
+    "--use-copy",
+    "--data-only",
+    "--schema", "supabase_migrations",
+  ], options);
   for (const name of BACKUP_FILES) fs.chmodSync(path.join(directory, name), 0o600);
 }
 
@@ -167,16 +213,20 @@ async function capture(directoryArg) {
   if (fs.readdirSync(directory).length !== 0) fail("backup_directory_must_start_empty");
   const connectionString = assertProductionUrl(process.env.SKILLMINT_PRODUCTION_DB_URL);
   assertPinnedCli();
-  const evidence = await sourceEvidence(connectionString);
-  assert.deepEqual(evidence.migrations, EXPECTED_MIGRATIONS, "production_migration_history_drift");
-  assert.deepEqual(evidence.public_tables, EXPECTED_PUBLIC_TABLES, "production_public_table_catalog_drift");
+
+  const before = await sourceEvidence(connectionString);
+  assertExpectedSource(before);
   dump(connectionString, directory);
+  const after = await sourceEvidence(connectionString);
+  assertExpectedSource(after);
+  assert.deepEqual(after, before, "production_changed_during_logical_backup_capture");
+
   const manifest = {
     format: 1,
     project_ref: EXPECTED_PROJECT_REF,
     captured_at: new Date().toISOString(),
     supabase_cli: EXPECTED_CLI_VERSION,
-    source: evidence,
+    source: after,
     files: fileEvidence(directory),
   };
   const manifestPath = path.join(directory, "recovery-manifest.json");
@@ -210,8 +260,22 @@ async function isPortOpen(port) {
   });
 }
 
+function localPsqlArgs() {
+  return [
+    "--host", LOCAL_DATABASE.host,
+    "--port", String(LOCAL_DATABASE.port),
+    "--username", LOCAL_DATABASE.user,
+    "--dbname", LOCAL_DATABASE.database,
+  ];
+}
+
+function localPsqlEnv() {
+  return { ...process.env, PGPASSWORD: LOCAL_DATABASE.password };
+}
+
 function restoreSql(directory) {
   run("psql", [
+    ...localPsqlArgs(),
     "--single-transaction",
     "--variable", "ON_ERROR_STOP=1",
     "--file", path.join(directory, "roles.sql"),
@@ -220,16 +284,19 @@ function restoreSql(directory) {
     "--file", path.join(directory, "data.sql"),
     "--file", path.join(directory, "history_schema.sql"),
     "--file", path.join(directory, "history_data.sql"),
-    "--dbname", LOCAL_DB_URL,
-  ], { timeout: 300000 });
+  ], { env: localPsqlEnv(), timeout: 300000 });
 }
 
 async function localEvidence() {
-  const client = new Client({ connectionString: LOCAL_DB_URL, connectionTimeoutMillis: 10000 });
+  const client = new Client({ ...LOCAL_DATABASE, connectionTimeoutMillis: 10000 });
   await client.connect();
   try {
-    const history = await client.query("select version::text from supabase_migrations.schema_migrations order by version");
-    const tables = await client.query("select tablename from pg_tables where schemaname = 'public' order by tablename");
+    const history = await client.query(
+      "select version::text from supabase_migrations.schema_migrations order by version",
+    );
+    const tables = await client.query(
+      "select tablename from pg_tables where schemaname = 'public' order by tablename",
+    );
     const rowCounts = {};
     for (const table of EXPECTED_PUBLIC_TABLES) {
       const result = await client.query(`select count(*)::bigint::text as count from public.${table}`);
@@ -254,7 +321,8 @@ async function localEvidence() {
     `);
     const rls = await client.query(`
       select relname, relrowsecurity
-      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
       where n.nspname = 'public' and c.relkind = 'r'
       order by relname
     `);
@@ -279,7 +347,7 @@ async function restore(directoryArg) {
   const manifest = loadManifest(directory);
   assertPinnedCli();
   run("psql", ["--version"]);
-  if (await isPortOpen(54322)) fail("local_postgres_port_54322_already_in_use");
+  if (await isPortOpen(LOCAL_DATABASE.port)) fail("local_postgres_port_54322_already_in_use");
 
   const workdir = fs.mkdtempSync(path.join(os.tmpdir(), "skillmint-recovery-drill-"));
   let started = false;
@@ -295,7 +363,11 @@ async function restore(directoryArg) {
     assert.equal(restored.function_contract.length, 1, "restored_rls_auto_enable_function_missing");
     assert.equal(restored.function_contract[0].owner, "postgres", "restored_rls_auto_enable_owner_mismatch");
     assert.equal(restored.function_contract[0].prosecdef, true, "restored_rls_auto_enable_security_definer_mismatch");
-    assert.match(restored.function_contract[0].config, /search_path=pg_catalog/, "restored_rls_auto_enable_search_path_mismatch");
+    assert.match(
+      restored.function_contract[0].config,
+      /search_path=pg_catalog/,
+      "restored_rls_auto_enable_search_path_mismatch",
+    );
     assert.equal(restored.trigger_contract.length, 1, "restored_ensure_rls_trigger_missing");
     assert.equal(restored.trigger_contract[0].evtevent, "ddl_command_end", "restored_event_trigger_event_mismatch");
     assert.equal(restored.trigger_contract[0].evtenabled, "O", "restored_event_trigger_disabled");
@@ -303,7 +375,11 @@ async function restore(directoryArg) {
     process.stdout.write(`SKILLMINT_PRODUCTION_RECOVERY_DRILL=PASS\nSOURCE_CAPTURED_AT=${manifest.captured_at}\n`);
   } finally {
     if (started) {
-      spawnSync("supabase", ["stop", "--no-backup"], { cwd: workdir, stdio: "ignore", timeout: 120000 });
+      spawnSync("supabase", ["stop", "--no-backup"], {
+        cwd: workdir,
+        stdio: "ignore",
+        timeout: 120000,
+      });
     }
     fs.rmSync(workdir, { recursive: true, force: true });
   }
@@ -312,7 +388,7 @@ async function restore(directoryArg) {
 function selfTest() {
   assert.equal(EXPECTED_MIGRATIONS.at(-1), "20260730000900");
   assert.equal(EXPECTED_PUBLIC_TABLES.length, 7);
-  assert.throws(() => assertProductionUrl("postgresql://postgres:secret@db.not-skillmint.supabase.co:5432/postgres"), /project_ref_mismatch/);
+  assert.throws(() => assertProductionUrl("not-a-database-url"), /database_url_invalid/);
   assert.throws(() => assertOutsideRepository(path.join(repoRoot(), "recovery-private")), /outside_repository/);
   const outside = path.join(os.tmpdir(), `skillmint-recovery-self-test-${process.pid}-${Date.now()}`);
   fs.mkdirSync(outside, { mode: 0o700 });
@@ -329,7 +405,9 @@ async function main() {
   if (mode === "--self-test") return selfTest();
   if (mode === "--capture" && directory) return capture(directory);
   if (mode === "--restore" && directory) return restore(directory);
-  fail("usage: node scripts/production-logical-recovery-drill.mjs --self-test | --capture /absolute/private/dir | --restore /absolute/private/dir");
+  fail(
+    "usage: node scripts/production-logical-recovery-drill.mjs --self-test | --capture /absolute/private/dir | --restore /absolute/private/dir",
+  );
 }
 
 main().catch((error) => {
