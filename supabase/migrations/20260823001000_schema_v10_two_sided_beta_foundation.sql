@@ -67,10 +67,9 @@ from public, anon, authenticated, service_role;
 revoke all on table public.proof_briefs
 from public, anon, authenticated, service_role;
 
+-- Persona identity is server-owned from the moment this table is created.
+-- Authenticated browser sessions may read their own assigned value only.
 grant select on table public.account_personas to authenticated;
-grant insert (user_id, persona) on table public.account_personas to authenticated;
-grant update (persona) on table public.account_personas to authenticated;
-grant delete on table public.account_personas to authenticated;
 grant select, insert, update, delete on table public.account_personas to service_role;
 
 grant select (
@@ -88,19 +87,6 @@ grant select, insert, update, delete on table public.proof_briefs to service_rol
 
 create policy "Users can select their own account persona"
 on public.account_personas for select to authenticated
-using (public.is_active_skillmint_user() and auth.uid() = user_id);
-
-create policy "Users can insert their own account persona"
-on public.account_personas for insert to authenticated
-with check (public.is_active_skillmint_user() and auth.uid() = user_id);
-
-create policy "Users can update their own account persona"
-on public.account_personas for update to authenticated
-using (public.is_active_skillmint_user() and auth.uid() = user_id)
-with check (public.is_active_skillmint_user() and auth.uid() = user_id);
-
-create policy "Users can delete their own account persona"
-on public.account_personas for delete to authenticated
 using (public.is_active_skillmint_user() and auth.uid() = user_id);
 
 create policy "Users can select their own proof briefs"
