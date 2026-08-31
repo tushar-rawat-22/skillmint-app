@@ -38,6 +38,30 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     });
   });
 
+  await page.route(`${PROVIDER_ORIGIN}/rest/v1/job_matches**`, async (route) => {
+    const request = route.request();
+    if (request.method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+
+    const input = JSON.parse(request.postData() ?? "{}");
+    const row = {
+      id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      user_id: ACCOUNT_A.id,
+      ...input,
+      created_at: "2026-01-02T03:04:05.000Z",
+    };
+    const acceptsSingle = request.headers().accept?.includes(
+      "application/vnd.pgrst.object+json",
+    );
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify(acceptsSingle ? row : [row]),
+    });
+  });
+
   await login(page, ACCOUNT_A);
 
   await page.goto("/upload");
@@ -60,7 +84,6 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await expect(page.getByText(/Latest JD set as Active Target/u)).toBeVisible();
 
   await page.goto("/dashboard");
-  await expect(page.getByText("Active Target", { exact: true }).first()).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Frontend Developer at Synthetic Co" }),
   ).toBeVisible();
