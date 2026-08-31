@@ -1,6 +1,5 @@
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
 import {
-  getBrowserStorage,
   readVisibleStorageValue,
   readVisibleStoredValue,
   removeOwnedStoragePartition,
@@ -105,16 +104,12 @@ export function getActiveTargetStatus(): ActiveTargetStatus {
 }
 
 export function readActiveTargetStorageSnapshot(
-  _options: ActiveTargetParseOptions = {},
+  options: ActiveTargetParseOptions = {},
 ): string | null {
-  const storage = getBrowserStorage();
-  if (!storage) return null;
-
-  try {
-    return storage.getItem(ACTIVE_TARGET_STORAGE_KEY);
-  } catch {
-    return null;
-  }
+  return readVisibleStorageValue(
+    ACTIVE_TARGET_STORAGE_DESCRIPTOR,
+    toBrowserOwnerContext(options),
+  );
 }
 
 export function parseActiveTarget(
