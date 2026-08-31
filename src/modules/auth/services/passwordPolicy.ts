@@ -1,4 +1,4 @@
-export const MIN_NEW_PASSWORD_LENGTH = 12;
+export const MIN_NEW_PASSWORD_LENGTH = 15;
 
 export function isNewPasswordAllowed(password: string): boolean {
   return password.length >= MIN_NEW_PASSWORD_LENGTH;
