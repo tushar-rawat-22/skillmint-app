@@ -41,8 +41,8 @@ import { buildCareerPathEngineResult } from "@/intelligence/roadmap";
 import {
   buildActiveTargetEngineResult,
   createActiveTargetResumeContextFromStoredAnalysis,
+  getActiveTarget,
   isResumeContextCurrent,
-  parseActiveTarget,
   readActiveTargetStorageSnapshot,
   type ActiveTarget,
   type ActiveTargetResumeContext,
@@ -248,9 +248,7 @@ export default function DashboardPage() {
     [resumeContext, storedJobMatch],
   );
   const activeTarget = useMemo(
-    () => parseActiveTarget(storedActiveTarget, {
-      currentUserId,
-    }),
+    () => getActiveTarget({ currentUserId }),
     [currentUserId, storedActiveTarget],
   );
   const dashboardActiveTarget = useMemo(
