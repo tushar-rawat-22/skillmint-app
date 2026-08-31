@@ -52,6 +52,10 @@ assert.deepEqual(
   v10,
   "V10 manifest contract changed",
 );
+assert.ok(
+  manifest.generated_for.production.pending_execution.includes(v10.version),
+  "V10 must remain pending for Production until direct evidence proves otherwise",
+);
 assert.equal(
   Buffer.compare(bytes(v10.source_path), bytes(v10.migration_path)),
   0,
@@ -68,9 +72,14 @@ assert.match(
   /grant select on table public\.account_personas to authenticated;/i,
   "authenticated users must retain owner-scoped persona read access",
 );
+assert.match(
+  v10Sql,
+  /grant select, insert, update, delete on table public\.account_personas to service_role;/i,
+  "server-owned persona assignment path is missing",
+);
 assert.doesNotMatch(
   v10Sql,
-  /grant\s+(?:insert|update|delete)(?:\s*\([^;]*\))?\s+on\s+table\s+public\.account_personas\s+to\s+authenticated/i,
+  /grant\s+[^;]*\b(?:insert|update|delete)\b[^;]*\bon\s+table\s+public\.account_personas\b[^;]*\bto\s+authenticated\b/i,
   "authenticated browser sessions must not receive direct persona write grants",
 );
 assert.doesNotMatch(
