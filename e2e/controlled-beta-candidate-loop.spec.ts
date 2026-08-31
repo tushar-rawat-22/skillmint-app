@@ -6,6 +6,7 @@ import {
   test,
 } from "./support/runtime";
 
+const ACTIVE_TARGET_STORAGE_KEY = "skillmint:active-target:v1";
 const SYNTHETIC_RESUME_TEXT = [
   "Skills: TypeScript React testing PostgreSQL accessibility",
   "Projects: Built a typed web application with component tests and measurable performance improvements.",
@@ -82,8 +83,24 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await page.getByRole("button", { name: "Analyze Match" }).click();
   await page.getByRole("button", { name: "Set as Active Target" }).click();
   await expect(page.getByText(/Latest JD set as Active Target/u)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Frontend Developer at Synthetic Co" }),
+  ).toBeVisible();
+
+  const activeTargetBeforeNavigation = await page.evaluate(
+    (key) => localStorage.getItem(key),
+    ACTIVE_TARGET_STORAGE_KEY,
+  );
+  expect(activeTargetBeforeNavigation).toContain("Frontend Developer");
+  expect(activeTargetBeforeNavigation).toContain("Synthetic Co");
 
   await page.goto("/dashboard");
+  expect(
+    await page.evaluate(
+      (key) => localStorage.getItem(key),
+      ACTIVE_TARGET_STORAGE_KEY,
+    ),
+  ).toBe(activeTargetBeforeNavigation);
   await expect(
     page.getByRole("heading", { name: "Frontend Developer at Synthetic Co" }),
   ).toBeVisible();
