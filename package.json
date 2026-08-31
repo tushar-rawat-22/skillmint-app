@@ -43,6 +43,7 @@
     "test:e2e:resume-comparison:firefox": "playwright test e2e/resume-comparison.spec.ts --project=firefox --grep @critical --workers=1 --retries=0",
     "test:e2e:resume-comparison:webkit": "playwright test e2e/resume-comparison.spec.ts --project=webkit --grep @critical --workers=1 --retries=0",
     "test:e2e:launch-hardening": "playwright test e2e/launch-hardening.spec.ts --project=chromium --workers=1 --retries=0",
+    "test:e2e:controlled-beta-candidate-loop": "playwright test e2e/controlled-beta-candidate-loop.spec.ts --project=chromium --workers=1 --retries=0",
     "test:e2e:controlled-access": "playwright test e2e/controlled-access.spec.ts --project=chromium --grep @closed --workers=1 --retries=0 && SKILLMINT_E2E_PUBLIC_SIGNUP_ENABLED=true playwright test e2e/controlled-access.spec.ts --project=chromium --grep @enabled --workers=1 --retries=0",
     "test:e2e:public-evidence-demo": "playwright test e2e/public-evidence-demo.spec.ts --project=chromium --grep @demo-disabled --workers=1 --retries=0 && SKILLMINT_E2E_PUBLIC_DEMO_ENABLED=true playwright test e2e/public-evidence-demo.spec.ts --project=chromium --grep @demo-enabled --workers=1 --retries=0",
     "test:e2e:proof-brief": "playwright test e2e/proof-brief.spec.ts --project=chromium --workers=1 --retries=0",
