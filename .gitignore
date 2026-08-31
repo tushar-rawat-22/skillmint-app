@@ -30,6 +30,10 @@ pnpm-debug.log*
 # local Supabase CLI metadata
 supabase/.temp/
 
+# local/private recovery material (must stay outside the repository)
+recovery-private/
+*.skillmint-recovery-manifest.json
+
 # testing
 coverage/
 playwright-report/
