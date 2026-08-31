@@ -8,6 +8,7 @@ on:
       - ".github/workflows/production-migration-rehearsal.yml"
       - "scripts/production-local-migration-rehearsal.mjs"
       - "scripts/production-local-migration-rehearsal-fixtures.mjs"
+      - "scripts/production-migration-lock-timing-rehearsal.mjs"
       - "scripts/production-pending-migration-integrity-fixtures.mjs"
       - "supabase/migrations/**"
       - "supabase/sources/**"
@@ -63,6 +64,9 @@ jobs:
 
       - name: Execute V1-V12 rehearsal
         run: node scripts/production-local-migration-rehearsal.mjs --execute
+
+      - name: Verify bounded migration timing and lock recovery
+        run: node scripts/production-migration-lock-timing-rehearsal.mjs
 
       - name: Stop isolated local Supabase
         if: always()
