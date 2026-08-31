@@ -89,6 +89,9 @@ jobs:
       - name: Run launch-hardening browser coverage
         run: npm run test:e2e:launch-hardening
 
+      - name: Run controlled beta candidate loop
+        run: npm run test:e2e:controlled-beta-candidate-loop
+
       - name: Run controlled-access browser coverage
         run: npm run test:e2e:controlled-access
 
