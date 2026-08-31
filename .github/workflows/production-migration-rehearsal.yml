@@ -11,6 +11,7 @@ on:
       - "scripts/production-migration-lock-timing-rehearsal.mjs"
       - "scripts/production-logical-recovery-drill.mjs"
       - "scripts/production-pending-migration-integrity-fixtures.mjs"
+      - "scripts/production-rollout-foundation-fixtures.mjs"
       - "supabase/migrations/**"
       - "supabase/sources/**"
   workflow_dispatch:
@@ -45,6 +46,12 @@ jobs:
 
       - name: Install repository dependencies
         run: npm ci
+
+      - name: Verify pending migration artifact integrity
+        run: node scripts/production-pending-migration-integrity-fixtures.mjs
+
+      - name: Verify rollout artifact contract
+        run: node scripts/production-rollout-foundation-fixtures.mjs
 
       - name: Verify recovery harness safety boundaries
         run: node scripts/production-logical-recovery-drill.mjs --self-test
