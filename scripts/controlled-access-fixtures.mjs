@@ -112,10 +112,12 @@ test("public signup configuration defaults closed and accepts only true", () => 
   );
 });
 
-test("new-password policy requires at least fifteen characters", () => {
+test("new-password policy requires fifteen Unicode code points", () => {
   assert.equal(MIN_NEW_PASSWORD_LENGTH, 15);
   assert.equal(isNewPasswordAllowed("12345678901234"), false);
   assert.equal(isNewPasswordAllowed("123456789012345"), true);
+  assert.equal(isNewPasswordAllowed("😀".repeat(14)), false);
+  assert.equal(isNewPasswordAllowed("😀".repeat(15)), true);
 });
 
 test("disabled signup cannot invoke the provider signup method", async () => {
