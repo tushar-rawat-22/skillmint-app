@@ -11,8 +11,11 @@ import {
 } from "@/components/ui/premium";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
 import { usePasswordRecovery } from "@/modules/auth/hooks/usePasswordRecovery";
+import {
+  getNewPasswordLengthMessage,
+  isNewPasswordAllowed,
+} from "@/modules/auth/services/passwordPolicy";
 
-const MIN_PASSWORD_LENGTH = 6;
 const INVALID_LINK_MESSAGE =
   "This password reset link is invalid or has expired.";
 const UPDATE_FAILURE_MESSAGE =
@@ -213,8 +216,8 @@ function getPasswordValidationError(
     return "New password is required.";
   }
 
-  if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  if (!isNewPasswordAllowed(newPassword)) {
+    return getNewPasswordLengthMessage();
   }
 
   if (!confirmPassword) {
