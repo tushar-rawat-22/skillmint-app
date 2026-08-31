@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isNewPasswordAllowed } from "@/modules/auth/services/passwordPolicy";
 
 const RESET_PASSWORD_PATH = "/reset-password";
 
@@ -85,6 +86,10 @@ export function usePasswordRecovery(): UsePasswordRecoveryResult {
       submissionLockRef.current
     ) {
       return "ignored";
+    }
+
+    if (!isNewPasswordAllowed(newPassword)) {
+      return "failure";
     }
 
     submissionLockRef.current = true;
