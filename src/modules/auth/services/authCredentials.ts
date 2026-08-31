@@ -1,3 +1,5 @@
+import { isNewPasswordAllowed } from "@/modules/auth/services/passwordPolicy";
+
 type AuthCredentialClient = {
   auth: {
     signInWithPassword(input: {
@@ -45,6 +47,13 @@ export async function submitAuthCredentials(
     request.publicSignupEnabled !== true
   ) {
     return { status: "signup_disabled" };
+  }
+
+  if (
+    request.mode === "signup" &&
+    !isNewPasswordAllowed(request.password)
+  ) {
+    return { status: "failure" };
   }
 
   try {
