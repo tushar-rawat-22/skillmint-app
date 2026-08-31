@@ -13,6 +13,10 @@ import { getSupabaseConfigStatus } from "@/lib/supabase/config";
 import {
   submitAuthCredentials,
 } from "@/modules/auth/services/authCredentials";
+import {
+  getNewPasswordLengthMessage,
+  isNewPasswordAllowed,
+} from "@/modules/auth/services/passwordPolicy";
 
 type AuthFormProps =
   | { mode: "login" }
@@ -236,8 +240,8 @@ function getValidationError(
     return "Password is required.";
   }
 
-  if (mode === "signup" && password.length < 6) {
-    return "Signup password must be at least 6 characters.";
+  if (mode === "signup" && !isNewPasswordAllowed(password)) {
+    return getNewPasswordLengthMessage();
   }
 
   return "";
