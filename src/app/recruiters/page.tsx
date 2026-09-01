@@ -65,8 +65,8 @@ export default function RecruitersPage() {
             </div>
             {!publicSignupEnabled ? (
               <p className="mt-5 text-sm leading-6 text-slate-500">
-                Recruiter account creation is not active yet. OAuth, server-owned
-                persona state, and abuse controls must pass review first.
+                Recruiter account creation is not active yet. OAuth and abuse
+                controls remain launch gates.
               </p>
             ) : null}
           </section>
