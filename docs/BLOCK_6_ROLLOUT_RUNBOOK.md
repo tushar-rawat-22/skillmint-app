@@ -1,10 +1,12 @@
 # Block 6 Rollout Runbook
 
+> **Current Production authority notice — September 1, 2026:** This file is a historical Block 6 engineering/isolated-verification record. It is **not** the current Production migration runbook. Production is reconciled through V9; V10–V12 are the only pending schema migrations. Do not execute the older Production V5–V7 procedures or checklist below against Production. Current schema state, recovery evidence, execution gates, rollback rules, and V10→V12 postflight authority live in [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md).
+
 ## 1. Purpose and current state
 
-This runbook remains the operating reference for a future explicitly authorized Production database and analytics rollout. It does not authorize a hosted change and is not obsolete.
+This runbook preserves the Block 6 analytics engineering and isolated-host verification record. Its historical Production rollout sections are retained for chronology only and are superseded by `docs/PRODUCTION_SCHEMA_ROLLOUT.md`.
 
-The Block 6 engineering foundation and isolated verification are complete. The fail-closed application code was automatically deployed from `main`, but this runbook has not been executed against Production. Production V5–V7 remain unapplied, and Production rollout remains pending authorization.
+The Block 6 engineering foundation and isolated verification are complete. Production has since been reconciled through V9 using direct connected evidence; analytics remains disabled. The historical statements below describing V5–V7 as unapplied must not be used as current Production state.
 
 The isolated hosted project has V1–V7 applied. Migration, catalog, ACL, raw-row, RPC, retention, and application live-security verification passed after the additive V7 ACL repair. That evidence does not prove Production state or activation.
 
@@ -20,7 +22,7 @@ Keep `ANALYTICS_COLLECTION_ENABLED` and `NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLE
 
 | Environment | Application | Database responsibility |
 | --- | --- | --- |
-| Production | Vercel Production | Supabase `skillmint-beta`; no migration or setting change is authorized by this repository pass |
+| Production | Vercel Production | Supabase `skillmint-beta`; current migration authority is `docs/PRODUCTION_SCHEMA_ROLLOUT.md` |
 | Isolated | No Vercel project connection | Supabase `skillmint-block6-test`; contains no Production data, has V1–V7 applied, and passed the isolated live-security gate |
 | Preview | Vercel Preview | Currently shares Production's two public Supabase variables, so it is not an isolated database environment |
 
@@ -74,7 +76,9 @@ The following procedure was completed under a separately approved isolated live-
 
 Never use `db pull` blindly. It can create misleading local state and does not replace catalog review.
 
-## 6. Production baseline procedure
+## 6. Historical Production baseline procedure — superseded
+
+**Do not execute this section against current Production.** It describes the earlier Block 6 V5–V7 rollout model and is retained only as historical evidence. Current Production is reconciled through V9; use `docs/PRODUCTION_SCHEMA_ROLLOUT.md` for the V10→V12 gate.
 
 V1–V4 are historical baseline candidates. Do not assume that Production has applied them merely because similar objects exist.
 
@@ -153,7 +157,9 @@ Application rollback and database recovery are separate decisions. Redeploying o
 
 Prefer flag shutdown, route blocking, and reviewed forward fixes. Do not modify applied SQL, erase migration history, or use migration repair to execute or undo schema changes.
 
-## 17. Evidence and closure checklist
+## 17. Historical evidence and closure checklist
+
+The checklist below records the older Block 6 rollout plan. It is not the current Production execution checklist; current V10→V12 gates are defined in `docs/PRODUCTION_SCHEMA_ROLLOUT.md`.
 
 - [x] Disposable workdir and private inventory provenance recorded without secret values.
 - [x] Target guard passed for the isolated project before link.
@@ -170,4 +176,4 @@ Prefer flag shutdown, route blocking, and reviewed forward fixes. Do not modify 
 - [ ] Browser delivery enabled with a rebuild and observed before Production activation approval.
 - [ ] Kill switches, monitoring ownership, incident path, and evidence location recorded.
 
-The Block 6 engineering foundation and isolated verification are complete. This checklist is not proof that Production rollout occurred: the runbook has not been executed against Production, and Production rollout and activation remain pending separate authorization and every applicable gate.
+The Block 6 engineering foundation and isolated verification are complete. This historical checklist is not proof of current Production rollout state or activation. Use [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md) for current Production schema truth.
