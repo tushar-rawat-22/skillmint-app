@@ -28,12 +28,12 @@ export default function Navbar({
           <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.RECRUITERS}>
             Recruiters
           </Link>
-          <a className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="#preview">
+          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="/#preview">
             Product Preview
-          </a>
-          <a className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="#how-it-works">
+          </Link>
+          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="/#how-it-works">
             How it works
-          </a>
+          </Link>
           <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.LOGIN}>
             Log in
           </Link>
