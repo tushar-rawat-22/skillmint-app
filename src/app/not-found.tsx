@@ -16,7 +16,7 @@ export default function NotFound() {
             Page not found
           </p>
           <h1 className="mt-4 text-4xl font-black sm:text-5xl">
-            This route does not exist.
+            This page could not be found.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             Nothing was changed or submitted. Return to SkillMint or sign in to continue your saved career workspace.
