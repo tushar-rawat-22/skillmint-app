@@ -853,7 +853,12 @@ check(
 );
 const rolloutAuthority = text("docs/PRODUCTION_SCHEMA_ROLLOUT.md");
 for (const requiredText of [
-  "Current decision:** `NO-GO`",
+  "Current decision:** `SCHEMA ROLLOUT COMPLETE`",
+  "Production is reconciled through **V12**",
+  "no pending repository migration",
+  "zero synthetic users or application rows persisted",
+  "controlled beta remains closed",
+  "privacy/support contact remains the immediate **controlled-beta release blocker**",
   "V1+V2",
   "exact V1+V2 versioned catalog baseline plus the known untracked",
   "history is **unknown**, not absent",

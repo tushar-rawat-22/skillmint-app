@@ -1,12 +1,12 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `NO-GO` — exact-version execution transport pending
+**Current decision:** `SCHEMA ROLLOUT COMPLETE` — exact V10 → V11 → V12 Production history and postflight verified; controlled beta remains closed
 
 This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize signup/invitations, analytics activation, hosted Auth changes, SMTP, domains, billing, or public beta release.
 
 ## Current connected Production evidence
 
-Fresh connected read-only inspection on September 1, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and migration history is exactly:
+Fresh connected inspection on September 2, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and migration history is exactly:
 
 1. `20260723000100`
 2. `20260723000200`
@@ -18,14 +18,17 @@ Fresh connected read-only inspection on September 1, 2026 reconfirmed the canoni
 8. `20260727000750`
 9. `20260727000800`
 10. `20260730000900`
+11. `20260823001000`
+12. `20260823001100`
+13. `20260829001200`
 
-Production is reconciled through **V9**. The repository migrations below remain **pending** in Production:
+Production is reconciled through **V12**. The exact repository migrations applied during the September 2 maintenance window were:
 
 - `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 - `20260823001100_schema_v11_recruiter_evidence_review.sql`
 - `20260829001200_schema_v12_account_persona_authority.sql`
 
-The same live lineage contains the seven ordinary `public` tables `active_resume_selections`, `analytics_events`, `beta_feedback`, `career_snapshots`, `job_matches`, `profiles`, and `resume_analyses`.
+The same live lineage now contains eleven ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, and `candidate_evidence_reviews`. Every ordinary `public` table was verified as owned by `postgres` with RLS enabled. `analytics_events` remains force-RLS with no authenticated table access.
 
 The live `public.rls_auto_enable()` contract remains present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog`. Its attached enabled event trigger is `ensure_rls`, on `ddl_command_end`, for `CREATE TABLE`, `CREATE TABLE AS`, and `SELECT INTO`. That shape matches the repository V9 contract.
 
@@ -43,7 +46,9 @@ Direct catalog ACL inspection previously observed table-specific grants rather t
 
 This table records only observed direct table ACL entries. It does not by itself prove effective privilege after column grants, RLS, functions, role inheritance, or other PostgreSQL/Supabase authorization layers. Those boundaries remain mandatory preflight/postflight checks.
 
-No Production writes were performed to obtain the September 1 drift evidence.
+The September 2 execution used pinned Supabase CLI `2.109.1` and repository migration bytes. Each migration was exposed, hash-checked, dry-run, applied, and postflight-verified separately. The resulting remote migration versions match the repository versions exactly; a final dry run reported the remote database up to date.
+
+No backup contents, credentials, row contents, or user identifiers were recorded in this authority. Transaction-scoped behavioral postflight created only synthetic rows inside a single rollback-bound transaction and verified that zero synthetic users or application rows persisted.
 
 ## Source of truth
 
@@ -67,7 +72,7 @@ The repository manifest currently defines this exact ordered chain:
 12. `20260823001100_schema_v11_recruiter_evidence_review.sql`
 13. `20260829001200_schema_v12_account_persona_authority.sql`
 
-Production is reconciled through V9, with **V10–V12 pending**. Never edit an applied migration in place. Recompute and compare hashes against the manifest before rehearsal or execution.
+Production is reconciled through V12, with **no pending repository migration** as of the September 2 postflight. Never edit an applied migration in place. Any future schema change requires a new forward migration and a fresh rollout authority.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately controlled.
 
@@ -99,38 +104,39 @@ For the exact recovery inputs and unchanged V10–V12 artifacts, **backup → is
 
 This recovery result does not authorize beta release. Public privacy/support contact monitoring and other release-only gates remain separate from schema execution.
 
-## Remaining Production gates
+## Production rollout gate result
 
 | Control | Current verified state | Gate |
 | --- | --- | --- |
-| Migration history | Exact connected history through V9 reconfirmed September 1 | V10–V12 remain pending |
-| Public ordinary tables | Seven V1–V9 lineage tables | Re-check immediately before execution |
-| Public table ACLs | Recorded direct ACL matrix plus prior effective probes | Re-check effective RLS/column/function privileges before and after execution |
-| `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | Re-check exact contract before execution and postflight |
-| Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | Re-check before execution and postflight |
-| Isolated migration rehearsal | V1–V12 transition rehearsal passed | Re-run only after migration/harness changes or material drift |
-| Lock/timing rehearsal | Bounded lock failure/recovery passed; real-host representative V10→V12 completed in 2.66s | Set abort threshold from reviewed evidence and stop on breach |
-| Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for unchanged evidence set** |
-| V10 persona boundary | Pending V10 denies authenticated persona writes; server/service-role owns assignment | Re-check exact V10 hash before execution |
-| V10–V12 execution authority | Founder authorized reviewed rollout after all execution gates are green | Authority exists; exact-version execution transport still required |
-| Hosted Auth/security | Reviewed boundaries must remain unchanged | Fresh preflight/postflight required |
-| Analytics | Must remain disabled unless separately authorized | Verify before and after execution |
+| Migration history | Exact connected history through V12 | **PASSED**; no pending repository version |
+| Public ordinary tables | Eleven expected lineage tables, all `postgres`-owned with RLS | **PASSED** |
+| Public table ACLs | Direct and effective RLS/column/function privilege probes | **PASSED**; no anonymous table access or authenticated write path to the four new tables |
+| `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | **PASSED** |
+| Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | **PASSED** |
+| Isolated migration rehearsal | V1–V12 transition rehearsal passed | **PASSED**; repeat only after migration/harness changes or material drift |
+| Lock/timing rehearsal | Bounded lock failure/recovery passed; real-host representative V10→V12 completed in 2.66s | **PASSED**; Production statements ran under the reviewed lock and statement limits |
+| Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for the unchanged evidence set** |
+| Persona authority | Authenticated persona writes absent; service assignment preserved; identity immutable | **PASSED** |
+| Proof Brief and recruiter-review boundaries | Publish/revoke/review/feedback, cross-owner denials, and deletion cascades | **PASSED** in rollback-bound Production postflight |
+| Hosted Auth/security | Signup disabled; email login remains enabled | **PASSED** and unchanged |
+| Analytics | Collection endpoint disabled; force-RLS and ACL boundary unchanged | **PASSED** and remains disabled |
+| Deployed application compatibility | Production deployment on exact preflight `main`; routes and protected APIs healthy; no runtime error cluster | **PASSED** |
 
 Cost or schedule pressure does not waive recovery, security, privacy, or authorization gates.
 
-## Exact-version execution transport requirement
+## Exact-version execution transport result
 
-The remaining schema blocker is operational, not conceptual: the execution path must preserve the repository migration versions `20260823001000`, `20260823001100`, and `20260829001200` exactly.
+The exact-version transport gate is satisfied. The execution path preserved repository migration versions `20260823001000`, `20260823001100`, and `20260829001200` exactly.
 
 Do **not** use a migration mechanism that generates new remote-only migration timestamps. In particular, the currently available Supabase MCP `apply_migration` action does not expose a version parameter and may generate its own server-side migration timestamp. Using that path would create migration-history drift against the repository files and would violate the no-history-repair rule.
 
-Acceptable execution must therefore use the reviewed repository migration files through a mechanism that records their existing versions exactly, such as the pinned Supabase CLI `db push` path from a trusted environment with the existing linked Production credentials. Do not copy secrets into GitHub Actions or chat merely to make the transport convenient.
+The accepted path was pinned Supabase CLI `db push` from a trusted local environment with the existing linked Production credentials. This result does not authorize another execution or allow secrets to be copied into GitHub Actions or chat.
 
 Never apply the SQL with `execute_sql` and then manually insert or repair migration-history rows. Migration history must be produced by the legitimate migration mechanism, not edited to force progress.
 
-## Narrow V10 → V12 pre-execution sequence
+## Executed V10 → V12 sequence record
 
-Immediately before the maintenance window:
+Immediately before and during the maintenance window, the operator:
 
 1. Fetch current `main`, migration manifest, exact V10/V11/V12 hashes, this authority, and current status docs.
 2. Require exact Production target `skillmint-beta` and exact history through `20260730000900`, with V10–V12 absent.
@@ -145,7 +151,7 @@ Immediately before the maintenance window:
 11. Confirm analytics remains disabled and hosted Auth/security boundaries match the reviewed state.
 12. Use only an execution transport that records the existing V10/V11/V12 migration versions exactly.
 
-Any unresolved execution item keeps the schema decision at `NO-GO`.
+Every listed execution item passed. A future schema rollout returns to `NO-GO` until a new forward migration and fresh evidence satisfy a new authority.
 
 ## Rollback contract
 
@@ -180,8 +186,18 @@ After V12, require:
 
 Controlled beta remains **CLOSED** after schema postflight until release-only gates, including a verified durably monitored privacy/support contact, are satisfied. The schema rollout and beta release are separate decisions.
 
+### September 2, 2026 execution record
+
+- Preflight matched exact current `main`, exact canonical Production identity, exact V1–V9 history, absent V10–V12 objects, and reviewed migration hashes.
+- The deployed Production application was `READY` on the exact preflight `main`; route, security-header, signup-closure, protected-API, and disabled-analytics checks passed. The only smoke failure was the already-known missing privacy/support contact.
+- V10, V11, and V12 were applied separately and in order through the pinned exact-version transport. Each step was preceded by a one-migration dry run and followed by connected history/catalog/security verification.
+- Exact postflight history ends at `20260829001200`; all expected tables, functions, triggers, constraints, owners, RLS, ACL, Auth, and deletion boundaries matched the reviewed contract.
+- A rollback-bound Production behavioral probe passed Candidate/Recruiter isolation, persona immutability, Proof Brief publish/revoke, recruiter review, candidate feedback, negative cross-owner access, and deletion relationships. The transaction rolled back and a separate count check confirmed zero persistent synthetic users or rows.
+- Final CLI history matched all thirteen repository versions and the final dry run reported the remote database up to date.
+- Signup remains closed, email login remains enabled, analytics remains disabled, and controlled beta remains closed.
+
 ## Next gate
 
-Recovery is no longer the blocker for the unchanged evidence set. The immediate schema gate is an **exact-version V10→V12 execution transport** plus the final narrow drift/hash/Auth/RLS preflight.
+The V10→V12 schema gate is complete. Do not repeat the recovery drill or replay these migrations while the verified inputs remain unchanged.
 
-The public privacy/support contact remains a **controlled-beta release blocker**, not a database migration execution gate. Do not invent an address and do not open invitations merely because schema postflight succeeds.
+The public privacy/support contact remains the immediate **controlled-beta release blocker**, not a database migration issue. Do not invent an address and do not open invitations merely because schema postflight succeeded.
