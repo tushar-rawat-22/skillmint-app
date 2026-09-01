@@ -1,6 +1,6 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `NO-GO — exact-version execution transport pending`
+**Current decision:** `NO-GO` — exact-version execution transport pending
 
 This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize signup/invitations, analytics activation, hosted Auth changes, SMTP, domains, billing, or public beta release.
 
