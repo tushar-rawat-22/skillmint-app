@@ -173,12 +173,16 @@ export default function TargetRoleSetupForm() {
       try {
         const profileResult = await getCurrentUserProfile();
 
-        if (!isActive || !profileResult.ok || !profileResult.data?.targetRole) {
+        if (!isActive || !profileResult.ok || !profileResult.data) {
           return;
         }
 
         const profile = profileResult.data;
         const targetRole = profile.targetRole;
+        if (!targetRole) {
+          return;
+        }
+
         const restoredSetup = profile.updatedAt
           ? parseStoredCareerDirection({
               targetRole,
