@@ -92,6 +92,19 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
 
   await login(page, ACCOUNT_A);
 
+  await page.goto("/setup");
+  await expect(page.getByLabel("Your career direction")).toHaveValue(
+    "Synthetic engineer",
+  );
+  await page.getByLabel("Your career direction").fill("Frontend Developer");
+  await page.getByRole("button", { name: "Save direction" }).click();
+  await expect.poll(async () =>
+    page.evaluate(
+      (key) => localStorage.getItem(key),
+      TARGET_ROLE_SETUP_STORAGE_KEY,
+    )
+  ).not.toBeNull();
+
   await page.goto("/upload");
   await page.locator("#resume-file-upload").setInputFiles({
     name: "controlled-beta-candidate.txt",
@@ -108,8 +121,17 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     SYNTHETIC_JOB_DESCRIPTION,
   );
   await page.getByRole("button", { name: "Analyze Match" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Choose the job you are actually pursuing.",
+    }),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: "Set as Active Target" }).click();
   await expect(page.getByText(/Latest JD set as Active Target/u)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Start one roadmap mission." }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", {
       name: "Frontend Developer at Synthetic Co",
@@ -123,6 +145,14 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   );
   expect(activeTargetBeforeNavigation).toContain("Frontend Developer");
   expect(activeTargetBeforeNavigation).toContain("Synthetic Co");
+
+  await page.goto("/roadmap");
+  await page.getByLabel("Status").first().selectOption("started");
+  await expect(
+    page.getByRole("heading", {
+      name: "Improve proof, then match another job.",
+    }),
+  ).toBeVisible();
 
   await page.goto("/dashboard");
   expect(
