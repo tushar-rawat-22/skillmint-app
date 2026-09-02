@@ -21,7 +21,7 @@ const sections = [
   {
     title: "Browser-local versus account-synced",
     body:
-      "Browser-local resume, JD, target, mission, setup, feedback, and preference state stays in this browser. Account-synced profile, saved-report, and feedback records use Supabase only for signed-in users when configured and available.",
+      "Browser-local resume, JD, Active Target, mission, setup, feedback, and preference state stays in this browser. For signed-in users, the saved target role and career-direction summary may also be restored from the account profile. Account-synced profile, saved-report, and feedback records use Supabase only when configured and available.",
   },
   {
     title: "Resume and JD processing",
@@ -41,12 +41,12 @@ const sections = [
   {
     title: "Saved-report and account deletion",
     body:
-      "Delete saved reports removes synced resume analyses, JD matches, and career snapshots while preserving the account, profile, and feedback. Account deletion uses a server-only admin boundary; its cascade behavior, including feedback deletion, requires the documented migration and operational verification.",
+      "Delete saved reports removes synced resume analyses, JD matches, and career snapshots while preserving the account, profile, and feedback. Account deletion uses a server-only admin boundary. Production postflight verified the intended deletion cascades, including feedback deletion, with transaction-scoped probes that rolled back without leaving synthetic rows.",
   },
   {
     title: "Current limitations",
     body:
-      "SkillMint does not claim GDPR or DPDP certification, instant infrastructure-wide erasure, end-to-end encryption, production readiness, or that data never leaves your device. Provider backup/log deletion and live account-deletion behavior are not yet operationally verified. A verified privacy/support contact is still a release blocker.",
+      "SkillMint does not claim GDPR or DPDP certification, instant infrastructure-wide erasure, end-to-end encryption, public-beta readiness, or that data never leaves your device. Provider backup and log retention remain separate from application-level deletion proof. A verified privacy/support contact is still a release blocker.",
   },
 ];
 
