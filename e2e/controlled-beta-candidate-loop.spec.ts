@@ -7,6 +7,7 @@ import {
 } from "./support/runtime";
 
 const ACTIVE_TARGET_STORAGE_KEY = "skillmint:active-target:v1";
+const TARGET_ROLE_SETUP_STORAGE_KEY = "skillmint:target-role-setup";
 const SYNTHETIC_RESUME_TEXT = [
   "Skills: TypeScript React testing PostgreSQL accessibility",
   "Projects: Built a typed web application with component tests and measurable performance improvements.",
@@ -19,6 +20,32 @@ const SYNTHETIC_JOB_DESCRIPTION = [
   "Write automated tests, review frontend changes, and collaborate with product and design.",
   "Use PostgreSQL-backed services and accessibility standards to ship reliable user experiences.",
 ].join(" ");
+
+test("@critical signed-in candidate restores account career direction on a fresh browser", async ({
+  page,
+  request,
+}) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+
+  await login(page, ACCOUNT_A);
+  await page.goto("/setup");
+
+  await expect(page.getByLabel("Your career direction")).toHaveValue(
+    "Synthetic engineer",
+  );
+  await expect(
+    page.getByText(
+      "Restored your saved target role from this SkillMint account. Review the remaining direction settings before saving.",
+    ),
+  ).toBeVisible();
+
+  expect(
+    await page.evaluate(
+      (key) => localStorage.getItem(key),
+      TARGET_ROLE_SETUP_STORAGE_KEY,
+    ),
+  ).toBeNull();
+});
 
 test("@critical controlled beta candidate reaches a private Proof Brief through the core product loop", async ({
   page,
