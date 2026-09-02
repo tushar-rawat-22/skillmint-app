@@ -89,6 +89,41 @@ const WEEKLY_TIME_OPTIONS = [
   ["high", "High: 10+ hrs/week"],
 ] satisfies Array<[TargetRoleSetup["weeklyTimeCommitment"], string]>;
 
+const CAREER_FIELD_VALUES = [
+  "tech_software",
+  "data_analytics",
+  "sales_business_development",
+  "marketing_content",
+  "finance_operations",
+  "design_product",
+  "other",
+] as const;
+const EXPERIENCE_LEVEL_VALUES = [
+  "student",
+  "fresher",
+  "intern",
+  "junior",
+  "switcher",
+] as const;
+const PRIMARY_GOAL_VALUES = [
+  "get_internship",
+  "get_first_job",
+  "switch_role",
+  "improve_resume",
+  "prepare_interviews",
+] as const;
+const PREFERRED_JOB_TYPE_VALUES = [
+  "not_sure",
+  "frontend",
+  "backend",
+  "full_stack",
+  "ai_ml",
+  "data",
+  "devops",
+  "product",
+] as const;
+const WEEKLY_TIME_VALUES = ["low", "medium", "high"] as const;
+
 export default function TargetRoleSetupForm() {
   const { user, isConfigured, isLoading } = useAuthSession();
   const currentUserId = isLoading ? undefined : user?.id ?? null;
@@ -112,19 +147,75 @@ export default function TargetRoleSetupForm() {
         return;
       }
 
-      setForm({
-        targetRole: setup.targetRole,
-        careerField: setup.careerField ?? DEFAULT_FORM.careerField,
-        experienceLevel: setup.experienceLevel,
-        primaryGoal: setup.primaryGoal,
-        preferredJobType: setup.preferredJobType,
-        weeklyTimeCommitment: setup.weeklyTimeCommitment,
-      });
+      setForm(toFormState(setup));
       setSavedSetup(setup);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (!isConfigured || isLoading || !user) {
+      return;
+    }
+
+    const ownerId = user.id;
+    if (getTargetRoleSetup({ currentUserId: ownerId })) {
+      return;
+    }
+
+    let isActive = true;
+    const timeoutId = window.setTimeout(() => {
+      void restoreCareerDirectionFromAccount();
+    }, 0);
+
+    async function restoreCareerDirectionFromAccount() {
+      try {
+        const profileResult = await getCurrentUserProfile();
+
+        if (!isActive || !profileResult.ok || !profileResult.data?.targetRole) {
+          return;
+        }
+
+        const profile = profileResult.data;
+        const restoredSetup = parseStoredCareerDirection({
+          targetRole: profile.targetRole,
+          careerGoal: profile.careerGoal,
+          updatedAt: profile.updatedAt,
+        });
+
+        if (restoredSetup) {
+          saveTargetRoleSetup(restoredSetup, {
+            currentUserId: ownerId,
+          });
+          setForm(toFormState(restoredSetup));
+          setSavedSetup(restoredSetup);
+          setSyncStatus({
+            tone: "success",
+            message: "Restored your saved career direction from this SkillMint account.",
+          });
+          return;
+        }
+
+        setForm((currentForm) => ({
+          ...currentForm,
+          targetRole: profile.targetRole ?? currentForm.targetRole,
+        }));
+        setSyncStatus({
+          tone: "muted",
+          message:
+            "Restored your saved target role from this SkillMint account. Review the remaining direction settings before saving.",
+        });
+      } catch {
+        // Account restore is additive. The browser-local workflow remains usable.
+      }
+    }
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [isConfigured, isLoading, user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -490,6 +581,88 @@ function getSyncStatusClassName(tone: SyncStatus["tone"]): string {
   }
 
   return `${baseClassName} border-slate-200 bg-slate-50 text-slate-700`;
+}
+
+function toFormState(setup: TargetRoleSetup): TargetRoleSetupFormState {
+  return {
+    targetRole: setup.targetRole,
+    careerField: setup.careerField ?? DEFAULT_FORM.careerField,
+    experienceLevel: setup.experienceLevel,
+    primaryGoal: setup.primaryGoal,
+    preferredJobType: setup.preferredJobType,
+    weeklyTimeCommitment: setup.weeklyTimeCommitment,
+  };
+}
+
+function parseStoredCareerDirection(input: {
+  targetRole: string;
+  careerGoal: string | null;
+  updatedAt: string;
+}): TargetRoleSetup | null {
+  const lines = input.careerGoal?.split("\n") ?? [];
+  if (lines.length !== 6 || lines[0] !== `Target role: ${input.targetRole}`) {
+    return null;
+  }
+
+  const careerField = parseStoredOption(
+    lines[1],
+    "Career field: ",
+    CAREER_FIELD_VALUES,
+  );
+  const experienceLevel = parseStoredOption(
+    lines[2],
+    "Experience level: ",
+    EXPERIENCE_LEVEL_VALUES,
+  );
+  const primaryGoal = parseStoredOption(
+    lines[3],
+    "Primary goal: ",
+    PRIMARY_GOAL_VALUES,
+  );
+  const preferredJobType = parseStoredOption(
+    lines[4],
+    "Preferred job type: ",
+    PREFERRED_JOB_TYPE_VALUES,
+  );
+  const weeklyTimeCommitment = parseStoredOption(
+    lines[5],
+    "Weekly time commitment: ",
+    WEEKLY_TIME_VALUES,
+  );
+
+  if (
+    !careerField ||
+    !experienceLevel ||
+    !primaryGoal ||
+    !preferredJobType ||
+    !weeklyTimeCommitment ||
+    !Number.isFinite(Date.parse(input.updatedAt))
+  ) {
+    return null;
+  }
+
+  return {
+    targetRole: input.targetRole,
+    careerField,
+    experienceLevel,
+    primaryGoal,
+    preferredJobType,
+    weeklyTimeCommitment,
+    updatedAt: input.updatedAt,
+  };
+}
+
+function parseStoredOption<T extends string>(
+  line: string,
+  prefix: string,
+  values: readonly T[],
+): T | null {
+  if (!line.startsWith(prefix)) {
+    return null;
+  }
+
+  const label = line.slice(prefix.length);
+  return values.find((value) => formatOptionLabel(value) === label) ?? null;
 }
 
 function getReadableCareerGoal(setup: TargetRoleSetup): string {
