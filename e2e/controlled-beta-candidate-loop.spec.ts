@@ -66,27 +66,64 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     });
   });
 
-  await page.route(`${PROVIDER_ORIGIN}/rest/v1/job_matches**`, async (route) => {
-    const request = route.request();
-    if (request.method() !== "POST") {
+  await page.route(`${PROVIDER_ORIGIN}/rest/v1/profiles**`, async (route) => {
+    const providerRequest = route.request();
+    if (providerRequest.method() !== "POST") {
       await route.fallback();
       return;
     }
 
-    const input = JSON.parse(request.postData() ?? "{}");
+    const input = JSON.parse(providerRequest.postData() ?? "{}");
     const row = {
-      id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
-      user_id: ACCOUNT_A.id,
-      ...input,
+      id: ACCOUNT_A.id,
+      full_name: input.full_name ?? "",
+      email: input.email ?? null,
+      career_goal: input.career_goal ?? null,
+      target_role: input.target_role ?? null,
       created_at: "2026-01-02T03:04:05.000Z",
+      updated_at: "2026-01-02T03:04:05.000Z",
     };
-    const acceptsSingle = request.headers().accept?.includes(
+    const acceptsSingle = providerRequest.headers().accept?.includes(
       "application/vnd.pgrst.object+json",
     );
     await route.fulfill({
       status: 201,
       contentType: "application/json",
       body: JSON.stringify(acceptsSingle ? row : [row]),
+    });
+  });
+
+  let savedJobMatchRow: Record<string, unknown> | null = null;
+  await page.route(`${PROVIDER_ORIGIN}/rest/v1/job_matches**`, async (route) => {
+    const providerRequest = route.request();
+    const input = JSON.parse(providerRequest.postData() ?? "{}");
+
+    if (providerRequest.method() === "POST") {
+      savedJobMatchRow = {
+        id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        user_id: ACCOUNT_A.id,
+        ...input,
+        created_at: "2026-01-02T03:04:05.000Z",
+      };
+    } else if (providerRequest.method() === "PATCH" && savedJobMatchRow) {
+      savedJobMatchRow = {
+        ...savedJobMatchRow,
+        roadmap: input.roadmap ?? null,
+      };
+    } else {
+      await route.fallback();
+      return;
+    }
+
+    const acceptsSingle = providerRequest.headers().accept?.includes(
+      "application/vnd.pgrst.object+json",
+    );
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(
+        acceptsSingle ? savedJobMatchRow : [savedJobMatchRow],
+      ),
     });
   });
 
