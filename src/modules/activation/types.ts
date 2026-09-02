@@ -2,6 +2,7 @@ export type CareerLoopStage =
   | "setup"
   | "resume"
   | "job_match"
+  | "active_target"
   | "roadmap"
   | "improve";
 
