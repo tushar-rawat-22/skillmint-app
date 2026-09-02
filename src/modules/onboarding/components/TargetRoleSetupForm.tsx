@@ -178,11 +178,14 @@ export default function TargetRoleSetupForm() {
         }
 
         const profile = profileResult.data;
-        const restoredSetup = parseStoredCareerDirection({
-          targetRole: profile.targetRole,
-          careerGoal: profile.careerGoal,
-          updatedAt: profile.updatedAt,
-        });
+        const targetRole = profile.targetRole;
+        const restoredSetup = profile.updatedAt
+          ? parseStoredCareerDirection({
+              targetRole,
+              careerGoal: profile.careerGoal,
+              updatedAt: profile.updatedAt,
+            })
+          : null;
 
         if (restoredSetup) {
           saveTargetRoleSetup(restoredSetup, {
@@ -199,7 +202,7 @@ export default function TargetRoleSetupForm() {
 
         setForm((currentForm) => ({
           ...currentForm,
-          targetRole: profile.targetRole ?? currentForm.targetRole,
+          targetRole,
         }));
         setSyncStatus({
           tone: "muted",
