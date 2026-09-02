@@ -10,6 +10,12 @@ import {
 } from "@/components/ui/premium";
 import { ROUTES } from "@/constants/routes";
 import {
+  MISSION_STATUS_STORAGE_DESCRIPTOR,
+} from "@/intelligence/missions/missionStorage";
+import {
+  readActiveTargetStorageSnapshot,
+} from "@/intelligence/target/activeTargetStorage";
+import {
   readCurrentJobMatchSnapshot,
 } from "@/lib/storage/jdMatchCurrentStorage";
 import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
@@ -27,7 +33,8 @@ type CareerLoopProgress = {
   hasSetup: boolean;
   hasResumeAnalysis: boolean;
   hasJobMatch: boolean;
-  hasRoadmap: boolean;
+  hasActiveTarget: boolean;
+  hasRoadmapAction: boolean;
 };
 
 type NextAction = {
@@ -67,12 +74,29 @@ export default function NextBestActionPanel({
     () => readStoredJobMatch(currentUserId),
     getServerSnapshot,
   );
+  const storedActiveTarget = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredActiveTarget(currentUserId),
+    getServerSnapshot,
+  );
+  const storedMissionStatuses = useSyncExternalStore(
+    subscribeToStoredData,
+    () => readStoredMissionStatuses(currentUserId),
+    getServerSnapshot,
+  );
   const progress = useMemo<CareerLoopProgress>(() => ({
     hasSetup: hasValidSetup(storedSetup),
     hasResumeAnalysis: hasValidResume(storedResume),
     hasJobMatch: hasValidJobMatch(storedJobMatch),
-    hasRoadmap: hasValidRoadmap(storedJobMatch),
-  }), [storedJobMatch, storedResume, storedSetup]);
+    hasActiveTarget: hasValidActiveTarget(storedActiveTarget),
+    hasRoadmapAction: hasRoadmapAction(storedMissionStatuses),
+  }), [
+    storedActiveTarget,
+    storedJobMatch,
+    storedMissionStatuses,
+    storedResume,
+    storedSetup,
+  ]);
   const action = getNextAction(progress);
   const isCurrentPage = pathname === action.href;
 
@@ -147,15 +171,27 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
     };
   }
 
-  if (!progress.hasRoadmap) {
+  if (!progress.hasActiveTarget) {
+    return {
+      stage: "active_target",
+      eyebrow: "Choose your focus",
+      title: "Choose the job you are actually pursuing.",
+      body:
+        "Set or refresh an Active Target so SkillMint can focus the roadmap without changing your underlying evidence or scores.",
+      href: ROUTES.ATS,
+      cta: "Set Active Target",
+    };
+  }
+
+  if (!progress.hasRoadmapAction) {
     return {
       stage: "roadmap",
-      eyebrow: "Next best action",
-      title: "Build your next 30 days.",
+      eyebrow: "Turn insight into action",
+      title: "Start one roadmap mission.",
       body:
-        "Turn your resume proof and latest job match into a practical 30/60/90-day roadmap.",
+        "Open the roadmap and start, complete, or explicitly block one mission. Generated guidance alone is not progress.",
       href: ROUTES.ROADMAP,
-      cta: "Open roadmap",
+      cta: "Act on roadmap",
     };
   }
 
@@ -198,9 +234,26 @@ function readStoredJobMatch(
   });
 }
 
+function readStoredActiveTarget(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readActiveTargetStorageSnapshot({
+    currentUserId,
+  });
+}
+
+function readStoredMissionStatuses(
+  currentUserId: string | null | undefined,
+): string | null {
+  return readVisibleStorageValue(MISSION_STATUS_STORAGE_DESCRIPTOR, {
+    currentUserId,
+  });
+}
+
 function getServerSnapshot(): null {
   return null;
 }
+
 function hasValidSetup(storedValue: string | null): boolean {
   const parsedValue = parseRecord(storedValue);
 
@@ -234,10 +287,27 @@ function hasValidJobMatch(storedValue: string | null): boolean {
   );
 }
 
-function hasValidRoadmap(storedValue: string | null): boolean {
+function hasValidActiveTarget(storedValue: string | null): boolean {
   const parsedValue = parseRecord(storedValue);
 
-  return Boolean(parsedValue && isRecord(parsedValue.roadmap));
+  return Boolean(
+    parsedValue &&
+      parsedValue.status === "active" &&
+      typeof parsedValue.title === "string" &&
+      parsedValue.title.trim().length > 0,
+  );
+}
+
+function hasRoadmapAction(storedValue: string | null): boolean {
+  const parsedValue = parseRecord(storedValue);
+
+  if (!parsedValue) {
+    return false;
+  }
+
+  return Object.values(parsedValue).some((status) =>
+    status === "started" || status === "done_by_user" || status === "blocked"
+  );
 }
 
 function parseRecord(storedValue: string | null): Record<string, unknown> | null {
