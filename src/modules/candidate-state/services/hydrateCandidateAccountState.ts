@@ -12,9 +12,7 @@ import {
   setActiveTarget,
 } from "@/intelligence/target/activeTargetStorage";
 import { notifySkillMintWorkspaceUpdated } from "@/lib/storage/skillMintStorageEvents";
-import {
-  readLatestCurrentUserCandidateState,
-} from "./candidateAccountStateRepository";
+import { readLatestCurrentUserCandidateState } from "./candidateAccountStateRepository";
 
 export async function hydrateCandidateAccountStateFromAccount(
   userId: string,
@@ -28,7 +26,6 @@ export async function hydrateCandidateAccountStateFromAccount(
   if (!getActiveTarget(context) && isActiveTarget(result.data.activeTarget)) {
     changed = setActiveTarget(result.data.activeTarget, {
       ownerUserId: userId,
-      syncAccount: false,
     }) || changed;
   }
 
