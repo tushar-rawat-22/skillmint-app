@@ -6,6 +6,7 @@ import type { Session } from "@supabase/supabase-js";
 import { getSupabaseConfigStatus } from "@/lib/supabase/config";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { SkillMintUser } from "@/lib/supabase/types";
+import { hydrateCandidateAccountStateFromAccount } from "@/modules/candidate-state/services/hydrateCandidateAccountState";
 
 type UseAuthSessionResult = {
   user: SkillMintUser | null;
@@ -44,23 +45,23 @@ export function useAuthSession(): UseAuthSessionResult {
     setIsLoading(true);
     setError(null);
 
-    const { data, error: sessionError } =
-      await supabase.auth.getSession();
+    const { data, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
       setSession(null);
       setError(sessionError.message);
     } else {
       setSession(data.session);
+      if (data.session?.user.id) {
+        void hydrateCandidateAccountStateFromAccount(data.session.user.id);
+      }
     }
 
     setIsLoading(false);
   }, [configStatus.isConfigured, configStatus.message]);
 
   useEffect(() => {
-    if (!configStatus.isConfigured) {
-      return;
-    }
+    if (!configStatus.isConfigured) return;
 
     const supabase = createSupabaseBrowserClient();
 
@@ -69,16 +70,13 @@ export function useAuthSession(): UseAuthSessionResult {
         setIsLoading(false);
         setError("Supabase auth client is unavailable.");
       }, 0);
-
       return () => window.clearTimeout(timeoutId);
     }
 
     let isMounted = true;
 
     supabase.auth.getSession().then(({ data, error: sessionError }) => {
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
 
       if (sessionError) {
         setSession(null);
@@ -86,6 +84,9 @@ export function useAuthSession(): UseAuthSessionResult {
       } else {
         setSession(data.session);
         setError(null);
+        if (data.session?.user.id) {
+          void hydrateCandidateAccountStateFromAccount(data.session.user.id);
+        }
       }
 
       setIsLoading(false);
@@ -94,13 +95,14 @@ export function useAuthSession(): UseAuthSessionResult {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
 
       setSession(nextSession);
       setError(null);
       setIsLoading(false);
+      if (nextSession?.user.id) {
+        void hydrateCandidateAccountStateFromAccount(nextSession.user.id);
+      }
     });
 
     return () => {
@@ -121,10 +123,7 @@ export function useAuthSession(): UseAuthSessionResult {
 
 function mapSessionToUser(session: Session | null): SkillMintUser | null {
   const user = session?.user;
-
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return {
     id: user.id,
