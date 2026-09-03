@@ -15,7 +15,7 @@ export default function DropZone({
     <section className="mx-auto max-w-5xl px-6 pb-20">
       <label
         htmlFor="resume-file-upload"
-        className="group relative flex cursor-pointer flex-col items-start justify-center border-2 border-dashed border-emerald-400 bg-white p-7 text-left transition hover:border-emerald-600 hover:bg-emerald-50 focus-within:border-emerald-700 focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-emerald-700 sm:p-10"
+        className="group relative flex cursor-pointer flex-col items-start justify-center border-2 border-dashed border-emerald-400 bg-white p-7 text-left transition hover:border-emerald-600 hover:bg-emerald-50 focus-within:border-emerald-700 focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-emerald-700 focus-within:ring-2 focus-within:ring-emerald-200 sm:p-10"
       >
         <p className="text-sm font-semibold text-emerald-800">Private by default</p>
         <h2 className="mt-3 text-3xl font-black text-slate-950">
