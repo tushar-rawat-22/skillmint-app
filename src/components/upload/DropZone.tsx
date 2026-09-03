@@ -19,7 +19,7 @@ export default function DropZone({
       >
         <p className="text-sm font-semibold text-emerald-800">Private by default</p>
         <h2 className="mt-3 text-3xl font-black text-slate-950">
-          Choose your resume
+          Choose your resume file
         </h2>
 
         <p id="resume-file-help" className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
