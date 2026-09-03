@@ -64,7 +64,8 @@ export default function CandidatesPage() {
             {!publicSignupEnabled ? (
               <p className="mt-5 text-sm leading-6 text-slate-500">
                 Public account creation is not active yet. Existing users can
-                continue to log in; OAuth and abuse controls are being prepared.
+                continue to log in. Public signup stays closed until the
+                remaining controlled-beta release gates are complete.
               </p>
             ) : null}
           </section>
@@ -123,10 +124,11 @@ export default function CandidatesPage() {
               A Proof Brief is shared only when you choose.
             </h2>
             <p className="mt-4 max-w-4xl text-sm leading-6 text-emerald-950">
-              The beta sharing model is being built around a minimal derived
-              evidence brief—not your raw resume, contact details, account ID,
-              or unrelated personal information. Candidate-authorized,
-              revocable links come before any recruiter discovery.
+              A Proof Brief contains a minimal derived evidence summary—not your
+              raw resume, contact details, account ID, or unrelated personal
+              information. It stays private by default; you can publish a
+              candidate-controlled link and revoke it again. Recruiter discovery
+              is not automatic.
             </p>
           </section>
         </div>
