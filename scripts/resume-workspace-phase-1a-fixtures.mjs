@@ -60,7 +60,7 @@ const ACL_NORMALIZATION_SHA256 =
 const BASELINE_PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
 const SECURITY_PACKAGE_LOCK_SHA256 =
-  "19f18b978f66921719f580821931f7e466cbea3ba3a5db553a361feb25ed9dd7";
+  "e591405c404068a90f210092851fe1e3d91326ebe49d8a54cea6116484e526e8";
 
 const FROZEN_MIGRATIONS = [
   {
@@ -1764,6 +1764,10 @@ assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);
   );
 
   const currentLock = JSON.parse(readText("package-lock.json"));
+  assert.equal(
+    currentLock.packages["node_modules/@xmldom/xmldom"].version,
+    "0.8.15",
+  );
   assert.equal(currentLock.packages["node_modules/nanoid"].version, "3.3.18");
   assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.1");
   assert.equal(
