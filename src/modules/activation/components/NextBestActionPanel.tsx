@@ -10,9 +10,6 @@ import {
 } from "@/components/ui/premium";
 import { ROUTES } from "@/constants/routes";
 import {
-  MISSION_STATUS_STORAGE_DESCRIPTOR,
-} from "@/intelligence/missions/missionStorage";
-import {
   readActiveTargetStorageSnapshot,
 } from "@/intelligence/target/activeTargetStorage";
 import {
@@ -20,6 +17,7 @@ import {
 } from "@/lib/storage/jdMatchCurrentStorage";
 import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
 import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
+import { hasRoadmapActionAfterActiveTarget } from "@/modules/activation/candidateActivationProgress";
 import type { CareerLoopStage } from "@/modules/activation/types";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
@@ -79,21 +77,21 @@ export default function NextBestActionPanel({
     () => readStoredActiveTarget(currentUserId),
     getServerSnapshot,
   );
-  const storedMissionStatuses = useSyncExternalStore(
+  const hasCurrentRoadmapAction = useSyncExternalStore(
     subscribeToStoredData,
-    () => readStoredMissionStatuses(currentUserId),
-    getServerSnapshot,
+    () => hasRoadmapActionAfterActiveTarget({ currentUserId }),
+    getServerBooleanSnapshot,
   );
   const progress = useMemo<CareerLoopProgress>(() => ({
     hasSetup: hasValidSetup(storedSetup),
     hasResumeAnalysis: hasValidResume(storedResume),
     hasJobMatch: hasValidJobMatch(storedJobMatch),
     hasActiveTarget: hasValidActiveTarget(storedActiveTarget),
-    hasRoadmapAction: hasRoadmapAction(storedMissionStatuses),
+    hasRoadmapAction: hasCurrentRoadmapAction,
   }), [
+    hasCurrentRoadmapAction,
     storedActiveTarget,
     storedJobMatch,
-    storedMissionStatuses,
     storedResume,
     storedSetup,
   ]);
@@ -189,7 +187,7 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
       eyebrow: "Turn insight into action",
       title: "Start one roadmap mission.",
       body:
-        "Open the roadmap and start, complete, or explicitly block one mission. Generated guidance alone is not progress.",
+        "Open the roadmap and start, complete, or explicitly block one mission after choosing this Active Target. Earlier roadmap actions do not count for a newly selected target.",
       href: ROUTES.ROADMAP,
       cta: "Act on roadmap",
     };
@@ -242,16 +240,12 @@ function readStoredActiveTarget(
   });
 }
 
-function readStoredMissionStatuses(
-  currentUserId: string | null | undefined,
-): string | null {
-  return readVisibleStorageValue(MISSION_STATUS_STORAGE_DESCRIPTOR, {
-    currentUserId,
-  });
-}
-
 function getServerSnapshot(): null {
   return null;
+}
+
+function getServerBooleanSnapshot(): false {
+  return false;
 }
 
 function hasValidSetup(storedValue: string | null): boolean {
@@ -295,18 +289,6 @@ function hasValidActiveTarget(storedValue: string | null): boolean {
       parsedValue.status === "active" &&
       typeof parsedValue.title === "string" &&
       parsedValue.title.trim().length > 0,
-  );
-}
-
-function hasRoadmapAction(storedValue: string | null): boolean {
-  const parsedValue = parseRecord(storedValue);
-
-  if (!parsedValue) {
-    return false;
-  }
-
-  return Object.values(parsedValue).some((status) =>
-    status === "started" || status === "done_by_user" || status === "blocked"
   );
 }
 
