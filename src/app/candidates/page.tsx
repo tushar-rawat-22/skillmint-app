@@ -63,9 +63,9 @@ export default function CandidatesPage() {
             </div>
             {!publicSignupEnabled ? (
               <p className="mt-5 text-sm leading-6 text-slate-500">
-                Public account creation is not active yet. Existing users can
-                continue to log in. Public signup stays closed until the
-                remaining controlled-beta release gates are complete.
+                Account creation is intentionally invite-only during the
+                controlled beta. Invited candidates can continue to log in;
+                there is no public signup or waitlist form.
               </p>
             ) : null}
           </section>

@@ -17,8 +17,8 @@ export default function SignupPage() {
     return (
       <AuthPageShell
         eyebrow="Early access"
-        title="SkillMint is preparing a controlled early-access cohort"
-        subtitle="Account creation is currently closed. No applications or waitlist are being collected."
+        title="Account creation is invite-only during beta"
+        subtitle="The first candidate cohort is being supported closely. There is no public signup or waitlist form."
       >
         <section
           aria-labelledby="signup-closed-title"

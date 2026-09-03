@@ -30,7 +30,7 @@ test("@critical signed-in candidate restores account career direction on a fresh
   await login(page, ACCOUNT_A);
   await page.goto("/setup");
 
-  await expect(page.getByLabel("Your career direction")).toHaveValue(
+  await expect(page.getByLabel("Target role")).toHaveValue(
     "Synthetic engineer",
   );
   await expect(
@@ -130,11 +130,11 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await login(page, ACCOUNT_A);
 
   await page.goto("/setup");
-  await expect(page.getByLabel("Your career direction")).toHaveValue(
+  await expect(page.getByLabel("Target role")).toHaveValue(
     "Synthetic engineer",
   );
-  await page.getByLabel("Your career direction").fill("Frontend Developer");
-  await page.getByRole("button", { name: "Save direction" }).click();
+  await page.getByLabel("Target role").fill("Frontend Developer");
+  await page.getByRole("button", { name: "Save target role" }).click();
   await expect.poll(async () =>
     page.evaluate(
       (key) => localStorage.getItem(key),
@@ -167,7 +167,7 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await page.getByRole("button", { name: "Set as Active Target" }).click();
   await expect(page.getByText(/Latest JD set as Active Target/u)).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Start one roadmap mission." }),
+    page.getByRole("heading", { name: "Start one next step." }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
@@ -187,7 +187,7 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await page.getByLabel("Status").first().selectOption("started");
   await expect(
     page.getByRole("heading", {
-      name: "Improve proof, then match another job.",
+      name: "Improve the evidence, then compare again.",
     }),
   ).toBeVisible();
 

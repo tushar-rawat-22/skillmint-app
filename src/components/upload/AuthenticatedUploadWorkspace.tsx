@@ -13,7 +13,6 @@ import {
   premiumPrimaryCta,
   premiumSecondaryCta,
 } from "@/components/ui/premium";
-import { NextBestActionPanel } from "@/modules/activation";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   analyzeResume as runResumeAnalysis,
@@ -143,10 +142,6 @@ export default function AuthenticatedUploadWorkspace({
   return (
     <main className="min-h-screen bg-[#f7f8f4] pb-24 text-slate-950">
       <UploadHero />
-
-      <div className="mx-auto max-w-5xl px-6">
-        <NextBestActionPanel />
-      </div>
 
       <DropZone file={file} setFile={selectFile} />
 

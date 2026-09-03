@@ -12,7 +12,7 @@ export default function Navbar({
   publicDemoEnabled,
 }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-5">
         <Link
           href="/"
@@ -25,29 +25,30 @@ export default function Navbar({
           <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.CANDIDATES}>
             Candidates
           </Link>
-          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.RECRUITERS}>
-            Recruiters
-          </Link>
           <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="/#preview">
-            Product Preview
+            Example
           </Link>
           <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href="/#how-it-works">
             How it works
           </Link>
-          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.LOGIN}>
-            Log in
+          <Link className="min-h-8 py-1 transition hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700" href={ROUTES.RECRUITERS}>
+            For recruiters
           </Link>
         </div>
 
         <Link
-          href={publicDemoEnabled ? ROUTES.DEMO : ROUTES.SIGNUP}
+          href={publicDemoEnabled
+            ? ROUTES.DEMO
+            : publicSignupEnabled
+              ? ROUTES.SIGNUP
+              : ROUTES.LOGIN}
           className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
         >
           {publicDemoEnabled
             ? "Explore live demo"
             : publicSignupEnabled
               ? "Create account"
-              : "View early access"}
+              : "Candidate login"}
         </Link>
       </nav>
     </header>

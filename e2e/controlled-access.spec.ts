@@ -15,11 +15,11 @@ test(
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "SkillMint is preparing a controlled early-access cohort",
+        name: "Account creation is invite-only during beta",
       }),
     ).toBeVisible();
     await expect(
-      page.getByText("Account creation is currently closed.", {
+      page.getByText("There is no public signup or waitlist form.", {
         exact: false,
       }),
     ).toBeVisible();
@@ -73,21 +73,18 @@ test(
   async ({ page }) => {
     await page.goto("/");
 
-    await expect(
-      page.getByText("Account creation is currently closed.", {
-        exact: true,
-      }),
-    ).toBeVisible();
-    const earlyAccessLinks = page.getByRole("link", {
-      name: "View early access",
+    await expect(page.getByText("For candidates · invite-only beta")).toBeVisible();
+    const candidateLoginLinks = page.getByRole("link", {
+      name: "Candidate login",
     });
-    await expect(earlyAccessLinks.first()).toBeVisible();
-    expect(await earlyAccessLinks.count()).toBeGreaterThan(0);
-    for (const link of await earlyAccessLinks.all()) {
-      await expect(link).toHaveAttribute("href", "/signup");
+    await expect(candidateLoginLinks.first()).toBeVisible();
+    expect(await candidateLoginLinks.count()).toBeGreaterThan(0);
+    for (const link of await candidateLoginLinks.all()) {
+      await expect(link).toHaveAttribute("href", "/login");
     }
+    await expect(page.getByRole("link", { name: "Invite-only beta details" })).toHaveAttribute("href", "/signup");
     await expect(page.locator("body")).not.toContainText(
-      /start free|free beta|create account|create an account|create your account|registration is open/i,
+      /start free|free beta|create account|create an account|create your account|registration is open|waiting on release gates/i,
     );
   },
 );

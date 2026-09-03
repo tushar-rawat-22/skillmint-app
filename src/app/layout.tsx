@@ -3,9 +3,9 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "SkillMint | Career Operating System",
+  title: "SkillMint | Know What Your Resume Proves",
   description:
-    "SkillMint is a proof-aware Career Operating System with deterministic resume evidence, role-fit, and next-step guidance.",
+    "See what your resume supports for the role you want, what evidence is missing, and what to improve next.",
   robots: {
     index: false,
     follow: false,

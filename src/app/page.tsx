@@ -3,12 +3,10 @@ import Footer from "@/components/layout/Footer";
 
 import Hero from "@/components/landing/Hero";
 import Problem from "@/components/landing/Problem";
-import Features from "@/components/landing/Features";
 import ProductLoop from "@/components/landing/ProductLoop";
 import DashboardPreview from "@/components/landing/DashboardPreview";
 import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
-import AudiencePaths from "@/components/landing/AudiencePaths";
 import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 
@@ -28,14 +26,12 @@ export default function HomePage() {
           publicSignupEnabled={publicSignupEnabled}
           publicDemoEnabled={publicDemoEnabled}
         />
-        <AudiencePaths publicDemoEnabled={publicDemoEnabled} />
         <Problem />
         <DashboardPreview />
         <ProductLoop
           publicSignupEnabled={publicSignupEnabled}
           publicDemoEnabled={publicDemoEnabled}
         />
-        <Features />
         <FAQ />
         <CTA
           publicSignupEnabled={publicSignupEnabled}

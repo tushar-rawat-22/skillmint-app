@@ -14,15 +14,15 @@ export default function CTA({
   return (
     <section
       id="cta"
-      className="mx-auto max-w-5xl px-6 py-20 text-center"
+      className="mx-auto max-w-5xl px-6 py-20"
     >
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_24px_70px_rgba(15,23,42,0.1)] md:p-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+      <div className="border-y border-slate-300 bg-white py-10 md:py-12">
+        <p className="text-sm font-semibold text-emerald-800">
           {publicDemoEnabled
-            ? "Public beta in preparation · synthetic demos"
+            ? "Synthetic beta preview"
             : publicSignupEnabled
               ? "Early-access registration"
-              : "Controlled early access"}
+              : "Invite-only candidate beta"}
         </p>
 
         <h2 className="mt-4 text-4xl font-black text-slate-950 md:text-5xl">
@@ -30,15 +30,15 @@ export default function CTA({
             ? "See the same evidence layer from both sides."
             : publicSignupEnabled
               ? "Create your account."
-              : "Account creation is currently closed."}
+              : "Already invited? Start with your target role."}
         </h2>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
           {publicDemoEnabled
             ? "Candidate and recruiter demos use fixed synthetic data. Real resume analysis and candidate sharing remain authenticated and private by default."
             : publicSignupEnabled
               ? "Registration is open for early access. Create an account to save your career direction, resume proof, job matches, and roadmap."
-              : "SkillMint is preparing a controlled early-access cohort. Existing users can continue to log in."}
+              : "Account creation is intentionally invite-only while the first candidate cohort is supported closely. Existing invited users can log in now."}
         </p>
 
         <p className="mt-3 text-sm text-slate-500">
@@ -46,22 +46,30 @@ export default function CTA({
             ? "Synthetic data only. No employment or hiring outcome is promised."
             : publicSignupEnabled
               ? "Early access does not guarantee employment outcomes."
-              : "No applications, invitations, or waitlist enrollment are open from this page."}
+              : "There is no public signup or waitlist form."}
         </p>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
+        <div className="mt-8 flex flex-wrap gap-4">
           <Link
-            href={ROUTES.CANDIDATES}
-            className="rounded-xl bg-emerald-600 px-8 py-4 font-bold text-white shadow-[0_14px_30px_rgba(5,150,105,0.18)] transition hover:bg-emerald-700"
+            href={publicDemoEnabled
+              ? ROUTES.DEMO
+              : publicSignupEnabled
+                ? ROUTES.SIGNUP
+                : ROUTES.LOGIN}
+            className="rounded-lg bg-emerald-800 px-8 py-4 font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
           >
-            I&apos;m a Candidate
+            {publicDemoEnabled
+              ? "See a candidate example"
+              : publicSignupEnabled
+                ? "Create candidate account"
+                : "Candidate login"}
           </Link>
 
           <Link
             href={ROUTES.RECRUITERS}
-            className="rounded-xl border border-slate-300 bg-white px-8 py-4 font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-900"
+            className="inline-flex min-h-12 items-center font-semibold text-slate-700 underline-offset-4 hover:text-emerald-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
           >
-            I&apos;m Hiring
+            For recruiters
           </Link>
         </div>
       </div>

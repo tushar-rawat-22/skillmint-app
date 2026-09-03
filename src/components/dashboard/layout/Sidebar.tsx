@@ -11,15 +11,15 @@ const navigationItems = [
     href: ROUTES.DASHBOARD,
   },
   {
-    label: "Setup",
+    label: "Target role",
     href: ROUTES.SETUP,
   },
   {
-    label: "Resume",
+    label: "Resume report",
     href: ROUTES.RESUME,
   },
   {
-    label: "ATS Match",
+    label: "Job match",
     href: ROUTES.ATS,
   },
   {
@@ -40,7 +40,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-full border-b border-slate-200 bg-white/92 p-4 backdrop-blur-xl md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:self-start md:overflow-y-auto md:border-b-0 md:border-r md:p-6">
+    <aside className="w-full border-b border-slate-200 bg-white p-4 md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0 md:self-start md:overflow-y-auto md:border-b-0 md:border-r md:p-6">
       <Link
         href="/"
         className="mb-4 block text-2xl font-black tracking-tight text-slate-950 transition hover:text-emerald-800 md:mb-10"
@@ -60,7 +60,7 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex shrink-0 items-center justify-between rounded-xl border px-3 py-2 text-sm font-semibold transition duration-200 md:w-full ${className}`}
+              className={`flex shrink-0 items-center justify-between rounded-lg border px-3 py-2 text-sm font-semibold transition duration-200 md:w-full ${className}`}
             >
               <span>{item.label}</span>
 

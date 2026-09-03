@@ -38,7 +38,7 @@ test("@public-demo @demo-disabled demo fails closed without Supabase and homepag
 
   await page.goto("/");
   await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "View early access" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Candidate login" }).first()).toBeVisible();
 });
 
 test("@public-demo @demo-disabled logged-out real upload is gated and metadata is noindex nofollow", async ({
@@ -152,9 +152,9 @@ test("@public-demo @demo-enabled homepage and logged-out upload route to the ena
     await expect(link).toHaveAttribute("href", "/demo");
   }
   await expect(page.getByRole("link", { name: "Existing user login" }).first()).toHaveAttribute("href", "/login");
-  await expect(page.getByText("Public beta in preparation · synthetic demos").first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "I'm a Candidate" }).first()).toHaveAttribute("href", "/candidates");
-  await expect(page.getByRole("link", { name: "I'm Hiring" }).first()).toHaveAttribute("href", "/recruiters");
+  await expect(page.getByText("Synthetic beta preview").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "See a candidate example" }).first()).toHaveAttribute("href", "/demo");
+  await expect(page.getByRole("link", { name: /recruiter workflow/i }).first()).toHaveAttribute("href", "/recruiters");
 
   await page.goto("/upload");
   await expect(page.locator('input[type="file"]')).toHaveCount(0);
@@ -172,7 +172,7 @@ test("@public-demo @demo-enabled two-sided entry and candidate demo work at 320p
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: /Make career evidence easier to understand/i,
+      name: /Know what your resume proves/i,
     }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, 320);
@@ -288,7 +288,7 @@ test("@public-demo @demo-enabled authenticated upload remains available through 
   await page.goto("/upload");
 
   await expect(
-    page.getByRole("heading", { name: "Choose your resume file" }),
+    page.getByRole("heading", { name: "Choose your resume" }),
   ).toBeVisible();
   await expect(page.locator("#resume-file-upload")).toBeVisible();
   const requestCounts = await readServerRequestCounts(request);
