@@ -57,15 +57,29 @@ function ProofBriefControlCardForSource({
     if (!currentUserId || !sourceResumeAnalysisId) {
       return () => { active = false; };
     }
-    void getProofBriefForSource(sourceResumeAnalysisId, currentUserId).then((result) => {
-      if (!active) return;
-      if (result.ok) {
-        setBrief(result.data);
-        setStatus({ tone: "idle", message: "" });
-      } else {
-        setStatus({ tone: "error", message: result.message });
+
+    void (async () => {
+      try {
+        const result = await getProofBriefForSource(
+          sourceResumeAnalysisId,
+          currentUserId,
+        );
+        if (!active) return;
+        if (result.ok) {
+          setBrief(result.data);
+          setStatus({ tone: "idle", message: "" });
+        } else {
+          setStatus({ tone: "error", message: result.message });
+        }
+      } catch {
+        if (!active) return;
+        setStatus({
+          tone: "error",
+          message: "Could not check your Proof Brief right now. Try again after the connection recovers.",
+        });
       }
-    });
+    })();
+
     return () => { active = false; };
   }, [currentUserId, sourceResumeAnalysisId]);
 
@@ -74,15 +88,23 @@ function ProofBriefControlCardForSource({
     setStatus({ tone: "loading", message: brief ? "Refreshing the private brief and revoking its old link…" : "Creating a private Proof Brief…" });
     setShareUrl(null);
     setShareConfirmed(false);
-    const result = await createOrRefreshPrivateProofBrief(
-      sourceResumeAnalysisId,
-      currentUserId,
-    );
-    if (result.ok) {
-      setBrief(result.data);
-      setStatus({ tone: "success", message: "Private Proof Brief ready. Nothing is shared yet." });
-    } else {
-      setStatus({ tone: "error", message: result.message });
+
+    try {
+      const result = await createOrRefreshPrivateProofBrief(
+        sourceResumeAnalysisId,
+        currentUserId,
+      );
+      if (result.ok) {
+        setBrief(result.data);
+        setStatus({ tone: "success", message: "Private Proof Brief ready. Nothing is shared yet." });
+      } else {
+        setStatus({ tone: "error", message: result.message });
+      }
+    } catch {
+      setStatus({
+        tone: "error",
+        message: "Could not create or refresh the Proof Brief right now. Your existing sharing state was not changed in this browser.",
+      });
     }
   }
 
@@ -90,15 +112,23 @@ function ProofBriefControlCardForSource({
     if (!currentUserId || !brief || !shareConfirmed) return;
     setStatus({ tone: "loading", message: "Creating a new link-only share…" });
     setShareUrl(null);
-    const result = await publishProofBrief(brief.id, currentUserId);
-    if (result.ok) {
-      const url = `${window.location.origin}/brief/${result.data.shareToken}`;
-      setBrief(result.data.brief);
-      setShareUrl(url);
-      setShareConfirmed(false);
-      setStatus({ tone: "success", message: "Link created. Copy it now; the raw link token is not stored in your account." });
-    } else {
-      setStatus({ tone: "error", message: result.message });
+
+    try {
+      const result = await publishProofBrief(brief.id, currentUserId);
+      if (result.ok) {
+        const url = `${window.location.origin}/brief/${result.data.shareToken}`;
+        setBrief(result.data.brief);
+        setShareUrl(url);
+        setShareConfirmed(false);
+        setStatus({ tone: "success", message: "Link created. Copy it now; the raw link token is not stored in your account." });
+      } else {
+        setStatus({ tone: "error", message: result.message });
+      }
+    } catch {
+      setStatus({
+        tone: "error",
+        message: "Could not create the sharing link right now. Refresh this Proof Brief before trying again so its current sharing state is confirmed.",
+      });
     }
   }
 
@@ -115,14 +145,22 @@ function ProofBriefControlCardForSource({
   async function handleRevoke() {
     if (!currentUserId || !brief) return;
     setStatus({ tone: "loading", message: "Revoking the shared link…" });
-    const result = await revokeProofBrief(brief.id, currentUserId);
-    if (result.ok) {
-      setBrief(result.data);
-      setShareUrl(null);
-      setShareConfirmed(false);
-      setStatus({ tone: "success", message: "Link revoked. The brief is private again." });
-    } else {
-      setStatus({ tone: "error", message: result.message });
+
+    try {
+      const result = await revokeProofBrief(brief.id, currentUserId);
+      if (result.ok) {
+        setBrief(result.data);
+        setShareUrl(null);
+        setShareConfirmed(false);
+        setStatus({ tone: "success", message: "Link revoked. The brief is private again." });
+      } else {
+        setStatus({ tone: "error", message: result.message });
+      }
+    } catch {
+      setStatus({
+        tone: "error",
+        message: "Could not confirm link revocation right now. Treat the existing link as active until the Proof Brief reloads and confirms otherwise.",
+      });
     }
   }
 
