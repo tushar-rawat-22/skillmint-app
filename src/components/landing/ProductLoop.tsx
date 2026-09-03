@@ -8,15 +8,15 @@ const productLoopSteps = [
     description: "Start with the candidate's current resume, not a generated profile.",
   },
   {
-    title: "Evidence map",
+    title: "What it shows",
     description: "Separate supported direction, strongest proof, and weak support.",
   },
   {
-    title: "Gap",
+    title: "What is missing",
     description: "Connect the most important missing evidence to the target role.",
   },
   {
-    title: "Next action",
+    title: "Next step",
     description: "Choose one practical action that could create clearer evidence.",
   },
   {
@@ -41,7 +41,7 @@ export default function ProductLoop({
     >
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
+          <p className="text-sm font-semibold text-emerald-800">
             The product loop
           </p>
           <h2 className="mt-4 text-4xl font-black tracking-[-0.03em] text-slate-950 md:text-5xl">
@@ -73,14 +73,18 @@ export default function ProductLoop({
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href={publicDemoEnabled ? ROUTES.DEMO : ROUTES.SIGNUP}
+            href={publicDemoEnabled
+              ? ROUTES.DEMO
+              : publicSignupEnabled
+                ? ROUTES.SIGNUP
+                : ROUTES.LOGIN}
             className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
           >
             {publicDemoEnabled
               ? "Explore live demo"
               : publicSignupEnabled
                 ? "Create account"
-                : "View early access"}
+                : "Candidate login"}
           </Link>
           <a
             href="#preview"

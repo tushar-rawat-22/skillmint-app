@@ -139,11 +139,11 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
     return {
       stage: "setup",
       eyebrow: "Start here",
-      title: "Choose your career direction.",
+      title: "Choose a target role.",
       body:
-        "Pick your field, role, level, goal, and weekly pace before SkillMint reads your resume proof.",
+        "Start with the role you want. Add more detail only when you want more tailored next steps.",
       href: ROUTES.SETUP,
-      cta: "Choose direction",
+      cta: "Set target role",
     };
   }
 
@@ -151,9 +151,9 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
     return {
       stage: "resume",
       eyebrow: "Next best action",
-      title: "Upload your resume proof.",
+      title: "Upload your resume.",
       body:
-        "SkillMint needs your resume before it can show proof gaps, readiness, or job-specific matches.",
+        "See what your resume supports for your target role, the clearest gap, and what to do next.",
       href: ROUTES.UPLOAD,
       cta: "Upload resume",
     };
@@ -163,9 +163,9 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
     return {
       stage: "job_match",
       eyebrow: "Continue your career loop",
-      title: "Match one real job.",
+      title: "Compare with one real job.",
       body:
-        "Paste one job description to see where your resume is competitive and what proof is missing.",
+        "Paste one job description to see where your resume aligns and what evidence is missing.",
       href: ROUTES.ATS,
       cta: "Match one job",
     };
@@ -177,9 +177,9 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
       eyebrow: "Choose your focus",
       title: "Choose the job you are actually pursuing.",
       body:
-        "Set or refresh an Active Target so SkillMint can focus the roadmap without changing your underlying evidence or scores.",
+        "Set a target job so SkillMint can focus your next steps without changing your resume evidence or scores.",
       href: ROUTES.ATS,
-      cta: "Set Active Target",
+      cta: "Set target job",
     };
   }
 
@@ -187,22 +187,22 @@ function getNextAction(progress: CareerLoopProgress): NextAction {
     return {
       stage: "roadmap",
       eyebrow: "Turn insight into action",
-      title: "Start one roadmap mission.",
+      title: "Start one next step.",
       body:
-        "Open the roadmap and start, complete, or explicitly block one mission. Generated guidance alone is not progress.",
+        "Open your roadmap and start, complete, or explicitly block one step. Guidance alone is not progress.",
       href: ROUTES.ROADMAP,
-      cta: "Act on roadmap",
+      cta: "Open next steps",
     };
   }
 
   return {
     stage: "improve",
     eyebrow: "Keep improving",
-    title: "Improve proof, then match another job.",
+    title: "Improve the evidence, then compare again.",
     body:
-      "Use the roadmap to strengthen project proof, update your resume, and compare the next real role.",
+      "Use your next steps to strengthen project evidence, update your resume, and compare the next real role.",
     href: ROUTES.RESUME,
-    cta: "Review proof",
+    cta: "Review resume evidence",
   };
 }
 

@@ -21,7 +21,7 @@ export default function Problem() {
     <section className="border-b border-slate-200 bg-[#f7f5ef] px-6 py-20">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
         <div className="max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
+          <p className="text-sm font-semibold text-emerald-800">
             The evidence gap
           </p>
           <h2 className="mt-4 text-4xl font-black tracking-[-0.03em] text-slate-950 md:text-5xl">

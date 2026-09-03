@@ -82,13 +82,13 @@ test("@critical analytics ignores invalid setup and emits one content-free anony
   const capture = await captureAnalytics(page);
   await page.goto("/setup");
 
-  await page.getByRole("button", { name: "Save direction" }).click();
+  await page.getByRole("button", { name: "Save target role" }).click();
   await expect(page.getByText(/add a target role/i)).toBeVisible();
   expect(capture.events).toHaveLength(0);
 
   const privateRole = "Synthetic Private Role Name";
-  await page.getByLabel("Your career direction").fill(privateRole);
-  await page.getByRole("button", { name: "Save direction" }).click();
+  await page.getByLabel("Target role").fill(privateRole);
+  await page.getByRole("button", { name: "Save target role" }).click();
   await expect.poll(() => capture.events.length).toBe(1);
 
   const [event] = capture.events;

@@ -2,19 +2,17 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import {
-  premiumEyebrow,
   premiumInput,
   premiumPrimaryCta,
-  premiumSurface,
 } from "@/components/ui/premium";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   getTargetRoleSetup,
   saveTargetRoleSetup,
 } from "@/modules/onboarding/storage/targetRoleSetupStorage";
-import { getTargetRoleRecommendation } from "@/modules/onboarding/utils/targetRoleRecommendations";
 import type { TargetRoleSetup } from "@/modules/onboarding/types";
 import {
   getCurrentUserProfile,
@@ -316,37 +314,18 @@ export default function TargetRoleSetupForm() {
     }
   }
 
-  const recommendation = savedSetup
-    ? getTargetRoleRecommendation(savedSetup)
-    : null;
-
   return (
-    <div className="space-y-6">
+    <div>
       <form
         onSubmit={handleSubmit}
-        className={premiumSurface}
+        className="bg-white px-5 py-7 sm:px-8 sm:py-9"
       >
         <div>
-          <p className={premiumEyebrow}>
-            Your Career Direction
-          </p>
-
-          <h2 className="mt-4 text-2xl font-bold text-slate-950">
-            Tell SkillMint where you are aiming.
-          </h2>
-
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            Start with the role you want. The rest helps SkillMint pace your
-            next steps without editing your resume analysis.
-          </p>
-        </div>
-
-        <div className="mt-6">
           <TextField
             id="target-role"
-            label="Your career direction"
+            label="Target role"
             value={form.targetRole}
-            placeholder="Frontend Intern, Data Analyst, Backend Developer"
+            placeholder="For example: Frontend developer"
             isPrimary
             onChange={(value) =>
               setForm({
@@ -354,78 +333,19 @@ export default function TargetRoleSetupForm() {
                 targetRole: value,
               })}
           />
-        </div>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <SelectField
-            id="career-field"
-            label="Career field"
-            value={form.careerField}
-            options={CAREER_FIELD_OPTIONS}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                careerField: value,
-              })}
-          />
-
-          <SelectField
-            id="experience-level"
-            label="Your level"
-            value={form.experienceLevel}
-            options={EXPERIENCE_LEVEL_OPTIONS}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                experienceLevel: value,
-              })}
-          />
-
-          <SelectField
-            id="primary-goal"
-            label="Your goal"
-            value={form.primaryGoal}
-            options={PRIMARY_GOAL_OPTIONS}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                primaryGoal: value,
-              })}
-          />
-
-          <SelectField
-            id="preferred-job-type"
-            label="Role type"
-            value={form.preferredJobType}
-            options={PREFERRED_JOB_TYPE_OPTIONS}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                preferredJobType: value,
-              })}
-          />
-
-          <SelectField
-            id="weekly-time"
-            label="Your weekly pace"
-            value={form.weeklyTimeCommitment}
-            options={WEEKLY_TIME_OPTIONS}
-            onChange={(value) =>
-              setForm({
-                ...form,
-                weeklyTimeCommitment: value,
-              })}
-          />
+          <p id="target-role-help" className="mt-2 text-sm leading-6 text-slate-500">
+            Use a role you would realistically search or apply for next.
+          </p>
         </div>
 
         {error && (
-          <p className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
+          <p role="alert" className="mt-5 border-l-2 border-rose-500 px-4 py-2 text-sm leading-6 text-rose-800">
             {error}
           </p>
         )}
 
         {syncStatus && (
-          <p className={getSyncStatusClassName(syncStatus.tone)}>
+          <p role="status" className={getSyncStatusClassName(syncStatus.tone)}>
             {syncStatus.message}
           </p>
         )}
@@ -439,16 +359,83 @@ export default function TargetRoleSetupForm() {
             ? "Saving..."
             : isLoading
               ? "Checking account..."
-              : "Save direction"}
+              : "Save target role"}
         </button>
+
+        <details className="mt-8 border-t border-slate-200 pt-6">
+          <summary className="cursor-pointer font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700">
+            Add optional details for more tailored next steps
+          </summary>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            Add these when you want more specific guidance. Existing saved
+            details are preserved even while this section is closed.
+          </p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <SelectField
+              id="career-field"
+              label="Career field"
+              value={form.careerField}
+              options={CAREER_FIELD_OPTIONS}
+              onChange={(value) => setForm({ ...form, careerField: value })}
+            />
+            <SelectField
+              id="experience-level"
+              label="Experience level"
+              value={form.experienceLevel}
+              options={EXPERIENCE_LEVEL_OPTIONS}
+              onChange={(value) => setForm({ ...form, experienceLevel: value })}
+            />
+            <SelectField
+              id="primary-goal"
+              label="Current goal"
+              value={form.primaryGoal}
+              options={PRIMARY_GOAL_OPTIONS}
+              onChange={(value) => setForm({ ...form, primaryGoal: value })}
+            />
+            <SelectField
+              id="preferred-job-type"
+              label="Role focus"
+              value={form.preferredJobType}
+              options={PREFERRED_JOB_TYPE_OPTIONS}
+              onChange={(value) => setForm({ ...form, preferredJobType: value })}
+            />
+            <SelectField
+              id="weekly-time"
+              label="Weekly time available"
+              value={form.weeklyTimeCommitment}
+              options={WEEKLY_TIME_OPTIONS}
+              onChange={(value) => setForm({ ...form, weeklyTimeCommitment: value })}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSaving || isLoading}
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-emerald-400 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Save optional details
+          </button>
+        </details>
       </form>
 
-      {recommendation && (
-        <RecommendationCard
-          headline={recommendation.headline}
-          message={recommendation.message}
-          nextActions={recommendation.nextActions}
-        />
+      {savedSetup && (
+        <section
+          aria-labelledby="resume-handoff-title"
+          className="mt-6 border-l-4 border-emerald-700 bg-emerald-50 px-5 py-6 sm:px-7"
+        >
+          <p className="text-sm font-semibold text-emerald-800">Target role saved</p>
+          <h2 id="resume-handoff-title" className="mt-2 text-2xl font-black text-slate-950">
+            Now show us what your resume says.
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-700">
+            We will compare what it shows with your target role and surface the
+            clearest gap and next step. Your resume stays private by default.
+          </p>
+          <Link href="/upload" className={`${premiumPrimaryCta} mt-5`}>
+            Continue to resume upload
+          </Link>
+        </section>
       )}
     </div>
   );
@@ -482,6 +469,7 @@ function TextField({
 
       <input
         id={id}
+        aria-describedby={isPrimary ? "target-role-help" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
@@ -537,57 +525,18 @@ function SelectField<T extends string>({
   );
 }
 
-type RecommendationCardProps = {
-  headline: string;
-  message: string;
-  nextActions: string[];
-};
-
-function RecommendationCard({
-  headline,
-  message,
-  nextActions,
-}: RecommendationCardProps) {
-  return (
-    <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
-        Recommended Focus
-      </p>
-
-      <h2 className="mt-4 text-xl font-bold">
-        {headline}
-      </h2>
-
-      <p className="mt-3 max-w-3xl text-sm leading-6">
-        {message}
-      </p>
-
-      <ul className="mt-5 grid gap-3 text-sm leading-6 text-slate-700 md:grid-cols-3">
-        {nextActions.map((action) => (
-          <li
-            key={action}
-            className="rounded-2xl border border-emerald-200 bg-white p-4"
-          >
-            {action}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function getSyncStatusClassName(tone: SyncStatus["tone"]): string {
-  const baseClassName = "mt-5 rounded-lg border p-3 text-sm leading-6";
+  const baseClassName = "mt-5 border-l-2 px-4 py-2 text-sm leading-6";
 
   if (tone === "success") {
-    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
+    return `${baseClassName} border-emerald-600 text-emerald-800`;
   }
 
   if (tone === "warning") {
-    return `${baseClassName} border-amber-200 bg-amber-50 text-amber-800`;
+    return `${baseClassName} border-amber-500 text-amber-800`;
   }
 
-  return `${baseClassName} border-slate-200 bg-slate-50 text-slate-700`;
+  return `${baseClassName} border-slate-300 text-slate-700`;
 }
 
 function toFormState(setup: TargetRoleSetup): TargetRoleSetupFormState {

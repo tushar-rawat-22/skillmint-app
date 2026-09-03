@@ -9,7 +9,7 @@ export default function DashboardPreview() {
     <section id="preview" className="mx-auto max-w-7xl px-6 py-20">
       <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          <p className="text-sm font-semibold text-emerald-800">
             Evidence-first preview
           </p>
           <h2 className="mt-4 text-4xl font-black text-slate-950 md:text-5xl">
@@ -22,17 +22,17 @@ export default function DashboardPreview() {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.1)]">
+        <div className="border-y border-slate-300 bg-white p-5">
           <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-                Evidence Summary
+              <p className="text-xs font-semibold text-emerald-800">
+                What the resume shows
               </p>
               <h3 className="mt-2 text-2xl font-black text-slate-950">
                 What this resume currently supports
               </h3>
             </div>
-            <span className="w-fit rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">
+            <span className="w-fit text-xs font-semibold text-violet-800">
               Synthetic preview data
             </span>
           </div>
@@ -61,8 +61,8 @@ export default function DashboardPreview() {
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <article className="border-l-2 border-slate-300 px-5 py-3">
+              <p className="text-xs font-semibold text-slate-600">
                 Selected synthetic evidence
               </p>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
@@ -72,7 +72,7 @@ export default function DashboardPreview() {
               </ul>
             </article>
 
-            <details className="rounded-2xl border border-slate-200 bg-white p-5">
+            <details className="border-l-2 border-slate-300 px-5 py-3">
               <summary className="cursor-pointer font-bold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600">
                 How this analysis was calculated
               </summary>
@@ -109,14 +109,14 @@ function PreviewSummary({
   tone: "emerald" | "amber" | "sky";
 }) {
   const className = tone === "emerald"
-    ? "border-emerald-200 bg-emerald-50"
+    ? "border-emerald-500"
     : tone === "amber"
-      ? "border-amber-200 bg-amber-50"
-      : "border-sky-200 bg-sky-50";
+      ? "border-amber-500"
+      : "border-sky-500";
 
   return (
-    <article className={`rounded-2xl border p-5 ${className}`}>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+    <article className={`border-l-2 px-4 py-2 ${className}`}>
+      <p className="text-xs font-semibold text-slate-700">
         {label}
       </p>
       <p className="mt-3 text-sm leading-6 text-slate-800">{body}</p>

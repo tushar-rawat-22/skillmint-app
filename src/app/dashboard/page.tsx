@@ -27,12 +27,9 @@ import {
   type SkillDistributionItem,
 } from "@/components/dashboard/visuals";
 import {
-  premiumCompactSurface,
   premiumEyebrow,
-  premiumHeroSurface,
   premiumPageStack,
   premiumPrimaryCta,
-  premiumSecondaryCta,
   premiumSurface,
 } from "@/components/ui/premium";
 
@@ -488,6 +485,7 @@ export default function DashboardPage() {
     visibleResumeOfferState.status === "workspace" ||
     visibleResumeOfferState.status === "latest" ||
     visibleResumeOfferState.status === "workspace_unavailable";
+  const hasTargetRoleSetup = Boolean(data.targetRole?.trim());
 
   function isCurrentDashboardRequestForPublication(
     request: DashboardOwnedRequest,
@@ -709,16 +707,22 @@ export default function DashboardPage() {
   if (!hasResumeAnalysis) {
     return (
       <DashboardLayout>
-        <div className="mx-auto max-w-6xl space-y-6">
-          <section className={premiumHeroSurface}>
-            <p className={premiumEyebrow}>
-              Dashboard
+        <div className="mx-auto max-w-5xl">
+          <section className="border-y border-slate-300 bg-white px-5 py-10 sm:px-8 sm:py-14">
+            <p className="text-sm font-semibold text-emerald-800">
+              {hasAccountResumeOption
+                ? "Resume ready to continue"
+                : hasTargetRoleSetup
+                  ? "Target role saved"
+                  : "Your first step"}
             </p>
 
-            <h1 className="mt-4 max-w-3xl text-4xl font-black md:text-5xl">
+            <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.03em] md:text-5xl">
               {hasAccountResumeOption
-                ? "No active resume report selected."
-                : "Upload your resume to build your career report."}
+                ? "Choose the resume you want to work from."
+                : hasTargetRoleSetup
+                  ? `Now see what your resume shows for ${data.targetRole}.`
+                  : "What role are you aiming for?"}
             </h1>
 
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
@@ -728,7 +732,9 @@ export default function DashboardPage() {
                   ? "Saved analyses exist in your account, but none is currently loaded as this browser’s active dashboard report."
                   : visibleResumeOfferState.status === "workspace_unavailable"
                     ? visibleResumeOfferState.message
-                : "SkillMint needs Resume Reality before showing Career IQ, Proof Confidence, Profile-fit roles, Latest JD Match context, and next missions."}
+                    : hasTargetRoleSetup
+                      ? "Upload one resume to see what it supports, the clearest gap for your target role, and the next step worth taking."
+                      : "Start with a target role. We will use it to make your resume feedback specific instead of generic."}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -758,29 +764,34 @@ export default function DashboardPage() {
                 </button>
               )}
 
-              <Link
-                href="/upload"
-                className={premiumPrimaryCta}
-              >
-                Upload resume
-              </Link>
+              {visibleResumeOfferState.status !== "workspace" &&
+                visibleResumeOfferState.status !== "latest" && (
+                  <Link
+                    href={hasTargetRoleSetup ? "/upload" : "/setup"}
+                    className={premiumPrimaryCta}
+                  >
+                    {hasTargetRoleSetup ? "Upload your resume" : "Set target role"}
+                  </Link>
+                )}
 
               {(hasAccountResumeOption ||
                 visibleResumeOfferState.status === "error") && (
                 <Link
                   href="/resume"
-                  className={premiumSecondaryCta}
+                  className="inline-flex min-h-11 items-center font-semibold text-slate-700 underline-offset-4 hover:text-emerald-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
                 >
-                  Go to Resume
+                  Manage saved resumes
                 </Link>
               )}
 
-              <Link
-                href="/setup"
-                className={premiumSecondaryCta}
-              >
-                Career setup
-              </Link>
+              {hasTargetRoleSetup && !hasAccountResumeOption && (
+                <Link
+                  href="/setup"
+                  className="inline-flex min-h-11 items-center font-semibold text-slate-700 underline-offset-4 hover:text-emerald-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+                >
+                  Change target role
+                </Link>
+              )}
             </div>
 
             {(visibleResumeOfferState.status === "checking" ||
@@ -797,10 +808,10 @@ export default function DashboardPage() {
                       ? "assertive"
                       : "polite"
                   }
-                  className={`mt-5 max-w-3xl rounded-2xl border p-4 text-sm leading-6 ${
+                  className={`mt-5 max-w-3xl border-l-2 px-4 py-2 text-sm leading-6 ${
                     visibleResumeOfferState.status === "error"
-                      ? "border-rose-200 bg-rose-50 text-rose-800"
-                      : "border-slate-200 bg-slate-50 text-slate-700"
+                      ? "border-rose-500 text-rose-800"
+                      : "border-slate-300 text-slate-700"
                   }`}
                 >
                   {visibleResumeOfferState.message}
@@ -819,10 +830,10 @@ export default function DashboardPage() {
                     ? "assertive"
                     : "polite"
                 }
-                className={`mt-5 max-w-3xl rounded-2xl border p-4 text-sm leading-6 ${
+                className={`mt-5 max-w-3xl border-l-2 px-4 py-2 text-sm leading-6 ${
                   visibleDashboardRestoreState.status === "error"
-                    ? "border-rose-200 bg-rose-50 text-rose-800"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    ? "border-rose-500 text-rose-800"
+                    : "border-emerald-600 text-emerald-800"
                 }`}
               >
                 {visibleDashboardRestoreState.message}
@@ -830,15 +841,37 @@ export default function DashboardPage() {
             )}
           </section>
 
-          <EmptyDashboardPreview />
-
-          <ActiveTargetCard result={dashboardActiveTarget} />
-
-          <OnboardingChecklist />
-
-          <NextBestActionPanel />
-
-          <AccountOverviewCard hasActiveResumeReport={false} />
+          <section className="mt-10" aria-labelledby="first-report-steps">
+            <h2 id="first-report-steps" className="text-xl font-bold text-slate-950">
+              From target role to useful feedback
+            </h2>
+            <ol className="mt-5 border-y border-slate-300">
+              <FirstReportStep
+                number="1"
+                title="Target role"
+                body={hasTargetRoleSetup
+                  ? data.targetRole ?? "Target role saved"
+                  : "Tell us the role you want to move toward."}
+                status={hasTargetRoleSetup ? "Done" : "Now"}
+              />
+              <FirstReportStep
+                number="2"
+                title="Your resume"
+                body="Upload a PDF, DOCX, or TXT file. Your resume stays private by default."
+                status={hasTargetRoleSetup ? "Next" : undefined}
+              />
+              <FirstReportStep
+                number="3"
+                title="What to do next"
+                body="See what your resume supports, the most important gap, and one useful next step."
+              />
+            </ol>
+            <p className="mt-5 text-sm leading-6 text-slate-600">
+              Scores and deeper analysis stay available after your first report;
+              they are supporting detail, not the starting point. Account and
+              privacy controls remain available in Settings.
+            </p>
+          </section>
         </div>
       </DashboardLayout>
     );
@@ -974,66 +1007,30 @@ export default function DashboardPage() {
   );
 }
 
-function EmptyDashboardPreview() {
-  const previewItems = [
-    {
-      title: "Career IQ",
-      body: "A trust-adjusted readiness signal after SkillMint reads your resume.",
-    },
-    {
-      title: "Proof Confidence",
-      body: "A clear view of which claims have evidence candidates and which need proof.",
-    },
-    {
-      title: "Profile-fit roles",
-      body: "General role directions based on your Resume Reality, kept separate from job matches.",
-    },
-    {
-      title: "Latest JD Match",
-      body: "A one-job comparison once you paste a real job description.",
-    },
-    {
-      title: "Roadmap / next missions",
-      body: "The next practical steps to close gaps and build stronger proof.",
-    },
-  ];
-
+function FirstReportStep({
+  number,
+  title,
+  body,
+  status,
+}: {
+  number: string;
+  title: string;
+  body: string;
+  status?: string;
+}) {
   return (
-    <section className={premiumSurface}>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className={premiumEyebrow}>
-            After upload
-          </p>
-
-          <h2 className="mt-2 text-2xl font-black">
-            What SkillMint will build
-          </h2>
-        </div>
-
-        <p className="max-w-xl text-sm leading-6 text-slate-600">
-          These sections stay hidden until there is an active resume report, so
-          the dashboard never shows stale or demo metrics.
-        </p>
+    <li className="grid gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[2rem_10rem_1fr_auto] sm:items-start">
+      <span className="font-mono text-xs font-bold text-emerald-800">
+        {number.padStart(2, "0")}
+      </span>
+      <h3 className="font-bold text-slate-950">{title}</h3>
+      <p className="text-sm leading-6 text-slate-600">{body}</p>
+      <div className="sm:text-right">
+        {status ? (
+          <span className="text-xs font-bold text-emerald-800">{status}</span>
+        ) : null}
       </div>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {previewItems.map((item) => (
-          <article
-            key={item.title}
-            className={premiumCompactSurface}
-          >
-            <h3 className="text-sm font-bold text-slate-950">
-              {item.title}
-            </h3>
-
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              {item.body}
-            </p>
-          </article>
-        ))}
-      </div>
-    </section>
+    </li>
   );
 }
 

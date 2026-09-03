@@ -13,73 +13,76 @@ export default function Hero({
 }: HeroProps) {
   return (
     <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-24">
+      <div className="mx-auto grid max-w-7xl gap-14 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-24">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
+          <p className="text-sm font-semibold text-emerald-800">
             {publicDemoEnabled
-              ? "Public beta in preparation · synthetic demos"
-              : "Public beta in preparation · controlled access"}
+              ? "For candidates · synthetic beta preview"
+              : "For candidates · invite-only beta"}
           </p>
 
           <h1 className="mt-6 max-w-3xl text-4xl font-black leading-[1.02] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
-            Make career evidence easier to understand.
+            Know what your resume proves.
             <span className="mt-2 block text-emerald-800">
-              For candidates and the people reviewing them.
+              Know what to fix next.
             </span>
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            Candidates can see what a resume supports and what to improve next.
-            Recruiters can review candidate-authorized evidence and ask clearer
-            questions without outsourcing the decision.
+            Choose the role you want, upload your resume, and see what it already
+            supports, what is holding you back, and the clearest next step.
           </p>
 
-          <p className="mt-5 max-w-2xl border-l-4 border-emerald-700 pl-4 text-sm leading-6 text-slate-700">
-            Not an AI shortlist, candidate ranking, or hiring-probability score.
-            The product keeps evidence explainable and human judgment in charge.
-          </p>
-
-          <div className="mt-9 flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link
-              href={ROUTES.CANDIDATES}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-800 px-7 py-3 font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700"
+              href={publicDemoEnabled
+                ? ROUTES.DEMO
+                : publicSignupEnabled
+                  ? ROUTES.SIGNUP
+                  : ROUTES.LOGIN}
+              className="inline-flex min-h-12 items-center justify-center rounded-lg bg-emerald-800 px-7 py-3 font-bold text-white transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700"
             >
-              I&apos;m a Candidate
+              {publicDemoEnabled
+                ? "See a candidate example"
+                : publicSignupEnabled
+                  ? "Create candidate account"
+                  : "Candidate login"}
             </Link>
 
-            <Link
-              href={ROUTES.RECRUITERS}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-7 py-3 font-semibold text-slate-800 transition hover:border-emerald-400 hover:text-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-emerald-700"
+            <a
+              href="#how-it-works"
+              className="inline-flex min-h-12 items-center font-semibold text-emerald-900 underline decoration-emerald-300 underline-offset-4 hover:decoration-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
             >
-              I&apos;m Hiring
-            </Link>
+              See how it works
+            </a>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold">
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
             {publicDemoEnabled ? (
-              <Link className="text-emerald-800 underline-offset-4 hover:underline" href={ROUTES.DEMO}>
-                Explore candidate demo
+              <Link className="font-semibold text-slate-700 underline-offset-4 hover:underline" href={ROUTES.LOGIN}>
+                Existing user login
               </Link>
             ) : null}
-            <Link className="text-slate-700 underline-offset-4 hover:underline" href={ROUTES.LOGIN}>
-              Existing user login
+            {!publicDemoEnabled && !publicSignupEnabled ? (
+              <Link className="font-semibold text-slate-700 underline-offset-4 hover:underline" href={ROUTES.SIGNUP}>
+                Invite-only beta details
+              </Link>
+            ) : null}
+            <Link className="text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline" href={ROUTES.RECRUITERS}>
+              Hiring? See the recruiter workflow
             </Link>
-            {!publicDemoEnabled && publicSignupEnabled ? (
-              <Link className="text-slate-700 underline-offset-4 hover:underline" href={ROUTES.SIGNUP}>
-                Create account
-              </Link>
-            ) : null}
           </div>
 
-          <p className="mt-5 text-sm text-slate-500">
-            No employment, interview, shortlist, or salary guarantees.
+          <p className="mt-6 max-w-xl border-l-2 border-emerald-700 pl-4 text-sm leading-6 text-slate-600">
+            Your resume stays private unless you choose to share a derived Proof
+            Brief. SkillMint does not rank candidates or predict hiring outcomes.
           </p>
         </div>
 
-        <div className="border-y border-slate-300 bg-[#f7f5ef] py-2 sm:border sm:p-6">
+        <div className="border-y border-slate-300 bg-[#f7f5ef] py-2 sm:p-6">
           <div className="border-b border-slate-300 px-4 py-5 sm:px-0 sm:pt-0">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
-              Evidence summary · synthetic
+            <p className="text-xs font-semibold text-emerald-800">
+              Example from a synthetic resume
             </p>
             <h2 className="mt-2 text-2xl font-black text-slate-950">
               Junior frontend product work
@@ -97,10 +100,10 @@ export default function Hero({
           />
           <HeroEvidenceRow
             index="03"
-            label="Next action"
+            label="Next step"
             value="Rewrite one project entry around contribution, result, and evidence."
           />
-          <p className="px-4 py-4 text-xs leading-5 text-slate-500 sm:px-0 sm:pb-0">
+          <p className="px-4 py-4 text-xs leading-5 text-slate-600 sm:px-0 sm:pb-0">
             Synthetic resume-internal signals only. No external verification.
           </p>
         </div>

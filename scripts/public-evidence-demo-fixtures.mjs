@@ -184,12 +184,11 @@ test("homepage exposes both public product paths without enabling signup", () =>
   const homepageSources = [
     "src/app/page.tsx",
     "src/components/landing/Hero.tsx",
-    "src/components/landing/AudiencePaths.tsx",
   ].map(source).join("\n");
-  assert.match(homepageSources, /I&apos;m a Candidate/u);
-  assert.match(homepageSources, /I&apos;m Hiring/u);
-  assert.match(homepageSources, /What does my resume support\?/u);
-  assert.match(homepageSources, /What evidence supports this candidate\?/u);
+  assert.match(homepageSources, /Know what your resume proves/u);
+  assert.match(homepageSources, /See a candidate example/u);
+  assert.match(homepageSources, /Hiring\? See the recruiter workflow/u);
+  assert.match(homepageSources, /ROUTES\.RECRUITERS/u);
   assert.doesNotMatch(
     homepageSources,
     /Recruiter Confidence|shortlist probability|hire probability|interview probability/u,
