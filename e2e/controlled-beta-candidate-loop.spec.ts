@@ -192,6 +192,12 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   ).toBeVisible();
 
   await page.goto("/ats");
+  await page.getByLabel("Job title").fill("Frontend Developer");
+  await page.getByLabel("Company name").fill("Synthetic Co");
+  await page.getByLabel("Job description to match").fill(
+    SYNTHETIC_JOB_DESCRIPTION,
+  );
+  await page.getByRole("button", { name: "Analyze Match" }).click();
   await page.getByRole("button", { name: "Replace Active Target" }).click();
   await expect(page.getByText(/Active Target replaced/u)).toBeVisible();
   await expect(
