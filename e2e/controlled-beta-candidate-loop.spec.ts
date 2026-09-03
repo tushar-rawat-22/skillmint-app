@@ -191,13 +191,28 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     }),
   ).toBeVisible();
 
+  await page.goto("/ats");
+  await page.getByRole("button", { name: "Replace Active Target" }).click();
+  await expect(page.getByText(/Active Target replaced/u)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Start one roadmap mission." }),
+  ).toBeVisible();
+
+  await page.goto("/roadmap");
+  await page.getByLabel("Status").first().selectOption("blocked");
+  await expect(
+    page.getByRole("heading", {
+      name: "Improve proof, then match another job.",
+    }),
+  ).toBeVisible();
+
   await page.goto("/dashboard");
   expect(
     await page.evaluate(
       (key) => localStorage.getItem(key),
       ACTIVE_TARGET_STORAGE_KEY,
     ),
-  ).toBe(activeTargetBeforeNavigation);
+  ).not.toBeNull();
   await expect(
     page.getByRole("heading", {
       name: "Frontend Developer at Synthetic Co",
