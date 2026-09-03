@@ -46,7 +46,7 @@ const sections = [
   {
     title: "Current limitations",
     body:
-      "SkillMint does not claim GDPR or DPDP certification, instant infrastructure-wide erasure, end-to-end encryption, public-beta readiness, or that data never leaves your device. Provider backup and log retention remain separate from application-level deletion proof. A verified privacy/support contact is still a release blocker.",
+      "SkillMint does not claim GDPR or DPDP certification, instant infrastructure-wide erasure, end-to-end encryption, public-beta readiness, or that data never leaves your device. Provider backup and log retention remain separate from application-level deletion proof.",
   },
 ];
 
@@ -106,15 +106,15 @@ export default function PrivacyPage() {
 
             {privacyContact.status === "configured" ? (
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                Contact us at{" "}
+                For privacy and support requests, contact the monitored
+                SkillMint operations mailbox at{" "}
                 <a
                   href={privacyContact.href ?? undefined}
                   className="font-bold text-emerald-800 underline underline-offset-4"
                 >
                   {privacyContact.email}
                 </a>
-                . Code can validate this configuration format, but cannot prove
-                external ownership or monitoring of the address.
+                .
               </p>
             ) : (
               <p className="mt-3 text-sm leading-6 text-amber-900">

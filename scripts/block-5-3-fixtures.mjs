@@ -372,6 +372,9 @@ test("privacy contact is central, syntax-validated, and missing remains a releas
   assert.match(example, /^SKILLMINT_PRIVACY_CONTACT_EMAIL=$/m);
   const privacyPage = fs.readFileSync(path.join(repoRoot, "src/app/privacy/page.tsx"), "utf8");
   assert.match(privacyPage, /getPrivacyContact/);
+  assert.match(privacyPage, /monitored\s+SkillMint operations mailbox/);
+  assert.doesNotMatch(privacyPage, /cannot prove\s+external ownership or monitoring/i);
+  assert.doesNotMatch(privacyPage, /is still a release blocker/i);
 });
 
 test("npm package boundary keeps the application private and excludes generated or environment artifacts", () => {
