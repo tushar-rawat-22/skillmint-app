@@ -26,4 +26,24 @@ jobs:
       - name: Run pinned vinext compatibility check
         run: npx --yes vinext@1.0.0-beta.8 check
       - name: Build production bundle with pinned vinext
-        run: npx --yes vinext@1.0.0-beta.8 build
+        id: vinext-build
+        shell: bash
+        run: |
+          set +e
+          npx --yes vinext@1.0.0-beta.8 build 2>&1 | tee vinext-build.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload vinext build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vinext-build-log
+          path: vinext-build.log
+          if-no-files-found: error
+          retention-days: 1
+      - name: Enforce vinext build result
+        if: steps.vinext-build.outputs.exit_code != '0'
+        run: |
+          echo "vinext production build failed; inspect vinext-build-log artifact."
+          exit 1
