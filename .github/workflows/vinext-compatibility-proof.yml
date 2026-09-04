@@ -42,6 +42,16 @@ jobs:
           status=${PIPESTATUS[0]}
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
           exit 0
+      - name: Package Worker with Wrangler dry run
+        id: wrangler-dry-run
+        if: steps.vinext-build.outputs.exit_code == '0'
+        shell: bash
+        run: |
+          set +e
+          npx wrangler deploy --dry-run --outdir wrangler-dry-run 2>&1 | tee wrangler-dry-run.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Upload vinext proof evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,6 +59,8 @@ jobs:
           name: vinext-proof-evidence
           path: |
             vinext-build.log
+            wrangler-dry-run.log
+            wrangler-dry-run/
             vinext-init-status.txt
             vinext-init.diff
           if-no-files-found: warn
@@ -57,4 +69,9 @@ jobs:
         if: steps.vinext-build.outputs.exit_code != '0'
         run: |
           echo "vinext production build failed; inspect vinext-proof-evidence artifact."
+          exit 1
+      - name: Enforce Wrangler dry-run packaging result
+        if: steps.vinext-build.outputs.exit_code == '0' && steps.wrangler-dry-run.outputs.exit_code != '0'
+        run: |
+          echo "Wrangler dry-run packaging failed; inspect vinext-proof-evidence artifact."
           exit 1
