@@ -12,7 +12,7 @@ permissions:
 jobs:
   vinext-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,31 +24,37 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Run pinned vinext compatibility check
-        run: npx --yes vinext@1.0.0-beta.8 check
-      - name: Prepare isolated vinext build prerequisites
+        run: npx --yes vinext@1.0.0-beta.9 check
+      - name: Initialize isolated Cloudflare vinext candidate
+        run: npx --yes vinext@1.0.0-beta.9 init --platform=cloudflare --skip-check
+      - name: Capture migration diff
+        if: always()
         shell: bash
         run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.type='module'; fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\n')"
-          npm install --no-save --package-lock=false @vitejs/plugin-rsc@0.5.34
-      - name: Build production bundle with pinned vinext
+          git status --short > vinext-init-status.txt
+          git diff -- package.json package-lock.json vite.config.ts wrangler.jsonc postcss.config.js postcss.config.cjs > vinext-init.diff || true
+      - name: Build production bundle with initialized vinext candidate
         id: vinext-build
         shell: bash
         run: |
           set +e
-          npx --yes vinext@1.0.0-beta.8 build 2>&1 | tee vinext-build.log
+          npm run build:vinext 2>&1 | tee vinext-build.log
           status=${PIPESTATUS[0]}
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Upload vinext build log
+      - name: Upload vinext proof evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: vinext-build-log
-          path: vinext-build.log
-          if-no-files-found: error
+          name: vinext-proof-evidence
+          path: |
+            vinext-build.log
+            vinext-init-status.txt
+            vinext-init.diff
+          if-no-files-found: warn
           retention-days: 1
       - name: Enforce vinext build result
         if: steps.vinext-build.outputs.exit_code != '0'
         run: |
-          echo "vinext production build failed; inspect vinext-build-log artifact."
+          echo "vinext production build failed; inspect vinext-proof-evidence artifact."
           exit 1
