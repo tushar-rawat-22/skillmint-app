@@ -25,6 +25,11 @@ jobs:
         run: npm ci
       - name: Run pinned vinext compatibility check
         run: npx --yes vinext@1.0.0-beta.8 check
+      - name: Prepare isolated vinext build prerequisites
+        shell: bash
+        run: |
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.type='module'; fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\n')"
+          npm install --no-save --package-lock=false @vitejs/plugin-rsc@0.5.34
       - name: Build production bundle with pinned vinext
         id: vinext-build
         shell: bash
