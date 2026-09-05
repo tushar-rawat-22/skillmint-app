@@ -19,8 +19,8 @@ export default function Hero({
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-xs font-bold text-emerald-200">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" aria-hidden="true" />
             {publicDemoEnabled
-              ? "Candidate beta · synthetic preview"
-              : "Candidate beta · invite only"}
+              ? "For candidates · synthetic beta preview"
+              : "For candidates · invite-only beta"}
           </div>
 
           <h1 className="mt-7 max-w-3xl text-4xl font-black leading-[0.98] tracking-[-0.05em] text-white sm:text-5xl lg:text-7xl">
