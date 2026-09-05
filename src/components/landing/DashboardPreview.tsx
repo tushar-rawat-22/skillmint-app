@@ -6,13 +6,13 @@ const evidenceExamples = [
 
 export default function DashboardPreview() {
   return (
-    <section id="preview" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
-        <div>
-          <p className="text-sm font-semibold text-emerald-800">
+    <section id="preview" className="border-y border-slate-200 bg-[#f1efe8] px-6 py-20 lg:py-24">
+      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
+        <div className="max-w-xl">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800">
             Evidence-first preview
           </p>
-          <h2 className="mt-4 text-4xl font-black text-slate-950 md:text-5xl">
+          <h2 className="mt-4 text-4xl font-black tracking-[-0.04em] text-slate-950 md:text-5xl">
             Read the evidence before the score.
           </h2>
           <p className="mt-5 text-base leading-7 text-slate-600">
@@ -20,20 +20,26 @@ export default function DashboardPreview() {
             strongest evidence, the main gap, and the next truthful move.
             Calculations remain available as supporting detail.
           </p>
+          <div className="mt-8 rounded-2xl border border-slate-300/80 bg-white/70 p-4 text-sm leading-6 text-slate-600 shadow-sm">
+            <p className="font-bold text-slate-900">Why this matters</p>
+            <p className="mt-1">
+              A score without inspectable evidence is easy to over-trust. SkillMint keeps the evidence visible and the calculation secondary.
+            </p>
+          </div>
         </div>
 
-        <div className="border-y border-slate-300 bg-white p-5">
-          <div className="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.10)] sm:p-6">
+          <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold text-emerald-800">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
                 What the resume shows
               </p>
-              <h3 className="mt-2 text-2xl font-black text-slate-950">
+              <h3 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">
                 What this resume currently supports
               </h3>
             </div>
-            <span className="w-fit text-xs font-semibold text-violet-800">
-              Synthetic preview data
+            <span className="w-fit rounded-full bg-violet-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-800">
+              Synthetic preview
             </span>
           </div>
 
@@ -42,7 +48,7 @@ export default function DashboardPreview() {
             that value typed interfaces, accessibility, and component testing.
           </p>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             <PreviewSummary
               label="Strongest support"
               body="One project entry ties TypeScript and testing to a shipped interface and measured result."
@@ -60,19 +66,22 @@ export default function DashboardPreview() {
             />
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            <article className="border-l-2 border-slate-300 px-5 py-3">
-              <p className="text-xs font-semibold text-slate-600">
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+            <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 Selected synthetic evidence
               </p>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
                 {evidenceExamples.map((example) => (
-                  <li key={example}>• {example}</li>
+                  <li key={example} className="flex gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden="true" />
+                    <span>{example}</span>
+                  </li>
                 ))}
               </ul>
             </article>
 
-            <details className="border-l-2 border-slate-300 px-5 py-3">
+            <details className="rounded-2xl border border-slate-200 bg-white p-5">
               <summary className="cursor-pointer font-bold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600">
                 How this analysis was calculated
               </summary>
@@ -85,14 +94,14 @@ export default function DashboardPreview() {
             </details>
           </div>
 
-          <p className="mt-4 text-xs leading-5 text-slate-500">
-            All information in this preview is invented. SkillMint has not
-            externally verified any source or candidate claim.
-          </p>
-          <p className="mt-2 border-l-2 border-emerald-600 pl-3 text-xs font-semibold leading-5 text-slate-700">
-            After the resume changes, saved reports can compare detected
-            evidence. Completing an action alone never creates proof.
-          </p>
+          <div className="mt-4 rounded-2xl bg-slate-950 px-4 py-3 text-xs leading-5 text-slate-300">
+            <p>
+              All information in this preview is invented. SkillMint has not externally verified any source or candidate claim.
+            </p>
+            <p className="mt-2 font-semibold text-emerald-300">
+              After the resume changes, saved reports can compare detected evidence. Completing an action alone never creates proof.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -109,17 +118,17 @@ function PreviewSummary({
   tone: "emerald" | "amber" | "sky";
 }) {
   const className = tone === "emerald"
-    ? "border-emerald-500"
+    ? "bg-emerald-50 border-emerald-200"
     : tone === "amber"
-      ? "border-amber-500"
-      : "border-sky-500";
+      ? "bg-amber-50 border-amber-200"
+      : "bg-sky-50 border-sky-200";
 
   return (
-    <article className={`border-l-2 px-4 py-2 ${className}`}>
-      <p className="text-xs font-semibold text-slate-700">
+    <article className={`rounded-2xl border p-4 ${className}`}>
+      <p className="text-xs font-bold text-slate-700">
         {label}
       </p>
-      <p className="mt-3 text-sm leading-6 text-slate-800">{body}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-800">{body}</p>
     </article>
   );
 }
