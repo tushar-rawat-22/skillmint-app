@@ -160,3 +160,4 @@ jobs:
           node scripts/production-readonly-inventory-fixtures.mjs
           node scripts/smoke-production-fixtures.mjs
           node scripts/documentation-status-fixtures.mjs
+          node scripts/greenhouse-source-adapter-fixtures.mjs
