@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private account or privacy support
+    url: mailto:skillmint.operations@gmail.com
+    about: Use private support for account access, privacy, or personal-data concerns.
+  - name: Security vulnerability
+    url: https://github.com/tushar-rawat-22/skillmint-app/security/policy
+    about: Follow the private security reporting guidance instead of opening a public issue.
