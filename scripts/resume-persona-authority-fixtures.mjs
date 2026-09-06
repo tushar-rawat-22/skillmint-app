@@ -12,6 +12,10 @@ const contract = fs.readFileSync(
   path.join(root, "src/lib/resume/resumeUploadContract.ts"),
   "utf8",
 );
+const personaModule = fs.readFileSync(
+  path.join(root, "src/modules/accountPersona.ts"),
+  "utf8",
+);
 
 assert.match(route, /getAccountPersona\(authorization\.userId\)/);
 assert.match(route, /persona\.status === "unavailable"/);
@@ -25,5 +29,21 @@ assert.ok(personaCheck >= 0 && bodyBoundary > personaCheck,
 
 assert.match(contract, /"candidate_persona_required"/);
 assert.match(contract, /candidate_persona_required:\s*\{[\s\S]*?status: 403/);
+
+assert.match(personaModule, /event: "account_persona_dependency_failure"/);
+assert.match(personaModule, /correlationId: randomUUID\(\)/);
+for (const failureClass of [
+  "admin_configuration",
+  "query_error",
+  "invalid_response",
+  "unexpected_error",
+]) {
+  assert.match(personaModule, new RegExp(`"${failureClass}"`));
+}
+const diagnosticBlock = personaModule.slice(
+  personaModule.indexOf("function logPersonaDependencyFailure"),
+);
+assert.doesNotMatch(diagnosticBlock, /userId|email|token|resume|payload/,
+  "persona diagnostics must not log identity, credentials, or resume data");
 
 console.log("Resume persona authority fixtures: PASS.");

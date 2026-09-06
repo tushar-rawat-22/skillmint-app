@@ -75,7 +75,7 @@ assert.match(personaAuthority, /^import "server-only";/);
 assert.match(personaAuthority, /createSupabaseAdminClient\(\)/);
 assert.match(personaAuthority, /\.from\("account_personas"\)/);
 assert.match(personaAuthority, /if \(existing\.status !== "missing"\)/);
-assert.match(personaAuthority, /return await readPersona\(admin, userId\)/);
+assert.match(personaAuthority, /return await readPersona\(admin, userId, "ensure_reread"\)/);
 assert.match(personaAuthority, /persona === "RECRUITER" \? "\/recruiters\/workspace" : "\/dashboard"/);
 
 assert.match(routeClient, /^import "server-only";/);
