@@ -20,6 +20,18 @@ This is a beta, so I am not looking for politeness. I want to know what felt use
 
 Plan for about 15 minutes.
 
+## Feedback and support boundary
+
+The in-product Feedback control is for a short description of a bug, confusing moment, UI problem, or idea. Ask candidates not to paste names, email addresses, resume text, job-description text, passwords, authentication details, or private screenshots into that field.
+
+Account-access and privacy questions belong in the one-to-one support thread at `skillmint.operations@gmail.com`. If a report needs personal context to diagnose, keep that context in the private support thread and reduce any GitHub regression to synthetic or non-personal evidence before recording it.
+
+During the session, record the **first point where the candidate cannot continue without help**. Use one of these checkpoints so repeated stalls can be compared without turning on analytics:
+
+`access` → `setup` → `resume_upload` → `resume_understanding` → `job_match` → `active_target` → `roadmap` → `proof_brief` → `feedback_support` → `completed`
+
+Do not infer a stall from silence. Record only what the candidate actually experiences or reports.
+
 ## Candidate session
 
 1. Sign in with the account that was activated for the session.
@@ -65,6 +77,7 @@ For each session, record only the minimum operational evidence needed to judge t
 Candidate ID: C01
 Session date: YYYY-MM-DD
 Access before session: PASS / FAIL
+First stall checkpoint: access / setup / resume_upload / resume_understanding / job_match / active_target / roadmap / proof_brief / feedback_support / completed
 Core loop reached: PASS / FAIL
 Active Target set: PASS / FAIL
 Private Proof Brief created: PASS / FAIL
