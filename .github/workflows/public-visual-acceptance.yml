@@ -1,0 +1,82 @@
+name: Public visual acceptance
+
+on:
+  push:
+    branches:
+      - ops/public-visual-acceptance-20260906
+
+permissions:
+  contents: read
+
+jobs:
+  visual-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Capture live production at desktop and mobile widths
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install --no-save --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+          cat > visual-check.mjs <<'EOF'
+          import { chromium, devices } from 'playwright';
+          import fs from 'node:fs';
+
+          const url = 'https://skillmint-app-three.vercel.app';
+          const browser = await chromium.launch({ headless: true });
+          const cases = [
+            { name: 'desktop', context: { viewport: { width: 1440, height: 1000 } } },
+            { name: 'mobile', context: { ...devices['iPhone 13'] } },
+          ];
+          const report = [];
+
+          for (const testCase of cases) {
+            const context = await browser.newContext(testCase.context);
+            const page = await context.newPage();
+            const consoleErrors = [];
+            page.on('console', msg => {
+              if (msg.type() === 'error') consoleErrors.push(msg.text());
+            });
+            const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+            const status = response?.status() ?? 0;
+            const title = await page.title();
+            const bodyText = (await page.locator('body').innerText()).trim();
+            const overflow = await page.evaluate(() => ({
+              scrollWidth: document.documentElement.scrollWidth,
+              clientWidth: document.documentElement.clientWidth,
+              hasHorizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
+            }));
+            const keyText = {
+              hasSkillMint: /SkillMint/i.test(bodyText),
+              hasInviteOnly: /invite[- ]only|closed beta|controlled beta/i.test(bodyText),
+              hasSynthetic: /synthetic/i.test(bodyText),
+            };
+            await page.screenshot({ path: `${testCase.name}.png`, fullPage: true });
+            report.push({ name: testCase.name, status, title, bodyLength: bodyText.length, overflow, keyText, consoleErrors });
+            if (status < 200 || status >= 400) throw new Error(`${testCase.name}: production returned HTTP ${status}`);
+            if (!keyText.hasSkillMint) throw new Error(`${testCase.name}: SkillMint identity missing`);
+            if (!keyText.hasInviteOnly) throw new Error(`${testCase.name}: closed/invite-only beta boundary missing`);
+            if (!keyText.hasSynthetic) throw new Error(`${testCase.name}: synthetic evidence label missing`);
+            if (overflow.hasHorizontalOverflow) throw new Error(`${testCase.name}: horizontal overflow ${overflow.scrollWidth} > ${overflow.clientWidth}`);
+            if (consoleErrors.length > 0) throw new Error(`${testCase.name}: console errors: ${consoleErrors.join(' | ')}`);
+            await context.close();
+          }
+
+          await browser.close();
+          fs.writeFileSync('visual-report.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          EOF
+          node visual-check.mjs
+
+      - name: Upload visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-visual-acceptance
+          path: |
+            desktop.png
+            mobile.png
+            visual-report.json
+          if-no-files-found: error
+          retention-days: 7
