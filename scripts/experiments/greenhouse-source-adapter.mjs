@@ -75,6 +75,79 @@ export async function fetchGreenhouseJobs({ boardToken, fetchImpl = fetch, fetch
   };
 }
 
+export function reconcileGreenhouseRefresh({ previousJobs = [], currentResult, observedAt }) {
+  if (!currentResult?.ok) {
+    return {
+      ok: false,
+      error: currentResult?.error ?? { kind: "invalid_current_result", message: "A successful Greenhouse refresh is required." },
+      jobs: previousJobs,
+    };
+  }
+
+  const boardToken = normalizeRequiredString(currentResult.boardToken);
+  const normalizedObservedAt = normalizeTimestamp(observedAt ?? currentResult.fetchedAt);
+  if (!boardToken || !normalizedObservedAt) {
+    return {
+      ok: false,
+      error: { kind: "invalid_refresh_metadata", message: "Greenhouse board token and observation timestamp are required." },
+      jobs: previousJobs,
+    };
+  }
+
+  const previousBySourceKey = new Map();
+  for (const previousJob of previousJobs) {
+    const sourceKey = normalizeRequiredString(previousJob?.sourceKey);
+    if (!sourceKey || previousJob?.source !== "greenhouse" || previousJob?.boardToken !== boardToken) {
+      return {
+        ok: false,
+        error: { kind: "invalid_previous_job", message: "Previous Greenhouse jobs must belong to the same board." },
+        jobs: previousJobs,
+      };
+    }
+    if (previousBySourceKey.has(sourceKey)) {
+      return {
+        ok: false,
+        error: { kind: "duplicate_previous_source_key", sourceKey },
+        jobs: previousJobs,
+      };
+    }
+    previousBySourceKey.set(sourceKey, previousJob);
+  }
+
+  const currentValidJobs = currentResult.jobs.filter((entry) => entry?.ok && entry.job);
+  const currentSourceKeys = new Set(currentValidJobs.map((entry) => entry.job.sourceKey));
+  const reconciled = currentValidJobs.map((entry) => {
+    const previous = previousBySourceKey.get(entry.job.sourceKey);
+    return {
+      ...entry.job,
+      firstSeenAt: previous?.firstSeenAt ?? previous?.fetchedAt ?? entry.job.fetchedAt ?? normalizedObservedAt,
+      availability: "available",
+      stale: false,
+      closedAt: null,
+    };
+  });
+
+  for (const previousJob of previousJobs) {
+    if (currentSourceKeys.has(previousJob.sourceKey)) continue;
+    reconciled.push({
+      ...previousJob,
+      availability: "stale",
+      stale: true,
+      closedAt: null,
+    });
+  }
+
+  return {
+    ok: true,
+    source: "greenhouse",
+    boardToken,
+    observedAt: normalizedObservedAt,
+    jobs: reconciled,
+    invalidCurrentJobs: currentResult.jobs.filter((entry) => !entry?.ok),
+    duplicateSourceKeys: currentResult.duplicateSourceKeys ?? [],
+  };
+}
+
 export function normalizeGreenhouseJob({ boardToken, rawJob, fetchedAt }) {
   const postingId = normalizePostingId(rawJob?.id);
   const title = normalizeRequiredString(rawJob?.title);
