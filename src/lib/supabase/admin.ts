@@ -14,6 +14,13 @@ export class SupabaseAdminConfigurationError extends Error {
   }
 }
 
+export function isSupabaseAdminConfigured(): boolean {
+  return Boolean(
+    getSupabasePublicConfig() &&
+      (process.env[SUPABASE_SECRET_KEY_ENV] ?? "").trim(),
+  );
+}
+
 export function createSupabaseAdminClient() {
   const publicConfig = getSupabasePublicConfig();
   const secretKey = (process.env[SUPABASE_SECRET_KEY_ENV] ?? "").trim();
