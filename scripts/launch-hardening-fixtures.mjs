@@ -1410,11 +1410,15 @@ test("health response is coarse, deterministic, status-aware, and no-store", asy
   const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const originalKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const originalSecret = process.env.SUPABASE_SECRET_KEY;
+  const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   try {
     process.env.NEXT_PUBLIC_SUPABASE_URL =
       "https://configured.example.test";
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY =
       "fixture-public-key";
+    process.env.SUPABASE_SECRET_KEY = "fixture-secret-key";
+    process.env.NEXT_PUBLIC_APP_URL = "https://app.example.test";
     const healthy = getHealth();
     assert.equal(healthy.status, 200);
     assert.deepEqual(await healthy.json(), { status: "healthy" });
@@ -1423,6 +1427,18 @@ test("health response is coarse, deterministic, status-aware, and no-store", asy
       /no-store/,
     );
 
+    delete process.env.SUPABASE_SECRET_KEY;
+    const missingAdmin = getHealth();
+    assert.equal(missingAdmin.status, 503);
+    assert.deepEqual(await missingAdmin.json(), { status: "degraded" });
+
+    process.env.SUPABASE_SECRET_KEY = "fixture-secret-key";
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    const missingTrustedOrigin = getHealth();
+    assert.equal(missingTrustedOrigin.status, 503);
+    assert.deepEqual(await missingTrustedOrigin.json(), { status: "degraded" });
+
+    process.env.NEXT_PUBLIC_APP_URL = "https://app.example.test";
     delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
     const degraded = getHealth();
@@ -1446,6 +1462,8 @@ test("health response is coarse, deterministic, status-aware, and no-store", asy
       "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
       originalKey,
     );
+    restoreEnvironment("SUPABASE_SECRET_KEY", originalSecret);
+    restoreEnvironment("NEXT_PUBLIC_APP_URL", originalAppUrl);
   }
 });
 
