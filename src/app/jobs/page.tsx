@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import { premiumPageStack, premiumPrimaryCta, premiumSurface } from "@/components/ui/premium";
@@ -12,8 +18,12 @@ import {
   type CandidateJobResult,
   type ResumeEvidence,
 } from "@/intelligence/jobs/explainableJobFit";
+import type { UserProfile } from "@/intelligence/types/profile";
+import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
+import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
+import { ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR } from "@/modules/resume/services/activeResumeReportStorage";
 
 type ApiJob = CandidateJob & {
   boardToken: string;
@@ -35,13 +45,36 @@ type JobsResponse = {
 };
 
 type LoadState =
-  | { status: "idle" | "loading"; jobs: CandidateJobResult[]; sourceStatus: JobsResponse["sourceStatus"] | null; message: string | null }
-  | { status: "ready"; jobs: CandidateJobResult[]; sourceStatus: JobsResponse["sourceStatus"]; message: string | null }
+  | {
+      status: "idle" | "loading";
+      jobs: CandidateJobResult[];
+      sourceStatus: JobsResponse["sourceStatus"] | null;
+      message: string | null;
+    }
+  | {
+      status: "ready";
+      jobs: CandidateJobResult[];
+      sourceStatus: JobsResponse["sourceStatus"];
+      message: string | null;
+    }
   | { status: "error"; jobs: []; sourceStatus: null; message: string };
 
 export default function JobsPage() {
-  const { user, session, isLoading: isAuthLoading, isConfigured } = useAuthSession();
+  const {
+    user,
+    session,
+    isLoading: isAuthLoading,
+    isConfigured,
+  } = useAuthSession();
   const currentUserId = isAuthLoading ? undefined : user?.id ?? null;
+  const storedResumeAnalysis = useSyncExternalStore(
+    subscribeToSkillMintWorkspaceUpdates,
+    () => readVisibleStorageValue(ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR, {
+      currentUserId,
+    }),
+    getServerSnapshot,
+  );
+  const hasResumeAnalysis = Boolean(storedResumeAnalysis);
   const data = useCareerData(currentUserId);
   const targetRole = data.targetRole?.trim() ?? "";
   const resumeEvidence = useMemo(
@@ -57,7 +90,14 @@ export default function JobsPage() {
 
   const loadJobs = useCallback(async () => {
     const accessToken = session?.access_token;
-    if (!accessToken || !targetRole || resumeEvidence.length === 0) return;
+    if (
+      !accessToken ||
+      !targetRole ||
+      !hasResumeAnalysis ||
+      resumeEvidence.length === 0
+    ) {
+      return;
+    }
 
     setState({ status: "loading", jobs: [], sourceStatus: null, message: null });
     try {
@@ -69,13 +109,18 @@ export default function JobsPage() {
           cache: "no-store",
         },
       );
-      const payload = await response.json() as JobsResponse | { ok: false; error?: string };
+      const payload = await response.json() as
+        | JobsResponse
+        | { ok: false; error?: string };
       if (!response.ok || !payload.ok) {
         setState({
           status: "error",
           jobs: [],
           sourceStatus: null,
-          message: describeLoadError(response.status, "error" in payload ? payload.error : undefined),
+          message: describeLoadError(
+            response.status,
+            "error" in payload ? payload.error : undefined,
+          ),
         });
         return;
       }
@@ -107,13 +152,31 @@ export default function JobsPage() {
         message: "Live job sources are unavailable right now. SkillMint did not substitute cached or stale jobs.",
       });
     }
-  }, [resumeEvidence, session?.access_token, targetRole]);
+  }, [
+    hasResumeAnalysis,
+    resumeEvidence,
+    session?.access_token,
+    targetRole,
+  ]);
 
   useEffect(() => {
-    if (!isAuthLoading && user && targetRole && resumeEvidence.length > 0) {
+    if (
+      !isAuthLoading &&
+      typeof currentUserId === "string" &&
+      hasResumeAnalysis &&
+      targetRole &&
+      resumeEvidence.length > 0
+    ) {
       void loadJobs();
     }
-  }, [isAuthLoading, loadJobs, resumeEvidence.length, targetRole, user]);
+  }, [
+    currentUserId,
+    hasResumeAnalysis,
+    isAuthLoading,
+    loadJobs,
+    resumeEvidence.length,
+    targetRole,
+  ]);
 
   if (isAuthLoading) {
     return (
@@ -130,7 +193,9 @@ export default function JobsPage() {
       <DashboardLayout>
         <section className={premiumSurface}>
           <p className="text-sm font-semibold text-emerald-800">Candidate jobs</p>
-          <h1 className="mt-3 text-3xl font-black text-slate-950">Sign in to use your private resume evidence.</h1>
+          <h1 className="mt-3 text-3xl font-black text-slate-950">
+            Sign in to use your private resume evidence.
+          </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
             Job discovery is part of the authenticated candidate workspace. Resume evidence is not sent to Greenhouse.
           </p>
@@ -147,7 +212,9 @@ export default function JobsPage() {
       <DashboardLayout>
         <section className={premiumSurface}>
           <p className="text-sm font-semibold text-emerald-800">Candidate jobs</p>
-          <h1 className="mt-3 text-3xl font-black text-slate-950">Set your target role first.</h1>
+          <h1 className="mt-3 text-3xl font-black text-slate-950">
+            Set your target role first.
+          </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
             SkillMint only shows jobs with explicit title overlap to the role you chose. It does not invent a target from your resume.
           </p>
@@ -159,12 +226,14 @@ export default function JobsPage() {
     );
   }
 
-  if (resumeEvidence.length === 0) {
+  if (!hasResumeAnalysis || resumeEvidence.length === 0) {
     return (
       <DashboardLayout>
         <section className={premiumSurface}>
           <p className="text-sm font-semibold text-emerald-800">Candidate jobs</p>
-          <h1 className="mt-3 text-3xl font-black text-slate-950">Add a resume before comparing job evidence.</h1>
+          <h1 className="mt-3 text-3xl font-black text-slate-950">
+            Add a resume before comparing job evidence.
+          </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
             Your resume stays in the candidate workspace. The job-source request contains your target role and authenticated session only.
           </p>
@@ -182,7 +251,9 @@ export default function JobsPage() {
         <section className={premiumSurface}>
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-sm font-semibold text-emerald-800">Trustworthy jobs · Greenhouse</p>
+              <p className="text-sm font-semibold text-emerald-800">
+                Trustworthy jobs · Greenhouse
+              </p>
               <h1 className="mt-3 text-4xl font-black tracking-[-0.03em] text-slate-950">
                 Jobs for {targetRole}
               </h1>
@@ -196,25 +267,41 @@ export default function JobsPage() {
               disabled={state.status === "loading"}
               className={premiumPrimaryCta}
             >
-              {state.status === "loading" ? "Checking live jobs…" : "Refresh live jobs"}
+              {state.status === "loading"
+                ? "Checking live jobs…"
+                : "Refresh live jobs"}
             </button>
           </div>
 
           <div className="mt-6 grid gap-3 text-xs leading-5 text-slate-600 sm:grid-cols-3">
-            <p><span className="font-bold text-slate-900">No auto-apply.</span> You choose whether to open the original posting.</p>
-            <p><span className="font-bold text-slate-900">No hiring score.</span> Evidence coverage is not a shortlist or offer probability.</p>
-            <p><span className="font-bold text-slate-900">No stale fallback.</span> If live sources fail, SkillMint shows the failure instead of old jobs.</p>
+            <p>
+              <span className="font-bold text-slate-900">No auto-apply.</span>{" "}
+              You choose whether to open the original posting.
+            </p>
+            <p>
+              <span className="font-bold text-slate-900">No hiring score.</span>{" "}
+              Evidence coverage is not a shortlist or offer probability.
+            </p>
+            <p>
+              <span className="font-bold text-slate-900">No stale fallback.</span>{" "}
+              If live sources fail, SkillMint shows the failure instead of old jobs.
+            </p>
           </div>
         </section>
 
         {state.status === "loading" && (
           <section className={premiumSurface} role="status" aria-live="polite">
-            <p className="text-sm text-slate-600">Checking current Greenhouse postings and explicit requirements…</p>
+            <p className="text-sm text-slate-600">
+              Checking current Greenhouse postings and explicit requirements…
+            </p>
           </section>
         )}
 
         {state.status === "error" && (
-          <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5" role="alert">
+          <section
+            className="rounded-2xl border border-rose-200 bg-rose-50 p-5"
+            role="alert"
+          >
             <h2 className="font-bold text-rose-950">Live jobs unavailable</h2>
             <p className="mt-2 text-sm leading-6 text-rose-900">{state.message}</p>
           </section>
@@ -257,9 +344,15 @@ function JobResultCard({ result }: { result: CandidateJobResult }) {
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
             {result.job.companyName ?? "Employer"} · Greenhouse
           </p>
-          <h2 className="mt-2 text-2xl font-black text-slate-950">{result.job.title}</h2>
-          <p className="mt-2 text-sm text-slate-600">{result.job.location ?? "Location not provided by source"}</p>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-700">{result.explanation.whyShown}</p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950">
+            {result.job.title}
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            {result.job.location ?? "Location not provided by source"}
+          </p>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-700">
+            {result.explanation.whyShown}
+          </p>
         </div>
         <a
           href={result.primaryAction.href}
@@ -272,16 +365,27 @@ function JobResultCard({ result }: { result: CandidateJobResult }) {
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5" aria-labelledby={`${result.job.sourceKey}-supported`}>
-          <h3 id={`${result.job.sourceKey}-supported`} className="font-bold text-emerald-950">
+        <section
+          className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"
+          aria-labelledby={`${result.job.sourceKey}-supported`}
+        >
+          <h3
+            id={`${result.job.sourceKey}-supported`}
+            className="font-bold text-emerald-950"
+          >
             Supported by this resume ({supported.length})
           </h3>
           {supported.length === 0 ? (
-            <p className="mt-3 text-sm leading-6 text-emerald-900">No extracted requirement has matching resume evidence yet.</p>
+            <p className="mt-3 text-sm leading-6 text-emerald-900">
+              No extracted requirement has matching resume evidence yet.
+            </p>
           ) : (
             <ul className="mt-3 space-y-4">
               {supported.map((item) => (
-                <li key={item.requirementId} className="text-sm leading-6 text-emerald-950">
+                <li
+                  key={item.requirementId}
+                  className="text-sm leading-6 text-emerald-950"
+                >
                   <p className="font-semibold">{item.requirement}</p>
                   <p className="mt-1 text-xs leading-5 text-emerald-800">
                     Resume evidence: {item.evidence.map((entry) => entry.label).join(", ")}
@@ -292,16 +396,27 @@ function JobResultCard({ result }: { result: CandidateJobResult }) {
           )}
         </section>
 
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5" aria-labelledby={`${result.job.sourceKey}-gaps`}>
-          <h3 id={`${result.job.sourceKey}-gaps`} className="font-bold text-amber-950">
+        <section
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-5"
+          aria-labelledby={`${result.job.sourceKey}-gaps`}
+        >
+          <h3
+            id={`${result.job.sourceKey}-gaps`}
+            className="font-bold text-amber-950"
+          >
             Not evidenced in this resume ({gaps.length})
           </h3>
           {gaps.length === 0 ? (
-            <p className="mt-3 text-sm leading-6 text-amber-900">Every extracted requirement has some resume evidence. That is not a hiring prediction.</p>
+            <p className="mt-3 text-sm leading-6 text-amber-900">
+              Every extracted requirement has some resume evidence. That is not a hiring prediction.
+            </p>
           ) : (
             <ul className="mt-3 space-y-3">
               {gaps.map((item) => (
-                <li key={item.requirementId} className="text-sm leading-6 text-amber-950">
+                <li
+                  key={item.requirementId}
+                  className="text-sm leading-6 text-amber-950"
+                >
                   {item.requirement}
                 </li>
               ))}
@@ -310,21 +425,41 @@ function JobResultCard({ result }: { result: CandidateJobResult }) {
         </section>
       </div>
 
-      <p className="mt-5 text-xs leading-5 text-slate-500">{result.trust.disclaimer}</p>
+      <p className="mt-5 text-xs leading-5 text-slate-500">
+        {result.trust.disclaimer}
+      </p>
     </article>
   );
 }
 
-function buildResumeEvidence(profile: ReturnType<typeof useCareerData>["profile"]): ResumeEvidence[] {
+function buildResumeEvidence(profile: UserProfile): ResumeEvidence[] {
   const evidence: ResumeEvidence[] = [];
   profile.skills.forEach((text, index) => {
-    if (text.trim()) evidence.push({ id: `skill-${index + 1}`, label: `Skill: ${text.trim()}`, text });
+    if (text.trim()) {
+      evidence.push({
+        id: `skill-${index + 1}`,
+        label: `Skill: ${text.trim()}`,
+        text,
+      });
+    }
   });
   profile.projects.forEach((text, index) => {
-    if (text.trim()) evidence.push({ id: `project-${index + 1}`, label: `Project ${index + 1}`, text });
+    if (text.trim()) {
+      evidence.push({
+        id: `project-${index + 1}`,
+        label: `Project ${index + 1}`,
+        text,
+      });
+    }
   });
   profile.experience.forEach((text, index) => {
-    if (text.trim()) evidence.push({ id: `experience-${index + 1}`, label: `Experience ${index + 1}`, text });
+    if (text.trim()) {
+      evidence.push({
+        id: `experience-${index + 1}`,
+        label: `Experience ${index + 1}`,
+        text,
+      });
+    }
   });
   if (profile.education.trim()) {
     evidence.push({ id: "education", label: "Education", text: profile.education });
@@ -348,4 +483,8 @@ function describeLoadError(status: number, code?: string): string {
 function formatTimestamp(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "just now" : date.toLocaleString();
+}
+
+function getServerSnapshot(): null {
+  return null;
 }
