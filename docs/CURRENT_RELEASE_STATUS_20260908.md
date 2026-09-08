@@ -4,13 +4,13 @@ This note is the current release gate snapshot. Older phase documents remain his
 
 ## Verified current state
 
-- Current protected `main`: `a00fd79a646c6e2a5c9ae18f7f36b9f06a95b97c` (documentation-only PR #114 merged on top of PR #113).
-- The runtime-bearing candidate Jobs implementation shipped in PR #113 at `2fa278bd82640a9ca547cc96a6dc7987df69b204`; PR #114 changed documentation only and did not change runtime, auth, RLS, schema, provider, billing, or recruiter behavior.
-- Vercel Production is READY on current exact `main` `a00fd79a646c6e2a5c9ae18f7f36b9f06a95b97c` and remains independent of the founder Mac. The canonical public alias remains `skillmint-app-three.vercel.app`.
+- **Current `main` authority is GitHub itself.** Re-fetch protected `main` before every release decision; this document deliberately does not hard-code the moving branch SHA because a documentation-only merge would invalidate that literal immediately.
+- The runtime-bearing candidate Jobs implementation shipped in PR #113 at `2fa278bd82640a9ca547cc96a6dc7987df69b204`. Later documentation-only merges do not change runtime, auth, RLS, schema, provider, billing, or recruiter behavior unless their changed-file set proves otherwise.
+- Vercel Production must be matched to the freshly resolved GitHub `main` SHA on every acceptance run. The canonical public alias remains `skillmint-app-three.vercel.app` and is independent of the founder Mac.
 - Supabase project `skillmint-beta` is currently `ACTIVE_HEALTHY` on the Free plan. Availability is monitored, not guaranteed; do not generate artificial traffic to prevent inactivity pausing.
-- Exact-main `quality`, Public OAuth contract, both CodeQL analyses, and Vercel deployment are green on `a00fd79a646c6e2a5c9ae18f7f36b9f06a95b97c`.
-- Live `/`, `/recruiters`, `/jobs`, and `/api/health/config` routes respond from current Production. `/api/health/config` reports `{"status":"healthy"}`. The unauthenticated `/jobs` shell remains session-gated and does not itself prove the authenticated candidate journey; the live Greenhouse endpoint correctly rejects an unauthenticated request with `401 not_authenticated`.
-- The latest 24-hour Vercel runtime-error check reports no runtime errors.
+- Exact-main `quality`, Public OAuth contract, applicable CodeQL analyses, and Vercel deployment must all be re-fetched on the same current SHA before calling a release fully accepted. Do not carry pass/fail state forward from an older head.
+- Live `/`, `/recruiters`, `/jobs`, and `/api/health/config` routes are part of each Production acceptance run. `/api/health/config` must report `{"status":"healthy"}`. The unauthenticated `/jobs` shell remains session-gated and does not itself prove the authenticated candidate journey; the live Greenhouse endpoint must continue to reject unauthenticated requests.
+- The latest observed 24-hour Vercel runtime-error check reported no current Production runtime error class. Re-check this on each run rather than treating the snapshot as permanent.
 - Public signup remains closed. External cohort expansion remains `NO-GO`.
 
 ## Issue #105 release gate
