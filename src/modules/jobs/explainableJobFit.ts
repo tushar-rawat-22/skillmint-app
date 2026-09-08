@@ -52,11 +52,7 @@ export type CandidateJobResult = {
     label: "View original job";
     href: string;
   };
-  trust: {
-    source: string;
-    sourceKey: string;
-    disclaimer: string;
-  };
+  trust: { source: string; sourceKey: string; disclaimer: string };
 };
 
 type ExplainInput = {
@@ -101,33 +97,21 @@ function containsPhrase(haystack: string, phrase: string): boolean {
 }
 
 function validateJob(job: CandidateJob): ExplainError | null {
-  if (job.availability !== "available" || job.stale) {
-    return { kind: "job_unavailable" };
-  }
-
+  if (job.availability !== "available" || job.stale) return { kind: "job_unavailable" };
   if (!normalizeText(job.source) || !normalizeText(job.sourceKey) || !normalizeText(job.title)) {
     return { kind: "invalid_job_provenance" };
   }
-
   try {
     const url = new URL(job.originalApplyUrl);
-    if (url.protocol !== "https:" && url.protocol !== "http:") {
-      return { kind: "invalid_apply_url" };
-    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") return { kind: "invalid_apply_url" };
   } catch {
     return { kind: "invalid_apply_url" };
   }
-
   return null;
 }
 
-function validateRequirements(
-  requirements: CandidateJobRequirement[],
-): ExplainError | null {
-  if (!Array.isArray(requirements) || requirements.length === 0) {
-    return { kind: "requirements_required" };
-  }
-
+function validateRequirements(requirements: CandidateJobRequirement[]): ExplainError | null {
+  if (!Array.isArray(requirements) || requirements.length === 0) return { kind: "requirements_required" };
   const seen = new Set<string>();
   for (const requirement of requirements) {
     const id = normalizeText(requirement?.id);
@@ -135,23 +119,18 @@ function validateRequirements(
     const evidenceTerms = Array.isArray(requirement?.evidenceTerms)
       ? requirement.evidenceTerms.map(normalizeText).filter(Boolean)
       : [];
-
     if (!id || !text || evidenceTerms.length === 0) {
       return { kind: "invalid_requirement", requirementId: id || null };
     }
-    if (seen.has(id)) {
-      return { kind: "duplicate_requirement", requirementId: id };
-    }
+    if (seen.has(id)) return { kind: "duplicate_requirement", requirementId: id };
     seen.add(id);
   }
-
   return null;
 }
 
 export function buildCandidateJobResult(input: ExplainInput): ExplainResult {
   const jobError = validateJob(input.job);
   if (jobError) return { ok: false, error: jobError };
-
   const requirementsError = validateRequirements(input.requirements);
   if (requirementsError) return { ok: false, error: requirementsError };
 
@@ -164,30 +143,21 @@ export function buildCandidateJobResult(input: ExplainInput): ExplainResult {
     .filter((entry) => entry.text);
 
   const mappedRequirements = input.requirements.map((requirement) => {
-    const evidenceTerms = requirement.evidenceTerms.map(normalizeText).filter(Boolean);
-    const matches = evidence.filter((entry) =>
-      evidenceTerms.some((term) => containsPhrase(entry.text, term)),
-    );
-
+    const terms = requirement.evidenceTerms.map(normalizeText).filter(Boolean);
+    const matches = evidence.filter((entry) => terms.some((term) => containsPhrase(entry.text, term)));
     return {
       requirementId: normalizeText(requirement.id),
       requirement: normalizeText(requirement.text),
       importance: requirement.importance === "preferred" ? "preferred" as const : "required" as const,
-      evidenceState: matches.length > 0
-        ? "supported_by_resume" as const
-        : "not_evidenced_in_resume" as const,
+      supported: matches.length > 0,
       evidence: matches,
     };
   });
 
-  const supported = mappedRequirements.filter(
-    (entry) => entry.evidenceState === "supported_by_resume",
-  );
-  const notEvidenced = mappedRequirements.filter(
-    (entry) => entry.evidenceState === "not_evidenced_in_resume",
-  );
-
+  const supported = mappedRequirements.filter((entry) => entry.supported);
+  const gaps = mappedRequirements.filter((entry) => !entry.supported);
   const { job } = input;
+
   return {
     ok: true,
     result: {
@@ -214,7 +184,7 @@ export function buildCandidateJobResult(input: ExplainInput): ExplainResult {
           importance: entry.importance,
           evidence: entry.evidence,
         })),
-        evidenceGaps: notEvidenced.map((entry) => ({
+        evidenceGaps: gaps.map((entry) => ({
           requirementId: entry.requirementId,
           requirement: entry.requirement,
           importance: entry.importance,
@@ -222,15 +192,11 @@ export function buildCandidateJobResult(input: ExplainInput): ExplainResult {
         })),
         coverage: {
           supportedCount: supported.length,
-          notEvidencedCount: notEvidenced.length,
+          notEvidencedCount: gaps.length,
           totalRequirements: mappedRequirements.length,
         },
       },
-      primaryAction: {
-        kind: "open_original_job",
-        label: "View original job",
-        href: job.originalApplyUrl,
-      },
+      primaryAction: { kind: "open_original_job", label: "View original job", href: job.originalApplyUrl },
       trust: {
         source: job.source,
         sourceKey: job.sourceKey,
