@@ -62,7 +62,11 @@ export default function JobsPage() {
   }, [evidence, hasOwnedResume, session?.access_token, targetRole]);
 
   useEffect(() => {
-    if (!authLoading && typeof currentUserId === "string" && hasOwnedResume && targetRole) void loadJobs();
+    if (authLoading || typeof currentUserId !== "string" || !hasOwnedResume || !targetRole) return;
+    const timer = window.setTimeout(() => {
+      void loadJobs();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [authLoading, currentUserId, hasOwnedResume, loadJobs, targetRole]);
 
   if (authLoading) return <DashboardLayout><section className={premiumSurface}><p className="text-sm text-slate-600">Checking your candidate session…</p></section></DashboardLayout>;
