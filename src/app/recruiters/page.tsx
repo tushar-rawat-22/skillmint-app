@@ -44,9 +44,13 @@ export default function RecruitersPage() {
                 <Link href={ROUTES.RECRUITER_DEMO} className={premiumPrimaryCta}>
                   Explore recruiter demo
                 </Link>
-              ) : (
+              ) : publicSignupEnabled ? (
                 <Link href={ROUTES.RECRUITER_WORKSPACE} className={premiumPrimaryCta}>
                   Open recruiter workspace
+                </Link>
+              ) : (
+                <Link href={ROUTES.LOGIN} className={premiumPrimaryCta}>
+                  Existing recruiter login
                 </Link>
               )}
               {publicDemoEnabled && !demoIsPublicEntry ? (
@@ -54,9 +58,11 @@ export default function RecruitersPage() {
                   Explore recruiter demo
                 </Link>
               ) : null}
-              <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
-                Existing user login
-              </Link>
+              {publicSignupEnabled || demoIsPublicEntry ? (
+                <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
+                  Existing user login
+                </Link>
+              ) : null}
               {publicSignupEnabled ? (
                 <Link href={ROUTES.SIGNUP} className={premiumSecondaryCta}>
                   Create recruiter account
@@ -65,8 +71,8 @@ export default function RecruitersPage() {
             </div>
             {!publicSignupEnabled ? (
               <p className="mt-5 text-sm leading-6 text-slate-500">
-                Recruiter account creation is not active yet. OAuth and abuse
-                controls remain launch gates.
+                Recruiter access is limited to approved pilot accounts. New
+                recruiter account creation is not active yet.
               </p>
             ) : null}
           </section>
