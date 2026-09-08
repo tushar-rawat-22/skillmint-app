@@ -33,6 +33,8 @@ export const ROUTES = {
 
   UPLOAD: "/upload",
 
+  JOBS: "/jobs",
+
   ATS: "/ats",
 
   ROADMAP: "/roadmap",
