@@ -162,3 +162,12 @@ jobs:
           node scripts/documentation-status-fixtures.mjs
           node scripts/greenhouse-source-adapter-fixtures.mjs
           node scripts/explainable-job-fit-fixtures.mjs
+
+      - name: Preserve browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-failure-evidence-${{ github.run_id }}
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 3

@@ -73,6 +73,7 @@ export function useCareerData(currentUserId: string | null | undefined) {
   return {
     profile,
     proof,
+    hasStoredAnalysis: Boolean(analysisContext),
     baseCareerIQ,
     proofAwareCareerIQ,
     careerIQ,
