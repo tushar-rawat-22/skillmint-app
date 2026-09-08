@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { explainJobFit } from "./experiments/explainable-job-fit.mjs";
+import { buildCandidateJobResult, explainJobFit } from "./experiments/explainable-job-fit.mjs";
 
 const baseJob = {
   source: "greenhouse",
@@ -64,6 +64,29 @@ assert.equal(result.result.requirements[2].evidenceState, "not_evidenced_in_resu
 assert.match(result.result.disclaimer, /does not predict hiring/i);
 assert.doesNotMatch(result.result.whyShown, /probability|chance|likely to be hired/i);
 
+const candidateResult = buildCandidateJobResult({
+  job: baseJob,
+  requirements,
+  resumeEvidence,
+  targetRole: "Frontend Engineer",
+});
+assert.equal(candidateResult.ok, true);
+assert.equal(candidateResult.result.targetRole, "Frontend Engineer");
+assert.equal(candidateResult.result.job.source, "greenhouse");
+assert.equal(candidateResult.result.job.sourceKey, baseJob.sourceKey);
+assert.equal(candidateResult.result.job.originalApplyUrl, baseJob.originalApplyUrl);
+assert.equal(candidateResult.result.primaryAction.kind, "open_original_job");
+assert.equal(candidateResult.result.primaryAction.href, baseJob.originalApplyUrl);
+assert.equal(candidateResult.result.explanation.supportedRequirements.length, 2);
+assert.equal(candidateResult.result.explanation.evidenceGaps.length, 1);
+assert.equal(candidateResult.result.explanation.evidenceGaps[0].state, "not_evidenced_in_resume");
+assert.equal(candidateResult.result.explanation.coverage.totalRequirements, 3);
+assert.match(candidateResult.result.trust.disclaimer, /does not predict hiring/i);
+assert.doesNotMatch(
+  JSON.stringify(candidateResult.result),
+  /hiring probability|shortlist probability|interview probability|offer probability|auto.?apply/i,
+);
+
 const unavailable = explainJobFit({
   job: { ...baseJob, availability: "stale", stale: true },
   requirements,
@@ -71,12 +94,26 @@ const unavailable = explainJobFit({
 });
 assert.deepEqual(unavailable, { ok: false, error: { kind: "job_unavailable" } });
 
+const unavailableCandidateResult = buildCandidateJobResult({
+  job: { ...baseJob, availability: "stale", stale: true },
+  requirements,
+  resumeEvidence,
+});
+assert.deepEqual(unavailableCandidateResult, { ok: false, error: { kind: "job_unavailable" } });
+
 const badApplyUrl = explainJobFit({
   job: { ...baseJob, originalApplyUrl: "javascript:alert(1)" },
   requirements,
   resumeEvidence,
 });
 assert.deepEqual(badApplyUrl, { ok: false, error: { kind: "invalid_apply_url" } });
+
+const badCandidateApplyUrl = buildCandidateJobResult({
+  job: { ...baseJob, originalApplyUrl: "javascript:alert(1)" },
+  requirements,
+  resumeEvidence,
+});
+assert.deepEqual(badCandidateApplyUrl, { ok: false, error: { kind: "invalid_apply_url" } });
 
 const invalidRequirement = explainJobFit({
   job: baseJob,
