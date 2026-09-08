@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -134,6 +134,7 @@ export default function TargetRoleSetupForm() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const hasUserEditedRef = useRef(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -177,7 +178,7 @@ export default function TargetRoleSetupForm() {
 
         const profile = profileResult.data;
         const targetRole = profile.targetRole;
-        if (!targetRole) {
+        if (!targetRole || hasUserEditedRef.current) {
           return;
         }
 
@@ -327,11 +328,13 @@ export default function TargetRoleSetupForm() {
             value={form.targetRole}
             placeholder="For example: Frontend developer"
             isPrimary
-            onChange={(value) =>
+            onChange={(value) => {
+              hasUserEditedRef.current = true;
               setForm({
                 ...form,
                 targetRole: value,
-              })}
+              });
+            }}
           />
           <p id="target-role-help" className="mt-2 text-sm leading-6 text-slate-500">
             Use a role you would realistically search or apply for next.
@@ -377,35 +380,50 @@ export default function TargetRoleSetupForm() {
               label="Career field"
               value={form.careerField}
               options={CAREER_FIELD_OPTIONS}
-              onChange={(value) => setForm({ ...form, careerField: value })}
+              onChange={(value) => {
+                hasUserEditedRef.current = true;
+                setForm({ ...form, careerField: value });
+              }}
             />
             <SelectField
               id="experience-level"
               label="Experience level"
               value={form.experienceLevel}
               options={EXPERIENCE_LEVEL_OPTIONS}
-              onChange={(value) => setForm({ ...form, experienceLevel: value })}
+              onChange={(value) => {
+                hasUserEditedRef.current = true;
+                setForm({ ...form, experienceLevel: value });
+              }}
             />
             <SelectField
               id="primary-goal"
               label="Current goal"
               value={form.primaryGoal}
               options={PRIMARY_GOAL_OPTIONS}
-              onChange={(value) => setForm({ ...form, primaryGoal: value })}
+              onChange={(value) => {
+                hasUserEditedRef.current = true;
+                setForm({ ...form, primaryGoal: value });
+              }}
             />
             <SelectField
               id="preferred-job-type"
               label="Role focus"
               value={form.preferredJobType}
               options={PREFERRED_JOB_TYPE_OPTIONS}
-              onChange={(value) => setForm({ ...form, preferredJobType: value })}
+              onChange={(value) => {
+                hasUserEditedRef.current = true;
+                setForm({ ...form, preferredJobType: value });
+              }}
             />
             <SelectField
               id="weekly-time"
               label="Weekly time available"
               value={form.weeklyTimeCommitment}
               options={WEEKLY_TIME_OPTIONS}
-              onChange={(value) => setForm({ ...form, weeklyTimeCommitment: value })}
+              onChange={(value) => {
+                hasUserEditedRef.current = true;
+                setForm({ ...form, weeklyTimeCommitment: value });
+              }}
             />
           </div>
 
