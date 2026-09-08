@@ -126,3 +126,59 @@ export function explainJobFit({ job, requirements, resumeEvidence = [], targetRo
     },
   };
 }
+
+export function buildCandidateJobResult(input) {
+  const explained = explainJobFit(input);
+  if (!explained.ok) return explained;
+
+  const { job, targetRole, requirements, summary, whyShown, disclaimer } = explained.result;
+  const supportedRequirements = requirements
+    .filter((entry) => entry.evidenceState === "supported_by_resume")
+    .map((entry) => ({
+      requirementId: entry.requirementId,
+      requirement: entry.requirement,
+      importance: entry.importance,
+      evidence: entry.evidence,
+    }));
+  const evidenceGaps = requirements
+    .filter((entry) => entry.evidenceState === "not_evidenced_in_resume")
+    .map((entry) => ({
+      requirementId: entry.requirementId,
+      requirement: entry.requirement,
+      importance: entry.importance,
+      state: "not_evidenced_in_resume",
+    }));
+
+  return {
+    ok: true,
+    result: {
+      targetRole,
+      job: {
+        source: job.source,
+        sourceKey: job.sourceKey,
+        title: job.title,
+        companyName: job.companyName,
+        location: job.location,
+        originalApplyUrl: job.originalApplyUrl,
+        sourceUpdatedAt: job.sourceUpdatedAt,
+        fetchedAt: job.fetchedAt,
+      },
+      explanation: {
+        whyShown,
+        supportedRequirements,
+        evidenceGaps,
+        coverage: summary,
+      },
+      primaryAction: {
+        kind: "open_original_job",
+        label: "View original job",
+        href: job.originalApplyUrl,
+      },
+      trust: {
+        source: job.source,
+        sourceKey: job.sourceKey,
+        disclaimer,
+      },
+    },
+  };
+}
