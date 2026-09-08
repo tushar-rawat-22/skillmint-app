@@ -19,6 +19,10 @@ const navigationItems = [
     href: ROUTES.RESUME,
   },
   {
+    label: "Jobs",
+    href: ROUTES.JOBS,
+  },
+  {
     label: "Job match",
     href: ROUTES.ATS,
   },
