@@ -4,6 +4,7 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 
 ## Start here
 
+- [Current Release Status — 2026-09-08](CURRENT_RELEASE_STATUS_20260908.md) is the canonical operational release snapshot for current `main`, Production availability, #103 candidate-jobs acceptance, and #105 recruiter gating. When older phase documents conflict with it on current Production truth, use this release snapshot plus the active release-gate issues.
 - [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md) is the current
   strategic authority: it preserves the accepted engineering foundation and
   authorizes gated implementation of a public candidate-and-recruiter beta.
@@ -11,7 +12,7 @@ SkillMint's documentation spans current contracts, frozen verification records, 
   sequence retained for its product evidence and preservation rationale.
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
 - [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented Phase 1A contract, its local verification history, the bounded isolated-hosted Phase 1B evidence, and the real-user evidence still required before expansion.
-- [Project Status](PROJECT_STATUS.md) is the current project-state entry point and records the release boundary, frozen blocks, and current approved sequence.
+- [Project Status](PROJECT_STATUS.md) is the long-form project-state entry point. For current Production and release-gate truth, read the Current Release Status first.
 - [Pilot Charter](PILOT_CHARTER.md) defines the private-pilot audience, synthetic-demo boundary, non-claims, data handling, and validation exit criteria.
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is a preserved historical execution roadmap and frozen-contract boundary; its former launch sequence is superseded for current planning.
@@ -69,6 +70,7 @@ Frozen evidence must not be casually rewritten. The Phase 1B closure is isolated
 - [Deployment Safety Guide](DEPLOYMENT.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
 - [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md)
+- [Current Release Status — 2026-09-08](CURRENT_RELEASE_STATUS_20260908.md)
 - [Project Status](PROJECT_STATUS.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Changelog](CHANGELOG.md)
@@ -90,4 +92,4 @@ The directories below preserve useful chronology, assumptions, and product ratio
 - `99_Releases`
 - older phase, public-beta, and release planning documents not listed as current contracts above
 
-Historical documents remain for context and should not be treated as shipped functionality. In particular, older dark-cockpit design direction, speculative AI and API architecture, payments, public career products, employer or institution surfaces, and launch plans do not override current implementation, frozen Blocks 1–5, or [Project Status](PROJECT_STATUS.md).
+Historical documents remain for context and should not be treated as shipped functionality. In particular, older dark-cockpit design direction, speculative AI and API architecture, payments, public career products, employer or institution surfaces, and launch plans do not override current implementation, frozen Blocks 1–5, or the current release snapshot.
