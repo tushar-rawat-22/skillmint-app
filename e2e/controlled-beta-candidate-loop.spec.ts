@@ -66,20 +66,20 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     });
   });
 
-  let observedJobsRequest: {
+  const observedJobsRequests: Array<{
     method: string;
     url: string;
     postData: string | null;
     authorization: string | undefined;
-  } | null = null;
+  }> = [];
   await page.route("**/api/jobs/greenhouse**", async (route) => {
     const jobsRequest = route.request();
-    observedJobsRequest = {
+    observedJobsRequests.push({
       method: jobsRequest.method(),
       url: jobsRequest.url(),
       postData: jobsRequest.postData(),
       authorization: jobsRequest.headers().authorization,
-    };
+    });
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -296,11 +296,12 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     page.getByRole("link", { name: "View original job" }),
   ).toHaveAttribute("href", "https://boards.greenhouse.io/synthetic/jobs/123");
 
-  expect(observedJobsRequest).not.toBeNull();
-  expect(observedJobsRequest?.method).toBe("GET");
-  expect(observedJobsRequest?.url).toContain("targetRole=Frontend%20Developer");
-  expect(observedJobsRequest?.postData).toBeNull();
-  expect(observedJobsRequest?.authorization).toMatch(/^Bearer\s+\S+/u);
-  expect(observedJobsRequest?.url).not.toContain("TypeScript");
-  expect(observedJobsRequest?.url).not.toContain("PostgreSQL");
+  expect(observedJobsRequests).toHaveLength(1);
+  const observedJobsRequest = observedJobsRequests[0];
+  expect(observedJobsRequest.method).toBe("GET");
+  expect(observedJobsRequest.url).toContain("targetRole=Frontend%20Developer");
+  expect(observedJobsRequest.postData).toBeNull();
+  expect(observedJobsRequest.authorization).toMatch(/^Bearer\s+\S+/u);
+  expect(observedJobsRequest.url).not.toContain("TypeScript");
+  expect(observedJobsRequest.url).not.toContain("PostgreSQL");
 });
