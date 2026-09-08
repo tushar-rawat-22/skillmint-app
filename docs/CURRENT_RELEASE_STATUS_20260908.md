@@ -4,10 +4,11 @@ This note is the current release gate snapshot. Older phase documents remain his
 
 ## Verified current state
 
-- `main`: `e9054b407f2456623aace2694a49b2a387efe3ef`.
-- Vercel Production is READY on that exact GitHub SHA and remains independent of the founder Mac.
-- Supabase project `skillmint-beta` is `ACTIVE_HEALTHY` on the Free plan. Availability is therefore monitored, not guaranteed; do not generate artificial traffic to prevent inactivity pausing.
-- Exact-head GitHub quality, Public OAuth contract, and CodeQL workflows are green.
+- `main`: `2fa278bd82640a9ca547cc96a6dc7987df69b204` (PR #113).
+- Vercel Production is READY on that exact GitHub SHA and remains independent of the founder Mac. The canonical public alias remains `skillmint-app-three.vercel.app`.
+- Supabase project `skillmint-beta` is currently `ACTIVE_HEALTHY` on the Free plan. Availability is monitored, not guaranteed; do not generate artificial traffic to prevent inactivity pausing.
+- PR #113 exact-head `quality`, Public OAuth contract, CodeQL, and Vercel Preview gates passed before merge. Post-merge OAuth and CodeQL are green on the exact merge SHA; the post-merge `quality` replay must also be green before calling the merge SHA fully release-accepted.
+- Live `/`, `/recruiters`, `/jobs`, and `/api/health/config` routes respond from the new Production deployment. `/api/health/config` reports `{"status":"healthy"}`. The unauthenticated `/jobs` shell remains session-gated and does not itself prove the authenticated candidate journey.
 - Public signup remains closed. External cohort expansion remains `NO-GO`.
 
 ## Issue #105 release gate
@@ -20,11 +21,22 @@ The only manual prerequisite is to create a dedicated Production recruiter accou
 
 Until the recruiter acceptance path passes, the external cohort remains `NO-GO`.
 
-## Issue #103 source federation
+## Issue #103 candidate jobs
 
-Greenhouse is the only admitted bounded source experiment. Its current contract preserves source-native posting identity, original apply URL, provenance, content hash, freshness timestamps, dedupe identity, explicit missing fields, failure states, and cross-refresh stale/reappearance semantics. A failed upstream refresh does not mutate prior state.
+Greenhouse remains the only admitted job source. PR #110 added deterministic explainable-fit semantics, PR #112 added the candidate job-result projection, and PR #113 wired the bounded Greenhouse path into the real authenticated candidate workspace.
 
-Issue #103 is not complete. The next value gate is candidate-facing: target role + resume evidence -> one trustworthy job result -> human-readable fit explanation -> original source/apply link. Do not broaden to a second adapter merely to increase source count.
+The shipped Jobs path preserves the candidate target role as the authority, keeps resume evidence in the browser, authenticates the server request, uses live Greenhouse data with `no-store`, shows supported versus not-evidenced requirements, preserves source provenance and the original application URL, and does not add auto-apply, hidden candidate ranking, or hiring probability. The target-role authority regression discovered during PR #113 was fixed so newer user intent wins over stale asynchronous account hydration. Playwright failure artifacts are retained in CI for cloud diagnosis.
+
+Issue #103 is **not complete**. The remaining user-value gate is a real authenticated Production candidate session on the same `/jobs` route against live Greenhouse data, proving:
+
+- target role + owned resume -> truthful current job result;
+- human-readable supported vs not-evidenced explanation;
+- original apply link;
+- truthful stale/unavailable behavior;
+- no auto-apply or hidden hiring probability/ranking;
+- resume text absent from the server request.
+
+Do not broaden to Lever, USAJOBS, O*NET, or another provider until that same-route/session/dependency gate passes.
 
 ## Availability and release truth
 
