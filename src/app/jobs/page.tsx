@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import { premiumPageStack, premiumPrimaryCta, premiumSurface } from "@/components/ui/premium";
 import type { UserProfile } from "@/intelligence/types/profile";
-import { readVisibleStorageValue } from "@/lib/storage/ownedSkillMintStorage";
-import { subscribeToSkillMintWorkspaceUpdates } from "@/lib/storage/skillMintStorageEvents";
 import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import { useCareerData } from "@/modules/dashboard/hooks/useCareerData";
 import {
@@ -17,7 +15,6 @@ import {
   type CandidateJobResult,
   type ResumeEvidence,
 } from "@/modules/jobs/explainableJobFit";
-import { ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR } from "@/modules/resume/services/activeResumeReportStorage";
 
 type ApiJob = CandidateJob & { boardToken: string; titleMatchReason: string; requirements: CandidateJobRequirement[] };
 type SourceStatus = { provider: "greenhouse"; configuredSources: number; failedSources: number; fetchedAt: string; staleResultsServed: false };
@@ -27,15 +24,10 @@ type LoadState = { status: "idle" | "loading" | "ready" | "error"; jobs: Candida
 export default function JobsPage() {
   const { user, session, isLoading: authLoading, isConfigured } = useAuthSession();
   const currentUserId = authLoading ? undefined : user?.id ?? null;
-  const activeResume = useSyncExternalStore(
-    subscribeToSkillMintWorkspaceUpdates,
-    () => readVisibleStorageValue(ACTIVE_RESUME_ANALYSIS_STORAGE_DESCRIPTOR, { currentUserId }),
-    () => null,
-  );
   const data = useCareerData(currentUserId);
   const targetRole = data.targetRole?.trim() ?? "";
   const evidence = useMemo(() => buildResumeEvidence(data.profile), [data.profile]);
-  const hasOwnedResume = Boolean(activeResume) && evidence.length > 0;
+  const hasOwnedResume = data.hasStoredAnalysis && evidence.length > 0;
   const [state, setState] = useState<LoadState>({ status: "idle", jobs: [], sourceStatus: null, message: null });
 
   const loadJobs = useCallback(async () => {

@@ -236,11 +236,11 @@ function htmlToLines(value: string): string[] {
     .replace(/<li[^>]*>/giu, "\n")
     .replace(/<[^>]+>/gu, " ")
     .replace(/&nbsp;/giu, " ")
-    .replace(/&amp;/giu, "&")
     .replace(/&quot;/giu, '"')
     .replace(/&#39;|&apos;/giu, "'")
     .replace(/&lt;/giu, "<")
     .replace(/&gt;/giu, ">")
+    .replace(/&amp;/giu, "&")
     .split(/\n+/u)
     .map((line) => line.replace(/\s+/gu, " ").trim())
     .filter((line) => line.length >= 20 && line.length <= 360);
