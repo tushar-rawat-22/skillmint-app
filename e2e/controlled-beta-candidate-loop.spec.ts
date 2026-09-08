@@ -66,6 +66,67 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     });
   });
 
+  let observedJobsRequest: {
+    method: string;
+    url: string;
+    postData: string | null;
+    authorization: string | undefined;
+  } | null = null;
+  await page.route("**/api/jobs/greenhouse**", async (route) => {
+    const jobsRequest = route.request();
+    observedJobsRequest = {
+      method: jobsRequest.method(),
+      url: jobsRequest.url(),
+      postData: jobsRequest.postData(),
+      authorization: jobsRequest.headers().authorization,
+    };
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        targetRole: "Frontend Developer",
+        jobs: [
+          {
+            source: "greenhouse",
+            sourceKey: "greenhouse:synthetic:123",
+            boardToken: "synthetic",
+            title: "Frontend Developer",
+            companyName: "Synthetic Jobs Co",
+            location: "Bengaluru, India",
+            originalApplyUrl: "https://boards.greenhouse.io/synthetic/jobs/123",
+            sourceUpdatedAt: "2026-09-08T02:00:00.000Z",
+            fetchedAt: "2026-09-08T03:00:00.000Z",
+            availability: "available",
+            stale: false,
+            titleMatchReason: "Shown because the job title explicitly overlaps your target role on: frontend, developer.",
+            requirements: [
+              {
+                id: "greenhouse:synthetic:123:requirement:1",
+                text: "Experience building production interfaces with TypeScript is required.",
+                evidenceTerms: ["typescript"],
+                importance: "required",
+              },
+              {
+                id: "greenhouse:synthetic:123:requirement:2",
+                text: "Experience deploying services on AWS is required.",
+                evidenceTerms: ["aws"],
+                importance: "required",
+              },
+            ],
+          },
+        ],
+        sourceStatus: {
+          provider: "greenhouse",
+          configuredSources: 3,
+          failedSources: 0,
+          fetchedAt: "2026-09-08T03:00:00.000Z",
+          staleResultsServed: false,
+        },
+      }),
+    });
+  });
+
   await page.route(`${PROVIDER_ORIGIN}/rest/v1/profiles**`, async (route) => {
     const providerRequest = route.request();
     if (providerRequest.method() !== "POST") {
@@ -210,4 +271,36 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
   await expect(page.getByRole("status")).toContainText(
     "Private Proof Brief ready. Nothing is shared yet.",
   );
+
+  await page.getByRole("link", { name: "Jobs", exact: true }).click();
+  await expect(page).toHaveURL(/\/jobs$/u);
+  await expect(
+    page.getByRole("heading", { name: "Jobs for Frontend Developer" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Frontend Developer", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Supported by this resume (1)" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Not evidenced in this resume (1)" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Experience building production interfaces with TypeScript is required."),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Experience deploying services on AWS is required."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "View original job" }),
+  ).toHaveAttribute("href", "https://boards.greenhouse.io/synthetic/jobs/123");
+
+  expect(observedJobsRequest).not.toBeNull();
+  expect(observedJobsRequest?.method).toBe("GET");
+  expect(observedJobsRequest?.url).toContain("targetRole=Frontend%20Developer");
+  expect(observedJobsRequest?.postData).toBeNull();
+  expect(observedJobsRequest?.authorization).toMatch(/^Bearer\s+\S+/u);
+  expect(observedJobsRequest?.url).not.toContain("TypeScript");
+  expect(observedJobsRequest?.url).not.toContain("PostgreSQL");
 });
