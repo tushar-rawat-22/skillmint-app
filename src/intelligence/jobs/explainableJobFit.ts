@@ -67,21 +67,20 @@ type ExplainInput = {
   whyShown?: string | null;
 };
 
+type ExplainError = {
+  kind:
+    | "job_unavailable"
+    | "invalid_job_provenance"
+    | "invalid_apply_url"
+    | "requirements_required"
+    | "invalid_requirement"
+    | "duplicate_requirement";
+  requirementId?: string | null;
+};
+
 type ExplainResult =
   | { ok: true; result: CandidateJobResult }
-  | {
-      ok: false;
-      error: {
-        kind:
-          | "job_unavailable"
-          | "invalid_job_provenance"
-          | "invalid_apply_url"
-          | "requirements_required"
-          | "invalid_requirement"
-          | "duplicate_requirement";
-        requirementId?: string | null;
-      };
-    };
+  | { ok: false; error: ExplainError };
 
 function normalizeText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -101,7 +100,7 @@ function containsPhrase(haystack: string, phrase: string): boolean {
   return ` ${tokenize(haystack).join(" ")} `.includes(` ${normalizedPhrase} `);
 }
 
-function validateJob(job: CandidateJob): ExplainResult["error"] | null {
+function validateJob(job: CandidateJob): ExplainError | null {
   if (job.availability !== "available" || job.stale) {
     return { kind: "job_unavailable" };
   }
@@ -124,7 +123,7 @@ function validateJob(job: CandidateJob): ExplainResult["error"] | null {
 
 function validateRequirements(
   requirements: CandidateJobRequirement[],
-): ExplainResult["error"] | null {
+): ExplainError | null {
   if (!Array.isArray(requirements) || requirements.length === 0) {
     return { kind: "requirements_required" };
   }
