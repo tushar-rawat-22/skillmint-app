@@ -23,7 +23,8 @@ I also wanted to keep general profile fit separate from one real job description
 - **Calculates Career IQ:** a bounded, explainable readiness signal based on resume-internal profile fit, claimed-versus-backed skills, applied evidence, and scoring caps. It is not hiring probability.
 - **Calculates Proof Confidence:** a measure of support visible inside the resume, including evidence candidates such as project, experience, certification, and proof-link signals. These are not independently verified claims, and missing proof means unverified rather than false.
 - **Suggests Profile-fit Roles:** general role-fit results come from the active resume. They remain separate from Latest JD Match.
-- **Maintains one Active Target:** a browser-local focus layer that can prioritize the ATS workflow, roadmap, and missions without changing any score.
+- **Maintains one Active Target:** a browser-local focus layer that can prioritize the ATS workflow, roadmap, missions, and candidate Jobs surface without changing any score.
+- **Shows bounded authenticated Greenhouse jobs:** the candidate `/jobs` surface sends the authenticated target role to a server-side Greenhouse adapter while keeping resume evidence in the browser. Results preserve source provenance and the original application URL, explain requirements as supported versus not evidenced, and do not auto-apply, rank candidates, or claim hiring probability. Greenhouse is the only admitted provider until real Production user-value acceptance closes issue #103.
 - **Compares one job description:** Latest JD Match evaluates one pasted job description against the active resume context. It does not replace Profile-fit Roles, and an old match becomes stale when its resume context changes.
 - **Generates a roadmap and missions:** deterministic career paths and 30/60/90 work plans turn current gaps into actions. A user can track mission progress, but marking work complete does not create proof or inflate a score; evidence can change only after re-analysis detects it in the resume.
 - **Separates active and saved reports:** the active browser report drives the current dashboard. Authenticated saved-analysis history is account-level persistence and does not silently become the active report.
@@ -36,18 +37,22 @@ I also wanted to keep general profile fit separate from one real job description
 ## Product flow
 
 ```text
-Resume
--> Evidence map
+Target role
+-> Resume evidence map
 -> Gap
+-> Trustworthy job result
+-> Supported / not-evidenced explanation
+-> Original apply link
 -> Next action
 -> New evidence
 -> Re-analysis
--> Compare progress
 ```
 
 Resume Reality records what the current résumé supports. Profile-fit Roles and
 one Latest JD Match remain separate contexts, while Active Target selects focus
-without changing truth or scores. Career IQ, Proof Confidence, ATS, and JD
+without changing truth or scores. The authenticated Jobs surface uses that target
+role to retrieve bounded Greenhouse results while resume evidence remains local
+to the candidate comparison. Career IQ, Proof Confidence, ATS, and JD
 calculations remain explainable supporting detail. Missions guide work, but only
 later re-analysis can detect changed evidence.
 
@@ -62,6 +67,13 @@ Browser UI (Next.js App Router + React)
   -> deterministic intelligence, resume parsing, and PDF utilities
   -> owner-aware browser storage
      or authenticated Supabase repositories where configured
+
+Authenticated candidate Jobs request
+  -> target role + bearer session only
+  -> server-confirmed Supabase identity
+  -> bounded Greenhouse public Job Board API fetch with no stale fallback
+  -> source/provenance + original apply URL returned
+  -> resume evidence comparison remains in the browser
 
 Protected administrative operation
   -> Next.js server route
@@ -81,17 +93,17 @@ the Supabase identity. The database schemas define Row Level Security policies
 for account-owned tables, while Trust Center requests use owner, context-epoch,
 and request-token checks to reject stale results after an account change.
 
-The repository includes deterministic Node fixture scripts and Playwright tests for Chromium, Firefox, and WebKit projects. GitHub Actions defines the required `quality` job for pull requests and pushes to `main`. Deployment guidance targets Vercel while keeping Preview and Production configuration, origins, backend credentials, schema state, and rollout approval as separate concerns.
+The repository includes deterministic Node fixture scripts and Playwright tests for Chromium, Firefox, and WebKit projects. GitHub Actions defines the required `quality` job for pull requests and pushes to `main`. Deployment guidance targets Vercel while keeping Preview and Production configuration, origins, backend credentials, schema state, and rollout approval as separate concerns. Browser failure evidence from the controlled candidate journey is retained in GitHub Actions so cloud-reproducible failures do not depend on a founder laptop for diagnosis.
 
 ## Important engineering decisions
 
 1. **Scores are deterministic.** The same normalized input follows versioned rules, weights, and caps. This makes a result inspectable and fixture-testable instead of allowing generated text to invent a score.
-2. **Active Target changes focus, not truth.** Selecting a role can reorder recommended work, but it cannot make the resume stronger or alter Career IQ, Proof Confidence, role fit, or JD Match math.
+2. **Active Target changes focus, not truth.** Selecting a role can reorder recommended work and the candidate Jobs query, but it cannot make the resume stronger or alter Career IQ, Proof Confidence, role fit, or JD Match math. Newer explicit user intent wins over stale asynchronous account hydration.
 3. **Mission completion is self-progress.** A click records what the user says they completed. It becomes an evidence signal only if later resume analysis finds matching support.
 4. **Browser workspace and account history have different authority.** The browser's active report controls the current experience; saved account rows remain history until the user explicitly restores a report.
 5. **Deletion derives identity from a validated session.** The protected account-deletion route rejects client-supplied identity fields, validates the bearer session, and performs deletion for the server-confirmed user.
-6. **Missing backend configuration fails safely.** Eligible browser-local behavior can remain available, while authentication, account persistence, and administrative deletion report an unavailable or unconfigured state instead of fabricating success.
-7. **Async results are owner-bound.** Owner keys, epochs, request tokens, and provider-identity checks prevent stale account counts, exports, or deletion follow-up from publishing into a different signed-in context.
+6. **Missing backend configuration fails safely.** Eligible browser-local behavior can remain available, while authentication, account persistence, administrative deletion, and candidate Jobs dependencies report an unavailable or unconfigured state instead of fabricating success.
+7. **Async results are owner-bound.** Owner keys, epochs, request tokens, provider-identity checks, and target-role authority guards prevent stale account or hydration results from publishing into a newer signed-in/user-intent context.
 
 ## Repository structure
 
@@ -138,45 +150,43 @@ npm run lint
 npm run build
 ```
 
-The required GitHub Actions `quality` job installs from the lockfile, verifies the dependency tree, runs lint and build, and executes the deterministic offline fixture suite. The fixtures cover scoring truth, missions, Active Target behavior, browser ownership, exports, data controls, feedback reliability, confirmation-dialog accessibility, and Trust Center reliability.
+The required GitHub Actions `quality` job installs from the lockfile, verifies the dependency tree, runs lint and build, and executes the deterministic offline fixture suite plus controlled browser gates. The fixtures cover scoring truth, missions, Active Target behavior, browser ownership, exports, data controls, feedback reliability, candidate target-role authority, Jobs request privacy, confirmation-dialog accessibility, and Trust Center reliability.
 
-Playwright is an additional browser-testing layer with Chromium, Firefox, and WebKit projects. Those suites are available through the repository scripts, but they are not all part of the required GitHub Actions job. A WebKit pass is not Safari certification, structural accessibility checks are not screen-reader certification, and these checks do not establish production readiness.
+Playwright is an additional browser-testing layer with Chromium, Firefox, and WebKit projects. A WebKit pass is not Safari certification, structural accessibility checks are not screen-reader certification, and these checks do not establish production readiness. Controlled candidate-loop coverage is still synthetic until the same authenticated Production route is accepted against live Greenhouse data.
 
 ## Current status
 
-- Blocks 1–5 are implemented and frozen for engineering preservation.
-- The private-pilot homepage and synthetic public demo use an evidence-first
-  hierarchy. Real résumé analysis requires a server-confirmed account; public
-  signup, analytics, and external verification claims remain off.
-- Resume Progress and Comparison reuses the deterministic analysis contracts to
-  show evidence change across user-selected reports. It does not claim that a
-  score change predicts a hiring outcome.
+For current operational truth, read [Current Release Status — 2026-09-08](docs/CURRENT_RELEASE_STATUS_20260908.md) before older phase documents.
+
+- Protected `main` contains PR #113's authenticated candidate Greenhouse Jobs integration. Greenhouse remains the only admitted job provider; issue #103 stays open until the real authenticated Production Jobs route passes the live user-value gate.
+- The private-pilot homepage and synthetic public demo use an evidence-first hierarchy. Real résumé analysis requires a server-confirmed account; public signup, analytics, and external verification claims remain off.
+- Resume Progress and Comparison reuses the deterministic analysis contracts to show evidence change across user-selected reports. It does not claim that a score change predicts a hiring outcome.
 - GitHub CI and `main` branch protection are active; the required repository check is the `quality` job.
-- Block 6 implementation and isolated verification are complete. The isolated hosted migration and ACL checks and the live-security gate passed; these results do not prove Production behavior.
-- Production schema rollout and analytics activation have not occurred, and analytics collection remains disabled.
-- Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The former broad Beta v1 public-launch path, including its Block 7.2 sequencing, is superseded as current authority by the July 27, 2026 Version 2 transition decision.
-- Phase 1 — Resume Workspace and the bounded Phase 2A Resume Progress and Comparison implementation are complete. Saved history, account Workspace selection, and the browser-active report remain separate; V8 is applied and verified only on isolated staging and remains unapplied to Production.
+- Vercel is the current Mac-independent public web host. Supabase `skillmint-beta` is a Free-plan data dependency and can pause after inactivity, so current health is monitored rather than represented as a 24/7 availability guarantee. Artificial keepalive traffic is not used.
+- The original #105 Production 503 is fixed and candidate Production extraction/analysis passes. Positive recruiter acceptance remains externally blocked until a separate immutable Production recruiter identity exists and completes first-login setup as `RECRUITER`; external cohort remains `NO-GO`.
+- Block 6 implementation and isolated verification are complete. Analytics collection remains disabled.
+- Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect. The former broad Beta v1 public-launch path is superseded by current controlled-release authority.
 - Public beta and unrestricted acquisition are not authorized.
 - Payments remain deferred; the public brand, logo, and domain remain undecided.
-- Environment separation is complete: Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; the live Production deployment was not redeployed or changed, and the Production Supabase database was not contacted or changed.
-- The first controlled approximately 20-user cohort uses the existing premium light-first baseline plus minimum launch-required Phase 4 work. The broader Version 2 UI and information-architecture foundation remains separately due before expansion to the planned 100–200-user stage, or sooner if cohort evidence reveals a material comprehension, accessibility, trust, or task-completion problem.
 - Legal review, verified privacy/support operations, provider backup/log-retention evidence, and accountable Production operations remain unresolved.
 
-Current authority and release boundaries are recorded in the [Version 2 Transition Gate](docs/V2_TRANSITION_GATE.md), [Version 2 Dynamic Execution Roadmap](docs/V2_DYNAMIC_EXECUTION_ROADMAP.md), [Resume Workspace v1 Architecture](docs/RESUME_WORKSPACE_V1_ARCHITECTURE.md), [Project Status](docs/PROJECT_STATUS.md), [Block 7.1 Closure](docs/BLOCK_7_1_CLOSURE.md), [Privacy-safe Analytics Collection](docs/ANALYTICS.md), the historical [Beta v1 Build Roadmap](docs/BETA_V1_BUILD_ROADMAP.md), the [Deployment Safety Guide](docs/DEPLOYMENT.md), and the [documentation map](docs/README.md).
+Current release truth is recorded in [Current Release Status — 2026-09-08](docs/CURRENT_RELEASE_STATUS_20260908.md). Longer-lived authority and historical context remain in the [Two-sided Public Beta Authority](docs/TWO_SIDED_PUBLIC_BETA.md), [Version 2 Dynamic Execution Roadmap](docs/V2_DYNAMIC_EXECUTION_ROADMAP.md), [Project Status](docs/PROJECT_STATUS.md), [Deployment Safety Guide](docs/DEPLOYMENT.md), and [documentation map](docs/README.md).
 
 ## Known limitations
 
 - SkillMint does not guarantee hiring, interviews, placement, or employability.
 - Resume evidence candidates are not third-party verification of every user claim.
-- Public beta is not authorized.
+- The candidate Jobs surface does not auto-apply or predict hiring probability, and the live same-session Production Greenhouse acceptance required by issue #103 is still pending.
+- Public beta is not authorized; external cohort remains `NO-GO` while recruiter Production acceptance is externally blocked.
 - There is no payment or subscription system.
 - There is no production LLM career adviser.
 - The final public brand has not been selected.
-- Production rollout, deletion operations, privacy/support monitoring, and legal review remain open work; environment separation is complete.
+- Supabase Free availability can pause after inactivity; current service health is not a 24/7 guarantee.
+- Privacy/support monitoring, legal review, and broader Production operations remain open work.
 
 ## Documentation
 
-Use the [documentation map](docs/README.md) to find the current project entry point, product and data contracts, frozen verification evidence, deployment guidance, and historical planning material. Those categories are intentionally separate: implementation and current contracts describe what exists, frozen evidence records bounded past verification, and historical documents preserve context without proving shipped functionality.
+Use the [documentation map](docs/README.md) to find the current release snapshot, product and data contracts, frozen verification evidence, deployment guidance, and historical planning material. Those categories are intentionally separate: implementation and current contracts describe what exists, frozen evidence records bounded past verification, and historical documents preserve context without proving shipped functionality.
 
 ## License
 
