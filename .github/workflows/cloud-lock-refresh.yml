@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  finalize:
+  diagnose-fixture:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -46,21 +46,26 @@ jobs:
           path.write_text(text)
           PY
 
-      - name: Install and verify
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify audit
+        run: npm audit --audit-level=high
+
+      - name: Capture fixture result
+        shell: bash
         run: |
-          npm ci
-          npm audit --audit-level=high
-          npm run fixtures:resume-workspace-phase-1a
+          set +e
+          npm run fixtures:resume-workspace-phase-1a > fixture-output.txt 2>&1
+          echo "$?" > fixture-exit-code.txt
+          exit 0
 
-      - name: Remove temporary cloud evidence
-        run: rm -f audit-report.json audit-exit-code.txt lock-sha256.txt .github/workflows/cloud-lock-refresh.yml
-
-      - name: Commit final reviewed tree
+      - name: Commit diagnostic evidence
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Finalize dependency security remediation"
+          git add scripts/resume-workspace-phase-1a-fixtures.mjs fixture-output.txt fixture-exit-code.txt
+          git commit -m "Capture dependency fixture diagnostic"
           git push origin HEAD:fix/sharp-0.35.4
