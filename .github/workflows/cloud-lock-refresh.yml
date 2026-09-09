@@ -11,9 +11,9 @@ permissions:
   contents: write
 
 jobs:
-  refresh-lock:
+  finalize:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout branch
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -27,21 +27,40 @@ jobs:
       - name: Pin npm
         run: npm install --global npm@11.13.0
 
-      - name: Regenerate lockfile only
-        run: npm install --package-lock-only --ignore-scripts
+      - name: Update frozen dependency fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
+          text = path.read_text()
+          text = text.replace(
+              'const SECURITY_PACKAGE_LOCK_SHA256 =\n  "e591405c404068a90f210092851fe1e3d91326ebe49d8a54cea6116484e526e8";',
+              'const SECURITY_PACKAGE_LOCK_SHA256 =\n  "a50868f051ea14e2e2163ac07a2291a12720ef4ddab76dd31f7b750316db7eaf";',
+          )
+          text = text.replace(
+              'assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.1");',
+              'assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.2");',
+          )
+          path.write_text(text)
+          PY
 
-      - name: Verify audit at release threshold
-        run: npm audit --audit-level=high
+      - name: Install and verify
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run fixtures:resume-workspace-phase-1a
 
-      - name: Record lockfile hash
-        run: sha256sum package-lock.json | cut -d ' ' -f1 > lock-sha256.txt
+      - name: Remove temporary cloud evidence
+        run: rm -f audit-report.json audit-exit-code.txt lock-sha256.txt .github/workflows/cloud-lock-refresh.yml
 
-      - name: Commit regenerated lockfile
+      - name: Commit final reviewed tree
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json lock-sha256.txt
-          git commit -m "Regenerate audited dependency lockfile"
+          git add -A
+          git commit -m "Finalize dependency security remediation"
           git push origin HEAD:fix/sharp-0.35.4
