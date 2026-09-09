@@ -111,6 +111,27 @@ export async function GET(request: Request) {
     const { data, error } = await authClient.auth.getUser(token);
     if (error || !data.user) return jsonError("not_authenticated", 401);
 
+    const personaResponse = await authClient
+      .from("account_personas")
+      .select("user_id,persona")
+      .eq("user_id", data.user.id)
+      .limit(2);
+    if (
+      personaResponse.error
+      || !Array.isArray(personaResponse.data)
+      || personaResponse.data.length > 1
+    ) {
+      return jsonError("temporarily_unavailable", 503);
+    }
+    const persona = personaResponse.data[0];
+    if (
+      personaResponse.data.length !== 1
+      || persona?.user_id !== data.user.id
+      || persona.persona !== "CANDIDATE"
+    ) {
+      return jsonError("candidate_persona_required", 403);
+    }
+
     const targetTerms = getTargetTerms(targetRole);
     if (targetTerms.length === 0) return jsonError("invalid_target_role", 400);
 
