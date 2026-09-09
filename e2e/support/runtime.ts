@@ -591,10 +591,25 @@ export async function login(page: Page, account: Account = ACCOUNT_A) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(account.email);
   await page.getByLabel("Password").fill(SYNTHETIC_PASSWORD);
-  await Promise.all([
-    page.waitForURL("**/dashboard"),
-    page.getByRole("button", { name: "Log in" }).click(),
-  ]);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await page.waitForURL(/\/(?:auth\/persona|dashboard|recruiters\/workspace)$/);
+
+  if (new URL(page.url()).pathname === "/auth/persona") {
+    const candidateButton = page.getByRole("button", {
+      name: "I am a candidate",
+    });
+    await expect.poll(async () => {
+      if (new URL(page.url()).pathname !== "/auth/persona") {
+        return "redirected";
+      }
+      return await candidateButton.isVisible() ? "chooser" : "pending";
+    }).not.toBe("pending");
+
+    if (new URL(page.url()).pathname === "/auth/persona") {
+      await candidateButton.click();
+      await page.waitForURL("**/dashboard");
+    }
+  }
 }
 
 export async function switchAccount(context: BrowserContext, account: Account) {
@@ -656,6 +671,18 @@ export function expiredSessionCookie(account: Account = ACCOUNT_A) {
     value: `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`,
     url: APP_ORIGIN,
   };
+}
+
+export function syntheticInviteFragment(account: Account = ACCOUNT_A): string {
+  const session = createSession(account);
+  return `#${new URLSearchParams({
+    access_token: session.access_token,
+    expires_in: String(session.expires_in),
+    expires_at: String(session.expires_at),
+    refresh_token: session.refresh_token,
+    token_type: session.token_type,
+    type: "invite",
+  }).toString()}`;
 }
 
 function corsHeaders() {

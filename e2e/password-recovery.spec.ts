@@ -415,7 +415,7 @@ test(
 
     await expect(
       page.getByText(
-        "Password updated. You can continue to SkillMint.",
+        "Password updated. Continue to account setup.",
       ),
     ).toBeVisible();
     expect(
@@ -454,7 +454,7 @@ test(
     ).toBeVisible();
     await expect(
       page.getByText(
-        "Password updated. You can continue to SkillMint.",
+        "Password updated. Continue to account setup.",
       ),
     ).toHaveCount(0);
     expect(
@@ -503,7 +503,7 @@ test(
 
     await expect(
       page.getByText(
-        "Password updated. You can continue to SkillMint.",
+        "Password updated. Continue to account setup.",
       ),
     ).toBeVisible();
     expect(

@@ -7,6 +7,10 @@ const TOKEN = "S".repeat(43);
 const SOURCE_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const JD = "Build accessible TypeScript and React interfaces, test changes, improve performance, review delivery trade-offs, and explain implementation outcomes with a small product team.";
 
+test.afterEach(async ({ request }) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+});
+
 test("@recruiter-evidence recruiter creates a role map and sends bounded candidate feedback", async ({ page, request }) => {
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
   await request.post(`${PROVIDER_ORIGIN}/__seed-shared-proof-brief`);

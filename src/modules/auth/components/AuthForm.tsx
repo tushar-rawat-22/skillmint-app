@@ -97,7 +97,7 @@ export default function AuthForm(props: AuthFormProps) {
       }
 
       if (mode === "login") {
-        router.push("/dashboard");
+        router.push("/auth/persona");
         router.refresh();
         return;
       }

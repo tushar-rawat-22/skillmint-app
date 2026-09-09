@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 import {
   ACCOUNT_A,
+  PROVIDER_ORIGIN,
   SYNTHETIC_PASSWORD,
   expect,
   test,
@@ -51,7 +52,13 @@ test(
 
 test(
   "@controlled-access @closed existing-user login remains available",
-  async ({ page, provider }) => {
+  async ({ page, provider, request }) => {
+    await request.post(`${PROVIDER_ORIGIN}/__reset`);
+    const persona = await request.post(
+      `${PROVIDER_ORIGIN}/rest/v1/account_personas`,
+      { data: { user_id: ACCOUNT_A.id, persona: "CANDIDATE" } },
+    );
+    expect(persona.ok()).toBeTruthy();
     await page.goto("/signup");
     await page.getByRole("link", {
       name: "Existing user login",
