@@ -20,6 +20,10 @@ test("@critical @invite-onboarding invited user sets credentials before choosing
 
   await expect(page).toHaveURL(/\/auth\/invite$/);
   await expect(page.getByRole("heading", { name: "Set your account password" })).toBeVisible();
+  await expect(page.getByText("Continue with your approved SkillMint account")).toBeVisible();
+  await expect(page.getByText("Open only the workspace assigned to your account")).toBeVisible();
+  await expect(page.getByText("Keep candidate and recruiter access separated")).toBeVisible();
+  await expect(page.getByText("Keep resume proof and job matches")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Set password and continue" })).toBeEnabled();
   expect(provider.count("auth:user", ACCOUNT_A.id)).toBeGreaterThanOrEqual(1);
 

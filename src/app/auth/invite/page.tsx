@@ -21,6 +21,11 @@ const INVALID_LINK_MESSAGE =
   "This invitation link is invalid or has expired.";
 const UPDATE_FAILURE_MESSAGE =
   "We could not set your password. Please try again or ask for a new invitation.";
+const INVITE_TRUST_ITEMS = [
+  "Continue with your approved SkillMint account",
+  "Open only the workspace assigned to your account",
+  "Keep candidate and recruiter access separated",
+] as const;
 
 export default function InvitePage() {
   const router = useRouter();
@@ -70,6 +75,7 @@ export default function InvitePage() {
       eyebrow="Invitation"
       title="Set your account password"
       subtitle="Secure your invited account, then choose the workspace that matches your role."
+      trustItems={INVITE_TRUST_ITEMS}
     >
       <form
         onSubmit={handleSubmit}
