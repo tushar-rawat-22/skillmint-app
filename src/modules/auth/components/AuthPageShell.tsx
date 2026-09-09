@@ -4,10 +4,17 @@ import {
   premiumHeroSurface,
 } from "@/components/ui/premium";
 
+const DEFAULT_TRUST_ITEMS = [
+  "Save your career direction",
+  "Keep resume proof and job matches",
+  "Continue your 30-day roadmap",
+] as const;
+
 type AuthPageShellProps = {
   eyebrow: string;
   title: string;
   subtitle: string;
+  trustItems?: readonly string[];
   children: React.ReactNode;
 };
 
@@ -15,6 +22,7 @@ export default function AuthPageShell({
   eyebrow,
   title,
   subtitle,
+  trustItems = DEFAULT_TRUST_ITEMS,
   children,
 }: AuthPageShellProps) {
   return (
@@ -42,7 +50,7 @@ export default function AuthPageShell({
             </p>
           </div>
 
-          <AuthTrustPanel />
+          <AuthTrustPanel items={trustItems} />
         </div>
 
         <div className={premiumHeroSurface}>
@@ -53,14 +61,10 @@ export default function AuthPageShell({
   );
 }
 
-function AuthTrustPanel() {
+function AuthTrustPanel({ items }: { items: readonly string[] }) {
   return (
     <div className="mt-8 grid gap-3 text-sm leading-6 text-slate-700">
-      {[
-        "Save your career direction",
-        "Keep resume proof and job matches",
-        "Continue your 30-day roadmap",
-      ].map((item) => (
+      {items.map((item) => (
         <p
           key={item}
           className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
