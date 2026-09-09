@@ -60,7 +60,7 @@ const ACL_NORMALIZATION_SHA256 =
 const BASELINE_PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
 const SECURITY_PACKAGE_LOCK_SHA256 =
-  "e591405c404068a90f210092851fe1e3d91326ebe49d8a54cea6116484e526e8";
+  "a50868f051ea14e2e2163ac07a2291a12720ef4ddab76dd31f7b750316db7eaf";
 
 const FROZEN_MIGRATIONS = [
   {
@@ -1769,7 +1769,7 @@ assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);
     "0.8.15",
   );
   assert.equal(currentLock.packages["node_modules/nanoid"].version, "3.3.18");
-  assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.1");
+  assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.2");
   assert.equal(
     currentLock.packages["node_modules/brace-expansion"].version,
     "1.1.18",

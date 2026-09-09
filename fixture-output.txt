@@ -1,0 +1,35 @@
+
+> skillmint-app@0.1.0 fixtures:resume-workspace-phase-1a
+> node scripts/resume-workspace-phase-1a-fixtures.mjs
+
+fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: git diff --no-ext-diff --name-only af7be0b9433e41300f28f951f7b46a92782296ab -- supabase/schema_v1.sql supabase/migrations/20260723000100_schema_v1.sql supabase/schema_v2_feedback.sql supabase/migrations/20260723000200_schema_v2_feedback.sql supabase/schema_v3_data_controls.sql supabase/migrations/20260723000300_schema_v3_data_controls.sql supabase/schema_v4_account_deletion_security.sql supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql supabase/schema_v5_analytics_events.sql supabase/migrations/20260723000500_schema_v5_analytics_events.sql supabase/schema_v6_analytics_aggregation.sql supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql supabase/schema_v7_analytics_acl_hardening.sql supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql
+fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at execFileSync (node:child_process:961:15)
+    at gitChangedPaths (file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1831:10)
+    at assertGitZeroDiff (file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1826:19)
+    at file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:231:3
+    at file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1786:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:633:26 {
+  status: 128,
+  signal: null,
+  output: [
+    null,
+    '',
+    'fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab\n'
+  ],
+  pid: 2356,
+  stdout: '',
+  stderr: 'fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab\n'
+}
+
+Node.js v24.17.0
