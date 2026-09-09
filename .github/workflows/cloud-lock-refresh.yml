@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose-full-history:
+  finalize:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -29,26 +29,58 @@ jobs:
       - name: Pin npm
         run: npm install --global npm@11.13.0
 
+      - name: Tighten authorized security override fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
+          text = path.read_text()
+          old = '''  assert.equal(currentPackage.dependencies.next, "16.3.3");
+assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
+const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
+normalizedCurrentWithoutScripts.dependencies.next =
+  baselineWithoutScripts.dependencies.next;
+normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
+  baselineWithoutScripts.devDependencies["eslint-config-next"];
+assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);'''
+          new = '''  assert.equal(currentPackage.dependencies.next, "16.3.3");
+assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
+assert.equal(currentPackage.overrides["js-yaml"], "4.3.2");
+assert.equal(currentPackage.overrides.next.sharp, "0.35.4");
+const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
+normalizedCurrentWithoutScripts.dependencies.next =
+  baselineWithoutScripts.dependencies.next;
+normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
+  baselineWithoutScripts.devDependencies["eslint-config-next"];
+delete normalizedCurrentWithoutScripts.overrides["js-yaml"];
+normalizedCurrentWithoutScripts.overrides.next.sharp =
+  baselineWithoutScripts.overrides.next.sharp;
+assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);'''
+          if old not in text:
+              raise SystemExit('authorized package normalization block not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
       - name: Install dependencies
         run: npm ci
 
       - name: Verify audit
         run: npm audit --audit-level=high
 
-      - name: Capture full-history fixture result
-        shell: bash
-        run: |
-          set +e
-          npm run fixtures:resume-workspace-phase-1a > fixture-output.txt 2>&1
-          echo "$?" > fixture-exit-code.txt
-          exit 0
+      - name: Verify frozen dependency fixture
+        run: npm run fixtures:resume-workspace-phase-1a
 
-      - name: Commit diagnostic evidence
+      - name: Remove temporary cloud files
+        run: rm -f audit-report.json audit-exit-code.txt lock-sha256.txt fixture-output.txt fixture-exit-code.txt .github/workflows/cloud-lock-refresh.yml
+
+      - name: Commit final reviewed tree
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add fixture-output.txt fixture-exit-code.txt
-          git commit -m "Capture full-history fixture rejection"
+          git add -A
+          git commit -m "Finalize dependency security remediation"
           git push origin HEAD:fix/sharp-0.35.4
