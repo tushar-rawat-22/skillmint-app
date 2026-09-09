@@ -2,34 +2,118 @@
 > skillmint-app@0.1.0 fixtures:resume-workspace-phase-1a
 > node scripts/resume-workspace-phase-1a-fixtures.mjs
 
-fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab
-node:internal/errors:985
-  const err = new Error(message);
-              ^
+PASS 01 V1-V7 retain their authorized hashes, byte identity, and zero diff
+PASS 02 ACL normalization and V8 source, migration, hashes, and frozen order prefix are exact
+PASS 03 Lifecycle ACL normalization is transactional and narrowly scoped
+PASS 04 V8 is transactional and has explicit fail-closed preflight/postflight
+PASS 05 V8 schema uses the exact owner-qualified selection model and indexes
+PASS 06 V8 trigger makes selected_at database-controlled and user_id immutable
+PASS 07 V8 RLS, table ACL, policy, and hardened function checks are exact
+PASS 08 V8 deletion functions preserve public shape and add protected lifecycle proof
+PASS 09 generated Supabase types expose the exact V8 table and function shapes
+PASS 10 workspace repository is generated-type-backed, owner-qualified, and timestamp-safe
+PASS 11 workspace repository runtime enforces owner checkpoints and exact analysis lookup
+PASS 12 workspace set, replace, clear, malformed rows, and account changes fail closed
+PASS 13 saved-analysis reads and deletes discard late results after an account change
+PASS 14 account counts expose a separate fail-closed zero-or-one selection count
+PASS 15 account export v5/v4 validates, reconciles, and omits owner identity
+PASS 16 account export rejects malformed, cross-owner, duplicate, stale, and orphan selections
+PASS 17 deletion parser/orchestration contracts require the selection count and stay generic
+PASS 18 protected HTTP deletion parser rejects missing/excess selection counts generically
+PASS 19 browser/account separation has no new key or descriptor and preserves explicit activation
+PASS 20 UI copy and actions keep saved, Workspace, and browser-active concepts distinct
+PASS 21 frozen product and analytics contracts allow the reviewed hostname fix and additive role-map engine
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
 
-Error: Command failed: git diff --no-ext-diff --name-only af7be0b9433e41300f28f951f7b46a92782296ab -- supabase/schema_v1.sql supabase/migrations/20260723000100_schema_v1.sql supabase/schema_v2_feedback.sql supabase/migrations/20260723000200_schema_v2_feedback.sql supabase/schema_v3_data_controls.sql supabase/migrations/20260723000300_schema_v3_data_controls.sql supabase/schema_v4_account_deletion_security.sql supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql supabase/schema_v5_analytics_events.sql supabase/migrations/20260723000500_schema_v5_analytics_events.sql supabase/schema_v6_analytics_aggregation.sql supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql supabase/schema_v7_analytics_acl_hardening.sql supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql
-fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
 
-    at genericNodeError (node:internal/errors:985:15)
-    at wrappedFn (node:internal/errors:539:14)
-    at checkExecSyncError (node:child_process:925:11)
-    at execFileSync (node:child_process:961:15)
-    at gitChangedPaths (file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1831:10)
-    at assertGitZeroDiff (file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1826:19)
-    at file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:231:3
-    at file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1786:9
-    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
-    at async node:internal/modules/esm/loader:633:26 {
-  status: 128,
-  signal: null,
-  output: [
-    null,
-    '',
-    'fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab\n'
-  ],
-  pid: 2356,
-  stdout: '',
-  stderr: 'fatal: bad object af7be0b9433e41300f28f951f7b46a92782296ab\n'
+  {
+    dependencies: {
+      '@supabase/ssr': '^0.12.0',
+      '@supabase/supabase-js': '2.110.7',
+      'pdf-parse': '^1.1.1',
+...
+    overrides: {
++     'js-yaml': '4.3.2',
+      next: {
++       sharp: '0.35.4'
+-       sharp: '0.35.3'
+      },
+      postcss: '8.5.23'
+    },
+    private: true,
+    version: '0.1.0'
+
+    at file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1656:8
+    at file:///home/runner/work/skillmint-app/skillmint-app/scripts/resume-workspace-phase-1a-fixtures.mjs:1786:9 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    name: 'skillmint-app',
+    version: '0.1.0',
+    private: true,
+    dependencies: {
+      '@supabase/ssr': '^0.12.0',
+      '@supabase/supabase-js': '2.110.7',
+      mammoth: '^1.8.0',
+      next: '16.2.11',
+      'pdf-parse': '^1.1.1',
+      react: '19.2.4',
+      'react-dom': '19.2.4'
+    },
+    devDependencies: {
+      '@axe-core/playwright': '^4.12.1',
+      '@playwright/test': '^1.61.1',
+      '@tailwindcss/postcss': '^4',
+      '@types/node': '^20',
+      '@types/react': '^19',
+      '@types/react-dom': '^19',
+      eslint: '^9',
+      'eslint-config-next': '16.2.11',
+      pg: '8.16.3',
+      tailwindcss: '^4',
+      typescript: '^5'
+    },
+    overrides: {
+      postcss: '8.5.23',
+      'js-yaml': '4.3.2',
+      next: { sharp: '0.35.4' }
+    }
+  },
+  expected: {
+    name: 'skillmint-app',
+    version: '0.1.0',
+    private: true,
+    dependencies: {
+      '@supabase/ssr': '^0.12.0',
+      '@supabase/supabase-js': '2.110.7',
+      mammoth: '^1.8.0',
+      next: '16.2.11',
+      'pdf-parse': '^1.1.1',
+      react: '19.2.4',
+      'react-dom': '19.2.4'
+    },
+    devDependencies: {
+      '@axe-core/playwright': '^4.12.1',
+      '@playwright/test': '^1.61.1',
+      '@tailwindcss/postcss': '^4',
+      '@types/node': '^20',
+      '@types/react': '^19',
+      '@types/react-dom': '^19',
+      eslint: '^9',
+      'eslint-config-next': '16.2.11',
+      pg: '8.16.3',
+      tailwindcss: '^4',
+      typescript: '^5'
+    },
+    overrides: { postcss: '8.5.23', next: { sharp: '0.35.3' } }
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
 }
 
 Node.js v24.17.0
