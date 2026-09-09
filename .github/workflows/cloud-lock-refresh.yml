@@ -29,39 +29,8 @@ jobs:
       - name: Pin npm
         run: npm install --global npm@11.13.0
 
-      - name: Tighten authorized security override fixture
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
-          text = path.read_text()
-          old = '''  assert.equal(currentPackage.dependencies.next, "16.3.3");
-assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
-const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
-normalizedCurrentWithoutScripts.dependencies.next =
-  baselineWithoutScripts.dependencies.next;
-normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
-  baselineWithoutScripts.devDependencies["eslint-config-next"];
-assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);'''
-          new = '''  assert.equal(currentPackage.dependencies.next, "16.3.3");
-assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.3");
-assert.equal(currentPackage.overrides["js-yaml"], "4.3.2");
-assert.equal(currentPackage.overrides.next.sharp, "0.35.4");
-const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
-normalizedCurrentWithoutScripts.dependencies.next =
-  baselineWithoutScripts.dependencies.next;
-normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
-  baselineWithoutScripts.devDependencies["eslint-config-next"];
-delete normalizedCurrentWithoutScripts.overrides["js-yaml"];
-normalizedCurrentWithoutScripts.overrides.next.sharp =
-  baselineWithoutScripts.overrides.next.sharp;
-assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);'''
-          if old not in text:
-              raise SystemExit('authorized package normalization block not found')
-          path.write_text(text.replace(old, new, 1))
-          PY
+      - name: Apply exact fixture patch
+        run: node scripts/temp-dependency-fixture-patch.mjs
 
       - name: Install dependencies
         run: npm ci
@@ -73,7 +42,7 @@ assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);'''
         run: npm run fixtures:resume-workspace-phase-1a
 
       - name: Remove temporary cloud files
-        run: rm -f audit-report.json audit-exit-code.txt lock-sha256.txt fixture-output.txt fixture-exit-code.txt .github/workflows/cloud-lock-refresh.yml
+        run: rm -f audit-report.json audit-exit-code.txt lock-sha256.txt fixture-output.txt fixture-exit-code.txt scripts/temp-dependency-fixture-patch.mjs .github/workflows/cloud-lock-refresh.yml
 
       - name: Commit final reviewed tree
         shell: bash
