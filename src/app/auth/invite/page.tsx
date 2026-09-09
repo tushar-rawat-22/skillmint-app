@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -10,29 +11,27 @@ import {
   premiumSecondaryCta,
 } from "@/components/ui/premium";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
-import { usePasswordRecovery } from "@/modules/auth/hooks/usePasswordRecovery";
+import { useInviteCredentialSetup } from "@/modules/auth/hooks/useInviteCredentialSetup";
 import {
   getNewPasswordLengthMessage,
   isNewPasswordAllowed,
 } from "@/modules/auth/services/passwordPolicy";
 
 const INVALID_LINK_MESSAGE =
-  "This password reset link is invalid or has expired.";
+  "This invitation link is invalid or has expired.";
 const UPDATE_FAILURE_MESSAGE =
-  "We could not update your password. Please try again or request a new reset link.";
-const UPDATE_SUCCESS_MESSAGE =
-  "Password updated. Continue to account setup.";
+  "We could not set your password. Please try again or ask for a new invitation.";
 
-export default function ResetPasswordPage() {
+export default function InvitePage() {
+  const router = useRouter();
   const {
     status,
     isSubmitting,
     updatePassword,
-  } = usePasswordRecovery();
+  } = useInviteCredentialSetup();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const isReady = status === "ready";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -49,68 +48,58 @@ export default function ResetPasswordPage() {
 
     if (validationError) {
       setError(validationError);
-      setMessage("");
       return;
     }
 
     setError("");
-    setMessage("");
-
     const result = await updatePassword(newPassword);
 
-    if (result === "ignored") {
+    if (result === "success") {
+      router.replace("/auth/persona");
+      router.refresh();
       return;
     }
 
     if (result === "failure") {
       setError(UPDATE_FAILURE_MESSAGE);
-      return;
     }
-
-    setNewPassword("");
-    setConfirmPassword("");
-    setMessage(UPDATE_SUCCESS_MESSAGE);
   }
 
   return (
     <AuthPageShell
-      eyebrow="Password Reset"
-      title="Create a new password"
-      subtitle="Set a new password, then continue your career loop."
+      eyebrow="Invitation"
+      title="Set your account password"
+      subtitle="Secure your invited account, then choose the workspace that matches your role."
     >
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
       >
-        {status === "checking" && (
+        {status === "checking" ? (
           <p
             role="status"
             className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700"
           >
-            Verifying your reset link...
+            Verifying your invitation...
           </p>
-        )}
+        ) : null}
 
-        {status === "invalid" && (
+        {status === "invalid" ? (
           <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
-            <p role="alert">
-              {INVALID_LINK_MESSAGE}
-            </p>
-
+            <p role="alert">{INVALID_LINK_MESSAGE}</p>
             <Link
-              href="/forgot-password"
+              href="/login"
               className="mt-3 inline-flex font-semibold text-rose-800 underline decoration-rose-300 underline-offset-4 transition hover:text-rose-950"
             >
-              Request a new reset link
+              Return to login
             </Link>
           </div>
-        )}
+        ) : null}
 
         <PasswordField
           id="new-password"
           label="New password"
           value={newPassword}
-          autoComplete="new-password"
           onChange={setNewPassword}
           disabled={!isReady || isSubmitting}
         />
@@ -120,50 +109,34 @@ export default function ResetPasswordPage() {
             id="confirm-password"
             label="Confirm password"
             value={confirmPassword}
-            autoComplete="new-password"
             onChange={setConfirmPassword}
             disabled={!isReady || isSubmitting}
           />
         </div>
 
-        {error && (
-          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
+        {error ? (
+          <p
+            role="alert"
+            className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800"
+          >
             {error}
           </p>
-        )}
-
-        {message && (
-          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
-            {message}
-          </p>
-        )}
+        ) : null}
 
         <button
           type="submit"
           disabled={!isReady || isSubmitting}
           className={`${premiumPrimaryCta} mt-5 w-full`}
         >
-          {isSubmitting ? "Updating..." : "Update password"}
+          {isSubmitting ? "Setting password..." : "Set password and continue"}
         </button>
       </form>
 
-      {message && (
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/login"
-            className={premiumSecondaryCta}
-          >
-            Log in
-          </Link>
-
-          <Link
-            href="/auth/persona"
-            className={premiumSecondaryCta}
-          >
-            Continue to account setup
-          </Link>
-        </div>
-      )}
+      <div className="mt-6">
+        <Link href="/login" className={premiumSecondaryCta}>
+          Already set a password? Log in
+        </Link>
+      </div>
     </AuthPageShell>
   );
 }
@@ -172,7 +145,6 @@ type PasswordFieldProps = {
   id: string;
   label: string;
   value: string;
-  autoComplete: string;
   onChange: (value: string) => void;
   disabled: boolean;
 };
@@ -181,23 +153,18 @@ function PasswordField({
   id,
   label,
   value,
-  autoComplete,
   onChange,
   disabled,
 }: PasswordFieldProps) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="text-sm font-semibold text-slate-700"
-      >
+      <label htmlFor={id} className="text-sm font-semibold text-slate-700">
         {label}
       </label>
-
       <input
         id={id}
         type="password"
-        autoComplete={autoComplete}
+        autoComplete="new-password"
         disabled={disabled}
         value={value}
         onChange={(event) => onChange(event.target.value)}

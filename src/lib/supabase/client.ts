@@ -26,6 +26,29 @@ export function createSupabaseBrowserClient(): SupabaseClient<Database> | null {
   }
 }
 
+export function createSupabaseInviteClient(): SupabaseClient<Database> | null {
+  const config = getSupabasePublicConfig();
+
+  if (!config) {
+    return null;
+  }
+
+  try {
+    return createBrowserClient<Database>(
+      config.url,
+      config.publishableKey,
+      {
+        isSingleton: false,
+        auth: {
+          detectSessionInUrl: false,
+        },
+      },
+    );
+  } catch {
+    return null;
+  }
+}
+
 export function createSupabaseAccountReauthenticationClient():
   SupabaseClient<Database> | null {
   const config = getSupabasePublicConfig();
