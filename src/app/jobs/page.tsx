@@ -111,13 +111,19 @@ function JobCard({ result }: { result: CandidateJobResult }) {
   const supported = result.explanation.supportedRequirements;
   const gaps = result.explanation.evidenceGaps;
   return <article className={premiumSurface}>
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">{result.job.companyName ?? "Employer"} · Greenhouse</p><h2 className="mt-2 text-2xl font-black text-slate-950">{result.job.title}</h2><p className="mt-2 text-sm text-slate-600">{result.job.location ?? "Location not provided by source"}</p><p className="mt-4 max-w-3xl text-sm leading-6 text-slate-700">{result.explanation.whyShown}</p></div><a href={result.primaryAction.href} target="_blank" rel="noopener noreferrer" className={premiumPrimaryCta}>{result.primaryAction.label}</a></div>
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">{result.job.companyName ?? "Employer"} · Greenhouse</p><h2 className="mt-2 text-2xl font-black text-slate-950">{result.job.title}</h2><p className="mt-2 text-sm text-slate-600">{result.job.location ?? "Location not provided by source"}</p><p className="mt-2 text-xs leading-5 text-slate-500">Posting updated by source: {formatFreshnessTimestamp(result.job.sourceUpdatedAt)} · checked by SkillMint: {formatFreshnessTimestamp(result.job.fetchedAt)}</p><p className="mt-4 max-w-3xl text-sm leading-6 text-slate-700">{result.explanation.whyShown}</p></div><a href={result.primaryAction.href} target="_blank" rel="noopener noreferrer" className={premiumPrimaryCta}>{result.primaryAction.label}</a></div>
     <div className="mt-6 grid gap-5 lg:grid-cols-2">
       <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><h3 className="font-bold text-emerald-950">Supported by this resume ({supported.length})</h3>{supported.length === 0 ? <p className="mt-3 text-sm leading-6 text-emerald-900">No extracted requirement has matching resume evidence yet.</p> : <ul className="mt-3 space-y-4">{supported.map((item) => <li key={item.requirementId} className="text-sm leading-6 text-emerald-950"><p className="font-semibold">{item.requirement}</p><p className="mt-1 text-xs leading-5 text-emerald-800">Resume evidence: {item.evidence.map((entry) => entry.label).join(", ")}</p></li>)}</ul>}</section>
       <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><h3 className="font-bold text-amber-950">Not evidenced in this resume ({gaps.length})</h3>{gaps.length === 0 ? <p className="mt-3 text-sm leading-6 text-amber-900">Every extracted requirement has some resume evidence. That is not a hiring prediction.</p> : <ul className="mt-3 space-y-3">{gaps.map((item) => <li key={item.requirementId} className="text-sm leading-6 text-amber-950">{item.requirement}</li>)}</ul>}</section>
     </div>
     <p className="mt-5 text-xs leading-5 text-slate-500">{result.trust.disclaimer}</p>
   </article>;
+}
+
+function formatFreshnessTimestamp(value: string | null): string {
+  if (!value) return "not provided";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "not provided" : date.toLocaleString();
 }
 
 function buildResumeEvidence(profile: UserProfile): ResumeEvidence[] {
