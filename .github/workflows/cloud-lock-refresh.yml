@@ -11,12 +11,14 @@ permissions:
   contents: write
 
 jobs:
-  diagnose-fixture:
+  finalize:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout branch
+      - name: Checkout full history
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -27,45 +29,24 @@ jobs:
       - name: Pin npm
         run: npm install --global npm@11.13.0
 
-      - name: Update frozen dependency fixture
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('scripts/resume-workspace-phase-1a-fixtures.mjs')
-          text = path.read_text()
-          text = text.replace(
-              'const SECURITY_PACKAGE_LOCK_SHA256 =\n  "e591405c404068a90f210092851fe1e3d91326ebe49d8a54cea6116484e526e8";',
-              'const SECURITY_PACKAGE_LOCK_SHA256 =\n  "a50868f051ea14e2e2163ac07a2291a12720ef4ddab76dd31f7b750316db7eaf";',
-          )
-          text = text.replace(
-              'assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.1");',
-              'assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.2");',
-          )
-          path.write_text(text)
-          PY
-
       - name: Install dependencies
         run: npm ci
 
       - name: Verify audit
         run: npm audit --audit-level=high
 
-      - name: Capture fixture result
-        shell: bash
-        run: |
-          set +e
-          npm run fixtures:resume-workspace-phase-1a > fixture-output.txt 2>&1
-          echo "$?" > fixture-exit-code.txt
-          exit 0
+      - name: Verify frozen dependency fixture
+        run: npm run fixtures:resume-workspace-phase-1a
 
-      - name: Commit diagnostic evidence
+      - name: Remove temporary cloud files
+        run: rm -f audit-report.json audit-exit-code.txt lock-sha256.txt fixture-output.txt fixture-exit-code.txt .github/workflows/cloud-lock-refresh.yml
+
+      - name: Commit final reviewed tree
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/resume-workspace-phase-1a-fixtures.mjs fixture-output.txt fixture-exit-code.txt
-          git commit -m "Capture dependency fixture diagnostic"
+          git add -A
+          git commit -m "Finalize dependency security remediation"
           git push origin HEAD:fix/sharp-0.35.4
