@@ -16,9 +16,9 @@ export default function SignupPage() {
   if (!enabled) {
     return (
       <AuthPageShell
-        eyebrow="Early access"
-        title="Account creation is invite-only during beta"
-        subtitle="The first candidate cohort is being supported closely. There is no public signup or waitlist form."
+        eyebrow="Access"
+        title="Account access is currently controlled"
+        subtitle="SkillMint is live. New-account admission is deliberately paced while existing users can continue to log in."
       >
         <section
           aria-labelledby="signup-closed-title"
@@ -48,9 +48,9 @@ export default function SignupPage() {
 
   return (
     <AuthPageShell
-      eyebrow="Early access"
+      eyebrow="Access"
       title="Create your SkillMint account"
-      subtitle="Early-access registration is open. Save your career direction, resume proof, job matches, and roadmap."
+      subtitle="Registration is open. Save your career direction, resume proof, job matches, and roadmap."
     >
       <AuthForm
         mode="signup"
