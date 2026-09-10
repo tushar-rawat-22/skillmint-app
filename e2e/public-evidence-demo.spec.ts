@@ -41,7 +41,7 @@ test("@public-demo @demo-disabled demo fails closed without Supabase and homepag
   await expect(page.getByRole("link", { name: "Candidate login" }).first()).toBeVisible();
 });
 
-test("@public-demo @demo-disabled logged-out real upload is gated and metadata is noindex nofollow", async ({
+test("@public-demo @demo-disabled logged-out real upload is gated while public homepage remains indexable", async ({
   page,
 }) => {
   await page.goto("/upload");
@@ -70,7 +70,7 @@ test("@public-demo @demo-disabled logged-out real upload is gated and metadata i
   await page.goto("/");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
-    /noindex.*nofollow|nofollow.*noindex/i,
+    /index.*follow|follow.*index/i,
   );
 });
 
