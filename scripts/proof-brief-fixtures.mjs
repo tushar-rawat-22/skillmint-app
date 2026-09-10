@@ -157,6 +157,32 @@ test("server source parser binds the exact saved analysis and owner", () => {
   }), null);
 });
 
+test("Proof Brief direction comes only from the candidate's durable target role", () => {
+  const route = fs.readFileSync(
+    path.join(repoRoot, "src/app/api/proof-brief/route.ts"),
+    "utf8",
+  );
+  assert.doesNotMatch(route, /calculateRoleMatches/u);
+  assert.match(
+    route,
+    /from\("profiles"\)[\s\S]*?\.select\("id,target_role"\)[\s\S]*?\.eq\("id", userId\)/u,
+  );
+  assert.match(route, /const direction = parseTargetRole\(profileResponse\.data\[0\], userId\)/u);
+  assert.match(route, /if \(!direction\) return jsonError\("target_role_required", 409\)/u);
+  assert.match(route, /deriveProofBriefPayload\(\{[\s\S]*?direction,/u);
+});
+
+test("missing durable target role returns an actionable repository error", async () => {
+  const result = await createOrRefreshPrivateProofBriefWithAdapter(
+    SOURCE_ID,
+    USER_A,
+    createAdapter({ insertError: { status: 409, code: "target_role_required" } }),
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "target_role_required");
+  assert.equal(result.message, "Set a target role before creating a Proof Brief.");
+});
+
 test("shared response parser exposes only exact payload and shared timestamp", () => {
   const payload = deriveProofBriefPayload(fixtureAnalysisInput());
   assert.deepEqual(parseSharedProofBrief({ payload, shared_at: NOW }), {
@@ -438,6 +464,7 @@ function createAdapter({
   identities = [USER_A],
   getRows = [],
   insertRow = briefRow(),
+  insertError = null,
   refreshRow = briefRow({ revoked_at: NOW }),
   publishRow = briefRow({ visibility: "LINK_ONLY", share_created_at: NOW }),
   revokeRow = briefRow({ revoked_at: NOW }),
@@ -459,7 +486,7 @@ function createAdapter({
     },
     async insertPrivate(input) {
       observed.insert = input;
-      return { data: insertRow, error: null };
+      return { data: insertRow, error: insertError };
     },
     async refreshPrivate() {
       return { data: refreshRow, error: null };

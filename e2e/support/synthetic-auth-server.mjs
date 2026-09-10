@@ -198,6 +198,19 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/rest/v1/profiles") {
+    const userId = postgrestEq(url, "id");
+    const account = accounts.get(userId);
+    send(
+      response,
+      200,
+      account
+        ? [{ id: account.id, target_role: "Synthetic engineer" }]
+        : [],
+    );
+    return;
+  }
+
   if (url.pathname === "/rest/v1/proof_briefs") {
     const userId = postgrestEq(url, "user_id");
     if (request.method === "GET") {

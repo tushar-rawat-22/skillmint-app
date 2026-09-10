@@ -15,6 +15,7 @@ export type ProofBriefRepositoryError =
   | "not_authenticated"
   | "account_changed"
   | "invalid_input"
+  | "target_role_required"
   | "not_found"
   | "permission_denied"
   | "schema_unavailable"
@@ -308,7 +309,15 @@ async function callProofBriefApi(
     const data: unknown = await response.json();
     return response.ok
       ? { data }
-      : { data: null, error: { status: response.status } };
+      : {
+          data: null,
+          error: {
+            status: response.status,
+            ...(isRecord(data) && typeof data.code === "string"
+              ? { code: data.code }
+              : {}),
+          },
+        };
   } catch (error) {
     return { data: null, error };
   }
@@ -342,6 +351,7 @@ function providerFailure(error: unknown): ProofBriefRepositoryResult<never> {
   const record = isRecord(error) ? error : {};
   const text = [record.message, record.code, typeof error === "string" ? error : ""]
     .filter((value): value is string => typeof value === "string").join(" ").toLowerCase();
+  if (/target_role_required/u.test(text)) return failure("target_role_required");
   if (/row-level security|permission denied|42501|forbidden/u.test(text)) return failure("permission_denied");
   if (/relation|schema cache|does not exist|42p01|pgrst2/u.test(text)) return failure("schema_unavailable");
   if (/network|fetch|timeout|connection|abort|429|50[0-9]/u.test(text)) return failure("network_failure");
@@ -354,6 +364,7 @@ function failure(code: ProofBriefRepositoryError): ProofBriefRepositoryResult<ne
     not_authenticated: "Log in to manage a Proof Brief.",
     account_changed: "Your account changed while the Proof Brief request was running.",
     invalid_input: "The Proof Brief request was not accepted.",
+    target_role_required: "Set a target role before creating a Proof Brief.",
     not_found: "The Proof Brief was not found.",
     permission_denied: "Proof Brief access was not authorized.",
     schema_unavailable: "Proof Brief sharing is not available in this environment yet.",
