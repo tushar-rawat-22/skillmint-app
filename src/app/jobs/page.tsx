@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import { premiumPageStack, premiumPrimaryCta, premiumSurface } from "@/components/ui/premium";
@@ -30,10 +30,12 @@ export default function JobsPage() {
   const evidence = useMemo(() => buildResumeEvidence(data.profile), [data.profile]);
   const hasOwnedResume = data.hasStoredAnalysis && evidence.length > 0;
   const [state, setState] = useState<LoadState>({ status: "idle", jobs: [], sourceStatus: null, message: null, recovery: null });
+  const requestIdRef = useRef(0);
 
   const loadJobs = useCallback(async () => {
     const token = session?.access_token;
     if (!token || !targetRole || !hasOwnedResume) return;
+    const requestId = ++requestIdRef.current;
     setState({ status: "loading", jobs: [], sourceStatus: null, message: null, recovery: null });
     try {
       const response = await fetch(`/api/jobs/greenhouse?targetRole=${encodeURIComponent(targetRole)}`, {
@@ -41,6 +43,7 @@ export default function JobsPage() {
         cache: "no-store",
       });
       const payload = await response.json() as JobsResponse | { ok: false; error?: string };
+      if (requestId !== requestIdRef.current) return;
       if (!response.ok || !payload.ok) {
         const errorCode = "error" in payload ? payload.error : undefined;
         setState({
@@ -66,6 +69,7 @@ export default function JobsPage() {
         recovery: null,
       });
     } catch {
+      if (requestId !== requestIdRef.current) return;
       setState({ status: "error", jobs: [], sourceStatus: null, message: "Live job sources are unavailable right now. SkillMint did not substitute cached or stale jobs.", recovery: "retry" });
     }
   }, [evidence, hasOwnedResume, session?.access_token, targetRole]);
@@ -75,7 +79,10 @@ export default function JobsPage() {
     const timer = window.setTimeout(() => {
       void loadJobs();
     }, 0);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      requestIdRef.current += 1;
+    };
   }, [authLoading, currentUserId, hasOwnedResume, loadJobs, targetRole]);
 
   if (authLoading) return <DashboardLayout><section className={premiumSurface}><p className="text-sm text-slate-600">Checking your candidate session…</p></section></DashboardLayout>;
