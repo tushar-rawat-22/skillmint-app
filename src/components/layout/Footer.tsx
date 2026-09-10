@@ -12,8 +12,8 @@ export default function Footer({
           <p className="font-semibold text-slate-700">SkillMint</p>
           <p className="mt-1 text-xs">
             {publicDemoEnabled
-              ? "Synthetic beta preview"
-              : "Invite-only candidate beta"}
+              ? "Synthetic product example"
+              : "Career evidence, jobs, and next actions"}
           </p>
         </div>
         <div className="flex flex-wrap gap-4">

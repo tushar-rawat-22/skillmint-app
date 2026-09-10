@@ -16,13 +16,11 @@ test(
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Account creation is invite-only during beta",
+        name: "Account access is currently controlled",
       }),
     ).toBeVisible();
     await expect(
-      page.getByText("There is no public signup or waitlist form.", {
-        exact: false,
-      }),
+      page.getByText("SkillMint is live.", { exact: false }),
     ).toBeVisible();
     await expect(page.locator("form")).toHaveCount(0);
     await expect(page.getByLabel("Email")).toHaveCount(0);
@@ -32,9 +30,6 @@ test(
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: /join|apply|waitlist/i }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByText(/start free|registration is open|free beta/i),
     ).toHaveCount(0);
     expect(provider.count("auth:signup")).toBe(0);
 
@@ -76,11 +71,11 @@ test(
 );
 
 test(
-  "@controlled-access @closed landing surfaces make no open-registration claim",
+  "@controlled-access @closed landing surfaces state controlled access without open registration",
   async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByText("For candidates · invite-only beta")).toBeVisible();
+    await expect(page.getByText("For candidates · access is controlled")).toBeVisible();
     const candidateLoginLinks = page.getByRole("link", {
       name: "Candidate login",
     });
@@ -89,9 +84,9 @@ test(
     for (const link of await candidateLoginLinks.all()) {
       await expect(link).toHaveAttribute("href", "/login");
     }
-    await expect(page.getByRole("link", { name: "Invite-only beta details" })).toHaveAttribute("href", "/signup");
+    await expect(page.getByRole("link", { name: "Access details" })).toHaveAttribute("href", "/signup");
     await expect(page.locator("body")).not.toContainText(
-      /start free|free beta|create account|create an account|create your account|registration is open|waiting on release gates/i,
+      /private beta|invite-only beta|pilot account|start free|free beta|create account|create an account|create your account|registration is open|waiting on release gates/i,
     );
   },
 );

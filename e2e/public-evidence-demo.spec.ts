@@ -152,7 +152,7 @@ test("@public-demo @demo-enabled homepage and logged-out upload route to the ena
     await expect(link).toHaveAttribute("href", "/demo");
   }
   await expect(page.getByRole("link", { name: "Existing user login" }).first()).toHaveAttribute("href", "/login");
-  await expect(page.getByText("Synthetic beta preview").first()).toBeVisible();
+  await expect(page.getByText("Synthetic product example").first()).toBeVisible();
   await expect(page.getByRole("link", { name: "See a candidate example" }).first()).toHaveAttribute("href", "/demo");
   await expect(page.getByRole("link", { name: /recruiter workflow/i }).first()).toHaveAttribute("href", "/recruiters");
 
