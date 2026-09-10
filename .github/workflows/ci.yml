@@ -161,6 +161,7 @@ jobs:
           node scripts/smoke-production-fixtures.mjs
           node scripts/documentation-status-fixtures.mjs
           node scripts/greenhouse-source-adapter-fixtures.mjs
+          node scripts/candidate-greenhouse-route-boundary-fixtures.mjs
           node scripts/explainable-job-fit-fixtures.mjs
 
       - name: Preserve browser failure evidence
