@@ -17,5 +17,9 @@ assert.match(jobsPage, />Refresh live jobs<\/button>/u, "zero-result states must
 assert.match(jobsPage, /href="\/setup"[^>]*>Review target role<\/Link>/u, "candidate recovery must link back to the authoritative target-role workflow");
 assert.match(jobsPage, /This account is assigned to the recruiter workspace/u, "persona mismatch must be explained truthfully");
 assert.match(jobsPage, /Resume evidence is not sent to the job provider\./u, "recovery changes must preserve the provider privacy boundary");
+assert.match(jobsPage, /const requestIdRef = useRef\(0\);/u, "candidate Jobs must track the latest live-job request");
+assert.match(jobsPage, /const requestId = \+\+requestIdRef\.current;/u, "every live-job request must get a monotonic request id");
+assert.match(jobsPage, /if \(requestId !== requestIdRef\.current\) return;/u, "stale live-job responses must not overwrite newer candidate intent");
+assert.match(jobsPage, /requestIdRef\.current \+= 1;/u, "target-role or session changes must invalidate in-flight live-job responses");
 
 console.log("candidate Jobs recovery fixtures: PASS");
