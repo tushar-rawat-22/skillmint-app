@@ -3,7 +3,6 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 
-import { calculateRoleMatches } from "@/intelligence/core/roleMatch";
 import { generateProofScore } from "@/intelligence/proof";
 import {
   createSupabaseAdminClient,
@@ -179,12 +178,22 @@ async function createOrRefresh(
     sourceResumeAnalysisId,
   });
   if (!source) return jsonError("temporarily_unavailable", 503);
+  const profileResponse = await admin.from("profiles")
+    .select("id,target_role")
+    .eq("id", userId)
+    .limit(2);
+  if (
+    profileResponse.error ||
+    !Array.isArray(profileResponse.data) ||
+    profileResponse.data.length > 1
+  ) return jsonError("temporarily_unavailable", 503);
+  const direction = parseTargetRole(profileResponse.data[0], userId);
+  if (!direction) return jsonError("target_role_required", 409);
   const proof = generateProofScore({
     profile: source.userProfile,
     resumeText: source.extractedText,
     parsedProfile: source.parsedProfile,
   });
-  const direction = calculateRoleMatches(source.userProfile)[0]?.role ?? null;
   const payload = deriveProofBriefPayload({
     profile: source.userProfile,
     proof,
@@ -357,6 +366,14 @@ function jsonResponse(body: unknown, status: number) {
 
 function jsonError(code: string, status: number) {
   return jsonResponse({ code, message: "The Proof Brief request could not be completed." }, status);
+}
+
+function parseTargetRole(value: unknown, userId: string): string | null {
+  if (!isRecord(value) || value.id !== userId || typeof value.target_role !== "string") {
+    return null;
+  }
+  const normalized = value.target_role.trim().replace(/\s+/gu, " ");
+  return normalized.length > 0 && normalized.length <= 120 ? normalized : null;
 }
 
 function isUuid(value: unknown): value is string {
