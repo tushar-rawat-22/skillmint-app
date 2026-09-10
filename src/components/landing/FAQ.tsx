@@ -9,7 +9,7 @@ const boundaries = [
   },
   {
     q: "How is the public demo different from real analysis?",
-    a: "The public demo is fixed, synthetic, read-only, and isolated from Supabase and analytics. Real-resume analysis requires an authenticated existing pilot account.",
+    a: "The public demo is fixed, synthetic, read-only, and isolated from Supabase and analytics. Real-resume analysis requires an authenticated account with access.",
   },
   {
     q: "Who is responsible for the final resume?",
