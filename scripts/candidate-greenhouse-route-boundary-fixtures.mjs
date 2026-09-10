@@ -12,6 +12,10 @@ for (const required of [
   '.eq("user_id", data.user.id)',
   'persona.persona !== "CANDIDATE"',
   'jsonError("candidate_persona_required", 403)',
+  'PREFERRED_REQUIREMENT_CUES',
+  'STRONG_REQUIRED_CUES',
+  'importance: classifyRequirementImportance(line)',
+  'return preferred && !explicitlyRequired ? "preferred" : "required"',
 ]) {
   assert.ok(route.includes(required), `missing candidate Greenhouse boundary: ${required}`);
 }
@@ -21,5 +25,7 @@ const providerFetch = route.indexOf('SOURCE_CATALOG.map((source) => fetchBoard(s
 assert.ok(personaCheck >= 0 && providerFetch > personaCheck, "provider fetch must occur only after candidate persona verification");
 assert.doesNotMatch(route, /service_role|SUPABASE_SERVICE_ROLE_KEY|createSupabaseAdminClient/u);
 assert.doesNotMatch(route, /resume(Text|Content|Body)|resume_text|resume_content/iu);
+assert.doesNotMatch(route, /importance:\s*"required"\s*,/u, "extracted requirements must not all be hard-coded as required");
+assert.match(route, /preferred\|prefer\|nice to have\|bonus\|desirable\|ideally/u, "preferred-language postings must remain eligible for extraction");
 
 console.log("Candidate Greenhouse route boundary fixtures passed.");
