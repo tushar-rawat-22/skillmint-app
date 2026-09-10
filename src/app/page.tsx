@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
@@ -9,6 +11,14 @@ import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
 import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
+import { publicPageMetadata } from "@/config/site";
+
+export const metadata: Metadata = publicPageMetadata({
+  title: "SkillMint | Evidence-backed career decisions",
+  description:
+    "Use resume evidence, a target role, trustworthy job provenance, candidate-controlled sharing, and clear next actions to make better career decisions.",
+  path: "/",
+});
 
 export default function HomePage() {
   const { enabled: publicSignupEnabled } = getPublicSignupConfiguration();
