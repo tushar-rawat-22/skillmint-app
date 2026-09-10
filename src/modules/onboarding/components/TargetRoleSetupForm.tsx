@@ -142,7 +142,7 @@ export default function TargetRoleSetupForm() {
         currentUserId,
       });
 
-      if (!setup) {
+      if (!setup || hasUserEditedRef.current) {
         return;
       }
 

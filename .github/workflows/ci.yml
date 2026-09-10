@@ -164,6 +164,7 @@ jobs:
           node scripts/candidate-greenhouse-route-boundary-fixtures.mjs
           node scripts/candidate-jobs-recovery-fixtures.mjs
           node scripts/explainable-job-fit-fixtures.mjs
+          node scripts/target-role-hydration-race-fixtures.mjs
 
       - name: Preserve browser failure evidence
         if: failure()
