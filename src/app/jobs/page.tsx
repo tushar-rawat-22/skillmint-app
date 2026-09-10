@@ -19,7 +19,8 @@ import {
 type ApiJob = CandidateJob & { boardToken: string; titleMatchReason: string; requirements: CandidateJobRequirement[] };
 type SourceStatus = { provider: "greenhouse"; configuredSources: number; failedSources: number; fetchedAt: string; staleResultsServed: false };
 type JobsResponse = { ok: true; targetRole: string; jobs: ApiJob[]; sourceStatus: SourceStatus };
-type LoadState = { status: "idle" | "loading" | "ready" | "error"; jobs: CandidateJobResult[]; sourceStatus: SourceStatus | null; message: string | null };
+type RecoveryAction = "login" | "retry" | null;
+type LoadState = { status: "idle" | "loading" | "ready" | "error"; jobs: CandidateJobResult[]; sourceStatus: SourceStatus | null; message: string | null; recovery: RecoveryAction };
 
 export default function JobsPage() {
   const { user, session, isLoading: authLoading, isConfigured } = useAuthSession();
@@ -28,12 +29,12 @@ export default function JobsPage() {
   const targetRole = data.targetRole?.trim() ?? "";
   const evidence = useMemo(() => buildResumeEvidence(data.profile), [data.profile]);
   const hasOwnedResume = data.hasStoredAnalysis && evidence.length > 0;
-  const [state, setState] = useState<LoadState>({ status: "idle", jobs: [], sourceStatus: null, message: null });
+  const [state, setState] = useState<LoadState>({ status: "idle", jobs: [], sourceStatus: null, message: null, recovery: null });
 
   const loadJobs = useCallback(async () => {
     const token = session?.access_token;
     if (!token || !targetRole || !hasOwnedResume) return;
-    setState({ status: "loading", jobs: [], sourceStatus: null, message: null });
+    setState({ status: "loading", jobs: [], sourceStatus: null, message: null, recovery: null });
     try {
       const response = await fetch(`/api/jobs/greenhouse?targetRole=${encodeURIComponent(targetRole)}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -41,7 +42,14 @@ export default function JobsPage() {
       });
       const payload = await response.json() as JobsResponse | { ok: false; error?: string };
       if (!response.ok || !payload.ok) {
-        setState({ status: "error", jobs: [], sourceStatus: null, message: describeError(response.status, "error" in payload ? payload.error : undefined) });
+        const errorCode = "error" in payload ? payload.error : undefined;
+        setState({
+          status: "error",
+          jobs: [],
+          sourceStatus: null,
+          message: describeError(response.status, errorCode),
+          recovery: response.status === 401 || errorCode === "not_authenticated" ? "login" : "retry",
+        });
         return;
       }
       const jobs = payload.jobs.flatMap((job) => {
@@ -55,9 +63,10 @@ export default function JobsPage() {
         message: jobs.length === 0
           ? "No current Greenhouse job in the bounded source set has both direct target-role title overlap and safely extracted explicit requirements. Nothing stale or loosely ranked was substituted."
           : null,
+        recovery: null,
       });
     } catch {
-      setState({ status: "error", jobs: [], sourceStatus: null, message: "Live job sources are unavailable right now. SkillMint did not substitute cached or stale jobs." });
+      setState({ status: "error", jobs: [], sourceStatus: null, message: "Live job sources are unavailable right now. SkillMint did not substitute cached or stale jobs.", recovery: "retry" });
     }
   }, [evidence, hasOwnedResume, session?.access_token, targetRole]);
 
@@ -94,8 +103,30 @@ export default function JobsPage() {
         </section>
 
         {state.status === "loading" && <section className={premiumSurface} role="status"><p className="text-sm text-slate-600">Checking current Greenhouse postings and explicit requirements…</p></section>}
-        {state.status === "error" && <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5" role="alert"><h2 className="font-bold text-rose-950">Live jobs unavailable</h2><p className="mt-2 text-sm leading-6 text-rose-900">{state.message}</p></section>}
-        {state.status === "ready" && state.message && <section className={premiumSurface} role="status"><h2 className="font-bold text-slate-950">No trustworthy match to show yet</h2><p className="mt-2 text-sm leading-6 text-slate-600">{state.message}</p></section>}
+        {state.status === "error" && (
+          <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5" role="alert">
+            <h2 className="font-bold text-rose-950">Live jobs unavailable</h2>
+            <p className="mt-2 text-sm leading-6 text-rose-900">{state.message}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {state.recovery === "login" ? (
+                <Link href="/login" className={premiumPrimaryCta}>Sign in again</Link>
+              ) : (
+                <button type="button" onClick={() => void loadJobs()} className={premiumPrimaryCta}>Retry live jobs</button>
+              )}
+              <Link href="/setup" className="text-sm font-semibold text-rose-950 underline underline-offset-4">Review target role</Link>
+            </div>
+          </section>
+        )}
+        {state.status === "ready" && state.message && (
+          <section className={premiumSurface} role="status">
+            <h2 className="font-bold text-slate-950">No trustworthy match to show yet</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{state.message}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button type="button" onClick={() => void loadJobs()} className={premiumPrimaryCta}>Refresh live jobs</button>
+              <Link href="/setup" className="text-sm font-semibold text-emerald-800 underline underline-offset-4">Review target role</Link>
+            </div>
+          </section>
+        )}
         {state.jobs.map((job) => <JobCard key={job.job.sourceKey} result={job} />)}
         {state.sourceStatus && <section className="border-t border-slate-300 pt-5 text-xs leading-5 text-slate-500"><p>Source: Greenhouse public Job Board API · checked {new Date(state.sourceStatus.fetchedAt).toLocaleString()} · {state.sourceStatus.failedSources} of {state.sourceStatus.configuredSources} bounded sources unavailable · stale results served: no.</p><p className="mt-1">Results are alphabetical after explicit target-role title overlap and requirement extraction. SkillMint does not rank candidates or infer hiring probability.</p></section>}
       </div>
