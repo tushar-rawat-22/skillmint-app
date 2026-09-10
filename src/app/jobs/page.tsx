@@ -19,7 +19,7 @@ import {
 type ApiJob = CandidateJob & { boardToken: string; titleMatchReason: string; requirements: CandidateJobRequirement[] };
 type SourceStatus = { provider: "greenhouse"; configuredSources: number; failedSources: number; fetchedAt: string; staleResultsServed: false };
 type JobsResponse = { ok: true; targetRole: string; jobs: ApiJob[]; sourceStatus: SourceStatus };
-type RecoveryAction = "login" | "retry" | null;
+type RecoveryAction = "login" | "retry" | "recruiter" | null;
 type LoadState = { status: "idle" | "loading" | "ready" | "error"; jobs: CandidateJobResult[]; sourceStatus: SourceStatus | null; message: string | null; recovery: RecoveryAction };
 
 export default function JobsPage() {
@@ -48,7 +48,7 @@ export default function JobsPage() {
           jobs: [],
           sourceStatus: null,
           message: describeError(response.status, errorCode),
-          recovery: response.status === 401 || errorCode === "not_authenticated" ? "login" : "retry",
+          recovery: recoveryForError(response.status, errorCode),
         });
         return;
       }
@@ -110,10 +110,12 @@ export default function JobsPage() {
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {state.recovery === "login" ? (
                 <Link href="/login" className={premiumPrimaryCta}>Sign in again</Link>
+              ) : state.recovery === "recruiter" ? (
+                <Link href="/recruiters" className={premiumPrimaryCta}>Open recruiter workspace</Link>
               ) : (
                 <button type="button" onClick={() => void loadJobs()} className={premiumPrimaryCta}>Retry live jobs</button>
               )}
-              <Link href="/setup" className="text-sm font-semibold text-rose-950 underline underline-offset-4">Review target role</Link>
+              {state.recovery !== "recruiter" && <Link href="/setup" className="text-sm font-semibold text-rose-950 underline underline-offset-4">Review target role</Link>}
             </div>
           </section>
         )}
@@ -166,8 +168,15 @@ function buildResumeEvidence(profile: UserProfile): ResumeEvidence[] {
   return rows;
 }
 
+function recoveryForError(status: number, code?: string): RecoveryAction {
+  if (status === 401 || code === "not_authenticated") return "login";
+  if (status === 403 && code === "candidate_persona_required") return "recruiter";
+  return "retry";
+}
+
 function describeError(status: number, code?: string): string {
   if (status === 401 || code === "not_authenticated") return "Your candidate session is no longer valid. Sign in again before loading jobs.";
+  if (status === 403 && code === "candidate_persona_required") return "This account is assigned to the recruiter workspace, so candidate job discovery is unavailable here.";
   if (code === "upstream_unavailable") return "The bounded Greenhouse sources are unavailable right now. SkillMint did not serve stale results.";
   if (status === 503) return "The job dependency is temporarily unavailable. SkillMint did not substitute cached or stale jobs.";
   return "SkillMint could not load trustworthy jobs for this target role right now.";
