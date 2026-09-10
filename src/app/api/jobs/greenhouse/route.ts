@@ -14,7 +14,9 @@ const MAX_RESULTS = 6;
 const MAX_REQUIREMENTS = 8;
 const REQUEST_TIMEOUT_MS = 8_000;
 
-const REQUIREMENT_CUES = /\b(required|requirements?|must|experience|experienced|proficien|knowledge|familiar|ability|expertise|skills?|you have|we are looking|we're looking)\b/iu;
+const REQUIREMENT_CUES = /\b(required|requirements?|must|experience|experienced|proficien|knowledge|familiar|ability|expertise|skills?|you have|we are looking|we're looking|preferred|prefer|nice to have|bonus|desirable|ideally|plus)\b/iu;
+const PREFERRED_REQUIREMENT_CUES = /\b(preferred|prefer|nice to have|bonus|desirable|ideally|a plus|plus if)\b/iu;
+const STRONG_REQUIRED_CUES = /\b(required|must|minimum|at least|need to|you have)\b/iu;
 const EVIDENCE_TERMS = [
   "accessibility",
   "api",
@@ -67,7 +69,7 @@ type Requirement = {
   id: string;
   text: string;
   evidenceTerms: string[];
-  importance: "required";
+  importance: "required" | "preferred";
 };
 
 type CandidateSourceJob = {
@@ -243,12 +245,18 @@ function extractRequirements(content: string, sourceKey: string): Requirement[] 
       id: `${sourceKey}:requirement:${requirements.length + 1}`,
       text: line,
       evidenceTerms: [...evidenceTerms],
-      importance: "required",
+      importance: classifyRequirementImportance(line),
     });
     if (requirements.length >= MAX_REQUIREMENTS) break;
   }
 
   return requirements;
+}
+
+function classifyRequirementImportance(line: string): Requirement["importance"] {
+  const preferred = PREFERRED_REQUIREMENT_CUES.test(line);
+  const explicitlyRequired = STRONG_REQUIRED_CUES.test(line);
+  return preferred && !explicitlyRequired ? "preferred" : "required";
 }
 
 function htmlToLines(value: string): string[] {
