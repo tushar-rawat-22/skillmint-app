@@ -65,6 +65,15 @@ test("aborted synthetic login exits submitting state without raw network error",
   await expect(page.getByText("Login could not be completed. Please try again.")).toBeVisible();
 });
 
+test("private workspace routes require an authenticated account", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login$/);
+
+  await page.goto("/recruiters/workspace");
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toHaveCount(0);
+});
+
 test("existing immutable personas reach their own workspace after login", async ({ page, request }) => {
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
   for (const [account, persona] of [
