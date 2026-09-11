@@ -12,6 +12,10 @@ const candidatePage = fs.readFileSync(
   path.join(root, "src/app/candidates/page.tsx"),
   "utf8",
 );
+const loginPage = fs.readFileSync(
+  path.join(root, "src/app/login/page.tsx"),
+  "utf8",
+);
 const publicHeader = fs.readFileSync(
   path.join(root, "src/components/layout/PublicBetaHeader.tsx"),
   "utf8",
@@ -43,7 +47,10 @@ assert.match(
 assert.match(candidatePage, /Existing user login/u);
 assert.doesNotMatch(candidatePage, /invite-only|controlled beta|no public signup or waitlist/u);
 
+assert.match(loginPage, /enabled \? "Create an account" : "Request access"/u);
+assert.doesNotMatch(loginPage, /View early access/u);
+
 assert.match(publicHeader, /aria-label="Public navigation"/u);
 assert.doesNotMatch(publicHeader, /aria-label="Public beta"/u);
 
-console.log("PASS public candidate and recruiter entry surfaces match launched controlled-access truth");
+console.log("PASS public candidate, recruiter, and login entry surfaces match launched controlled-access truth");
