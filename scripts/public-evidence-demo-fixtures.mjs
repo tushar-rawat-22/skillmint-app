@@ -195,7 +195,7 @@ test("homepage exposes both public product paths without enabling signup", () =>
   );
 });
 
-test("recruiter public entry prioritizes the usable demo while signup is closed", () => {
+test("recruiter public entry prioritizes controlled access while preserving the demo", () => {
   const recruiterPage = source("src/app/recruiters/page.tsx");
   assert.match(
     recruiterPage,
@@ -203,11 +203,11 @@ test("recruiter public entry prioritizes the usable demo while signup is closed"
   );
   assert.match(
     recruiterPage,
-    /demoIsPublicEntry[\s\S]*RECRUITER_DEMO[\s\S]*premiumPrimaryCta/u,
+    /publicSignupEnabled \? \([\s\S]*ROUTES\.SIGNUP[\s\S]*Create recruiter account[\s\S]*\) : \([\s\S]*ROUTES\.SIGNUP[\s\S]*Request recruiter access/u,
   );
   assert.match(
     recruiterPage,
-    /publicDemoEnabled && !demoIsPublicEntry[\s\S]*RECRUITER_DEMO[\s\S]*premiumSecondaryCta/u,
+    /demoIsPublicEntry[\s\S]*RECRUITER_DEMO[\s\S]*premiumSecondaryCta/u,
   );
   assert.doesNotMatch(recruiterPage, /Existing recruiter workspace/u);
 });
