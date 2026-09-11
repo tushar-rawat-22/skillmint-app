@@ -5,7 +5,7 @@ import { ROUTES } from "@/constants/routes";
 export default function PublicBetaHeader() {
   return (
     <header className="border-b border-slate-200 bg-white">
-      <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5" aria-label="Public beta">
+      <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5" aria-label="Public navigation">
         <Link
           href={ROUTES.HOME}
           className="text-2xl font-black tracking-tight text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
