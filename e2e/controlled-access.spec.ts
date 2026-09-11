@@ -170,6 +170,99 @@ test(
 );
 
 test(
+  "@controlled-access @closed access-request API persists once, hides duplicates, and recovers from provider failure",
+  async ({ request }) => {
+    await request.post(`${PROVIDER_ORIGIN}/__reset`);
+    const headers = {
+      origin: APP_ORIGIN,
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/json",
+      "x-forwarded-for": "198.51.100.91",
+    };
+    const payload = JSON.stringify({
+      email: "stateful-candidate@example.com",
+      intent: "CANDIDATE",
+      website: "",
+    });
+
+    const first = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers,
+      data: payload,
+    });
+    expect(first.status()).toBe(202);
+    const firstBody = await first.json();
+    expect(firstBody).toEqual({ status: "received" });
+
+    const duplicate = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers,
+      data: payload,
+    });
+    expect(duplicate.status()).toBe(202);
+    expect(await duplicate.json()).toEqual(firstBody);
+
+    const storedAfterDuplicate = await request.get(`${PROVIDER_ORIGIN}/__access-requests`);
+    expect(storedAfterDuplicate.ok()).toBeTruthy();
+    const rowsAfterDuplicate = await storedAfterDuplicate.json() as Array<{
+      email: string;
+      intent: string;
+    }>;
+    expect(rowsAfterDuplicate).toHaveLength(1);
+    expect(rowsAfterDuplicate[0]).toMatchObject({
+      email: "stateful-candidate@example.com",
+      intent: "CANDIDATE",
+    });
+
+    const rejectMode = await request.post(`${PROVIDER_ORIGIN}/__access-request-mode`, {
+      data: { mode: "reject" },
+    });
+    expect(rejectMode.ok()).toBeTruthy();
+
+    const failure = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: { ...headers, "x-forwarded-for": "198.51.100.92" },
+      data: JSON.stringify({
+        email: "recovery-recruiter@example.com",
+        intent: "RECRUITER",
+        website: "",
+      }),
+    });
+    expect(failure.status()).toBe(503);
+    const failureBody = await failure.json();
+    expect(failureBody).toEqual({
+      code: "temporarily_unavailable",
+      message: "The access request could not be completed.",
+    });
+    expect(JSON.stringify(failureBody)).not.toContain("RAW_SYNTHETIC_ACCESS_PROVIDER_SECRET");
+
+    const normalMode = await request.post(`${PROVIDER_ORIGIN}/__access-request-mode`, {
+      data: { mode: "normal" },
+    });
+    expect(normalMode.ok()).toBeTruthy();
+
+    const recovered = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: { ...headers, "x-forwarded-for": "198.51.100.92" },
+      data: JSON.stringify({
+        email: "recovery-recruiter@example.com",
+        intent: "RECRUITER",
+        website: "",
+      }),
+    });
+    expect(recovered.status()).toBe(202);
+    expect(await recovered.json()).toEqual({ status: "received" });
+
+    const storedAfterRecovery = await request.get(`${PROVIDER_ORIGIN}/__access-requests`);
+    const rowsAfterRecovery = await storedAfterRecovery.json() as Array<{
+      email: string;
+      intent: string;
+    }>;
+    expect(rowsAfterRecovery).toHaveLength(2);
+    expect(rowsAfterRecovery).toEqual(expect.arrayContaining([
+      expect.objectContaining({ email: "stateful-candidate@example.com", intent: "CANDIDATE" }),
+      expect.objectContaining({ email: "recovery-recruiter@example.com", intent: "RECRUITER" }),
+    ]));
+  },
+);
+
+test(
   "@controlled-access @closed access-request API throttles repeated trusted attempts",
   async ({ request }) => {
     const headers = {
