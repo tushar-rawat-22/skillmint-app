@@ -86,6 +86,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v11_recruiter_evidence_review.sql",
   "supabase/schema_v12_account_persona_authority.sql",
   "supabase/schema_v13_access_requests.sql",
+  "supabase/schema_v14_candidate_job_lifecycle.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -100,108 +101,116 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
   "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
   "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
+  "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
   "supabase/migrations/manifest.json",
 ];
 
+const appliedClassification = "existing_production_migration_history_verified";
 const migrations = [
   {
     version: "20260723000100",
     source: "supabase/schema_v1.sql",
     migration: "supabase/migrations/20260723000100_schema_v1.sql",
     hash: "af7a9a7314b699d1e38fe6998bc382489a33532315f188d77d0f8f739b5357e5",
-    classification: "existing_production_catalog_verified_history_unknown",
+    classification: appliedClassification,
   },
   {
     version: "20260723000200",
     source: "supabase/schema_v2_feedback.sql",
     migration: "supabase/migrations/20260723000200_schema_v2_feedback.sql",
     hash: "213fae232e106ff82cd6e300fc27507d77a612dd8c5f128bd91601f114f33701",
-    classification: "existing_production_catalog_verified_history_unknown",
+    classification: appliedClassification,
   },
   {
     version: "20260723000300",
     source: "supabase/schema_v3_data_controls.sql",
     migration: "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
     hash: "a130483eac5ffafdbf293b3938e18dabea57a0e36c7d8617fb8bc448ae042959",
-    classification: "pending_data_controls",
+    classification: appliedClassification,
   },
   {
     version: "20260723000400",
     source: "supabase/schema_v4_account_deletion_security.sql",
     migration: "supabase/migrations/20260723000400_schema_v4_account_deletion_security.sql",
     hash: "3ff175e86b79516ee896578d01b6b64fb747aa2b371187fa63f8225c09807587",
-    classification: "pending_account_deletion_security",
+    classification: appliedClassification,
   },
   {
     version: "20260723000500",
     source: "supabase/schema_v5_analytics_events.sql",
     migration: "supabase/migrations/20260723000500_schema_v5_analytics_events.sql",
     hash: "15498e432dcac694af1adc696e3f824d72e184b9f96827f3e4610e66397332b2",
-    classification: "pending_analytics_ingestion",
+    classification: appliedClassification,
   },
   {
     version: "20260723000600",
     source: "supabase/schema_v6_analytics_aggregation.sql",
     migration: "supabase/migrations/20260723000600_schema_v6_analytics_aggregation.sql",
     hash: "e46fabd2cf149f9bf97d4af18add4b125e8176fc577c162fa6b8f6dc385feba5",
-    classification: "pending_founder_aggregation",
+    classification: appliedClassification,
   },
   {
     version: "20260723000700",
     source: "supabase/schema_v7_analytics_acl_hardening.sql",
     migration: "supabase/migrations/20260723000700_schema_v7_analytics_acl_hardening.sql",
     hash: "46f5606f45599d5955081d677a3f6bc51474fc0750a7daad87963b6bf9855b4c",
-    classification: "pending_analytics_acl_hardening",
+    classification: appliedClassification,
   },
   {
     version: "20260727000750",
     source: "supabase/schema_v7_1_lifecycle_function_acl_normalization.sql",
     migration: "supabase/migrations/20260727000750_lifecycle_function_acl_normalization.sql",
     hash: "6536263fd8cceb15e04daa60509a5923aff8562b50e4f19810fd59948dc89154",
-    classification: "pending_lifecycle_function_acl_normalization",
+    classification: appliedClassification,
   },
   {
     version: "20260727000800",
     source: "supabase/schema_v8_active_resume_selections.sql",
     migration: "supabase/migrations/20260727000800_schema_v8_active_resume_selections.sql",
     hash: "233c4aa2d7f7fbf0fa8a034f763cbe38cd2399054641b6023a66c11cc730a3a1",
-    classification: "pending_resume_workspace_phase_1a",
+    classification: appliedClassification,
   },
   {
     version: "20260730000900",
     source: "supabase/schema_v9_public_function_acl_normalization.sql",
-    migration:
-      "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
+    migration: "supabase/migrations/20260730000900_public_rls_auto_enable_acl_normalization.sql",
     hash: "171404d422850c935300ad0384cc680a195849847705683c0b05016290e93983",
-    classification: "pending_public_function_acl_normalization",
+    classification: appliedClassification,
   },
   {
     version: "20260823001000",
     source: "supabase/schema_v10_two_sided_beta_foundation.sql",
     migration: "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql",
     hash: "2b4f6dc8fc29e3a85439f90e854d48da60f295c4c3250be716c45a3ed0fd948a",
-    classification: "pending_two_sided_beta_foundation",
+    classification: appliedClassification,
   },
   {
     version: "20260823001100",
     source: "supabase/schema_v11_recruiter_evidence_review.sql",
     migration: "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
     hash: "007c6076a68de87bc96f6e85b886d93add5458dbfdc96da8210c22081ecd8cee",
-    classification: "pending_recruiter_evidence_review",
+    classification: appliedClassification,
   },
   {
     version: "20260829001200",
     source: "supabase/schema_v12_account_persona_authority.sql",
     migration: "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
     hash: "2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507",
-    classification: "pending_account_persona_authority",
+    classification: appliedClassification,
   },
   {
     version: "20260911001300",
     source: "supabase/schema_v13_access_requests.sql",
     migration: "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
     hash: "c35d9925a8861da4f20e1edd52d7b05e29d86dd924b73a32675d506555b87c19",
-    classification: "pending_access_requests",
+    classification: appliedClassification,
+  },
+  {
+    version: "20260912001400",
+    source: "supabase/schema_v14_candidate_job_lifecycle.sql",
+    migration: "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
+    hash: "fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b",
+    classification: "pending_candidate_job_lifecycle",
   },
 ];
 
@@ -219,7 +228,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered fourteen SQL files",
+  "migration directory must contain the exact ordered fifteen SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -239,12 +248,12 @@ equal(
 );
 equal(
   manifest.generated_for.production.catalog_proof_required_before_marking_applied,
-  migrations.slice(0, 2).map((item) => item.version),
-  "Production baseline versions changed",
+  [],
+  "Production migration history no longer requires catalog-only proof",
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  migrations.slice(2).map((item) => item.version),
+  [migrations.at(-1).version],
   "Production pending versions changed",
 );
 equal(
@@ -252,7 +261,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 14, "manifest must contain fourteen migrations");
+equal(manifest.ordered_migrations.length, 15, "manifest must contain fifteen migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -267,95 +276,48 @@ manifest.ordered_migrations.forEach((entry, index) => {
   equal(entry.sha256, expected.hash, "manifest hash changed");
   equal(entry.rollout_classification, expected.classification, "manifest classification changed");
 });
-const productionPendingVersions = new Set(
-  manifest.generated_for.production.pending_execution,
-);
+const productionPendingVersions = new Set(manifest.generated_for.production.pending_execution);
 for (const entry of manifest.ordered_migrations) {
   if (productionPendingVersions.has(entry.version)) {
-    check(
-      entry.rollout_classification.startsWith("pending_"),
-      `${entry.version} pending classification must begin with pending_`,
-    );
-    check(
-      !entry.rollout_classification.startsWith("existing_production"),
-      `${entry.version} pending classification cannot describe an existing Production baseline`,
-    );
+    check(entry.rollout_classification.startsWith("pending_"), `${entry.version} pending classification must begin with pending_`);
+    check(!entry.rollout_classification.startsWith("existing_production"), `${entry.version} pending classification cannot describe an existing Production baseline`);
+  } else {
+    equal(entry.rollout_classification, appliedClassification, `${entry.version} must record verified Production migration history`);
   }
 }
-for (const baselineVersion of ["20260723000100", "20260723000200"]) {
-  check(
-    !productionPendingVersions.has(baselineVersion),
-    `${baselineVersion} cannot be pending execution`,
-  );
-}
-for (const pendingVersion of ["20260723000300", "20260723000400"]) {
-  const entry = manifest.ordered_migrations.find(
-    (migrationEntry) => migrationEntry.version === pendingVersion,
-  );
-  check(
-    !entry.rollout_classification.includes("existing_production"),
-    `${pendingVersion} cannot be classified as an existing Production baseline`,
-  );
+for (const appliedVersion of migrations.slice(0, -1).map((item) => item.version)) {
+  check(!productionPendingVersions.has(appliedVersion), `${appliedVersion} cannot be pending execution`);
 }
 equal(manifest.ordered_migrations[4].version, migrations[4].version, "V5 must follow V4");
 equal(manifest.ordered_migrations[5].version, migrations[5].version, "V6 must follow V5");
 equal(manifest.ordered_migrations[6].version, migrations[6].version, "V7 must follow V6");
 equal(manifest.ordered_migrations[7].version, migrations[7].version, "ACL normalization must follow V7");
 equal(manifest.ordered_migrations[8].version, migrations[8].version, "V8 must follow ACL normalization");
-equal(
-  manifest.ordered_migrations[9].version,
-  migrations[9].version,
-  "public-function ACL normalization must follow V8",
-);
-equal(
-  manifest.ordered_migrations[10].version,
-  migrations[10].version,
-  "two-sided beta foundation must follow public-function ACL normalization",
-);
-equal(
-  manifest.ordered_migrations[11].version,
-  migrations[11].version,
-  "recruiter evidence review must follow the two-sided beta foundation",
-);
-equal(
-  manifest.ordered_migrations[12].version,
-  migrations[12].version,
-  "account persona authority must follow recruiter evidence review",
-);
-equal(
-  manifest.ordered_migrations[13].version,
-  migrations[13].version,
-  "access requests must follow account persona authority",
-);
+equal(manifest.ordered_migrations[9].version, migrations[9].version, "public-function ACL normalization must follow V8");
+equal(manifest.ordered_migrations[10].version, migrations[10].version, "two-sided beta foundation must follow public-function ACL normalization");
+equal(manifest.ordered_migrations[11].version, migrations[11].version, "recruiter evidence review must follow the two-sided beta foundation");
+equal(manifest.ordered_migrations[12].version, migrations[12].version, "account persona authority must follow recruiter evidence review");
+equal(manifest.ordered_migrations[13].version, migrations[13].version, "access requests must follow account persona authority");
+equal(manifest.ordered_migrations[14].version, migrations[14].version, "candidate lifecycle must follow access requests");
 
 const config = text("supabase/config.toml");
 check(config.startsWith("# Generated with Supabase CLI 2.109.1 for local and migration tooling."), "config provenance missing");
 check(/^project_id = "skillmint-app"$/m.test(config), "local config project_id changed");
-check(
-  config.includes("https://supabase.com/docs/guides/local-development/cli/config"),
-  "config documentation provenance is missing",
-);
+check(config.includes("https://supabase.com/docs/guides/local-development/cli/config"), "config documentation provenance is missing");
 const seedHeaders = [...config.matchAll(/^\[db\.seed\]\s*$/gm)];
 equal(seedHeaders.length, 1, "db.seed must exist exactly once");
 const seedRemainder = config.slice(seedHeaders[0].index + seedHeaders[0][0].length);
 const nextTomlSection = seedRemainder.match(/^\[[^\]]+\]\s*$/m);
 const seedSection = seedRemainder.slice(0, nextTomlSection?.index ?? seedRemainder.length);
-const seedSettings = seedSection
-  .split("\n")
-  .map((line) => line.trim())
-  .filter((line) => line.length > 0 && !line.startsWith("#"));
+const seedSettings = seedSection.split("\n").map((line) => line.trim()).filter((line) => line.length > 0 && !line.startsWith("#"));
 equal(seedSettings, ["enabled = false", "sql_paths = []"], "db.seed must be disabled with an empty sql_paths list");
-check(
-  seedSection.includes("# SkillMint has no committed seed dataset."),
-  "db.seed must explain the absence of a seed dataset",
-);
+check(seedSection.includes("# SkillMint has no committed seed dataset."), "db.seed must explain the absence of a seed dataset");
 check(!/\b(?:seed\.sql|seeds\/)/i.test(config), "config references a seed file");
 check(!existsSync(join(root, "supabase/seed.sql")), "supabase/seed.sql must not exist");
 check(!existsSync(join(root, "supabase/.temp")), "supabase/.temp exists in the worktree");
 check(/^supabase\/\.temp\/$/m.test(text(".gitignore")), "Supabase .temp ignore is missing");
 
-const hostedProjectEndpoint =
-  /https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.supabase\.co(?=[:/\s"'`]|$)/i;
+const hostedProjectEndpoint = /https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.supabase\.co(?=[:/\s"'`]|$)/i;
 for (const path of rolloutFoundationPaths) {
   const contents = text(path);
   check(!hostedProjectEndpoint.test(contents), `${path} contains a hosted project URL`);
@@ -381,56 +343,19 @@ equal(extractProjects([isolatedProject]), [isolatedProject], "array inventory wa
 equal(extractProjects({ projects: [isolatedProject] }), [isolatedProject], "projects container was not accepted");
 equal(
   validateTargetInventory([isolatedProject], isolatedProject.name, { hashProjectRef: fixtureHasher }),
-  {
-    name: isolatedProject.name,
-    status: isolatedProject.status,
-    region: isolatedProject.region,
-    refSha256: approvedHash,
-  },
+  { name: isolatedProject.name, status: isolatedProject.status, region: isolatedProject.region, refSha256: approvedHash },
   "valid isolated target was refused",
 );
 
-expectRefusal(
-  () => validateTargetInventory([isolatedProject], "skillmint-beta", { hashProjectRef: fixtureHasher }),
-  "production_target_name",
-  "Production name must fail",
-);
-expectRefusal(
-  () => validateTargetInventory([isolatedProject], isolatedProject.name, { hashProjectRef: () => productionHash }),
-  "production_target_ref",
-  "Production hash must fail",
-);
-expectRefusal(
-  () => validateTargetInventory([{ ...isolatedProject, region: "us-east-1" }], isolatedProject.name, { hashProjectRef: fixtureHasher }),
-  "wrong_target_region",
-  "wrong region must fail",
-);
-expectRefusal(
-  () => validateTargetInventory([{ ...isolatedProject, status: "PAUSED" }], isolatedProject.name, { hashProjectRef: fixtureHasher }),
-  "unhealthy_target_status",
-  "unhealthy status must fail",
-);
-expectRefusal(
-  () => validateTargetInventory([{ ...isolatedProject, status: "active healthy" }], isolatedProject.name, { hashProjectRef: fixtureHasher }),
-  "malformed_target_status",
-  "malformed status must fail",
-);
-expectRefusal(
-  () => validateTargetInventory([isolatedProject, isolatedProject], isolatedProject.name, { hashProjectRef: fixtureHasher }),
-  "duplicate_target",
-  "duplicate target must fail",
-);
+expectRefusal(() => validateTargetInventory([isolatedProject], "skillmint-beta", { hashProjectRef: fixtureHasher }), "production_target_name", "Production name must fail");
+expectRefusal(() => validateTargetInventory([isolatedProject], isolatedProject.name, { hashProjectRef: () => productionHash }), "production_target_ref", "Production hash must fail");
+expectRefusal(() => validateTargetInventory([{ ...isolatedProject, region: "us-east-1" }], isolatedProject.name, { hashProjectRef: fixtureHasher }), "wrong_target_region", "wrong region must fail");
+expectRefusal(() => validateTargetInventory([{ ...isolatedProject, status: "PAUSED" }], isolatedProject.name, { hashProjectRef: fixtureHasher }), "unhealthy_target_status", "unhealthy status must fail");
+expectRefusal(() => validateTargetInventory([{ ...isolatedProject, status: "active healthy" }], isolatedProject.name, { hashProjectRef: fixtureHasher }), "malformed_target_status", "malformed status must fail");
+expectRefusal(() => validateTargetInventory([isolatedProject, isolatedProject], isolatedProject.name, { hashProjectRef: fixtureHasher }), "duplicate_target", "duplicate target must fail");
 expectRefusal(() => extractProjects({ data: [isolatedProject] }), "unknown_inventory_container", "unknown container must fail");
-expectRefusal(
-  () => validateTargetInventory([{ name: isolatedProject.name }], isolatedProject.name, { hashProjectRef: fixtureHasher }),
-  "missing_target_status",
-  "missing fields must fail",
-);
-expectRefusal(
-  () => validateTargetInventory([isolatedProject], isolatedProject.name, { hashProjectRef: () => "0".repeat(64) }),
-  "wrong_target_ref",
-  "wrong target hash must fail",
-);
+expectRefusal(() => validateTargetInventory([{ name: isolatedProject.name }], isolatedProject.name, { hashProjectRef: fixtureHasher }), "missing_target_status", "missing fields must fail");
+expectRefusal(() => validateTargetInventory([isolatedProject], isolatedProject.name, { hashProjectRef: () => "0".repeat(64) }), "wrong_target_ref", "wrong target hash must fail");
 const guardResult = await runGuard(["--inventory", "private.json", "--target", isolatedProject.name], {
   readInventory: async () => JSON.stringify({ projects: [isolatedProject] }),
   hashProjectRef: fixtureHasher,
@@ -438,17 +363,10 @@ const guardResult = await runGuard(["--inventory", "private.json", "--target", i
 equal(guardResult.refSha256, approvedHash, "runGuard did not validate the expected hash");
 
 const guardSource = text("scripts/block6-target-guard.mjs");
-check(
-  !/node:(?:child_process|http|https|net|tls|dgram)|\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(guardSource),
-  "target guard uses a network, shell, or child-process API",
-);
+check(!/node:(?:child_process|http|https|net|tls|dgram)|\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(guardSource), "target guard uses a network, shell, or child-process API");
 check(!/writeFile|appendFile|createWriteStream/.test(guardSource), "target guard uses a file-write API");
 
-const importProbe = spawnSync(
-  process.execPath,
-  ["--input-type=module", "--eval", `import(${JSON.stringify(pathToFileURL(join(root, "scripts/block6-target-guard.mjs")).href)})`],
-  { cwd: root, encoding: "utf8" },
-);
+const importProbe = spawnSync(process.execPath, ["--input-type=module", "--eval", `import(${JSON.stringify(pathToFileURL(join(root, "scripts/block6-target-guard.mjs")).href)})`], { cwd: root, encoding: "utf8" });
 equal(importProbe.status, 0, "target guard import failed");
 equal(importProbe.stdout, "", "target guard import wrote to stdout");
 equal(importProbe.stderr, "", "target guard import wrote to stderr");
@@ -457,16 +375,8 @@ const temporaryDirectory = mkdtempSync(join(tmpdir(), "skillmint-block6-guard-fi
 try {
   const inventoryPath = join(temporaryDirectory, "inventory.json");
   const unrelatedRef = "must-never-be-printed";
-  writeFileSync(
-    inventoryPath,
-    JSON.stringify([{ id: unrelatedRef, name: "unrelated", status: "ACTIVE_HEALTHY", region: "ap-northeast-1" }]),
-    { mode: 0o600 },
-  );
-  const refusalProbe = spawnSync(
-    process.execPath,
-    [join(root, "scripts/block6-target-guard.mjs"), "--inventory", inventoryPath, "--target", "skillmint-beta"],
-    { cwd: root, encoding: "utf8" },
-  );
+  writeFileSync(inventoryPath, JSON.stringify([{ id: unrelatedRef, name: "unrelated", status: "ACTIVE_HEALTHY", region: "ap-northeast-1" }]), { mode: 0o600 });
+  const refusalProbe = spawnSync(process.execPath, [join(root, "scripts/block6-target-guard.mjs"), "--inventory", inventoryPath, "--target", "skillmint-beta"], { cwd: root, encoding: "utf8" });
   check(refusalProbe.status !== 0, "Production CLI selection did not fail");
   equal(refusalProbe.stdout, "", "refusal printed a PASS summary");
   check(!refusalProbe.stderr.includes(unrelatedRef), "refusal leaked an unrelated project ref");
@@ -489,8 +399,8 @@ for (const [pattern, claim] of [
   [/Block 6\.1 and Block 6\.2 are merged and frozen pending rollout/i, "Block 6.1/6.2 merged and frozen"],
   [/fail-closed[^.]*automatically deployed|automatically deployed[^.]*fail-closed/i, "fail-closed automatic deployment"],
   [/skillmint-block6-test[^.]*ACTIVE_HEALTHY|ACTIVE_HEALTHY[^.]*skillmint-block6-test/i, "isolated project state"],
-  [/verified only (?:the )?V1\+V2 Production catalog|Production catalog as V1\+V2/i, "Production V1+V2 catalog baseline"],
-  [/V3–V8 remain (?:catalog-)?pending/i, "Production V3–V8 pending"],
+  [/Production migration history[^.]*V1[^.]*V13|V1[^.]*V13[^.]*Production migration history/i, "Production migration history through V13"],
+  [/V14[^.]*pending|pending[^.]*V14/i, "V14 pending Production execution"],
   [/analytics remains disabled/i, "analytics disabled"],
   [/founder UUID[^.]*WAF[^.]*retention[^.]*unconfigured/i, "founder/WAF/retention unconfigured"],
   [/Preview and Production[^.]*share[^.]*two public Supabase variables/i, "Preview/Production shared backend"],
@@ -509,24 +419,7 @@ for (const [pattern, claim] of [
 }
 
 const bannedPhrases = [
-  "seamless",
-  "robust",
-  "comprehensive",
-  "cutting-edge",
-  "revolutionary",
-  "game-changing",
-  "world-class",
-  "best-in-class",
-  "leverage",
-  "leveraging",
-  "delve",
-  "furthermore",
-  "moreover",
-  "empower",
-  "unlock",
-  "transformative",
-  "it is important to note",
-  "this document serves as",
+  "seamless", "robust", "comprehensive", "cutting-edge", "revolutionary", "game-changing", "world-class", "best-in-class", "leverage", "leveraging", "delve", "furthermore", "moreover", "empower", "unlock", "transformative", "it is important to note", "this document serves as",
 ];
 for (const phrase of bannedPhrases) {
   check(!documentation.toLowerCase().includes(phrase), `banned writing phrase found: ${phrase}`);
@@ -538,7 +431,6 @@ for (const path of currentDocs) {
     const lines = paragraph.split("\n").filter(Boolean);
     return lines.length > 0 && lines.every((line) => !/^\s*(?:#|\||-|\d+\.)/.test(line));
   });
-
   for (const paragraph of proseParagraphs) {
     const wordCount = paragraph.match(/[A-Za-z0-9_'-]+/g)?.length ?? 0;
     check(wordCount <= 120, `${path} has a prose paragraph over 120 words`);
@@ -546,22 +438,9 @@ for (const path of currentDocs) {
 }
 
 const packageJson = JSON.parse(text("package.json"));
-equal(
-  packageJson.scripts["fixtures:analytics-acl"],
-  "node scripts/analytics-acl-fixtures.mjs",
-  "package analytics ACL fixture script is missing",
-);
-equal(
-  packageJson.scripts["fixtures:block6-rollout-foundation"],
-  "node scripts/block6-rollout-foundation-fixtures.mjs",
-  "package fixture script is missing",
-);
-check(
-  /node scripts\/analytics-dashboard-fixtures\.mjs\s+node scripts\/analytics-acl-fixtures\.mjs\s+node scripts\/block6-rollout-foundation-fixtures\.mjs/.test(
-    text(".github/workflows/ci.yml"),
-  ),
-  "analytics ACL and rollout fixtures are not ordered after the analytics dashboard fixture",
-);
+equal(packageJson.scripts["fixtures:analytics-acl"], "node scripts/analytics-acl-fixtures.mjs", "package analytics ACL fixture script is missing");
+equal(packageJson.scripts["fixtures:block6-rollout-foundation"], "node scripts/block6-rollout-foundation-fixtures.mjs", "package fixture script is missing");
+check(/node scripts\/analytics-dashboard-fixtures\.mjs\s+node scripts\/analytics-acl-fixtures\.mjs\s+node scripts\/block6-rollout-foundation-fixtures\.mjs/.test(text(".github/workflows/ci.yml")), "analytics ACL and rollout fixtures are not ordered after the analytics dashboard fixture");
 
 process.stdout.write(`PASS durable rollout-foundation content contracts passed (${assertionCount} assertions)\n`);
 process.stdout.write("REVIEW changed-path, unrelated-file, and staging checks remain independent review responsibilities\n");
