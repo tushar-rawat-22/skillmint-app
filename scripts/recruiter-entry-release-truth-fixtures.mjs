@@ -8,6 +8,14 @@ const recruiterPage = fs.readFileSync(
   path.join(root, "src/app/recruiters/page.tsx"),
   "utf8",
 );
+const candidatePage = fs.readFileSync(
+  path.join(root, "src/app/candidates/page.tsx"),
+  "utf8",
+);
+const publicHeader = fs.readFileSync(
+  path.join(root, "src/components/layout/PublicBetaHeader.tsx"),
+  "utf8",
+);
 
 assert.match(
   recruiterPage,
@@ -15,15 +23,30 @@ assert.match(
 );
 assert.match(
   recruiterPage,
-  /\) : publicSignupEnabled \? \([\s\S]*ROUTES\.RECRUITER_WORKSPACE[\s\S]*Open recruiter workspace[\s\S]*\) : \([\s\S]*ROUTES\.LOGIN[\s\S]*Existing recruiter login/u,
+  /!publicSignupEnabled[\s\S]*ROUTES\.SIGNUP[\s\S]*Request recruiter access/u,
 );
 assert.match(
   recruiterPage,
-  /Recruiter access is limited to approved pilot accounts\./u,
+  /SkillMint is live with controlled recruiter admission\./u,
 );
 assert.match(
   recruiterPage,
-  /New[\s\S]*recruiter account creation is not active yet\./u,
+  /Existing recruiter login/u,
 );
+assert.doesNotMatch(recruiterPage, /pilot accounts|first beta/u);
 
-console.log("PASS recruiter public entry stays aligned with the closed recruiter release gate");
+assert.match(
+  candidatePage,
+  /!publicSignupEnabled[\s\S]*ROUTES\.SIGNUP[\s\S]*Request access/u,
+);
+assert.match(
+  candidatePage,
+  /SkillMint is live with controlled account admission\./u,
+);
+assert.match(candidatePage, /Existing user login/u);
+assert.doesNotMatch(candidatePage, /invite-only|controlled beta|no public signup or waitlist/u);
+
+assert.match(publicHeader, /aria-label="Public navigation"/u);
+assert.doesNotMatch(publicHeader, /aria-label="Public beta"/u);
+
+console.log("PASS public candidate and recruiter entry surfaces match launched controlled-access truth");
