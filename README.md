@@ -172,7 +172,7 @@ For current operational truth, use the active GitHub launch issue and the newest
 - Protected `main` contains the authenticated candidate Greenhouse Jobs integration. The real Production candidate journey required by issue #103 passed and #103 is closed.
 - The Production recruiter collaboration journey required by issue #105 passed and #105 is closed. The live collaboration model uses a distinct recruiter persona, candidate-authorized Proof Briefs, recruiter role evidence maps, and structured evidence reviews.
 - Public `/`, `/candidates`, `/recruiters`, and `/privacy` pages are intentionally indexable and canonical. Authenticated/private workspace routes remain non-indexable and authorization-protected. Root robots and sitemap routes expose only the intended public discovery surface.
-- Issue #130 is the active launch-quality lane: public access-request workflow, adversarial candidate/recruiter acceptance, security abuse testing, and final launch-quality verification remain in progress.
+- Issue #130 is the active launch-quality lane: the privacy-bounded Request Access path is live for candidate and recruiter intent while public self-signup remains disabled; adversarial candidate/recruiter acceptance, security abuse testing, and final launch-quality verification remain in progress.
 - GitHub CI and `main` branch protection are active; the required repository check is the `quality` job.
 - Vercel is the current Mac-independent public web host. Supabase `skillmint-beta` is a Free-plan data dependency and can pause after inactivity, so current health is monitored rather than represented as a 24/7 availability guarantee. Artificial keepalive traffic is not used.
 - Block 6 implementation and isolated verification are complete. Analytics collection remains disabled.
@@ -187,7 +187,7 @@ Longer-lived authority and historical context remain in the [Two-sided Public Be
 - SkillMint does not guarantee hiring, interviews, placement, or employability.
 - Resume evidence candidates are not third-party verification of every user claim.
 - The candidate Jobs surface does not auto-apply or predict hiring probability.
-- Public self-signup is disabled while new-account admission is deliberately paced; a privacy-bounded public access-request workflow is still being completed under issue #130.
+- Public self-signup remains disabled while new-account admission is deliberately paced; the public Request Access path accepts candidate or recruiter intent without requiring a resume and does not automatically create an account or persona.
 - Durable Save -> Applied -> follow-up application lifecycle work remains a separate product lane and must not be confused with provider availability or inferred employer outcomes.
 - There is no payment or subscription system.
 - There is no production LLM career adviser.
