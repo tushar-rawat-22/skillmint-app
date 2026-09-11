@@ -17,7 +17,8 @@ export default function AccessRequestForm() {
     event.preventDefault();
     if (state.kind === "submitting") return;
 
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const email = String(form.get("email") ?? "");
     const intent = String(form.get("intent") ?? "");
     const website = String(form.get("website") ?? "");
@@ -35,7 +36,7 @@ export default function AccessRequestForm() {
 
       if (response.ok && body?.status === "received") {
         setState({ kind: "success", duplicate: false });
-        event.currentTarget.reset();
+        formElement.reset();
         return;
       }
       if (response.ok && body?.status === "already_received") {
