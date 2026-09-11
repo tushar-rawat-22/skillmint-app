@@ -46,7 +46,7 @@
     "test:e2e:controlled-access": "playwright test e2e/controlled-access.spec.ts --project=chromium --grep @closed --workers=1 --retries=0 && SKILLMINT_E2E_PUBLIC_SIGNUP_ENABLED=true playwright test e2e/controlled-access.spec.ts --project=chromium --grep @enabled --workers=1 --retries=0",
     "test:e2e:public-evidence-demo": "playwright test e2e/public-evidence-demo.spec.ts --project=chromium --grep @demo-disabled --workers=1 --retries=0 && SKILLMINT_E2E_PUBLIC_DEMO_ENABLED=true playwright test e2e/public-evidence-demo.spec.ts --project=chromium --grep @demo-enabled --workers=1 --retries=0",
     "test:e2e:proof-brief": "playwright test e2e/proof-brief.spec.ts --project=chromium --workers=1 --retries=0",
-    "test:e2e:recruiter-evidence": "playwright test e2e/recruiter-evidence.spec.ts --project=chromium --workers=1 --retries=0",
+    "test:e2e:recruiter-evidence": "playwright test e2e/recruiter-evidence.spec.ts e2e/recruiter-responsive-acceptance.spec.ts --project=chromium --workers=1 --retries=0",
     "test:e2e:forgot-password": "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @forgot-password --workers=1 --retries=0",
     "test:e2e:password-recovery": "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @password-recovery --workers=1 --retries=0",
     "test:block-5-3:fixtures": "node scripts/block-5-3-fixtures.mjs",
