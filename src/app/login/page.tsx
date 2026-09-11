@@ -49,7 +49,7 @@ export default function LoginPage() {
             href="/signup"
             className="font-semibold text-emerald-700 transition hover:text-emerald-900"
           >
-            {enabled ? "Create an account" : "View early access"}
+            {enabled ? "Create an account" : "Request access"}
           </Link>
         </p>
 
