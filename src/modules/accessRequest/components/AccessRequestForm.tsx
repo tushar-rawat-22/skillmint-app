@@ -7,7 +7,7 @@ import { premiumPrimaryCta } from "@/components/ui/premium";
 type SubmissionState =
   | { readonly kind: "idle" }
   | { readonly kind: "submitting" }
-  | { readonly kind: "success"; readonly duplicate: boolean }
+  | { readonly kind: "success" }
   | { readonly kind: "error"; readonly message: string };
 
 export default function AccessRequestForm() {
@@ -35,12 +35,8 @@ export default function AccessRequestForm() {
         | null;
 
       if (response.ok && body?.status === "received") {
-        setState({ kind: "success", duplicate: false });
+        setState({ kind: "success" });
         formElement.reset();
-        return;
-      }
-      if (response.ok && body?.status === "already_received") {
-        setState({ kind: "success", duplicate: true });
         return;
       }
       if (response.status === 429) {
@@ -131,9 +127,7 @@ export default function AccessRequestForm() {
       <div className="mt-4 min-h-12 text-sm leading-6" aria-live="polite">
         {state.kind === "success" ? (
           <p className="text-emerald-800">
-            {state.duplicate
-              ? "We already have this access request. No duplicate account or request was created."
-              : "Request received. SkillMint will review access separately; no account has been created yet."}
+            Request received. SkillMint will review access separately; no account has been created yet.
           </p>
         ) : state.kind === "error" ? (
           <p className="text-rose-700">{state.message}</p>
