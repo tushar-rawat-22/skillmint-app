@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   // A filled honeypot is acknowledged without persistence so simple bots cannot
   // use response differences to tune around the trap.
   if (payload.website.length > 0) {
-    return jsonResponse({ status: "received" }, 202);
+    return acceptedResponse();
   }
 
   const limiter = consumeRateLimit(clientKey(request));
@@ -71,7 +71,9 @@ export async function POST(request: Request) {
 
     if (existing.error) return jsonError("temporarily_unavailable", 503);
     if (Array.isArray(existing.data) && existing.data.length === 1) {
-      return jsonResponse({ status: "already_received" }, 200);
+      // Duplicate state is intentionally indistinguishable from a newly accepted
+      // request so the public endpoint cannot be used to enumerate email intent.
+      return acceptedResponse();
     }
 
     const created = await table
@@ -85,7 +87,7 @@ export async function POST(request: Request) {
 
     if (created.error) {
       if (created.error.code === "23505") {
-        return jsonResponse({ status: "already_received" }, 200);
+        return acceptedResponse();
       }
       return jsonError("temporarily_unavailable", 503);
     }
@@ -93,12 +95,16 @@ export async function POST(request: Request) {
       return jsonError("temporarily_unavailable", 503);
     }
 
-    return jsonResponse({ status: "received" }, 201);
+    return acceptedResponse();
   } catch (error) {
     return error instanceof SupabaseAdminConfigurationError
       ? jsonError("not_configured", 503)
       : jsonError("temporarily_unavailable", 503);
   }
+}
+
+function acceptedResponse() {
+  return jsonResponse({ status: "received" }, 202);
 }
 
 function parseAccessRequest(text: string): AccessRequest | null {
