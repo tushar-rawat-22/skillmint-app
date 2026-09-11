@@ -23,21 +23,18 @@ assert.match(
 );
 assert.match(
   recruiterPage,
-  /!publicSignupEnabled[\s\S]*ROUTES\.SIGNUP[\s\S]*Request recruiter access/u,
+  /publicSignupEnabled \? \([\s\S]*ROUTES\.SIGNUP[\s\S]*Create recruiter account[\s\S]*\) : \([\s\S]*ROUTES\.SIGNUP[\s\S]*Request recruiter access/u,
 );
 assert.match(
   recruiterPage,
   /SkillMint is live with controlled recruiter admission\./u,
 );
-assert.match(
-  recruiterPage,
-  /Existing recruiter login/u,
-);
+assert.match(recruiterPage, /Existing recruiter login/u);
 assert.doesNotMatch(recruiterPage, /pilot accounts|first beta/u);
 
 assert.match(
   candidatePage,
-  /!publicSignupEnabled[\s\S]*ROUTES\.SIGNUP[\s\S]*Request access/u,
+  /publicSignupEnabled \? \([\s\S]*ROUTES\.SIGNUP[\s\S]*Create candidate account[\s\S]*\) : \([\s\S]*ROUTES\.SIGNUP[\s\S]*Request access/u,
 );
 assert.match(
   candidatePage,
