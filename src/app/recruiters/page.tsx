@@ -40,39 +40,29 @@ export default function RecruitersPage() {
               human conversation.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {demoIsPublicEntry ? (
-                <Link href={ROUTES.RECRUITER_DEMO} className={premiumPrimaryCta}>
-                  Explore recruiter demo
-                </Link>
-              ) : publicSignupEnabled ? (
-                <Link href={ROUTES.RECRUITER_WORKSPACE} className={premiumPrimaryCta}>
-                  Open recruiter workspace
+              {publicSignupEnabled ? (
+                <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
+                  Create recruiter account
                 </Link>
               ) : (
-                <Link href={ROUTES.LOGIN} className={premiumPrimaryCta}>
-                  Existing recruiter login
+                <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
+                  Request recruiter access
                 </Link>
               )}
-              {publicDemoEnabled && !demoIsPublicEntry ? (
+              {demoIsPublicEntry ? (
                 <Link href={ROUTES.RECRUITER_DEMO} className={premiumSecondaryCta}>
                   Explore recruiter demo
                 </Link>
               ) : null}
-              {publicSignupEnabled || demoIsPublicEntry ? (
-                <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
-                  Existing user login
-                </Link>
-              ) : null}
-              {publicSignupEnabled ? (
-                <Link href={ROUTES.SIGNUP} className={premiumSecondaryCta}>
-                  Create recruiter account
-                </Link>
-              ) : null}
+              <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
+                Existing recruiter login
+              </Link>
             </div>
             {!publicSignupEnabled ? (
               <p className="mt-5 text-sm leading-6 text-slate-500">
-                Recruiter access is limited to approved pilot accounts. New
-                recruiter account creation is not active yet.
+                SkillMint is live with controlled recruiter admission. Request
+                recruiter access without candidate data or a resume; approved
+                users can log in to continue their evidence-review workspace.
               </p>
             ) : null}
           </section>
@@ -101,7 +91,7 @@ export default function RecruitersPage() {
               Candidate-authorized links come first.
             </h2>
             <p className="mt-4 max-w-4xl text-sm leading-6 text-amber-950">
-              The first beta will not offer a searchable candidate database or
+              SkillMint does not offer a searchable candidate database or
               pretend that an email domain proves employer identity. Recruiter
               access and any future trust state must be server-authorized and
               reviewed for fraud and spam risk.
