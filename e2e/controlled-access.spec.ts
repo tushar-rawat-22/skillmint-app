@@ -23,7 +23,7 @@ test(
         website: "",
       });
       await route.fulfill({
-        status: 201,
+        status: 202,
         contentType: "application/json",
         body: JSON.stringify({ status: "received" }),
       });
@@ -69,13 +69,13 @@ test(
 );
 
 test(
-  "@controlled-access @closed request-access duplicate state is recoverable",
+  "@controlled-access @closed duplicate request stays idempotent without exposing prior email intent",
   async ({ page }) => {
     await page.route("**/api/access-request", async (route) => {
       await route.fulfill({
-        status: 200,
+        status: 202,
         contentType: "application/json",
-        body: JSON.stringify({ status: "already_received" }),
+        body: JSON.stringify({ status: "received" }),
       });
     });
     await page.goto("/signup");
@@ -83,8 +83,9 @@ test(
     await page.getByLabel("Email").fill("recruiter@example.com");
     await page.getByRole("button", { name: "Request access" }).click();
     await expect(
-      page.getByText("No duplicate account or request was created", { exact: false }),
+      page.getByText("no account has been created yet", { exact: false }),
     ).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(/already have this access request|duplicate account|duplicate request/i);
   },
 );
 
