@@ -170,6 +170,40 @@ test(
 );
 
 test(
+  "@controlled-access @closed access-request API throttles repeated trusted attempts",
+  async ({ request }) => {
+    const headers = {
+      origin: APP_ORIGIN,
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/json",
+      "x-forwarded-for": "198.51.100.77",
+    };
+    const payload = JSON.stringify({
+      email: "rate-limit@example.com",
+      intent: "CANDIDATE",
+      website: "",
+    });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await request.post(`${APP_ORIGIN}/api/access-request`, {
+        headers,
+        data: payload,
+      });
+      expect(response.status()).not.toBe(429);
+    }
+
+    const limited = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers,
+      data: payload,
+    });
+    expect(limited.status()).toBe(429);
+    expect(Number(limited.headers()["retry-after"])).toBeGreaterThan(0);
+    expect(limited.headers()["cache-control"]).toContain("no-store");
+    await expect(limited.json()).resolves.toMatchObject({ code: "rate_limited" });
+  },
+);
+
+test(
   "@controlled-access @closed existing-user login remains available",
   async ({ page, provider, request }) => {
     await request.post(`${PROVIDER_ORIGIN}/__reset`);
