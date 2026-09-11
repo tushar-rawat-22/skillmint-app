@@ -33,8 +33,14 @@ assert.equal(record.source_path, sourcePath);
 assert.equal(record.migration_path, migrationPath);
 assert.equal(record.rollout_classification, "pending_account_persona_authority");
 assert.equal(record.sha256, crypto.createHash("sha256").update(migration).digest("hex"));
-assert.equal(manifest.generated_for.empty_isolated_project.apply_in_order.at(-1), "20260829001200");
-assert.equal(manifest.generated_for.production.pending_execution.at(-1), "20260829001200");
+assert.ok(
+  manifest.generated_for.empty_isolated_project.apply_in_order.includes("20260829001200"),
+  "V12 must remain in the isolated migration chain",
+);
+assert.ok(
+  manifest.generated_for.production.pending_execution.includes("20260829001200"),
+  "V12 must remain pending until direct Production migration-history evidence says otherwise",
+);
 
 assert.match(recruiterRoute, /const authorization = await getServerAuthorization\(\)/);
 assert.match(recruiterRoute, /authorization\.userId !== mutation\.expectedUserId/);

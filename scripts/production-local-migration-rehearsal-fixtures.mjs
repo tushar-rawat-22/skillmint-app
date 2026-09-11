@@ -30,11 +30,11 @@ equal(
   "rehearsal scenarios changed",
 );
 equal(BASELINE_VERSION, "20260723000200", "baseline is not exact V1+V2");
-equal(ORDERED_VERSIONS.length, 13, "migration chain length changed");
+equal(ORDERED_VERSIONS.length, 14, "migration chain length changed");
 equal(
   ORDERED_VERSIONS.at(-1),
-  "20260829001200",
-  "rehearsal no longer ends at V12",
+  "20260911001300",
+  "rehearsal no longer ends at V13",
 );
 equal(
   {

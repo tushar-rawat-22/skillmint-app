@@ -78,7 +78,7 @@ jobs:
       - name: Start isolated local Supabase
         run: supabase start
 
-      - name: Execute V1-V12 rehearsal
+      - name: Execute V1-V13 rehearsal
         run: node scripts/production-local-migration-rehearsal.mjs --execute
 
       - name: Verify bounded migration timing and lock recovery

@@ -9,8 +9,26 @@ import {
 } from "./support/runtime";
 
 test(
-  "@controlled-access @closed signup defaults closed without a provider request",
+  "@controlled-access @closed signup defaults closed with a request-access path and no provider signup",
   async ({ page, provider }) => {
+    await page.route("**/api/access-request", async (route) => {
+      const payload = route.request().postDataJSON() as {
+        email?: string;
+        intent?: string;
+        website?: string;
+      };
+      expect(payload).toEqual({
+        email: "candidate@example.com",
+        intent: "CANDIDATE",
+        website: "",
+      });
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({ status: "received" }),
+      });
+    });
+
     await page.goto("/signup");
 
     await expect(
@@ -19,18 +37,23 @@ test(
         name: "Account access is currently controlled",
       }),
     ).toBeVisible();
-    await expect(
-      page.getByText("SkillMint is live.", { exact: false }),
-    ).toBeVisible();
-    await expect(page.locator("form")).toHaveCount(0);
-    await expect(page.getByLabel("Email")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Request access" })).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Password")).toHaveCount(0);
+    await expect(page.getByLabel("Candidate")).toBeChecked();
+    await expect(page.getByLabel("Recruiter")).not.toBeChecked();
+    await expect(
+      page.getByText("no resume is required", { exact: false }),
+    ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Existing user login" }),
     ).toBeVisible();
+
+    await page.getByLabel("Email").fill("candidate@example.com");
+    await page.getByRole("button", { name: "Request access" }).click();
     await expect(
-      page.getByRole("button", { name: /join|apply|waitlist/i }),
-    ).toHaveCount(0);
+      page.getByText("no account has been created yet", { exact: false }),
+    ).toBeVisible();
     expect(provider.count("auth:signup")).toBe(0);
 
     const accessibility = await new AxeBuilder({ page })
@@ -42,6 +65,27 @@ test(
         violation.impact === "serious"
       ),
     ).toEqual([]);
+  },
+);
+
+test(
+  "@controlled-access @closed duplicate request stays idempotent without exposing prior email intent",
+  async ({ page }) => {
+    await page.route("**/api/access-request", async (route) => {
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({ status: "received" }),
+      });
+    });
+    await page.goto("/signup");
+    await page.getByLabel("Recruiter").check();
+    await page.getByLabel("Email").fill("recruiter@example.com");
+    await page.getByRole("button", { name: "Request access" }).click();
+    await expect(
+      page.getByText("no account has been created yet", { exact: false }),
+    ).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(/already have this access request|duplicate account|duplicate request/i);
   },
 );
 

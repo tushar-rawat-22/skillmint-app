@@ -45,6 +45,14 @@ const expected = [
     sha256: "2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507",
     rollout_classification: "pending_account_persona_authority",
   },
+  {
+    version: "20260911001300",
+    source_path: "supabase/schema_v13_access_requests.sql",
+    migration_path:
+      "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
+    sha256: "c35d9925a8861da4f20e1edd52d7b05e29d86dd924b73a32675d506555b87c19",
+    rollout_classification: "pending_access_requests",
+  },
 ];
 
 assert.deepEqual(

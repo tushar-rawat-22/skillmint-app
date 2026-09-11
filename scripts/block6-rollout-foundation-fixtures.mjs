@@ -85,6 +85,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v10_two_sided_beta_foundation.sql",
   "supabase/schema_v11_recruiter_evidence_review.sql",
   "supabase/schema_v12_account_persona_authority.sql",
+  "supabase/schema_v13_access_requests.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -98,6 +99,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260823001000_schema_v10_two_sided_beta_foundation.sql",
   "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
   "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
+  "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -194,6 +196,13 @@ const migrations = [
     hash: "2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507",
     classification: "pending_account_persona_authority",
   },
+  {
+    version: "20260911001300",
+    source: "supabase/schema_v13_access_requests.sql",
+    migration: "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
+    hash: "c35d9925a8861da4f20e1edd52d7b05e29d86dd924b73a32675d506555b87c19",
+    classification: "pending_access_requests",
+  },
 ];
 
 for (const item of migrations) {
@@ -210,7 +219,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered thirteen SQL files",
+  "migration directory must contain the exact ordered fourteen SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -243,7 +252,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 13, "manifest must contain thirteen migrations");
+equal(manifest.ordered_migrations.length, 14, "manifest must contain fourteen migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -312,6 +321,11 @@ equal(
   manifest.ordered_migrations[12].version,
   migrations[12].version,
   "account persona authority must follow recruiter evidence review",
+);
+equal(
+  manifest.ordered_migrations[13].version,
+  migrations[13].version,
+  "access requests must follow account persona authority",
 );
 
 const config = text("supabase/config.toml");
@@ -417,7 +431,6 @@ expectRefusal(
   "wrong_target_ref",
   "wrong target hash must fail",
 );
-
 const guardResult = await runGuard(["--inventory", "private.json", "--target", isolatedProject.name], {
   readInventory: async () => JSON.stringify({ projects: [isolatedProject] }),
   hashProjectRef: fixtureHasher,
