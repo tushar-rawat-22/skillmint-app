@@ -84,3 +84,29 @@ test("existing immutable personas reach their own workspace after login", async 
   await submitLogin(page, ACCOUNT_B);
   await expect(page).toHaveURL(/\/recruiters\/workspace$/);
 });
+
+test("immutable personas cannot render the other private workspace by direct navigation", async ({ page, request }) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  for (const [account, persona] of [
+    [ACCOUNT_A, "CANDIDATE"],
+    [ACCOUNT_B, "RECRUITER"],
+  ] as const) {
+    const response = await request.post(
+      `${PROVIDER_ORIGIN}/rest/v1/account_personas`,
+      { data: { user_id: account.id, persona } },
+    );
+    expect(response.ok()).toBeTruthy();
+  }
+
+  await submitLogin(page, ACCOUNT_A);
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/recruiters/workspace");
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toHaveCount(0);
+
+  await submitLogin(page, ACCOUNT_B);
+  await expect(page).toHaveURL(/\/recruiters\/workspace$/);
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/recruiters\/workspace$/);
+  await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toBeVisible();
+});
