@@ -3,6 +3,7 @@ import Link from "next/link";
 import { premiumPrimaryCta } from "@/components/ui/premium";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 import { getTrustedAppOrigin } from "@/lib/supabase/config";
+import AccessRequestForm from "@/modules/accessRequest/components/AccessRequestForm";
 import AuthForm from "@/modules/auth/components/AuthForm";
 import AuthPageShell from "@/modules/auth/components/AuthPageShell";
 
@@ -20,24 +21,26 @@ export default function SignupPage() {
         title="Account access is currently controlled"
         subtitle="SkillMint is live. New-account admission is deliberately paced while existing users can continue to log in."
       >
+        <AccessRequestForm />
+
         <section
           aria-labelledby="signup-closed-title"
-          className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950"
+          className="mt-8 border-t border-slate-200 pt-6"
         >
           <h2
             id="signup-closed-title"
-            className="text-2xl font-bold"
+            className="text-lg font-bold text-slate-950"
           >
-            Existing user?
+            Already have access?
           </h2>
 
-          <p className="mt-3 text-sm leading-6">
+          <p className="mt-2 text-sm leading-6 text-slate-600">
             Log in with your existing SkillMint account to continue.
           </p>
 
           <Link
             href="/login"
-            className={`${premiumPrimaryCta} mt-6 inline-flex`}
+            className={`${premiumPrimaryCta} mt-4 inline-flex`}
           >
             Existing user login
           </Link>
