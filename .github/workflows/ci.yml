@@ -89,6 +89,9 @@ jobs:
       - name: Run launch-hardening browser coverage
         run: npm run test:e2e:launch-hardening
 
+      - name: Run private session boundary coverage
+        run: npx playwright test e2e/session-boundary.spec.ts --project=chromium --workers=1 --retries=0
+
       - name: Run public launch discovery coverage
         run: npx playwright test e2e/public-launch-discovery.spec.ts --project=chromium --workers=1 --retries=0
 
