@@ -21,6 +21,7 @@ export const ORDERED_VERSIONS = [
   "20260823001100",
   "20260829001200",
   "20260911001300",
+  "20260912001400",
 ];
 export const LOCAL_DATABASE_CONFIG = Object.freeze({
   host: "127.0.0.1",
