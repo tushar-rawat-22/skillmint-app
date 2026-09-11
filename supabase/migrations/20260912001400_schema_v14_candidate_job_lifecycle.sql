@@ -50,26 +50,11 @@ create policy "Candidates can select their own job lifecycle" on public.candidat
 using (public.is_active_skillmint_user() and auth.uid() = user_id and exists (
   select 1 from public.account_personas where account_personas.user_id = auth.uid() and account_personas.persona = 'CANDIDATE'
 ));
-create policy "Candidates own inserted job lifecycle rows" on public.candidate_job_lifecycle for insert to authenticated
-with check (public.is_active_skillmint_user() and auth.uid() = user_id and exists (
-  select 1 from public.account_personas where account_personas.user_id = auth.uid() and account_personas.persona = 'CANDIDATE'
-));
-create policy "Candidates own updated job lifecycle rows" on public.candidate_job_lifecycle for update to authenticated
-using (public.is_active_skillmint_user() and auth.uid() = user_id and exists (
-  select 1 from public.account_personas where account_personas.user_id = auth.uid() and account_personas.persona = 'CANDIDATE'
-))
-with check (public.is_active_skillmint_user() and auth.uid() = user_id and exists (
-  select 1 from public.account_personas where account_personas.user_id = auth.uid() and account_personas.persona = 'CANDIDATE'
-));
-create policy "Candidates own deleted job lifecycle rows" on public.candidate_job_lifecycle for delete to authenticated
-using (public.is_active_skillmint_user() and auth.uid() = user_id and exists (
-  select 1 from public.account_personas where account_personas.user_id = auth.uid() and account_personas.persona = 'CANDIDATE'
-));
 
 create trigger set_candidate_job_lifecycle_updated_at before update on public.candidate_job_lifecycle
 for each row execute function public.set_updated_at();
 
-comment on table public.candidate_job_lifecycle is 'Candidate-owned job workflow state. Provider provenance is written only by trusted server code.';
+comment on table public.candidate_job_lifecycle is 'Candidate-owned job workflow state. Provider provenance and lifecycle mutations are written only by trusted server code.';
 comment on column public.candidate_job_lifecycle.provider_availability is 'Provider/source availability only; never an inferred employer outcome.';
 comment on column public.candidate_job_lifecycle.workflow_state is 'Candidate-recorded state only; never inferred from provider silence or employer behavior.';
 
