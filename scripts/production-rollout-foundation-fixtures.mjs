@@ -75,53 +75,36 @@ equal(
     "20260823001100",
     "20260829001200",
     "20260911001300",
+    "20260912001400",
   ],
   "migration order is not exact",
 );
 equal(
   manifest.generated_for.production.catalog_proof_required_before_marking_applied,
-  ["20260723000100", "20260723000200"],
-  "Production catalog baseline must be V1+V2 only",
+  [],
+  "Production catalog proof queue must be empty for verified V1-V13 history",
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  [
-    "20260723000300",
-    "20260723000400",
-    "20260723000500",
-    "20260723000600",
-    "20260723000700",
-    "20260727000750",
-    "20260727000800",
-    "20260730000900",
-    "20260823001000",
-    "20260823001100",
-    "20260829001200",
-    "20260911001300",
-  ],
+  ["20260912001400"],
   "Production pending order is not exact",
 );
 const expectedClassifications = new Map([
-  [
-    "20260723000100",
-    "existing_production_catalog_verified_history_unknown",
-  ],
-  [
-    "20260723000200",
-    "existing_production_catalog_verified_history_unknown",
-  ],
-  ["20260723000300", "pending_data_controls"],
-  ["20260723000400", "pending_account_deletion_security"],
-  ["20260723000500", "pending_analytics_ingestion"],
-  ["20260723000600", "pending_founder_aggregation"],
-  ["20260723000700", "pending_analytics_acl_hardening"],
-  ["20260727000750", "pending_lifecycle_function_acl_normalization"],
-  ["20260727000800", "pending_resume_workspace_phase_1a"],
-  ["20260730000900", "pending_public_function_acl_normalization"],
-  ["20260823001000", "pending_two_sided_beta_foundation"],
-  ["20260823001100", "pending_recruiter_evidence_review"],
-  ["20260829001200", "pending_account_persona_authority"],
-  ["20260911001300", "pending_access_requests"],
+  ["20260723000100", "existing_production_migration_history_verified"],
+  ["20260723000200", "existing_production_migration_history_verified"],
+  ["20260723000300", "existing_production_migration_history_verified"],
+  ["20260723000400", "existing_production_migration_history_verified"],
+  ["20260723000500", "existing_production_migration_history_verified"],
+  ["20260723000600", "existing_production_migration_history_verified"],
+  ["20260723000700", "existing_production_migration_history_verified"],
+  ["20260727000750", "existing_production_migration_history_verified"],
+  ["20260727000800", "existing_production_migration_history_verified"],
+  ["20260730000900", "existing_production_migration_history_verified"],
+  ["20260823001000", "existing_production_migration_history_verified"],
+  ["20260823001100", "existing_production_migration_history_verified"],
+  ["20260829001200", "existing_production_migration_history_verified"],
+  ["20260911001300", "existing_production_migration_history_verified"],
+  ["20260912001400", "pending_candidate_job_lifecycle"],
 ]);
 equal(
   new Map(
@@ -149,18 +132,15 @@ for (const pendingVersion of productionPendingVersions) {
     `${pendingVersion} cannot have an existing Production classification`,
   );
 }
-for (const baselineVersion of ["20260723000100", "20260723000200"]) {
+for (const appliedVersion of manifest.ordered_migrations.slice(0, -1).map((entry) => entry.version)) {
   check(
-    !productionPendingVersions.has(baselineVersion),
-    `${baselineVersion} cannot be pending execution`,
+    !productionPendingVersions.has(appliedVersion),
+    `${appliedVersion} cannot be pending execution`,
   );
-}
-for (const pendingVersion of ["20260723000300", "20260723000400"]) {
-  check(
-    !expectedClassifications
-      .get(pendingVersion)
-      .includes("existing_production"),
-    `${pendingVersion} cannot describe an existing Production baseline`,
+  equal(
+    expectedClassifications.get(appliedVersion),
+    "existing_production_migration_history_verified",
+    `${appliedVersion} must describe verified Production history`,
   );
 }
 
@@ -180,7 +160,7 @@ equal(
     source_path: sourcePath,
     migration_path: migrationPath,
     sha256: migrationHash,
-    rollout_classification: "pending_public_function_acl_normalization",
+    rollout_classification: "existing_production_migration_history_verified",
   },
   "V9 manifest entry changed",
 );
@@ -204,7 +184,7 @@ equal(
     source_path: v10SourcePath,
     migration_path: v10MigrationPath,
     sha256: v10Hash,
-    rollout_classification: "pending_two_sided_beta_foundation",
+    rollout_classification: "existing_production_migration_history_verified",
   },
   "V10 manifest entry changed",
 );
@@ -856,24 +836,14 @@ check(
 );
 const rolloutAuthority = text("docs/PRODUCTION_SCHEMA_ROLLOUT.md");
 for (const requiredText of [
-  "Current decision:** `SCHEMA ROLLOUT COMPLETE`",
-  "Production is reconciled through **V12**",
-  "no pending repository migration",
-  "zero synthetic users or application rows persisted",
-  "controlled beta remains closed",
-  "privacy/support contact remains the immediate **controlled-beta release blocker**",
-  "V1+V2",
-  "exact V1+V2 versioned catalog baseline plus the known untracked",
-  "history is **unknown**, not absent",
-  "table-grant visibility is **unknown**",
-  "function owner and event-trigger contract were not captured",
-  "function body",
+  "Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION`",
+  "Production migration history is reconciled through **V13**",
+  "20260911001300_schema_v13_access_requests.sql",
+  "20260912001400_schema_v14_candidate_job_lifecycle.sql",
+  "repository-pending and unapplied",
+  "launched with controlled account admission",
   "Backup files and user data must never enter Git",
-  "Provider signup is disabled and email login is enabled",
   "Analytics remains disabled",
-  "Public launch, invitations",
-  "Changing default function privileges was rejected",
-  "The expected write downtime is **unknown",
 ]) {
   check(
     rolloutAuthority.includes(requiredText),

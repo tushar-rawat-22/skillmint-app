@@ -281,7 +281,7 @@ test("ACL normalization and V8 source, migration, hashes, and frozen order prefi
       migration_path: aclNormalizationMigrationPath,
       sha256: ACL_NORMALIZATION_SHA256,
       rollout_classification:
-        "pending_lifecycle_function_acl_normalization",
+        "existing_production_migration_history_verified",
     },
   );
 
@@ -294,7 +294,7 @@ test("ACL normalization and V8 source, migration, hashes, and frozen order prefi
       source_path: v8SourcePath,
       migration_path: v8MigrationPath,
       sha256: V8_SHA256,
-      rollout_classification: "pending_resume_workspace_phase_1a",
+      rollout_classification: "existing_production_migration_history_verified",
     },
   );
 
@@ -308,7 +308,7 @@ test("ACL normalization and V8 source, migration, hashes, and frozen order prefi
     manifest.generated_for.production.pending_execution.filter((version) =>
       [aclNormalizationVersion, "20260727000800", "20260730000900"].includes(version)
     ),
-    [aclNormalizationVersion, "20260727000800", "20260730000900"],
+    [],
   );
 
   assert.equal(
