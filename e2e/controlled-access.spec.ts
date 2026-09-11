@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 import {
   ACCOUNT_A,
+  APP_ORIGIN,
   PROVIDER_ORIGIN,
   SYNTHETIC_PASSWORD,
   expect,
@@ -86,6 +87,85 @@ test(
       page.getByText("no account has been created yet", { exact: false }),
     ).toBeVisible();
     await expect(page.locator("body")).not.toContainText(/already have this access request|duplicate account|duplicate request/i);
+  },
+);
+
+test(
+  "@controlled-access @closed access-request API rejects missing and cross-site origins",
+  async ({ request }) => {
+    const payload = {
+      email: "candidate@example.com",
+      intent: "CANDIDATE",
+      website: "",
+    };
+
+    const missingOrigin = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      data: payload,
+    });
+    expect(missingOrigin.status()).toBe(403);
+    await expect(missingOrigin.json()).resolves.toMatchObject({ code: "invalid_origin" });
+
+    const crossSite = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: {
+        origin: "https://attacker.example",
+        "sec-fetch-site": "cross-site",
+      },
+      data: payload,
+    });
+    expect(crossSite.status()).toBe(403);
+    await expect(crossSite.json()).resolves.toMatchObject({ code: "invalid_origin" });
+  },
+);
+
+test(
+  "@controlled-access @closed access-request API rejects malformed, oversized, and structurally invalid bodies",
+  async ({ request }) => {
+    const trustedHeaders = {
+      origin: APP_ORIGIN,
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/json",
+    };
+
+    const malformed = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: trustedHeaders,
+      data: "{",
+    });
+    expect(malformed.status()).toBe(400);
+    await expect(malformed.json()).resolves.toMatchObject({ code: "invalid_request" });
+
+    const oversized = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: trustedHeaders,
+      data: JSON.stringify({
+        email: `${"a".repeat(800)}@example.com`,
+        intent: "CANDIDATE",
+        website: "",
+      }),
+    });
+    expect(oversized.status()).toBe(413);
+    await expect(oversized.json()).resolves.toMatchObject({ code: "request_too_large" });
+
+    const extraKey = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: trustedHeaders,
+      data: JSON.stringify({
+        email: "candidate@example.com",
+        intent: "CANDIDATE",
+        website: "",
+        role: "admin",
+      }),
+    });
+    expect(extraKey.status()).toBe(400);
+    await expect(extraKey.json()).resolves.toMatchObject({ code: "invalid_request" });
+
+    const invalidIntent = await request.post(`${APP_ORIGIN}/api/access-request`, {
+      headers: trustedHeaders,
+      data: JSON.stringify({
+        email: "candidate@example.com",
+        intent: "ADMIN",
+        website: "",
+      }),
+    });
+    expect(invalidIntent.status()).toBe(400);
+    await expect(invalidIntent.json()).resolves.toMatchObject({ code: "invalid_request" });
   },
 );
 
