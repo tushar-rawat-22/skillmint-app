@@ -12,7 +12,7 @@ const MIGRATION_PROCESS_TIMEOUT_MS = 120000;
 const V2_VERSION = "20260723000200";
 const V5_VERSION = "20260723000500";
 const V7_VERSION = "20260723000700";
-const FINAL_VERSION = "20260829001200";
+const FINAL_VERSION = "20260911001300";
 
 const DATABASE = Object.freeze({
   host: "127.0.0.1",
@@ -116,8 +116,8 @@ async function runTimedCleanMigration() {
     env: migrationEnv(),
   });
   const history = await migrationHistory();
-  assert.equal(history.at(-1), FINAL_VERSION, "clean migration rehearsal did not reach V12");
-  process.stdout.write(`CLEAN_V2_TO_V12_MIGRATION_MS=${elapsedMs}\n`);
+  assert.equal(history.at(-1), FINAL_VERSION, "clean migration rehearsal did not reach V13");
+  process.stdout.write(`CLEAN_V2_TO_V13_MIGRATION_MS=${elapsedMs}\n`);
 }
 
 async function runLockContentionMigration() {
@@ -158,7 +158,7 @@ async function runLockContentionMigration() {
     env: migrationEnv(),
   });
   const history = await migrationHistory();
-  assert.equal(history.at(-1), FINAL_VERSION, "migration did not recover to V12 after lock release");
+  assert.equal(history.at(-1), FINAL_VERSION, "migration did not recover to V13 after lock release");
   process.stdout.write(`POST_LOCK_RECOVERY_MIGRATION_MS=${elapsedMs}\n`);
 }
 
