@@ -26,15 +26,28 @@ const proofBriefs = new Map();
 const accountPersonas = new Map();
 const recruiterRoleMaps = new Map();
 const candidateEvidenceReviews = [];
+const accessRequests = new Map();
 let proofSourceMode = "normal";
 let sharedProofBriefDisabled = false;
+let accessRequestMode = "normal";
 
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${HOST}:${PORT}`);
 
-  const isControlRequest = ["/health", "/__reset", "/__requests", "/__proof-brief", "/__proof-source-mode", "/__seed-shared-proof-brief", "/__seed-recruiter-context", "/__revoke-shared-proof-brief", "/__replace-shared-proof-brief", "/__candidate-reviews"].includes(
-    url.pathname,
-  );
+  const isControlRequest = [
+    "/health",
+    "/__reset",
+    "/__requests",
+    "/__proof-brief",
+    "/__proof-source-mode",
+    "/__seed-shared-proof-brief",
+    "/__seed-recruiter-context",
+    "/__revoke-shared-proof-brief",
+    "/__replace-shared-proof-brief",
+    "/__candidate-reviews",
+    "/__access-requests",
+    "/__access-request-mode",
+  ].includes(url.pathname);
   if (!isControlRequest) {
     applicationRequests += 1;
   }
@@ -56,8 +69,10 @@ const server = http.createServer(async (request, response) => {
     accountPersonas.clear();
     recruiterRoleMaps.clear();
     candidateEvidenceReviews.length = 0;
+    accessRequests.clear();
     proofSourceMode = "normal";
     sharedProofBriefDisabled = false;
+    accessRequestMode = "normal";
     send(response, 200, { ok: true });
     return;
   }
@@ -73,8 +88,24 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === "POST" && url.pathname === "/__access-request-mode") {
+    const body = await readJsonBody(request);
+    if (!body || !["normal", "reject"].includes(body.mode)) {
+      send(response, 400, { message: "Invalid synthetic access-request mode" });
+      return;
+    }
+    accessRequestMode = body.mode;
+    send(response, 200, { ok: true });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/__requests") {
     send(response, 200, { applicationRequests, authUserRequests });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/__access-requests") {
+    send(response, 200, [...accessRequests.values()]);
     return;
   }
 
@@ -209,6 +240,46 @@ const server = http.createServer(async (request, response) => {
         : [],
     );
     return;
+  }
+
+  if (url.pathname === "/rest/v1/access_requests") {
+    if (accessRequestMode === "reject") {
+      send(response, 503, {
+        code: "SYNTHETIC_PROVIDER_FAILURE",
+        message: "RAW_SYNTHETIC_ACCESS_PROVIDER_SECRET",
+      });
+      return;
+    }
+
+    if (request.method === "GET") {
+      const requestKey = postgrestEq(url, "request_key");
+      const row = requestKey ? accessRequests.get(requestKey) : null;
+      send(response, 200, row ? [{ id: row.id, status: row.status }] : []);
+      return;
+    }
+
+    if (request.method === "POST") {
+      const body = await readJsonBody(request);
+      if (accessRequests.has(body.request_key)) {
+        send(response, 409, {
+          code: "23505",
+          message: "Synthetic duplicate access request",
+        });
+        return;
+      }
+      const row = {
+        id: `abababab-abab-4bab-8bab-${String(accessRequests.size + 1).padStart(12, "0")}`,
+        email: body.email,
+        intent: body.intent,
+        request_key: body.request_key,
+        status: "PENDING",
+        created_at: CREATED_AT,
+        updated_at: CREATED_AT,
+      };
+      accessRequests.set(row.request_key, row);
+      send(response, 201, [{ id: row.id, status: row.status }]);
+      return;
+    }
   }
 
   if (url.pathname === "/rest/v1/proof_briefs") {
