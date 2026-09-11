@@ -1,3 +1,5 @@
+import type { APIRequestContext } from "@playwright/test";
+
 import {
   ACCOUNT_A,
   PROVIDER_ORIGIN,
@@ -8,7 +10,7 @@ import {
   test,
 } from "./support/runtime";
 
-async function seedCandidatePersona(request: Parameters<typeof test>[0] extends never ? never : any) {
+async function seedCandidatePersona(request: APIRequestContext) {
   const reset = await request.post(`${PROVIDER_ORIGIN}/__reset`);
   expect(reset.ok()).toBeTruthy();
 
