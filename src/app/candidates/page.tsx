@@ -47,25 +47,29 @@ export default function CandidatesPage() {
               evidence for a later analysis.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
+              {publicSignupEnabled ? (
+                <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
+                  Create candidate account
+                </Link>
+              ) : (
+                <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
+                  Request access
+                </Link>
+              )}
               {publicDemoEnabled ? (
-                <Link href={ROUTES.DEMO} className={premiumPrimaryCta}>
+                <Link href={ROUTES.DEMO} className={premiumSecondaryCta}>
                   Explore candidate demo
                 </Link>
               ) : null}
               <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
                 Existing user login
               </Link>
-              {publicSignupEnabled ? (
-                <Link href={ROUTES.SIGNUP} className={premiumSecondaryCta}>
-                  Create candidate account
-                </Link>
-              ) : null}
             </div>
             {!publicSignupEnabled ? (
               <p className="mt-5 text-sm leading-6 text-slate-500">
-                Account creation is intentionally invite-only during the
-                controlled beta. Invited candidates can continue to log in;
-                there is no public signup or waitlist form.
+                SkillMint is live with controlled account admission. Request
+                candidate access without uploading a resume; approved users can
+                log in to continue their workspace.
               </p>
             ) : null}
           </section>
