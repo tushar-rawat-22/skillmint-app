@@ -1,0 +1,236 @@
+name: PR143 contract reconciliation
+
+on:
+  push:
+    branches:
+      - product/candidate-job-lifecycle-foundation
+    paths:
+      - ".github/workflows/pr143-contract-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: product/candidate-job-lifecycle-foundation
+          fetch-depth: 0
+
+      - name: Patch only stale V14 rollout contracts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          ROOT = Path('.')
+
+          def read(path):
+              return (ROOT / path).read_text()
+
+          def write(path, text):
+              (ROOT / path).write_text(text)
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          # Resume Workspace fixture: historical migration bytes remain frozen, but rollout
+          # classifications and Production pending state must match verified V1-V13 history.
+          path = 'scripts/resume-workspace-phase-1a-fixtures.mjs'
+          text = read(path)
+          text = replace_once(
+              text,
+              'rollout_classification:\n        "pending_lifecycle_function_acl_normalization",',
+              'rollout_classification:\n        "existing_production_migration_history_verified",',
+              'V7.1 rollout classification',
+          )
+          text = replace_once(
+              text,
+              'rollout_classification: "pending_resume_workspace_phase_1a",',
+              'rollout_classification: "existing_production_migration_history_verified",',
+              'V8 rollout classification',
+          )
+          text = replace_once(
+              text,
+              '    [aclNormalizationVersion, "20260727000800", "20260730000900"],\n  );',
+              '    [],\n  );',
+              'resume workspace Production pending expectation',
+          )
+          write(path, text)
+
+          # Production rollout fixture: reconcile only migration-history assertions to the
+          # connected Production truth (V1-V13 applied, V14 pending) and current authority text.
+          path = 'scripts/production-rollout-foundation-fixtures.mjs'
+          text = read(path)
+          text = replace_once(
+              text,
+              '    "20260911001300",\n  ],\n  "migration order is not exact",',
+              '    "20260911001300",\n    "20260912001400",\n  ],\n  "migration order is not exact",',
+              'V1-V14 migration order',
+          )
+          text = replace_once(
+              text,
+              '  ["20260723000100", "20260723000200"],\n  "Production catalog baseline must be V1+V2 only",',
+              '  [],\n  "Production catalog proof queue must be empty for verified V1-V13 history",',
+              'catalog proof expectation',
+          )
+          pending_pattern = re.compile(
+              r'equal\(\n  manifest\.generated_for\.production\.pending_execution,\n  \[\n.*?\n  \],\n  "Production pending order is not exact",\n\);',
+              re.S,
+          )
+          replacement = '''equal(\n  manifest.generated_for.production.pending_execution,\n  ["20260912001400"],\n  "Production pending order is not exact",\n);'''
+          text, count = pending_pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'pending execution block: expected 1 match, found {count}')
+
+          class_pattern = re.compile(
+              r'const expectedClassifications = new Map\(\[\n.*?\n\]\);',
+              re.S,
+          )
+          applied = [
+              '20260723000100','20260723000200','20260723000300','20260723000400',
+              '20260723000500','20260723000600','20260723000700','20260727000750',
+              '20260727000800','20260730000900','20260823001000','20260823001100',
+              '20260829001200','20260911001300',
+          ]
+          entries = '\n'.join(
+              f'  ["{version}", "existing_production_migration_history_verified"],'
+              for version in applied
+          )
+          new_class_block = (
+              'const expectedClassifications = new Map([\n'
+              + entries
+              + '\n  ["20260912001400", "pending_candidate_job_lifecycle"],\n]);'
+          )
+          text, count = class_pattern.subn(new_class_block, text, count=1)
+          if count != 1:
+              raise SystemExit(f'classification map: expected 1 match, found {count}')
+
+          old_loops = '''for (const baselineVersion of ["20260723000100", "20260723000200"]) {\n  check(\n    !productionPendingVersions.has(baselineVersion),\n    `${baselineVersion} cannot be pending execution`,\n  );\n}\nfor (const pendingVersion of ["20260723000300", "20260723000400"]) {\n  check(\n    !expectedClassifications\n      .get(pendingVersion)\n      .includes("existing_production"),\n    `${pendingVersion} cannot describe an existing Production baseline`,\n  );\n}\n'''
+          new_loops = '''for (const appliedVersion of manifest.ordered_migrations.slice(0, -1).map((entry) => entry.version)) {\n  check(\n    !productionPendingVersions.has(appliedVersion),\n    `${appliedVersion} cannot be pending execution`,\n  );\n  equal(\n    expectedClassifications.get(appliedVersion),\n    "existing_production_migration_history_verified",\n    `${appliedVersion} must describe verified Production history`,\n  );\n}\n'''
+          text = replace_once(text, old_loops, new_loops, 'applied migration assertions')
+
+          stale_classes = [
+              'pending_data_controls',
+              'pending_account_deletion_security',
+              'pending_analytics_ingestion',
+              'pending_founder_aggregation',
+              'pending_analytics_acl_hardening',
+              'pending_lifecycle_function_acl_normalization',
+              'pending_resume_workspace_phase_1a',
+              'pending_public_function_acl_normalization',
+              'pending_two_sided_beta_foundation',
+              'pending_recruiter_evidence_review',
+              'pending_account_persona_authority',
+              'pending_access_requests',
+          ]
+          for stale in stale_classes:
+              text = text.replace(f'"{stale}"', '"existing_production_migration_history_verified"')
+
+          doc_pattern = re.compile(
+              r'const rolloutAuthority = text\("docs/PRODUCTION_SCHEMA_ROLLOUT\.md"\);\nfor \(const requiredText of \[\n.*?\n\]\) \{',
+              re.S,
+          )
+          new_doc_check = '''const rolloutAuthority = text("docs/PRODUCTION_SCHEMA_ROLLOUT.md");\nfor (const requiredText of [\n  "Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION`",\n  "Production migration history is reconciled through **V13**",\n  "20260911001300_schema_v13_access_requests.sql",\n  "20260912001400_schema_v14_candidate_job_lifecycle.sql",\n  "repository-pending and unapplied",\n  "launched with controlled account admission",\n  "Backup files and user data must never enter Git",\n  "Analytics remains disabled",\n]) {'''
+          text, count = doc_pattern.subn(new_doc_check, text, count=1)
+          if count != 1:
+              raise SystemExit(f'rollout authority fixture: expected 1 match, found {count}')
+          write(path, text)
+
+          # Current rollout authority: preserve dated execution/recovery history, but repair the
+          # current-state sections that would otherwise contradict live V13 / pending V14 truth.
+          path = 'docs/PRODUCTION_SCHEMA_ROLLOUT.md'
+          text = read(path)
+          text = replace_once(
+              text,
+              '**Current decision:** `SCHEMA ROLLOUT COMPLETE` — exact V10 → V11 → V12 Production history and postflight verified; controlled beta remains closed',
+              '**Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION` — Production history is verified through V13; V14 is repository-pending and unapplied; SkillMint is launched with controlled account admission',
+              'current rollout decision',
+          )
+          text = replace_once(
+              text,
+              'This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize signup/invitations, analytics activation, hosted Auth changes, SMTP, domains, billing, or public beta release.',
+              'This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize V14 Production execution, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.',
+              'rollout authority scope',
+          )
+          text = replace_once(
+              text,
+              'Fresh connected inspection on September 2, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and migration history is exactly:',
+              'Fresh connected inspection on September 12, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and Production migration history is exactly:',
+              'connected evidence date',
+          )
+          text = replace_once(
+              text,
+              '13. `20260829001200`\n\nProduction is reconciled through **V12**. The exact repository migrations applied during the September 2 maintenance window were:',
+              '13. `20260829001200`\n14. `20260911001300`\n\nProduction migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V14 exists only in this review branch and remains unapplied:',
+              'V13 history and current pending state',
+          )
+          text = replace_once(
+              text,
+              '- `20260829001200_schema_v12_account_persona_authority.sql`\n\nThe same live lineage now contains eleven ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, and `candidate_evidence_reviews`.',
+              '- `20260829001200_schema_v12_account_persona_authority.sql`\n- `20260911001300_schema_v13_access_requests.sql`\n- `20260912001400_schema_v14_candidate_job_lifecycle.sql` — repository-pending and unapplied\n\nThe same live lineage now contains twelve ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, and `access_requests`.',
+              'V13/V14 migration list and live table count',
+          )
+          text = replace_once(
+              text,
+              'Its older `generated_for.production` classification text is stale where it still describes V3–V9 as pending or Production history as unknown; connected Production evidence plus this authority govern applied/pending state until that manifest metadata is deliberately reconciled with its fixtures.',
+              'Its `generated_for.production` metadata is reconciled to connected Production history: V1–V13 are verified as applied and V14 is the only pending repository migration.',
+              'manifest source-of-truth text',
+          )
+          text = replace_once(
+              text,
+              '13. `20260829001200_schema_v12_account_persona_authority.sql`\n\nProduction is reconciled through V12, with **no pending repository migration** as of the September 2 postflight. Never edit an applied migration in place. Any future schema change requires a new forward migration and a fresh rollout authority.',
+              '13. `20260829001200_schema_v12_account_persona_authority.sql`\n14. `20260911001300_schema_v13_access_requests.sql`\n15. `20260912001400_schema_v14_candidate_job_lifecycle.sql`\n\nProduction is reconciled through V13. V14 is the only pending repository migration and is **not authorized for Production execution by this PR**. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.',
+              'manifest chain and V14 gate',
+          )
+          text = replace_once(
+              text,
+              '| Migration history | Exact connected history through V12 | **PASSED**; no pending repository version |',
+              '| Migration history | Exact connected Production history through V13; V14 repository-pending | **PASSED for current Production**; V14 remains review-only |',
+              'migration history gate row',
+          )
+          text = replace_once(
+              text,
+              '| Isolated migration rehearsal | V1–V12 transition rehearsal passed | **PASSED**; repeat only after migration/harness changes or material drift |',
+              '| Isolated migration rehearsal | V1–V13 released lineage previously passed; V1–V14 rehearsal is required for this changed migration set | **PENDING for V14**; no Production execution until green |',
+              'rehearsal gate row',
+          )
+          write(path, text)
+
+          # Workflow label must describe the migration set it actually executes from the manifest.
+          path = '.github/workflows/production-migration-rehearsal.yml'
+          text = read(path)
+          text = replace_once(text, '- name: Execute V1-V13 rehearsal', '- name: Execute V1-V14 rehearsal', 'rehearsal step name')
+          write(path, text)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify corrected fixtures before pushing
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/resume-workspace-phase-1a-fixtures.mjs
+          node scripts/production-rollout-foundation-fixtures.mjs
+          git diff --check
+
+      - name: Commit bounded reconciliation and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/pr143-contract-reconcile.yml
+          git config user.name "SkillMint Unified Autopilot"
+          git config user.email "151115438+tushar-rawat-22@users.noreply.github.com"
+          git add scripts/resume-workspace-phase-1a-fixtures.mjs scripts/production-rollout-foundation-fixtures.mjs docs/PRODUCTION_SCHEMA_ROLLOUT.md .github/workflows/production-migration-rehearsal.yml .github/workflows/pr143-contract-reconcile.yml
+          git diff --cached --check
+          git commit -m "Reconcile V14 rollout contracts with Production history"
+          git push origin HEAD:product/candidate-job-lifecycle-foundation
