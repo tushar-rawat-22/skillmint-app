@@ -74,6 +74,7 @@ equal(
     "20260823001000",
     "20260823001100",
     "20260829001200",
+    "20260911001300",
   ],
   "migration order is not exact",
 );
@@ -96,6 +97,7 @@ equal(
     "20260823001000",
     "20260823001100",
     "20260829001200",
+    "20260911001300",
   ],
   "Production pending order is not exact",
 );
@@ -119,6 +121,7 @@ const expectedClassifications = new Map([
   ["20260823001000", "pending_two_sided_beta_foundation"],
   ["20260823001100", "pending_recruiter_evidence_review"],
   ["20260829001200", "pending_account_persona_authority"],
+  ["20260911001300", "pending_access_requests"],
 ]);
 equal(
   new Map(
