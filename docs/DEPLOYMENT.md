@@ -198,11 +198,33 @@ configuration structure.
 The extraction route rejects explicit cross-origin browser requests using the
 canonical request URL and a strictly parsed ordinary Host fallback. Forwarded
 host values are not origin authority. This is browser-request hardening, not
-authentication, authorization, or a WAF. The repository does not provide
-durable distributed rate limiting or a Production WAF; hosted WAF and
-rate-limit controls remain separately gated and unconfigured. Password
-recovery can pass an opaque CAPTCHA token when a future verified integration
-provides one; no CAPTCHA provider is configured or active.
+authentication or authorization.
+
+The canonical Production host has a zero-cash Vercel Hobby firewall rule named
+`Request Access — 5 per 10m per IP` (`rule_request_access_5_per_10m_per_ip_SWtzHv`).
+It matches only Production requests whose host is exactly
+`skillmint-app-three.vercel.app`, method is exactly `POST`, and path is exactly
+`/api/access-request`. The rule applies a fixed-window limit of five requests
+per 600 seconds per IP and returns HTTP 429 over the limit. Preview and unrelated
+routes are excluded. Live verification on September 12, 2026 confirmed the
+first five invalid, non-personal-data probes reached application validation,
+the sixth received the provider 429, no `access_requests` row was created, and
+application validation resumed after the actual window expired.
+
+This is a coarse provider abuse boundary, not a globally exact counter: Vercel
+counts by client IP and region. The application-level in-process limiter remains
+as secondary defense in depth alongside same-origin enforcement, bounded body
+handling, exact validation, the honeypot, durable duplicate suppression, and
+sanitized failures. The verified Hobby configuration required no plan upgrade,
+card, billing activation, paid service, or spend-capable usage model.
+
+To roll back, stage a disable with
+`vercel firewall rules disable "Request Access — 5 per 10m per IP" --yes`,
+inspect `vercel firewall diff`, and have the operator publish with
+`vercel firewall publish --yes`. The equivalent dashboard action is to disable
+the named rule, inspect the pending change, and publish it. Password recovery
+can pass an opaque CAPTCHA token when a future verified integration provides
+one; no CAPTCHA provider is configured or active.
 
 ## Production smoke checklist
 

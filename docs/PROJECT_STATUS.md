@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** August 23, 2026
+**Last updated:** September 12, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -151,7 +151,7 @@ reads are denied; candidate feedback survives removal of the recruiter-owned
 map without retaining recruiter identity; and Proof Brief deletion cascades the
 candidate review. This remains isolated evidence, not a Production schema claim.
 
-Analytics collection remains disabled. The Phase 2 application deployment did not perform a Production database rollout, enable analytics, or satisfy the broader Production-readiness gate. Persistent Production founder configuration, Vercel WAF configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; that earlier environment-separation action did not redeploy the then-live application or contact the Production Supabase database.
+Analytics collection remains disabled. The Phase 2 application deployment did not perform a Production database rollout, enable analytics, or satisfy the broader Production-readiness gate. The bounded Request Access distributed rate-limit gate closed on September 12, 2026: Vercel Hobby now applies one zero-cash, Production-host-only firewall rule to `POST /api/access-request`, using a coarse per-IP, per-region fixed window of five requests per 600 seconds with HTTP 429 over limit. The application in-process limiter remains secondary defense in depth; Preview and unrelated routes are excluded. Live invalid-payload verification produced no durable access-request row and recovered after the actual window. Broader Production founder configuration, retention scheduling, legal approval, and operational ownership approval remain deferred. Environment separation was independently verified on July 27, 2026: Preview is staging-scoped and Production is Production-scoped. Vercel Production environment-variable records were re-scoped to Production-only while preserving the Production target; that earlier environment-separation action did not redeploy the then-live application or contact the Production Supabase database.
 
 The supplied fresh Preview verification found zero Production-reference hits. Counts describe events, never people; there is no identity, unique-person, active-user, retention, cohort, or session metric contract. See [Version 2 Transition Gate](V2_TRANSITION_GATE.md), [Privacy-safe Analytics Collection](ANALYTICS.md), and the [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md).
 
