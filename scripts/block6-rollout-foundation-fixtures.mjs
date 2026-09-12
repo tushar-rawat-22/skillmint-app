@@ -303,7 +303,7 @@ equal(manifest.ordered_migrations[14].version, migrations[14].version, "candidat
 const config = text("supabase/config.toml");
 check(config.startsWith("# Generated with Supabase CLI 2.109.1 for local and migration tooling."), "config provenance missing");
 check(/^project_id = "skillmint-app"$/m.test(config), "local config project_id changed");
-check(config.includes("https://supabase.com/docs/guides/local-development/cli/config"), "config documentation provenance is missing");
+check(/^# https:\/\/supabase\.com\/docs\/guides\/local-development\/cli\/config$/m.test(config), "config documentation provenance is missing");
 const seedHeaders = [...config.matchAll(/^\[db\.seed\]\s*$/gm)];
 equal(seedHeaders.length, 1, "db.seed must exist exactly once");
 const seedRemainder = config.slice(seedHeaders[0].index + seedHeaders[0][0].length);
