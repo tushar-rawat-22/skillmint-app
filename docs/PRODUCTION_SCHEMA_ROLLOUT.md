@@ -23,7 +23,7 @@ Fresh connected inspection on September 12, 2026 reconfirmed the canonical Supab
 13. `20260829001200`
 14. `20260911001300`
 
-Production migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V14 exists only in this review branch and remains unapplied:
+Production migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V14 exists only in the repository and remains unapplied:
 
 - `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 - `20260823001100_schema_v11_recruiter_evidence_review.sql`
@@ -77,7 +77,7 @@ The repository manifest currently defines this exact ordered chain:
 14. `20260911001300_schema_v13_access_requests.sql`
 15. `20260912001400_schema_v14_candidate_job_lifecycle.sql`
 
-Production is reconciled through V13. V14 is the only pending repository migration and is **not authorized for Production execution by this PR**. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.
+Production is reconciled through V13. V14 is the only pending repository migration and is **not authorized for Production execution by the merged schema-foundation work**. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately controlled.
 
@@ -107,7 +107,7 @@ On September 1, 2026, a real-host recovery session against exact application mai
 
 For the exact recovery inputs and unchanged V10–V12 artifacts, **backup → isolated restore/recovery is PASSED**. Do not repeat it without changed inputs, fresh drift, or a concrete defect.
 
-This recovery result does not authorize beta release. Public privacy/support contact monitoring and other release-only gates remain separate from schema execution.
+This recovery result did not by itself authorize the later public launch. Public launch status remains separate from schema execution and is now governed by #130's launched-with-controlled-throughput acceptance.
 
 ## Production rollout gate result
 
@@ -118,7 +118,7 @@ This recovery result does not authorize beta release. Public privacy/support con
 | Public table ACLs | Direct and effective RLS/column/function privilege probes | **PASSED**; no anonymous table access or authenticated write path to the four new tables |
 | `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | **PASSED** |
 | Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | **PASSED** |
-| Isolated migration rehearsal | V1–V13 released lineage previously passed; V1–V14 rehearsal is required for this changed migration set | **PENDING for V14**; no Production execution until green |
+| Isolated migration rehearsal | V1–V14 isolated rehearsal passed on PR #143 exact head `890269e2ef8124a2b4f6ab851466bdc443d109e2` | **PASSED for the current V14 artifact review**; no Production execution authorization |
 | Lock/timing rehearsal | Bounded lock failure/recovery passed; real-host representative V10→V12 completed in 2.66s | **PASSED**; Production statements ran under the reviewed lock and statement limits |
 | Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for the unchanged evidence set** |
 | Persona authority | Authenticated persona writes absent; service assignment preserved; identity immutable | **PASSED** |
@@ -168,13 +168,13 @@ Before the first Production write, record the maintenance-window rollback contra
 - **Rollback:** stop forward writes immediately and use the verified recovery artifact/isolated-restore procedure when state compatibility requires database restoration. An older Vercel deployment does not reverse schema.
 - **Caveat:** once application/user writes rely on V10–V12, code rollback alone is not state rollback. Recovery decisions must account for data created under the new schema.
 
-## Production execution and postflight rules
+## Historical V10→V12 Production execution and postflight rules
 
-Founder authorization dated September 1, 2026 permits the reviewed V10 → V11 → V12 Production rollout once all documented execution gates above are freshly green. Do not request routine migration permission again when those gates pass.
+Founder authorization dated September 1, 2026 permitted the reviewed V10 → V11 → V12 Production rollout once all documented execution gates were freshly green. The rules below are retained as the historical execution contract for that completed rollout.
 
-Before each migration, verify target project, current migration history, and exact artifact hash. Apply only V10 → V11 → V12 in order and stop immediately on any anomaly.
+Before each migration, the operator verified target project, current migration history, and exact artifact hash, applied only V10 → V11 → V12 in order, and stopped on any anomaly.
 
-After V12, require:
+After V12, the historical postflight required:
 
 - exact migration history through `20260829001200` with no unexpected versions;
 - expected new tables, constraints, indexes, triggers, functions and owners;
@@ -189,7 +189,7 @@ After V12, require:
 - analytics still disabled; and
 - no unexpected pending migration versions.
 
-Controlled beta remains **CLOSED** after schema postflight until release-only gates, including a verified durably monitored privacy/support contact, are satisfied. The schema rollout and beta release are separate decisions.
+At that time, controlled beta remained **CLOSED** after schema postflight until the then-current release-only gates were satisfied. That dated release state is historical; it does not override the current launched-with-controlled-account-admission decision at the top of this authority.
 
 ### September 2, 2026 execution record
 
@@ -199,10 +199,10 @@ Controlled beta remains **CLOSED** after schema postflight until release-only ga
 - Exact postflight history ends at `20260829001200`; all expected tables, functions, triggers, constraints, owners, RLS, ACL, Auth, and deletion boundaries matched the reviewed contract.
 - A rollback-bound Production behavioral probe passed Candidate/Recruiter isolation, persona immutability, Proof Brief publish/revoke, recruiter review, candidate feedback, negative cross-owner access, and deletion relationships. The transaction rolled back and a separate count check confirmed zero persistent synthetic users or rows.
 - Final CLI history matched all thirteen repository versions and the final dry run reported the remote database up to date.
-- Signup remains closed, email login remains enabled, analytics remains disabled, and controlled beta remains closed.
+- Signup remained closed, email login remained enabled, analytics remained disabled, and controlled beta remained closed at that September 2 checkpoint.
 
 ## Next gate
 
-The V10→V12 schema gate is complete. Do not repeat the recovery drill or replay these migrations while the verified inputs remain unchanged.
+The V10→V12 schema gate is complete, and the V1→V14 isolated rehearsal is green. Do not repeat those proofs while their verified inputs remain unchanged.
 
-The public privacy/support contact remains the immediate **controlled-beta release blocker**, not a database migration issue. Do not invent an address and do not open invitations merely because schema postflight succeeded.
+V14 remains **review-only and unapplied to Production**. Its next schema gate is an explicitly authorized exact-version Production execution through the accepted pinned-CLI transport, followed by fresh postflight. This schema gate does not control whether the public site is launched: current public launch quality remains governed by #130, with controlled account admission kept separate from schema rollout and ungated provisioning.
