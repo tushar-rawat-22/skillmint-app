@@ -1,12 +1,12 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `SCHEMA ROLLOUT COMPLETE` — exact V10 → V11 → V12 Production history and postflight verified; controlled beta remains closed
+**Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION` — Production history is verified through V13; V14 is repository-pending and unapplied; SkillMint is launched with controlled account admission
 
-This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize signup/invitations, analytics activation, hosted Auth changes, SMTP, domains, billing, or public beta release.
+This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize V14 Production execution, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
 
 ## Current connected Production evidence
 
-Fresh connected inspection on September 2, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and migration history is exactly:
+Fresh connected inspection on September 12, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and Production migration history is exactly:
 
 1. `20260723000100`
 2. `20260723000200`
@@ -21,14 +21,17 @@ Fresh connected inspection on September 2, 2026 reconfirmed the canonical Supaba
 11. `20260823001000`
 12. `20260823001100`
 13. `20260829001200`
+14. `20260911001300`
 
-Production is reconciled through **V12**. The exact repository migrations applied during the September 2 maintenance window were:
+Production migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V14 exists only in this review branch and remains unapplied:
 
 - `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 - `20260823001100_schema_v11_recruiter_evidence_review.sql`
 - `20260829001200_schema_v12_account_persona_authority.sql`
+- `20260911001300_schema_v13_access_requests.sql`
+- `20260912001400_schema_v14_candidate_job_lifecycle.sql` — repository-pending and unapplied
 
-The same live lineage now contains eleven ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, and `candidate_evidence_reviews`. Every ordinary `public` table was verified as owned by `postgres` with RLS enabled. `analytics_events` remains force-RLS with no authenticated table access.
+The same live lineage now contains twelve ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, and `access_requests`. Every ordinary `public` table was verified as owned by `postgres` with RLS enabled. `analytics_events` remains force-RLS with no authenticated table access.
 
 The live `public.rls_auto_enable()` contract remains present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog`. Its attached enabled event trigger is `ensure_rls`, on `ddl_command_end`, for `CREATE TABLE`, `CREATE TABLE AS`, and `SELECT INTO`. That shape matches the repository V9 contract.
 
@@ -52,7 +55,7 @@ No backup contents, credentials, row contents, or user identifiers were recorded
 
 ## Source of truth
 
-Before rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest is authoritative for migration file order, paths, and hashes. Its older `generated_for.production` classification text is stale where it still describes V3–V9 as pending or Production history as unknown; connected Production evidence plus this authority govern applied/pending state until that manifest metadata is deliberately reconciled with its fixtures.
+Before rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest is authoritative for migration file order, paths, and hashes. Its `generated_for.production` metadata is reconciled to connected Production history: V1–V13 are verified as applied and V14 is the only pending repository migration.
 
 If migration order/hashes, connected Production evidence, and this authority disagree, stop before any Production write.
 
@@ -71,8 +74,10 @@ The repository manifest currently defines this exact ordered chain:
 11. `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 12. `20260823001100_schema_v11_recruiter_evidence_review.sql`
 13. `20260829001200_schema_v12_account_persona_authority.sql`
+14. `20260911001300_schema_v13_access_requests.sql`
+15. `20260912001400_schema_v14_candidate_job_lifecycle.sql`
 
-Production is reconciled through V12, with **no pending repository migration** as of the September 2 postflight. Never edit an applied migration in place. Any future schema change requires a new forward migration and a fresh rollout authority.
+Production is reconciled through V13. V14 is the only pending repository migration and is **not authorized for Production execution by this PR**. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately controlled.
 
@@ -108,12 +113,12 @@ This recovery result does not authorize beta release. Public privacy/support con
 
 | Control | Current verified state | Gate |
 | --- | --- | --- |
-| Migration history | Exact connected history through V12 | **PASSED**; no pending repository version |
+| Migration history | Exact connected Production history through V13; V14 repository-pending | **PASSED for current Production**; V14 remains review-only |
 | Public ordinary tables | Eleven expected lineage tables, all `postgres`-owned with RLS | **PASSED** |
 | Public table ACLs | Direct and effective RLS/column/function privilege probes | **PASSED**; no anonymous table access or authenticated write path to the four new tables |
 | `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | **PASSED** |
 | Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | **PASSED** |
-| Isolated migration rehearsal | V1–V12 transition rehearsal passed | **PASSED**; repeat only after migration/harness changes or material drift |
+| Isolated migration rehearsal | V1–V13 released lineage previously passed; V1–V14 rehearsal is required for this changed migration set | **PENDING for V14**; no Production execution until green |
 | Lock/timing rehearsal | Bounded lock failure/recovery passed; real-host representative V10→V12 completed in 2.66s | **PASSED**; Production statements ran under the reviewed lock and statement limits |
 | Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for the unchanged evidence set** |
 | Persona authority | Authenticated persona writes absent; service assignment preserved; identity immutable | **PASSED** |

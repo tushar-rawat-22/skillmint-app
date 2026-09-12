@@ -6,6 +6,8 @@
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
+**Current Production migration truth (September 12, 2026):** Production migration history from V1 through V13 is verified on `skillmint-beta`. V14 is pending Production execution and remains unapplied; PR #143 is review/rehearsal work only. SkillMint is launched with controlled account admission.
+
 ## Repository context
 
 SkillMint is a proof-aware Career Operating System for students, freshers, job seekers, and early-career users. It helps a user understand current resume evidence, realistic role direction, proof gaps, one job-specific match, and the next truthful improvements.
