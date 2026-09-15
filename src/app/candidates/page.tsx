@@ -1,30 +1,34 @@
 import Link from "next/link";
 
-import PublicBetaHeader from "@/components/layout/PublicBetaHeader";
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
 import {
-  premiumEyebrow,
-  premiumHeroSurface,
   premiumPrimaryCta,
   premiumSecondaryCta,
-  premiumSurface,
 } from "@/components/ui/premium";
 import { getPublicDemoConfiguration } from "@/config/publicDemo";
 import { getPublicSignupConfiguration } from "@/config/publicSignup";
 import { ROUTES } from "@/constants/routes";
 
 const syntheticEvidencePreview = [
-  [
-    "Strongest support",
-    "Typed interface delivery, accessibility checks, and component testing are clearly supported by the resume.",
-  ],
-  [
-    "Main evidence gap",
-    "API ownership and one inspectable team-delivery example are still unclear.",
-  ],
-  [
-    "Best next move",
-    "Rewrite one project entry around contribution, result, and the evidence someone can inspect.",
-  ],
+  {
+    label: "Strongest support",
+    description:
+      "Typed interface delivery, accessibility checks, and component testing are clearly supported by the resume.",
+    tone: "Supported",
+  },
+  {
+    label: "Main evidence gap",
+    description:
+      "API ownership and one inspectable team-delivery example are still unclear.",
+    tone: "Needs proof",
+  },
+  {
+    label: "Best next move",
+    description:
+      "Rewrite one project entry around contribution, result, and the evidence someone can inspect.",
+    tone: "Next action",
+  },
 ] as const;
 
 export default function CandidatesPage() {
@@ -33,110 +37,144 @@ export default function CandidatesPage() {
 
   return (
     <>
-      <PublicBetaHeader />
-      <main className="min-h-screen bg-[#f7f5ef] px-6 py-12 text-slate-950 md:py-16">
-        <div className="mx-auto max-w-6xl space-y-7">
-          <section className={premiumHeroSurface}>
-            <p className={premiumEyebrow}>For candidates</p>
-            <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.04em] md:text-6xl">
-              What does my resume actually support?
-            </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-              Turn a resume into an evidence map, find the most useful gap for a
-              target role, and choose a next action that can create stronger
-              evidence for a later analysis.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              {publicSignupEnabled ? (
-                <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
-                  Create candidate account
-                </Link>
-              ) : (
-                <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
-                  Request access
-                </Link>
-              )}
-              {publicDemoEnabled ? (
-                <Link href={ROUTES.DEMO} className={premiumSecondaryCta}>
-                  Explore candidate demo
-                </Link>
-              ) : null}
-              <Link href={ROUTES.LOGIN} className={premiumSecondaryCta}>
-                Existing user login
-              </Link>
-            </div>
-            {!publicSignupEnabled ? (
-              <p className="mt-5 text-sm leading-6 text-slate-500">
-                SkillMint is live with controlled account admission. Request
-                candidate access without uploading a resume; approved users can
-                log in to continue their workspace.
+      <Navbar
+        publicSignupEnabled={publicSignupEnabled}
+        publicDemoEnabled={publicDemoEnabled}
+      />
+      <main
+        className="min-h-screen bg-[#f7f5ef] text-slate-950"
+        data-role-composition="candidate-editorial"
+      >
+        <section className="border-b border-slate-200" aria-labelledby="candidate-title">
+          <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:py-20 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:gap-16">
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">For candidates</p>
+              <h1
+                id="candidate-title"
+                className="mt-4 max-w-2xl text-[2.15rem] leading-[1.06] font-black tracking-[-0.045em] text-balance sm:text-5xl lg:text-6xl"
+              >
+                What does my resume actually support?
+              </h1>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+                Turn your resume into a clear evidence map for a target role,
+                find the gap that matters most, and choose a next action you can
+                prove in a later analysis.
               </p>
-            ) : null}
-          </section>
 
-          <section className={premiumSurface} aria-labelledby="candidate-preview-title">
-            <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-              <div>
-                <p className={premiumEyebrow}>Synthetic example</p>
-                <h2 id="candidate-preview-title" className="mt-3 text-3xl font-black">
-                  See the evidence before the score.
-                </h2>
-                <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600">
-                  A useful analysis should tell you what the resume supports,
-                  where the evidence is weak, and what to improve next. The
-                  example on this page is synthetic and is not a real candidate
-                  assessment.
-                </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {publicSignupEnabled ? (
+                  <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
+                    Create candidate account
+                  </Link>
+                ) : (
+                  <Link href={ROUTES.SIGNUP} className={premiumPrimaryCta}>
+                    Request access
+                  </Link>
+                )}
                 {publicDemoEnabled ? (
-                  <Link
-                    href={ROUTES.DEMO}
-                    className="mt-6 inline-flex min-h-11 items-center font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
-                  >
-                    See the full evidence loop
+                  <Link href={ROUTES.DEMO} className={premiumSecondaryCta}>
+                    Explore candidate demo
                   </Link>
                 ) : null}
+                <Link
+                  href={ROUTES.LOGIN}
+                  className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-slate-700 underline-offset-4 hover:text-emerald-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+                >
+                  Existing user login
+                </Link>
               </div>
 
-              <div className="border-y border-slate-200">
-                {syntheticEvidencePreview.map(([title, description], index) => (
-                  <article
-                    key={title}
-                    className="grid gap-2 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[2.5rem_10rem_1fr] sm:items-start sm:gap-4"
+              {!publicSignupEnabled ? (
+                <p className="mt-5 max-w-xl text-sm leading-6 text-slate-600">
+                  SkillMint is live with controlled account admission. Request
+                  candidate access with an email only—no resume upload or
+                  automatic account creation.
+                </p>
+              ) : null}
+            </div>
+
+            <article
+              className="relative border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]"
+              aria-labelledby="candidate-preview-title"
+            >
+              <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-7">
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800">Synthetic example</p>
+                  <h2 id="candidate-preview-title" className="mt-1 text-2xl font-black tracking-[-0.025em]">
+                    See the evidence before the score.
+                  </h2>
+                </div>
+                <p className="max-w-44 text-xs leading-5 text-slate-500 sm:text-right">
+                  Example content only—not a real candidate assessment.
+                </p>
+              </div>
+
+              <div>
+                {syntheticEvidencePreview.map((item, index) => (
+                  <section
+                    key={item.label}
+                    className="grid gap-3 border-b border-slate-200 px-5 py-5 sm:grid-cols-[2.5rem_8.5rem_1fr] sm:gap-4 sm:px-7"
+                    aria-label={item.label}
                   >
                     <p className="font-mono text-xs font-bold text-emerald-800">
                       {String(index + 1).padStart(2, "0")}
                     </p>
-                    <h3 className="text-sm font-bold text-slate-950">{title}</h3>
-                    <p className="text-sm leading-6 text-slate-600">{description}</p>
-                  </article>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">{item.tone}</p>
+                      <h3 className="mt-1 text-sm font-bold text-slate-950">{item.label}</h3>
+                    </div>
+                    <p className="text-sm leading-6 text-slate-600">{item.description}</p>
+                  </section>
                 ))}
-                <article className="grid gap-2 py-5 sm:grid-cols-[2.5rem_10rem_1fr] sm:items-start sm:gap-4">
-                  <p className="font-mono text-xs font-bold text-emerald-800">04</p>
-                  <h3 className="text-sm font-bold text-slate-950">After re-analysis</h3>
-                  <p className="text-sm leading-6 text-slate-600">
+              </div>
+
+              <div className="grid gap-4 bg-slate-950 px-5 py-5 text-white sm:grid-cols-[2.5rem_8.5rem_1fr] sm:px-7">
+                <p className="font-mono text-xs font-bold text-emerald-300">04</p>
+                <h3 className="text-sm font-bold">After re-analysis</h3>
+                <div>
+                  <p className="text-sm leading-6 text-slate-300">
                     Compare a later resume state with the earlier one to see what
                     evidence actually changed instead of chasing a score.
                   </p>
-                </article>
+                  {publicDemoEnabled ? (
+                    <Link
+                      href={ROUTES.DEMO}
+                      className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-emerald-300 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-300"
+                    >
+                      See the full evidence loop
+                    </Link>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          </section>
+            </article>
+          </div>
+        </section>
 
-          <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 md:p-8" aria-labelledby="candidate-privacy-title">
-            <p className={premiumEyebrow}>Private by default</p>
-            <h2 id="candidate-privacy-title" className="mt-3 text-2xl font-black">
-              A Proof Brief is shared only when you choose.
+        <section className="mx-auto grid max-w-7xl gap-8 px-6 py-14 md:grid-cols-[0.7fr_1.3fr] md:py-18" aria-labelledby="candidate-privacy-title">
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">Private by default</p>
+            <h2 id="candidate-privacy-title" className="mt-2 text-3xl font-black tracking-[-0.03em]">
+              Your evidence moves only when you choose.
             </h2>
-            <p className="mt-4 max-w-4xl text-sm leading-6 text-emerald-950">
-              A Proof Brief contains a minimal derived evidence summary—not your
-              raw resume, contact details, account ID, or unrelated personal
-              information. It stays private by default; you can publish a
-              candidate-controlled link and revoke it again. Recruiter discovery
-              is not automatic.
+          </div>
+          <div className="border-l-2 border-emerald-700 pl-5 sm:pl-7">
+            <p className="max-w-3xl text-base leading-7 text-slate-700">
+              A Proof Brief contains a minimal evidence summary—not your raw
+              resume, contact details, account ID, or unrelated personal
+              information. It stays private by default. You can publish a
+              candidate-controlled link and revoke it again; SkillMint does not
+              place you in a recruiter search database.
             </p>
-          </section>
-        </div>
+            <Link
+              href={ROUTES.PRIVACY}
+              className="mt-4 inline-flex min-h-11 items-center font-semibold text-emerald-800 underline underline-offset-4 hover:text-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+            >
+              Read Data &amp; privacy
+            </Link>
+          </div>
+        </section>
       </main>
+      <Footer publicDemoEnabled={publicDemoEnabled} />
     </>
   );
 }

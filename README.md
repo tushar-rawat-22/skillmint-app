@@ -1,9 +1,10 @@
 # SkillMint
 
-SkillMint is a candidate-first career operating system for turning a target role,
-resume evidence, trustworthy job provenance, and recruiter collaboration into clear
-next actions. It treats scores as supporting signals, not outcomes, and keeps the
-candidate in control of career direction and evidence sharing.
+SkillMint is an evidence-backed career decision product for candidates and
+recruiters. It turns a target role, resume evidence, trustworthy job provenance,
+and candidate-authorized collaboration into clear next actions. Scores remain
+supporting signals rather than outcomes, and candidates control career direction
+and evidence sharing.
 
 SkillMint is the public product name used by the launched application.
 
