@@ -4,12 +4,6 @@ import {
   premiumHeroSurface,
 } from "@/components/ui/premium";
 
-const DEFAULT_TRUST_ITEMS = [
-  "Save your career direction",
-  "Keep resume proof and job matches",
-  "Continue your 30-day roadmap",
-] as const;
-
 type AuthPageShellProps = {
   eyebrow: string;
   title: string;
@@ -22,7 +16,7 @@ export default function AuthPageShell({
   eyebrow,
   title,
   subtitle,
-  trustItems = DEFAULT_TRUST_ITEMS,
+  trustItems = [],
   children,
 }: AuthPageShellProps) {
   return (
@@ -50,7 +44,7 @@ export default function AuthPageShell({
             </p>
           </div>
 
-          <AuthTrustPanel items={trustItems} />
+          {trustItems.length > 0 ? <AuthTrustPanel items={trustItems} /> : null}
         </div>
 
         <div className={premiumHeroSurface}>
