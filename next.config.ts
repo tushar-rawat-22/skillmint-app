@@ -13,7 +13,7 @@ export const SECURITY_HEADERS = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      `connect-src 'self' ${turnstileSource}${supabaseConnectSources.length ? ` ${supabaseConnectSources.join(" ")}` : ""}`,
+      `connect-src 'self'${supabaseConnectSources.length ? ` ${supabaseConnectSources.join(" ")}` : ""} ${turnstileSource}`,
       `frame-src ${turnstileSource}`,
       "object-src 'none'",
       "base-uri 'self'",
