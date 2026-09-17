@@ -38,8 +38,8 @@ export default function ForgotPasswordPage() {
       setCaptchaToken((event as CustomEvent<string>).detail ?? "");
     };
 
-    window.addEventListener("skillmint:turnstile", handleToken);
-    return () => window.removeEventListener("skillmint:turnstile", handleToken);
+    window.addEventListener("skillmint-turnstile", handleToken);
+    return () => window.removeEventListener("skillmint-turnstile", handleToken);
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
       {turnstileSiteKey ? (
         <>
           <Script id="skillmint-turnstile-callbacks" strategy="afterInteractive">
-            {`window.skillmintTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint:turnstile', { detail: token })); }; window.skillmintTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint:turnstile', { detail: '' })); };`}
+            {`window.skillmintTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint-turnstile', { detail: token })); }; window.skillmintTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint-turnstile', { detail: '' })); };`}
           </Script>
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
