@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Script from "next/script";
 import type { FormEvent } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   premiumInput,
@@ -33,15 +33,21 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    const handleToken = (event: Event) => {
+      setCaptchaToken((event as CustomEvent<string>).detail ?? "");
+    };
+
+    window.addEventListener("skillmint:turnstile", handleToken);
+    return () => window.removeEventListener("skillmint:turnstile", handleToken);
+  }, []);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submissionInFlight.current) {
-      return;
-    }
+    if (submissionInFlight.current) return;
 
     const trimmedEmail = email.trim();
-
     if (!trimmedEmail) {
       setError("Email is required.");
       setMessage("");
@@ -55,7 +61,6 @@ export default function ForgotPasswordPage() {
     }
 
     const supabase = createSupabaseBrowserClient();
-
     if (!configStatus.isConfigured || !supabase) {
       setError(RESET_SERVICE_UNAVAILABLE_MESSAGE);
       setMessage("");
@@ -95,23 +100,24 @@ export default function ForgotPasswordPage() {
       subtitle="Enter your email and SkillMint will send a secure reset link."
     >
       {turnstileSiteKey ? (
-        <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="afterInteractive"
-        />
+        <>
+          <Script id="skillmint-turnstile-callbacks" strategy="afterInteractive">
+            {`window.skillmintTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint:turnstile', { detail: token })); }; window.skillmintTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint:turnstile', { detail: '' })); };`}
+          </Script>
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="afterInteractive"
+          />
+        </>
       ) : null}
 
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
       >
-        <label
-          htmlFor="email"
-          className="text-sm font-semibold text-slate-700"
-        >
+        <label htmlFor="email" className="text-sm font-semibold text-slate-700">
           Email
         </label>
-
         <input
           id="email"
           type="email"
@@ -131,10 +137,6 @@ export default function ForgotPasswordPage() {
               data-expired-callback="skillmintTurnstileExpired"
               data-error-callback="skillmintTurnstileExpired"
             />
-            <Script id="skillmint-turnstile-callbacks" strategy="afterInteractive">
-              {`window.skillmintTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint:turnstile', { detail: token })); }; window.skillmintTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint:turnstile', { detail: '' })); };`}
-            </Script>
-            <TurnstileTokenListener onToken={setCaptchaToken} />
           </div>
         ) : null}
 
@@ -143,7 +145,6 @@ export default function ForgotPasswordPage() {
             {error}
           </p>
         )}
-
         {message && (
           <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
             {message}
@@ -161,30 +162,10 @@ export default function ForgotPasswordPage() {
 
       <p className="mt-6 text-sm text-slate-600">
         Remember your password?{" "}
-        <Link
-          href="/login"
-          className="font-semibold text-emerald-700 transition hover:text-emerald-900"
-        >
+        <Link href="/login" className="font-semibold text-emerald-700 transition hover:text-emerald-900">
           Log in
         </Link>
       </p>
     </AuthPageShell>
   );
-}
-
-function TurnstileTokenListener({ onToken }: { onToken: (token: string) => void }) {
-  useMemo(() => {
-    if (typeof window === "undefined") {
-      return undefined;
-    }
-
-    const handleToken = (event: Event) => {
-      onToken((event as CustomEvent<string>).detail ?? "");
-    };
-
-    window.addEventListener("skillmint:turnstile", handleToken);
-    return () => window.removeEventListener("skillmint:turnstile", handleToken);
-  }, [onToken]);
-
-  return null;
 }
