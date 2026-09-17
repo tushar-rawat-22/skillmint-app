@@ -41,15 +41,17 @@ test("@public-demo @demo-disabled demo fails closed without Supabase and homepag
   await expect(page.getByRole("link", { name: "Candidate login" }).first()).toBeVisible();
 });
 
-test("@public-demo @demo-disabled logged-out real upload is gated while public homepage remains indexable", async ({
+test("@public-demo @demo-disabled logged-out real upload redirects before candidate UI while the homepage remains indexable", async ({
   page,
 }) => {
+  const response = await page.request.get("/upload", { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  expect(
+    new URL(response.headers().location, "http://127.0.0.1:3100").pathname,
+  ).toBe("/login");
   await page.goto("/upload");
-  await expect(
-    page.getByRole("heading", { name: "Log in to analyze a real resume" }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/login$/);
   await expect(page.locator('input[type="file"]')).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");
   await expect(page.getByRole("link", { name: "Explore synthetic demo" })).toHaveCount(0);
 
   const extraction = await page.request.post("/api/resume/extract", {
@@ -142,7 +144,7 @@ test("@public-demo @demo-enabled demo is synthetic, evidence-first, accessible, 
   ).toEqual([]);
 });
 
-test("@public-demo @demo-enabled homepage and logged-out upload route to the enabled synthetic demo", async ({
+test("@public-demo @demo-enabled homepage exposes the demo while logged-out upload redirects before candidate UI", async ({
   page,
 }) => {
   await page.goto("/");
@@ -156,9 +158,15 @@ test("@public-demo @demo-enabled homepage and logged-out upload route to the ena
   await expect(page.getByRole("link", { name: "See a candidate example" }).first()).toHaveAttribute("href", "/demo");
   await expect(page.getByRole("link", { name: /recruiter workflow/i }).first()).toHaveAttribute("href", "/recruiters");
 
+  const response = await page.request.get("/upload", { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  expect(
+    new URL(response.headers().location, "http://127.0.0.1:3100").pathname,
+  ).toBe("/login");
   await page.goto("/upload");
+  await expect(page).toHaveURL(/\/login$/);
   await expect(page.locator('input[type="file"]')).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Explore synthetic demo" })).toHaveAttribute("href", "/demo");
+  await expect(page.getByRole("link", { name: "Explore synthetic demo" })).toHaveCount(0);
 });
 
 test("@public-demo @demo-enabled two-sided entry and candidate demo work at 320px with reduced motion", async ({
@@ -283,8 +291,8 @@ test("@public-demo @demo-enabled authenticated upload remains available through 
   page,
   request,
 }) => {
-  await login(page, ACCOUNT_A);
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  await login(page, ACCOUNT_A);
   await page.goto("/upload");
 
   await expect(

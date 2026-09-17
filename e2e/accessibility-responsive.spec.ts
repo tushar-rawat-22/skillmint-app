@@ -1,6 +1,21 @@
 import AxeBuilder from "@axe-core/playwright";
 
-import { expect, test } from "./support/runtime";
+import {
+  ACCOUNT_A,
+  PROVIDER_ORIGIN,
+  expect,
+  login,
+  test,
+} from "./support/runtime";
+
+test.beforeEach(async ({ page, request }) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  const persona = await request.post(`${PROVIDER_ORIGIN}/rest/v1/account_personas`, {
+    data: { user_id: ACCOUNT_A.id, persona: "CANDIDATE" },
+  });
+  expect(persona.ok()).toBeTruthy();
+  await login(page, ACCOUNT_A);
+});
 
 async function expectNoSeriousAxeViolations(page: import("@playwright/test").Page) {
   await page.evaluate(async () => {
@@ -77,7 +92,9 @@ test("keyboard-only nondestructive path exposes truthful expanded, busy, status,
   await page.getByPlaceholder("What felt broken, confusing, or useful?").fill("Keyboard-only synthetic feedback");
   await page.getByRole("button", { name: "Send feedback" }).focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("status").filter({ hasText: /saved in this browser/i })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: /saved to your account/i }),
+  ).toBeVisible();
   await expect(feedback).toHaveAttribute("aria-expanded", "true");
 
   await page.getByRole("button", { name: "Close beta feedback" }).focus();

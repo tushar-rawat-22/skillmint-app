@@ -7,6 +7,34 @@ import {
   test,
 } from "./support/runtime";
 
+const CANDIDATE_PRIVATE_ROUTES = [
+  "/dashboard",
+  "/setup",
+  "/profile",
+  "/resume",
+  "/resume/compare",
+  "/upload",
+  "/jobs",
+  "/ats",
+  "/roadmap",
+  "/settings",
+  "/settings/data",
+] as const;
+
+const ABSENT_CANDIDATE_ROUTE_ALIASES = ["/target-role", "/job-match"] as const;
+
+async function expectServerRedirect(
+  page: import("@playwright/test").Page,
+  route: string,
+  destination: string,
+) {
+  const response = await page.request.get(route, { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  expect(new URL(response.headers().location, "http://127.0.0.1:3100").pathname).toBe(
+    destination,
+  );
+}
+
 async function submitLogin(
   page: import("@playwright/test").Page,
   account: typeof ACCOUNT_A,
@@ -66,12 +94,23 @@ test("aborted synthetic login exits submitting state without raw network error",
 });
 
 test("private workspace routes require an authenticated account", async ({ page }) => {
-  await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login$/);
+  for (const route of CANDIDATE_PRIVATE_ROUTES) {
+    await expectServerRedirect(page, route, "/login");
+    await page.goto(route);
+    await expect(page).toHaveURL(/\/login$/);
+  }
 
   await page.goto("/recruiters/workspace");
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toHaveCount(0);
+});
+
+test("absent candidate route aliases fail closed without rendering candidate UI", async ({ page }) => {
+  for (const route of ABSENT_CANDIDATE_ROUTE_ALIASES) {
+    const response = await page.goto(route);
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
+  }
 });
 
 test("existing immutable personas reach their own workspace after login", async ({ page, request }) => {
@@ -109,13 +148,23 @@ test("immutable personas cannot render the other private workspace by direct nav
 
   await submitLogin(page, ACCOUNT_A);
   await expect(page).toHaveURL(/\/dashboard$/);
+  for (const route of CANDIDATE_PRIVATE_ROUTES) {
+    const response = await page.request.get(route, { maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+    await page.goto(route);
+    await expect(page).toHaveURL(new RegExp(`${route.replaceAll("/", "\\/")}$`));
+    await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toHaveCount(0);
+  }
   await page.goto("/recruiters/workspace");
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toHaveCount(0);
 
   await submitLogin(page, ACCOUNT_B);
   await expect(page).toHaveURL(/\/recruiters\/workspace$/);
-  await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/recruiters\/workspace$/);
-  await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toBeVisible();
+  for (const route of CANDIDATE_PRIVATE_ROUTES) {
+    await expectServerRedirect(page, route, "/recruiters/workspace");
+    await page.goto(route);
+    await expect(page).toHaveURL(/\/recruiters\/workspace$/);
+    await expect(page.getByRole("heading", { name: "Define what evidence matters before reviewing a candidate." })).toBeVisible();
+  }
 });

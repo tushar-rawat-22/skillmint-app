@@ -275,7 +275,7 @@ class ResumeComparisonApi {
 
 test.describe("saved resume comparison", () => {
   test(
-    "@critical signed-out access hides personal history and does not query it",
+    "@critical signed-out access redirects before comparison UI or history reads",
     async ({ page }) => {
       const api = new ResumeComparisonApi();
       api.setAnalyses(
@@ -284,18 +284,20 @@ test.describe("saved resume comparison", () => {
       );
       await api.install(page);
 
+      const response = await page.request.get("/resume/compare", {
+        maxRedirects: 0,
+      });
+      expect(response.status()).toBe(307);
+      expect(
+        new URL(response.headers().location, "http://127.0.0.1:3100").pathname,
+      ).toBe("/login");
       await page.goto("/resume/compare");
-
+      await expect(page).toHaveURL(/\/login$/);
       await expect(
         page.getByRole("heading", {
           name: "Compare saved report evidence",
         }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("heading", {
-          name: "Sign in to compare saved reports",
-        }),
-      ).toBeVisible();
+      ).toHaveCount(0);
       await expect(
         page.getByText("Account A report 01.pdf", {
           exact: true,

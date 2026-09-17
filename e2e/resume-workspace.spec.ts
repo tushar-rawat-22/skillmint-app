@@ -463,28 +463,20 @@ class ResumeWorkspaceApi {
 }
 
 test(
-  "signed-out Resume keeps Workspace controls account-bound and makes no provider reads",
+  "signed-out Resume redirects before Workspace UI or repository reads",
   async ({ page }) => {
     const api = new ResumeWorkspaceApi();
     await api.install(page);
 
+    const response = await page.request.get("/resume", { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    expect(
+      new URL(response.headers().location, "http://127.0.0.1:3100").pathname,
+    ).toBe("/login");
     await page.goto("/resume");
-
+    await expect(page).toHaveURL(/\/login$/);
     await expect(
-      page.getByRole("heading", {
-        name: "No active resume report selected",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        "Sign in to select a Workspace resume. Signed-out browser reports remain separate.",
-        { exact: true },
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", {
-        name: /workspace resume/i,
-      }),
+      page.getByRole("heading", { name: "No active resume report selected" }),
     ).toHaveCount(0);
 
     expect(api.count("selection:read")).toBe(0);
