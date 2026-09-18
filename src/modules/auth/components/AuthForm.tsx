@@ -103,7 +103,7 @@ export default function AuthForm(props: AuthFormProps) {
       }
 
       if (result.sessionCreated) {
-        router.push("/settings/data?import=1");
+        router.push("/auth/persona");
         router.refresh();
         return;
       }
