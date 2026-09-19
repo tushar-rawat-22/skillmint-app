@@ -16,6 +16,7 @@ const htmlRoutes = [
   "/profile",
   "/settings",
   "/privacy",
+  "/support",
 ];
 
 const protectedApiRoutes = [
