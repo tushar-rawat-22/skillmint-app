@@ -1,7 +1,8 @@
 "use client";
 
+import Script from "next/script";
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -18,6 +19,9 @@ import {
   isNewPasswordAllowed,
 } from "@/modules/auth/services/passwordPolicy";
 
+const CAPTCHA_REQUIRED_MESSAGE =
+  "Please complete the security check before creating an account.";
+
 type AuthFormProps =
   | { mode: "login" }
   | {
@@ -30,11 +34,24 @@ export default function AuthForm(props: AuthFormProps) {
   const { mode } = props;
   const router = useRouter();
   const configStatus = useMemo(() => getSupabaseConfigStatus(), []);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (mode !== "signup") return;
+
+    const handleToken = (event: Event) => {
+      setCaptchaToken((event as CustomEvent<string>).detail ?? "");
+    };
+
+    window.addEventListener("skillmint-signup-turnstile", handleToken);
+    return () => window.removeEventListener("skillmint-signup-turnstile", handleToken);
+  }, [mode]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +69,12 @@ export default function AuthForm(props: AuthFormProps) {
 
     if (validationError) {
       setError(validationError);
+      setMessage("");
+      return;
+    }
+
+    if (mode === "signup" && turnstileSiteKey && !captchaToken) {
+      setError(CAPTCHA_REQUIRED_MESSAGE);
       setMessage("");
       return;
     }
@@ -78,6 +101,7 @@ export default function AuthForm(props: AuthFormProps) {
             password,
             publicSignupEnabled: props.publicSignupEnabled,
             emailRedirectTo: props.emailRedirectTo,
+            captchaToken: captchaToken || undefined,
           },
     );
 
@@ -162,68 +186,94 @@ export default function AuthForm(props: AuthFormProps) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
-    >
-      <div>
-        <label
-          htmlFor="email"
-          className="text-sm font-semibold text-slate-700"
-        >
-          Email
-        </label>
+    <>
+      {mode === "signup" && turnstileSiteKey ? (
+        <>
+          <Script id="skillmint-signup-turnstile-callbacks" strategy="afterInteractive">
+            {`window.skillmintSignupTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile', { detail: token })); }; window.skillmintSignupTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile', { detail: '' })); };`}
+          </Script>
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="afterInteractive"
+          />
+        </>
+      ) : null}
 
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className={`mt-2 ${premiumInput}`}
-          placeholder="you@example.com"
-        />
-      </div>
-
-      <div className="mt-4">
-        <label
-          htmlFor="password"
-          className="text-sm font-semibold text-slate-700"
-        >
-          Password
-        </label>
-
-        <input
-          id="password"
-          type="password"
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className={`mt-2 ${premiumInput}`}
-          placeholder="Enter your password"
-        />
-      </div>
-
-      {error && (
-        <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
-          {error}
-        </p>
-      )}
-
-      {message && (
-        <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
-          {message}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className={`${premiumPrimaryCta} mt-5 w-full`}
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
       >
-        {isSubmitting ? "Please wait..." : getSubmitLabel(mode)}
-      </button>
-    </form>
+        <div>
+          <label
+            htmlFor="email"
+            className="text-sm font-semibold text-slate-700"
+          >
+            Email
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className={`mt-2 ${premiumInput}`}
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div className="mt-4">
+          <label
+            htmlFor="password"
+            className="text-sm font-semibold text-slate-700"
+          >
+            Password
+          </label>
+
+          <input
+            id="password"
+            type="password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className={`mt-2 ${premiumInput}`}
+            placeholder="Enter your password"
+          />
+        </div>
+
+        {mode === "signup" && turnstileSiteKey ? (
+          <div className="mt-4" aria-label="Security check">
+            <div
+              className="cf-turnstile"
+              data-sitekey={turnstileSiteKey}
+              data-callback="skillmintSignupTurnstileSuccess"
+              data-expired-callback="skillmintSignupTurnstileExpired"
+              data-error-callback="skillmintSignupTurnstileExpired"
+            />
+          </div>
+        ) : null}
+
+        {error && (
+          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
+            {error}
+          </p>
+        )}
+
+        {message && (
+          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
+            {message}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={isSubmitting || Boolean(mode === "signup" && turnstileSiteKey && !captchaToken)}
+          className={`${premiumPrimaryCta} mt-5 w-full`}
+        >
+          {isSubmitting ? "Please wait..." : getSubmitLabel(mode)}
+        </button>
+      </form>
+    </>
   );
 }
 
