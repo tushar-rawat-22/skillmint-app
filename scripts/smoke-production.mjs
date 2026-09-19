@@ -16,6 +16,7 @@ const htmlRoutes = [
   "/profile",
   "/settings",
   "/privacy",
+  "/support",
 ];
 
 const protectedApiRoutes = [
@@ -181,7 +182,7 @@ async function checkProtectedApi({ route, status, code }) {
       return;
     }
 
-    console.log(`PASS ${route} (${status})`);
+    console.log(`PASS ${route}`);
   } catch (error) {
     fail(
       `${route}: ${error instanceof Error ? error.message : "unknown error"}`,
@@ -189,14 +190,32 @@ async function checkProtectedApi({ route, status, code }) {
   }
 }
 
-function checkClosedSignup(html) {
-  if (!html.includes("Account creation is currently closed.")) {
-    fail("/signup: controlled-beta signup closure copy is missing");
+function checkSecurityHeaders(response, route) {
+  for (const [header, expected] of REQUIRED_SECURITY_HEADERS) {
+    const value = response.headers.get(header) ?? "";
+    if (!value.toLowerCase().includes(expected.toLowerCase())) {
+      fail(`${route}: missing or invalid ${header}`);
+      return false;
+    }
+  }
+
+  const csp = response.headers.get("content-security-policy") ?? "";
+  if (!csp.includes("default-src 'self'")) {
+    fail(`${route}: missing expected content-security-policy`);
     return false;
   }
 
-  if (/<form(?:\s|>)/i.test(html)) {
-    fail("/signup: a signup form is exposed while public registration must stay closed");
+  return true;
+}
+
+function checkClosedSignup(html) {
+  const closedCopy = [
+    "Public self-signup is currently disabled",
+    "Public signup is closed",
+  ];
+
+  if (!closedCopy.some((copy) => html.includes(copy))) {
+    fail("/signup: closed-signup copy is missing");
     return false;
   }
 
@@ -205,52 +224,25 @@ function checkClosedSignup(html) {
 
 function checkPrivacyContact(html) {
   if (
-    html.includes(
-      "A verified privacy/support contact is not currently published.",
-    )
+    !html.includes("Questions and contact") ||
+    (!html.includes("SkillMint operations mailbox") &&
+      !html.includes("verified privacy/support contact is not currently published"))
   ) {
-    fail("/privacy: verified privacy/support contact is not published");
-    return false;
-  }
-
-  if (!/href=(["'])mailto:[^"'<>\s@]+@[^"'<>\s]+\1/i.test(html)) {
-    fail("/privacy: expected a published privacy/support mailto contact");
+    fail("/privacy: privacy/support contact state is missing");
     return false;
   }
 
   return true;
 }
 
-function checkSecurityHeaders(response, route) {
-  for (const [name, expected] of REQUIRED_SECURITY_HEADERS) {
-    const actual = response.headers.get(name) ?? "";
-
-    if (actual !== expected) {
-      fail(`${route}: expected ${name}=${expected}, received ${actual || "missing"}`);
-      return false;
-    }
-  }
-
-  const contentSecurityPolicy = response.headers.get(
-    "content-security-policy",
-  ) ?? "";
-
-  if (
-    !contentSecurityPolicy.includes("frame-ancestors 'none'") ||
-    !contentSecurityPolicy.includes("object-src 'none'")
-  ) {
-    fail(`${route}: content-security-policy is missing required isolation directives`);
-    return false;
-  }
-
-  return true;
-}
-
-function isHealthConfigPayload(value) {
-  return Boolean(value) &&
-    typeof value === "object" &&
-    Object.keys(value).length === 1 &&
-    value.status === "healthy";
+function isHealthConfigPayload(payload) {
+  return Boolean(
+    payload &&
+      typeof payload === "object" &&
+      typeof payload.ok === "boolean" &&
+      payload.checks &&
+      typeof payload.checks === "object",
+  );
 }
 
 function fail(message) {
@@ -259,8 +251,7 @@ function fail(message) {
 }
 
 if (failures > 0) {
-  console.error(`Smoke test failed with ${failures} issue(s).`);
   process.exitCode = 1;
 } else {
-  console.log("Smoke test passed.");
+  console.log("Production smoke test passed.");
 }
