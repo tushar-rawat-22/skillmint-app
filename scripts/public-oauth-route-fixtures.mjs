@@ -50,7 +50,10 @@ assert.match(signup, /getTrustedAppOrigin\(\)/);
 assert.match(signup, /new URL\("\/auth\/callback", appOrigin\)/);
 assert.match(signup, /emailRedirectTo=\{emailRedirectTo\}/);
 assert.match(authCredentials, /emailRedirectTo: string \| null/);
-assert.match(authCredentials, /options:\s*\{\s*emailRedirectTo: request\.emailRedirectTo/);
+assert.match(authCredentials, /captchaToken\?: string/);
+assert.match(authCredentials, /emailRedirectTo: request\.emailRedirectTo/);
+assert.match(authCredentials, /captchaToken: request\.captchaToken/);
+assert.match(authCredentials, /client\.auth\.signUp/);
 
 assert.match(personaRoute, /export async function POST\(request: Request\)/);
 assert.match(personaRoute, /request\.headers\.get\("origin"\) !== appOrigin/);
