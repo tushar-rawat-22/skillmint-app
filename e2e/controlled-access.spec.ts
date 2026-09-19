@@ -343,7 +343,7 @@ test(
 );
 
 test(
-  "@controlled-access @enabled signup submits and preserves the signed-in destination",
+  "@controlled-access @enabled signup submits and enters persona authority",
   async ({ page, provider }) => {
     await page.goto("/signup");
 
@@ -359,7 +359,7 @@ test(
       name: "Create account",
     }).click();
 
-    await expect(page).toHaveURL(/\/settings\/data\?import=1$/);
+    await expect(page).toHaveURL(/\/auth\/persona$/);
     expect(provider.count("auth:signup", ACCOUNT_A.id)).toBe(1);
   },
 );
