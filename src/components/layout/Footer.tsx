@@ -25,6 +25,12 @@ export default function Footer({
           >
             Data & privacy
           </Link>
+          <Link
+            href="/support"
+            className="font-semibold text-slate-700 transition hover:text-emerald-800"
+          >
+            Support
+          </Link>
         </div>
       </div>
     </footer>
