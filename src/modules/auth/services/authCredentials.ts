@@ -11,6 +11,7 @@ type AuthCredentialClient = {
       password: string;
       options?: {
         emailRedirectTo?: string;
+        captchaToken?: string;
       };
     }): PromiseLike<{
       data: { session: unknown | null };
@@ -31,6 +32,7 @@ export type AuthCredentialRequest =
       password: string;
       publicSignupEnabled: boolean;
       emailRedirectTo: string | null;
+      captchaToken?: string;
     };
 
 export type AuthCredentialResult =
@@ -68,16 +70,19 @@ export async function submitAuthCredentials(
         : { status: "success", sessionCreated: true };
     }
 
+    const options = {
+      ...(request.emailRedirectTo
+        ? { emailRedirectTo: request.emailRedirectTo }
+        : {}),
+      ...(request.captchaToken
+        ? { captchaToken: request.captchaToken }
+        : {}),
+    };
+
     const { data, error } = await client.auth.signUp({
       email: request.email.trim(),
       password: request.password,
-      ...(request.emailRedirectTo
-        ? {
-            options: {
-              emailRedirectTo: request.emailRedirectTo,
-            },
-          }
-        : {}),
+      ...(Object.keys(options).length > 0 ? { options } : {}),
     });
 
     return error
