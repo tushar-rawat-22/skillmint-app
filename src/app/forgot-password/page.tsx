@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
     <AuthPageShell
       eyebrow="Password Recovery"
       title="Reset your password"
-      subtitle="Enter your email and SkillMint will send a secure reset link."
+      subtitle="Enter your email to request a password reset link."
     >
       {turnstileSiteKey ? (
         <>
