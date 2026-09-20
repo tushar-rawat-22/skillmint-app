@@ -22,6 +22,8 @@ Required browser-side Supabase values:
 
 `SUPABASE_SECRET_KEY` is server-only and is required by trusted server functionality that needs administrative authority, including the protected account-deletion path. It must never use a `NEXT_PUBLIC_` prefix or enter browser bundles, logs, or test artifacts. Other required server-side values depend on the deployed feature set and are validated by the application's readiness checks. Treat a missing critical server value as a failed deployment, not as a warning to work around.
 
+`SUPABASE_DB_URL` is operator-only for controlled migration and isolated database verification. It is not part of the deployed Next.js runtime and must not enter browser bundles, ordinary Preview/runtime configuration, logs, or repository history. Load it only for an explicitly authorized database operation after verifying the intended target; repository presence never authorizes a Production migration.
+
 Analytics remains opt-in. Do not enable analytics or founder-only surfaces merely to make a deployment pass.
 
 ## Release path
