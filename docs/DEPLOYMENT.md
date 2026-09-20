@@ -20,7 +20,7 @@ Required browser-side Supabase values:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-Required server-side values depend on the deployed feature set and are validated by the application's readiness checks. Treat a missing critical server value as a failed deployment, not as a warning to work around.
+`SUPABASE_SECRET_KEY` is server-only and is required by trusted server functionality that needs administrative authority, including the protected account-deletion path. It must never use a `NEXT_PUBLIC_` prefix or enter browser bundles, logs, or test artifacts. Other required server-side values depend on the deployed feature set and are validated by the application's readiness checks. Treat a missing critical server value as a failed deployment, not as a warning to work around.
 
 Analytics remains opt-in. Do not enable analytics or founder-only surfaces merely to make a deployment pass.
 
