@@ -398,7 +398,7 @@ const documentation = currentDocs.map((path) => text(path)).join("\n");
 for (const [pattern, claim] of [
   [/Block 6\.1 and Block 6\.2 are merged and frozen pending rollout/i, "Block 6.1/6.2 merged and frozen"],
   [/fail-closed[^.]*automatically deployed|automatically deployed[^.]*fail-closed/i, "fail-closed automatic deployment"],
-  [/skillmint-block6-test[^.]*ACTIVE_HEALTHY|ACTIVE_HEALTHY[^.]*skillmint-block6-test/i, "isolated project state"],
+  [/skillmint-block6-test[^.]*contains no Production data[^.]*V1[–-]V7[^.]*passed the isolated live-security gate/i, "isolated project state"],
   [/Production migration history[^.]*V1[^.]*V13|V1[^.]*V13[^.]*Production migration history/i, "Production migration history through V13"],
   [/V14[^.]*pending|pending[^.]*V14/i, "V14 pending Production execution"],
   [/analytics remains disabled/i, "analytics disabled"],
@@ -407,7 +407,7 @@ for (const [pattern, claim] of [
   [/not Production activation|not a Production database rollout|no Production readiness/i, "no Production rollout claim"],
   [/Events are not people/i, "events are not people"],
   [/Migration repair changes (?:migration )?history only[^.]*executes no (?:migration )?SQL/i, "history-only migration repair"],
-  [/no configured seed dataset/i, "no configured seed dataset"],
+  [/No seed file is configured or expected/i, "no configured seed dataset"],
   [/Supabase CLI 2\.109\.1/i, "pinned Supabase CLI"],
   [/dry-run[\s\S]{0,220}does not execute[^.]*migration SQL/i, "dry-run limitation"],
   [/same validated inventory[^.]*same fail-closed process/i, "target-to-link inventory binding"],

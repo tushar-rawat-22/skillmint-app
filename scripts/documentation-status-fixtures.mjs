@@ -117,8 +117,8 @@ for (const [needle, label] of [
     "merge and deployment non-authorization boundary",
   ],
   [
-    "new authorized deployment",
-    "static deployment-time configuration boundary",
+    "Release acceptance requires exact-head checks plus affected-route Production verification",
+    "exact-head Production acceptance boundary",
   ],
 ]) {
   check(
