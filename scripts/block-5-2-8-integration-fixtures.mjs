@@ -386,7 +386,7 @@ test("10b count collection performs a final same-provider checkpoint", () => {
   );
 });
 
-test("11 Block 5 documentation keeps downloads and 5.3 boundaries truthful", () => {
+test("11 Block 5 documentation keeps downloads and deployment authority truthful", () => {
   const blockFiveDocs = [
     "DATA_CONTROLS.md",
     "DATA_EXPORT.md",
@@ -401,6 +401,7 @@ test("11 Block 5 documentation keeps downloads and 5.3 boundaries truthful", () 
     "DEPLOYMENT.md",
   ].map((name) => fs.readFileSync(path.join(repoRoot, "docs", name), "utf8"));
   const combined = blockFiveDocs.join("\n");
+  const deployment = blockFiveDocs.at(-1);
   const completionClaimLines = combined.split("\n").filter((line) =>
     /download (?:was )?(?:saved|completed)|file (?:was )?saved|downloaded successfully/i.test(line)
   );
@@ -424,12 +425,19 @@ test("11 Block 5 documentation keeps downloads and 5.3 boundaries truthful", () 
   }
   assert.match(combined, /SUPABASE_SECRET_KEY/);
   assert.match(combined, /SUPABASE_DB_URL/);
-  assert.match(combined, /schema_v3_data_controls\.sql/);
-  assert.match(combined, /schema_v4_account_deletion_security\.sql/);
-  assert.match(combined, /Preview and Production scopes must be reviewed separately/i);
-  assert.match(combined, /Unknown remote deployment behavior blocks remote push readiness/i);
-  assert.match(combined, /BETA_RELEASE_READINESS=BLOCKED_PENDING_PRODUCTION_ROLLOUT_AND_EXTERNAL_PRIVACY_CONTACT/);
-  assert.match(combined, /verified privacy\/support contact[^\n]*release blocker/i);
+  assert.match(deployment, /GitHub `main` is the source of truth for releasable code/i);
+  assert.match(deployment, /Vercel is the active web host/i);
+  assert.match(deployment, /Production must resolve to the exact `main` commit/i);
+  assert.match(deployment, /Verify the Vercel Preview when the change affects runtime or UI behavior/i);
+  assert.match(deployment, /Confirm Vercel Production deployed the resulting `main` SHA/i);
+  assert.match(deployment, /required GitHub checks passed for that exact head/i);
+  assert.match(deployment, /Public self-service account creation is \*\*not launch-ready\*\* while GitHub issue #130 remains open/i);
+  assert.match(deployment, /repository presence never authorizes a Production migration/i);
+  assert.match(deployment, /A provider integration is not considered production-ready until its server-side configuration and real behavior are verified/i);
+  assert.match(deployment, /Email\/recovery delivery must not be described as reliable until a production-suitable sending path has been proven/i);
+  assert.doesNotMatch(deployment, /Unknown remote deployment behavior blocks remote push readiness/i);
+  assert.doesNotMatch(deployment, /BETA_RELEASE_READINESS=BLOCKED_PENDING_PRODUCTION_ROLLOUT_AND_EXTERNAL_PRIVACY_CONTACT/);
+  assert.doesNotMatch(deployment, /verified privacy\/support contact[^\n]*release blocker/i);
   assert.doesNotMatch(combined, /GDPR compliant|DPDP compliant|production ready/i);
 });
 
