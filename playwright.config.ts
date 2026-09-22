@@ -37,6 +37,8 @@ export default defineConfig({
         NEXT_PUBLIC_APP_URL: appOrigin,
         SUPABASE_SECRET_KEY: "synthetic-local-key",
         NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED: "true",
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY:
+          process.env.SKILLMINT_E2E_TURNSTILE_SITE_KEY ?? "",
         SKILLMINT_PUBLIC_SIGNUP_ENABLED:
           process.env.SKILLMINT_E2E_PUBLIC_SIGNUP_ENABLED === "true"
             ? "true"

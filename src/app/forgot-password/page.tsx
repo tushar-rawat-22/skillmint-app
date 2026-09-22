@@ -113,7 +113,7 @@ export default function ForgotPasswordPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-6"
       >
         <label htmlFor="email" className="text-sm font-semibold text-slate-700">
           Email
@@ -129,10 +129,11 @@ export default function ForgotPasswordPage() {
         />
 
         {turnstileSiteKey ? (
-          <div className="mt-4" aria-label="Security check">
+          <div className="-mx-8 mt-4 flex justify-center sm:mx-0" aria-label="Security check">
             <div
               className="cf-turnstile"
               data-sitekey={turnstileSiteKey}
+              data-size="flexible"
               data-callback="skillmintTurnstileSuccess"
               data-expired-callback="skillmintTurnstileExpired"
               data-error-callback="skillmintTurnstileExpired"

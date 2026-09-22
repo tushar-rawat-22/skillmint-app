@@ -20,9 +20,9 @@ export default function AuthPageShell({
   children,
 }: AuthPageShellProps) {
   return (
-    <main className="min-h-screen bg-[#f7f8f4] px-6 py-12 text-slate-950">
+    <main className="min-h-screen bg-[#f7f8f4] px-2 py-12 text-slate-950 sm:px-6">
       <section className="mx-auto grid min-h-[80vh] max-w-6xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div>
+        <div className="min-w-0">
           <Link
             href="/"
             className="text-2xl font-black text-slate-950 transition hover:text-emerald-800"
@@ -47,7 +47,7 @@ export default function AuthPageShell({
           {trustItems.length > 0 ? <AuthTrustPanel items={trustItems} /> : null}
         </div>
 
-        <div className={premiumHeroSurface}>
+        <div className={`${premiumHeroSurface} min-w-0 max-sm:p-4`}>
           {children}
         </div>
       </section>
