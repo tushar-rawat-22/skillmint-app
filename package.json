@@ -48,7 +48,6 @@
     "test:e2e:proof-brief": "playwright test e2e/proof-brief.spec.ts --project=chromium --workers=1 --retries=0",
     "test:e2e:recruiter-evidence": "playwright test e2e/recruiter-evidence.spec.ts e2e/recruiter-responsive-acceptance.spec.ts --project=chromium --workers=1 --retries=0",
     "test:e2e:forgot-password": "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @forgot-password --workers=1 --retries=0",
-    "test:e2e:turnstile": "SKILLMINT_E2E_TURNSTILE_SITE_KEY=synthetic-turnstile-site-key playwright test e2e/turnstile-responsive.spec.ts --project=chromium --workers=1 --retries=0",
     "test:e2e:password-recovery": "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @password-recovery --workers=1 --retries=0",
     "test:block-5-3:fixtures": "node scripts/block-5-3-fixtures.mjs",
     "test:block-5-3:chromium": "playwright test e2e/account-deletion.spec.ts --project=chromium --workers=1 --retries=0",
