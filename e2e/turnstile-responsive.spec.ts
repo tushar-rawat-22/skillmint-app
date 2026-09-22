@@ -20,9 +20,7 @@ test(
             document.querySelectorAll('.cf-turnstile').forEach((widget) => {
               const challenge = document.createElement('div');
               challenge.dataset.syntheticTurnstile = 'true';
-              challenge.style.width = widget.dataset.size === 'flexible'
-                ? '100%'
-                : '300px';
+              challenge.style.width = '300px';
               challenge.style.height = '65px';
               widget.append(challenge);
             });
