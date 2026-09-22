@@ -246,6 +246,7 @@ export default function AuthForm(props: AuthFormProps) {
             <div
               className="cf-turnstile"
               data-sitekey={turnstileSiteKey}
+              data-size="flexible"
               data-callback="skillmintSignupTurnstileSuccess"
               data-expired-callback="skillmintSignupTurnstileExpired"
               data-error-callback="skillmintSignupTurnstileExpired"

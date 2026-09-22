@@ -133,6 +133,7 @@ export default function ForgotPasswordPage() {
             <div
               className="cf-turnstile"
               data-sitekey={turnstileSiteKey}
+              data-size="flexible"
               data-callback="skillmintTurnstileSuccess"
               data-expired-callback="skillmintTurnstileExpired"
               data-error-callback="skillmintTurnstileExpired"
