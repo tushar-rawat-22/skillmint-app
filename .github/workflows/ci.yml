@@ -116,6 +116,9 @@ jobs:
       - name: Run forgot-password coverage
         run: npm run test:e2e:forgot-password
 
+      - name: Run Turnstile responsive lifecycle coverage
+        run: npm run test:e2e:turnstile
+
       - name: Run existing password-recovery coverage
         run: npm run test:e2e:password-recovery
 
