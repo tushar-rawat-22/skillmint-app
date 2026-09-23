@@ -20,7 +20,12 @@ export const SYNTHETIC_RECOVERY_VERIFIER =
 const CREATED_AT = "2026-01-02T03:04:05.000Z";
 
 type Account = typeof ACCOUNT_A;
-type ProviderMode = "success" | "reject" | "abort" | "malformed";
+type ProviderMode =
+  | "success"
+  | "reject"
+  | "abort"
+  | "malformed"
+  | "rate-limit";
 type RequestRecord = { kind: string; accountId: string | null; url: string };
 
 class Deferred {
@@ -230,6 +235,14 @@ export class SyntheticProvider {
       if (this.passwordResetMode === "reject") {
         await json(route, 503, {
           error_code: "provider_failure",
+          msg: "RAW_SYNTHETIC_PASSWORD_RESET_SECRET",
+        });
+        return;
+      }
+
+      if (this.passwordResetMode === "rate-limit") {
+        await json(route, 429, {
+          error_code: "over_email_send_rate_limit",
           msg: "RAW_SYNTHETIC_PASSWORD_RESET_SECRET",
         });
         return;
