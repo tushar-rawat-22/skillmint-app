@@ -1402,7 +1402,35 @@ test("password reset support converts returned provider failures without exposin
       redirectTo: "https://app.example.test/reset-password",
     },
   );
-  assert.deepEqual(result, { ok: false });
+  assert.deepEqual(result, {
+    ok: false,
+    reason: "provider-failure",
+  });
+  assert.equal(JSON.stringify(result).includes("RAW_PROVIDER_DETAIL"), false);
+});
+
+test("password reset support classifies only email-send cooldowns as non-enumerating", async () => {
+  const result = await requestPasswordReset(
+    {
+      auth: {
+        resetPasswordForEmail: async () => ({
+          data: null,
+          error: {
+            code: "over_email_send_rate_limit",
+            message: "RAW_PROVIDER_DETAIL",
+          },
+        }),
+      },
+    },
+    {
+      email: "person@example.test",
+      redirectTo: "https://app.example.test/reset-password",
+    },
+  );
+  assert.deepEqual(result, {
+    ok: false,
+    reason: "email-rate-limited",
+  });
   assert.equal(JSON.stringify(result).includes("RAW_PROVIDER_DETAIL"), false);
 });
 

@@ -80,6 +80,11 @@ export default function ForgotPasswordPage() {
       });
 
       if (!result.ok) {
+        if (result.reason === "email-rate-limited") {
+          setMessage(RESET_REQUEST_SUCCESS_MESSAGE);
+          return;
+        }
+
         setError(RESET_REQUEST_FAILURE_MESSAGE);
         return;
       }

@@ -91,6 +91,29 @@ test(
 );
 
 test(
+  "@forgot-password email cooldown remains non-enumerating",
+  async ({ page, provider }) => {
+    provider.passwordResetMode = "rate-limit";
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill(ACCOUNT_A.email);
+    await page.getByRole("button", {
+      name: "Send reset link",
+    }).click();
+
+    await expect(
+      page.getByText(SAFE_RESET_REQUEST_SUCCESS),
+    ).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(
+      "RAW_SYNTHETIC_PASSWORD_RESET_SECRET",
+    );
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeEnabled();
+    expect(provider.count("auth:password-reset")).toBe(1);
+  },
+);
+
+test(
   "@forgot-password thrown network failure is sanitized and restores submitting state",
   async ({ page, provider }) => {
     provider.passwordResetMode = "abort";
