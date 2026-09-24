@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 const supabaseConnectSources = getSupabaseConnectSources();
+const oauthFormActionSources = getOAuthFormActionSources(
+  supabaseConnectSources[0],
+);
 const turnstileSource = "https://challenges.cloudflare.com";
 
 export const SECURITY_HEADERS = [
@@ -17,7 +20,7 @@ export const SECURITY_HEADERS = [
       `frame-src ${turnstileSource}`,
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      `form-action 'self'${oauthFormActionSources.length ? ` ${oauthFormActionSources.join(" ")}` : ""}`,
       "frame-ancestors 'none'",
     ].join("; "),
   },
@@ -77,4 +80,19 @@ function getSupabaseConnectSources(): string[] {
   } catch {
     return [];
   }
+}
+
+function getOAuthFormActionSources(
+  supabaseOrigin: string | undefined,
+): string[] {
+  const googleOauthEnabled = [
+    process.env.SKILLMINT_PUBLIC_OAUTH_ENABLED,
+    process.env.SKILLMINT_PUBLIC_OAUTH_GOOGLE_ENABLED,
+  ].every((value) => (value ?? "").trim().toLowerCase() === "true");
+
+  if (!googleOauthEnabled || !supabaseOrigin) {
+    return [];
+  }
+
+  return [supabaseOrigin, "https://accounts.google.com"];
 }

@@ -1499,10 +1499,15 @@ test("configured security headers use a bounded CSP and production excludes unsa
   const configPath = require.resolve("../next.config.ts");
   const originalNodeEnv = process.env.NODE_ENV;
   const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const originalPublicOauth = process.env.SKILLMINT_PUBLIC_OAUTH_ENABLED;
+  const originalGoogleOauth =
+    process.env.SKILLMINT_PUBLIC_OAUTH_GOOGLE_ENABLED;
   try {
     process.env.NODE_ENV = "production";
     process.env.NEXT_PUBLIC_SUPABASE_URL =
       "https://configured.example.test";
+    process.env.SKILLMINT_PUBLIC_OAUTH_ENABLED = "true";
+    process.env.SKILLMINT_PUBLIC_OAUTH_GOOGLE_ENABLED = "true";
     delete require.cache[configPath];
     const configModule = require(configPath);
     const configuredHeaders =
@@ -1519,6 +1524,10 @@ test("configured security headers use a bounded CSP and production excludes unsa
       headers["Content-Security-Policy"],
       /connect-src 'self' https:\/\/configured\.example\.test wss:\/\/configured\.example\.test/,
     );
+    assert.match(
+      headers["Content-Security-Policy"],
+      /form-action 'self' https:\/\/configured\.example\.test https:\/\/accounts\.google\.com/,
+    );
     assert.doesNotMatch(
       headers["Content-Security-Policy"],
       /unsafe-eval/,
@@ -1527,6 +1536,10 @@ test("configured security headers use a bounded CSP and production excludes unsa
       headers["Content-Security-Policy"],
       /connect-src[^;]*\*/,
     );
+    assert.doesNotMatch(
+      headers["Content-Security-Policy"],
+      /form-action[^;]*\*/,
+    );
     assert.equal(headers["X-Content-Type-Options"], "nosniff");
     assert.equal(headers["X-Frame-Options"], "DENY");
     assert.equal(
@@ -1534,12 +1547,33 @@ test("configured security headers use a bounded CSP and production excludes unsa
       "strict-origin-when-cross-origin",
     );
     assert.match(headers["Permissions-Policy"], /camera=\(\)/);
+
+    process.env.SKILLMINT_PUBLIC_OAUTH_GOOGLE_ENABLED = "false";
+    delete require.cache[configPath];
+    const disabledConfigModule = require(configPath);
+    const disabledHeaders = Object.fromEntries(
+      (await disabledConfigModule.default.headers())[0].headers.map(
+        ({ key, value }) => [key, value],
+      ),
+    );
+    const disabledFormAction = disabledHeaders[
+      "Content-Security-Policy"
+    ].match(/(?:^|;)\s*form-action\s+([^;]+)/)?.[1];
+    assert.equal(disabledFormAction, "'self'");
   } finally {
     delete require.cache[configPath];
     restoreEnvironment("NODE_ENV", originalNodeEnv);
     restoreEnvironment(
       "NEXT_PUBLIC_SUPABASE_URL",
       originalUrl,
+    );
+    restoreEnvironment(
+      "SKILLMINT_PUBLIC_OAUTH_ENABLED",
+      originalPublicOauth,
+    );
+    restoreEnvironment(
+      "SKILLMINT_PUBLIC_OAUTH_GOOGLE_ENABLED",
+      originalGoogleOauth,
     );
   }
 });
