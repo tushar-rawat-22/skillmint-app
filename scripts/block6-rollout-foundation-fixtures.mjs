@@ -86,6 +86,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v11_recruiter_evidence_review.sql",
   "supabase/schema_v12_account_persona_authority.sql",
   "supabase/schema_v13_access_requests.sql",
+  "supabase/schema_v15_oauth_deletion_reauthentication.sql",
   "supabase/schema_v14_candidate_job_lifecycle.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
@@ -101,6 +102,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql",
   "supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql",
   "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
+  "supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
   "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
   "supabase/migrations/manifest.json",
 ];
@@ -206,6 +208,13 @@ const migrations = [
     classification: appliedClassification,
   },
   {
+    version: "20260911001350",
+    source: "supabase/schema_v15_oauth_deletion_reauthentication.sql",
+    migration: "supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
+    hash: "91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562",
+    classification: "pending_oauth_deletion_reauthentication",
+  },
+  {
     version: "20260912001400",
     source: "supabase/schema_v14_candidate_job_lifecycle.sql",
     migration: "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
@@ -228,7 +237,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered fifteen SQL files",
+  "migration directory must contain the exact ordered sixteen SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -253,7 +262,9 @@ equal(
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  [migrations.at(-1).version],
+  migrations
+    .filter((item) => item.classification.startsWith("pending_"))
+    .map((item) => item.version),
   "Production pending versions changed",
 );
 equal(
@@ -261,7 +272,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 15, "manifest must contain fifteen migrations");
+equal(manifest.ordered_migrations.length, 16, "manifest must contain sixteen migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -285,7 +296,9 @@ for (const entry of manifest.ordered_migrations) {
     equal(entry.rollout_classification, appliedClassification, `${entry.version} must record verified Production migration history`);
   }
 }
-for (const appliedVersion of migrations.slice(0, -1).map((item) => item.version)) {
+for (const appliedVersion of migrations
+  .filter((item) => item.classification === appliedClassification)
+  .map((item) => item.version)) {
   check(!productionPendingVersions.has(appliedVersion), `${appliedVersion} cannot be pending execution`);
 }
 equal(manifest.ordered_migrations[4].version, migrations[4].version, "V5 must follow V4");

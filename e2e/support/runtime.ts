@@ -54,6 +54,7 @@ export class SyntheticProvider {
   countMode: "success" | "reject" = "success";
   feedbackMode: ProviderMode = "success";
   savedReportsMode: ProviderMode = "success";
+  authProvider: "email" | "google" = "email";
   careerSnapshotCount = 0;
   private gates = new Map<string, Deferred[]>();
   private failures = new Map<string, number>();
@@ -182,7 +183,7 @@ export class SyntheticProvider {
 
         this.usedRecoveryCodes.add(authCode);
 
-        await json(route, 200, createSession(account));
+        await json(route, 200, createSession(account, 3600, this.authProvider));
         return;
       }
 
@@ -213,7 +214,7 @@ export class SyntheticProvider {
         return;
       }
 
-      await json(route, 200, createSession(account));
+      await json(route, 200, createSession(account, 3600, this.authProvider));
       return;
     }
 
@@ -294,7 +295,7 @@ export class SyntheticProvider {
         return;
       }
 
-      await json(route, 200, createSession(account));
+      await json(route, 200, createSession(account, 3600, this.authProvider));
       return;
     }
 
@@ -340,7 +341,7 @@ export class SyntheticProvider {
         return;
       }
 
-      await json(route, 200, createUser(account));
+      await json(route, 200, createUser(account, this.authProvider));
       return;
     }
 
@@ -363,7 +364,7 @@ export class SyntheticProvider {
         return;
       }
 
-      await json(route, 200, createUser(account));
+      await json(route, 200, createUser(account, this.authProvider));
       return;
     }
 
@@ -750,19 +751,28 @@ function accountFromAuthorization(value: string | undefined): Account | null {
   }
 }
 
-function createSession(account: Account, expiresIn = 3600) {
+function createSession(
+  account: Account,
+  expiresIn = 3600,
+  provider: "email" | "google" = "email",
+) {
   const now = Math.floor(Date.now() / 1000);
   return {
-    access_token: createJwt(account, now, expiresIn),
+    access_token: createJwt(account, now, expiresIn, provider),
     token_type: "bearer",
     expires_in: expiresIn,
     expires_at: now + expiresIn,
     refresh_token: `refresh-${account.id}`,
-    user: createUser(account),
+    user: createUser(account, provider),
   };
 }
 
-function createJwt(account: Account, now: number, expiresIn: number): string {
+function createJwt(
+  account: Account,
+  now: number,
+  expiresIn: number,
+  provider: "email" | "google" = "email",
+): string {
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
   return `${encode({ alg: "HS256", typ: "JWT" })}.${encode({
     aud: "authenticated",
@@ -773,11 +783,14 @@ function createJwt(account: Account, now: number, expiresIn: number): string {
     role: "authenticated",
     aal: "aal1",
     session_id: `session-${account.id}`,
-    amr: [{ method: "password", timestamp: now }],
+    amr: [{ method: provider === "google" ? "oauth" : "password", timestamp: now }],
   })}.synthetic-signature`;
 }
 
-function createUser(account: Account) {
+function createUser(
+  account: Account,
+  provider: "email" | "google" = "email",
+) {
   return {
     id: account.id,
     aud: "authenticated",
@@ -786,9 +799,11 @@ function createUser(account: Account) {
     email_confirmed_at: CREATED_AT,
     confirmed_at: CREATED_AT,
     last_sign_in_at: CREATED_AT,
-    app_metadata: { provider: "email", providers: ["email"] },
+    app_metadata: { provider, providers: [provider] },
     user_metadata: { full_name: account.name },
-    identities: [],
+    identities: provider === "google"
+      ? [{ id: `google-${account.id}`, user_id: account.id, provider: "google" }]
+      : [],
     created_at: CREATED_AT,
     updated_at: CREATED_AT,
     is_anonymous: false,

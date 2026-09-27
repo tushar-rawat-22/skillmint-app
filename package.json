@@ -50,6 +50,8 @@
     "test:e2e:forgot-password": "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @forgot-password --workers=1 --retries=0",
     "test:e2e:password-recovery": "playwright test e2e/password-recovery.spec.ts --project=chromium --grep @password-recovery --workers=1 --retries=0",
     "test:block-5-3:fixtures": "node scripts/block-5-3-fixtures.mjs",
+    "test:oauth-deletion-reauth:fixtures": "node scripts/oauth-deletion-reauth-fixtures.mjs",
+    "test:oauth-deletion-reauth:database": "node scripts/oauth-deletion-reauth-database-integration.mjs",
     "test:block-5-3:chromium": "playwright test e2e/account-deletion.spec.ts --project=chromium --workers=1 --retries=0",
     "test:block-5-3:cross-browser": "playwright test e2e/account-deletion.spec.ts --project=firefox --grep @critical --workers=1 --retries=0 && playwright test e2e/account-deletion.spec.ts --project=webkit --grep @critical --workers=1 --retries=0",
     "test:block-5-3:offline": "npm run test:block-5-3:fixtures && npm run test:block-5-3:chromium && npm run test:block-5-3:cross-browser",

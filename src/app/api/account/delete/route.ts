@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 
 import {
@@ -20,6 +21,17 @@ import {
   decodeJwtPayload,
   validateRecentAuthentication,
 } from "@/lib/accountDeletion/recentAuth";
+import {
+  hasGoogleIdentity,
+  OAUTH_DELETION_REAUTH_PROVIDER,
+  OAUTH_DELETION_REAUTH_PURPOSE,
+} from "@/lib/oauthReauthentication/contract";
+import {
+  hashOAuthDeletionReauthNonce,
+  oauthCookieBaseOptions,
+  OAUTH_DELETION_PROOF_COOKIE,
+  parseOAuthDeletionReauthNonce,
+} from "@/lib/oauthReauthentication/proof";
 import {
   runAccountDeletionOrchestration,
   type AccountDeletionOrchestrationErrorCode,
@@ -53,10 +65,11 @@ const activeDeletions = new Map<string, Promise<
 >>();
 
 export async function POST(request: Request) {
+  const trustedAppOrigin = getTrustedAppOrigin();
   if (!isAllowedAccountDeletionOrigin({
     requestUrl: request.url,
     origin: request.headers.get("origin"),
-    trustedAppOrigin: getTrustedAppOrigin(),
+    trustedAppOrigin,
   })) {
     return jsonError("invalid_origin", 403);
   }
@@ -95,6 +108,7 @@ export async function POST(request: Request) {
   const publicConfig = getSupabasePublicConfig();
   if (!publicConfig) return jsonError("not_configured", 503);
 
+  let shouldClearOAuthProof = false;
   try {
     const userClient = createClient<Database>(
       publicConfig.url,
@@ -110,24 +124,52 @@ export async function POST(request: Request) {
       return jsonError("not_authenticated", 401);
     }
 
-    const recent = validateRecentAuthentication({
+    const recentPasswordAuthentication = validateRecentAuthentication({
       claims: decodeJwtPayload(token),
       validatedUserId: userData.user.id,
       provider: userData.user.app_metadata?.provider,
       nowSeconds: Math.floor(Date.now() / 1000),
     });
-    if (!recent.ok) {
-      return jsonError(
-        recent.code === "unsupported_method"
-          ? "unsupported_authentication_method"
-          : "recent_authentication_required",
-        403,
-      );
-    }
 
     // Validate the server-only Auth admin boundary before removing any rows so
     // a configuration failure cannot create an avoidable partial deletion.
     const adminClient = createSupabaseAdminClient();
+
+    if (!recentPasswordAuthentication.ok) {
+      if (!hasGoogleIdentity(userData.user)) {
+        return jsonError(
+          recentPasswordAuthentication.code === "unsupported_method"
+            ? "unsupported_authentication_method"
+            : "recent_authentication_required",
+          403,
+        );
+      }
+
+      const cookieStore = await cookies();
+      const proof = parseOAuthDeletionReauthNonce(
+        cookieStore.get(OAUTH_DELETION_PROOF_COOKIE)?.value,
+      );
+      if (!proof) {
+        return jsonError("recent_authentication_required", 403);
+      }
+      shouldClearOAuthProof = true;
+
+      const consumed = await adminClient.rpc(
+        "consume_oauth_deletion_reauth_intent",
+        {
+          requested_nonce_hash: hashOAuthDeletionReauthNonce(proof),
+          expected_user_id: userData.user.id,
+          expected_provider: OAUTH_DELETION_REAUTH_PROVIDER,
+          requested_purpose: OAUTH_DELETION_REAUTH_PURPOSE,
+        },
+      );
+      if (consumed.error || consumed.data !== true) {
+        return clearOAuthProofCookie(
+          jsonError("recent_authentication_required", 403),
+          trustedAppOrigin,
+        );
+      }
+    }
 
     const result = await runOnceForUser(userData.user.id, async () =>
       runAccountDeletionOrchestration({
@@ -166,13 +208,19 @@ export async function POST(request: Request) {
       })
     );
 
-    return result.ok
+    const response = result.ok
       ? jsonResponse({ ok: true, deleted: true }, 200)
       : jsonError(result.code, 500);
+    return shouldClearOAuthProof
+      ? clearOAuthProofCookie(response, trustedAppOrigin)
+      : response;
   } catch (error) {
-    return error instanceof SupabaseAdminConfigurationError
+    const response = error instanceof SupabaseAdminConfigurationError
       ? jsonError("not_configured", 503)
       : jsonError("temporarily_unavailable", 503);
+    return shouldClearOAuthProof
+      ? clearOAuthProofCookie(response, trustedAppOrigin)
+      : response;
   }
 }
 
@@ -241,7 +289,7 @@ function jsonError(code: PublicErrorCode, status: number): NextResponse {
     request_too_large: "The deletion request is too large.",
     invalid_request: "The deletion request was not accepted.",
     not_authenticated: "Sign in again before deleting your account.",
-    recent_authentication_required: "Reauthenticate with your current password before deleting your account.",
+    recent_authentication_required: "Reauthenticate before deleting your account.",
     unsupported_authentication_method: "Account deletion is not available for this sign-in method yet.",
     not_configured: "Account deletion is not configured on this server.",
     account_data_cleanup_failed: "Account deletion did not finish. Please try again.",
@@ -260,6 +308,19 @@ function jsonResponse(body: object, status: number): NextResponse {
       Pragma: "no-cache",
     },
   });
+}
+
+function clearOAuthProofCookie(
+  response: NextResponse,
+  appOrigin: string | null,
+): NextResponse {
+  if (!appOrigin) return response;
+  response.cookies.set(OAUTH_DELETION_PROOF_COOKIE, "", {
+    ...oauthCookieBaseOptions(appOrigin),
+    maxAge: 0,
+    path: "/api/account/delete",
+  });
+  return response;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

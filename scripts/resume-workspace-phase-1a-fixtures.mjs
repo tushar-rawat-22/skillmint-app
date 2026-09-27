@@ -1240,7 +1240,7 @@ test("deletion parser/orchestration contracts require the selection count and st
   assert.doesNotMatch(
     sliceSource(
       accountDeletionRouteSource,
-      "return result.ok",
+      "const response = result.ok",
       "} catch (error)",
     ),
     /profiles_deleted|active_resume_selections_deleted|userData\.user\.id/,
@@ -1347,6 +1347,7 @@ test("protected HTTP deletion parser rejects missing/excess selection counts gen
 
   const originalLoad = Module._load;
   Module._load = function loadRouteDependency(request, parent, isMain) {
+    if (request === "server-only") return {};
     if (request === "@supabase/supabase-js") {
       return {
         createClient: () => ({
@@ -1693,6 +1694,8 @@ assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);
       "test:e2e:resume-comparison:race",
       "test:e2e:resume-comparison:webkit",
       "test:e2e:resume-workspace",
+      "test:oauth-deletion-reauth:database",
+      "test:oauth-deletion-reauth:fixtures",
     ],
   );
   assert.equal(
@@ -1758,6 +1761,14 @@ assert.deepEqual(normalizedCurrentWithoutScripts, baselineWithoutScripts);
   assert.equal(
     currentPackage.scripts["test:e2e:resume-workspace"],
     "playwright test e2e/resume-workspace.spec.ts --project=chromium --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:oauth-deletion-reauth:database"],
+    "node scripts/oauth-deletion-reauth-database-integration.mjs",
+  );
+  assert.equal(
+    currentPackage.scripts["test:oauth-deletion-reauth:fixtures"],
+    "node scripts/oauth-deletion-reauth-fixtures.mjs",
   );
   assert.equal(
     sha256(readBuffer("package-lock.json")),

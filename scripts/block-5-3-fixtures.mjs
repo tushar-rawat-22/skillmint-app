@@ -43,6 +43,7 @@ const {
   RECENT_AUTH_MAX_AGE_SECONDS,
   decodeJwtPayload,
   validateRecentAuthentication,
+  validateRecentOAuthAuthentication,
 } = require("../src/lib/accountDeletion/recentAuth.ts");
 const {
   runAccountDeletionOrchestration,
@@ -174,6 +175,18 @@ test("recent authentication trusts detailed provider AMR, not token issuance", (
   const token = jwt(claims);
   assert.deepEqual(decodeJwtPayload(token), claims);
   assert.equal(decodeJwtPayload("not-a-jwt"), null);
+
+  const oauthClaims = {
+    sub: ACCOUNT_A,
+    iat: NOW,
+    amr: [{ method: "oauth", timestamp: NOW - RECENT_AUTH_MAX_AGE_SECONDS }],
+  };
+  assert.equal(validateRecentOAuthAuthentication({ claims: oauthClaims, validatedUserId: ACCOUNT_A, provider: "google", nowSeconds: NOW }).ok, true);
+  assert.equal(validateRecentOAuthAuthentication({ claims: { ...oauthClaims, amr: [{ method: "oauth", timestamp: NOW - RECENT_AUTH_MAX_AGE_SECONDS - 1 }] }, validatedUserId: ACCOUNT_A, provider: "google", nowSeconds: NOW }).code, "stale");
+  assert.equal(validateRecentOAuthAuthentication({ claims: { ...oauthClaims, amr: [{ method: "oauth", timestamp: NOW + 31 }] }, validatedUserId: ACCOUNT_A, provider: "google", nowSeconds: NOW }).code, "future");
+  assert.equal(validateRecentOAuthAuthentication({ claims: { ...oauthClaims, amr: [{ method: "password", timestamp: NOW }] }, validatedUserId: ACCOUNT_A, provider: "google", nowSeconds: NOW }).code, "unsupported_method");
+  assert.equal(validateRecentOAuthAuthentication({ claims: oauthClaims, validatedUserId: ACCOUNT_B, provider: "google", nowSeconds: NOW }).code, "account_mismatch");
+  assert.equal(validateRecentOAuthAuthentication({ claims: oauthClaims, validatedUserId: ACCOUNT_A, provider: "github", nowSeconds: NOW }).code, "unsupported_method");
 });
 
 test("orchestration is ordered, validates adapters, and never reports partial success", async () => {
@@ -275,6 +288,7 @@ test("route preserves exact safe success and generic Auth-failure responses", as
   delete require.cache[routePath];
   const originalLoad = Module._load;
   Module._load = function loadRouteDependency(request, parent, isMain) {
+    if (request === "server-only") return {};
     if (request === "@supabase/supabase-js") {
       return {
         createClient: () => ({

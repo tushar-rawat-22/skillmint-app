@@ -50,13 +50,22 @@ const applied = [
     rollout_classification: "existing_production_migration_history_verified",
   },
 ];
-const pending = {
-  version: "20260912001400",
-  source_path: "supabase/schema_v14_candidate_job_lifecycle.sql",
-  migration_path: "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
-  sha256: "fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b",
-  rollout_classification: "pending_candidate_job_lifecycle",
-};
+const pending = [
+  {
+    version: "20260911001350",
+    source_path: "supabase/schema_v15_oauth_deletion_reauthentication.sql",
+    migration_path: "supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
+    sha256: "91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562",
+    rollout_classification: "pending_oauth_deletion_reauthentication",
+  },
+  {
+    version: "20260912001400",
+    source_path: "supabase/schema_v14_candidate_job_lifecycle.sql",
+    migration_path: "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
+    sha256: "fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b",
+    rollout_classification: "pending_candidate_job_lifecycle",
+  },
+];
 
 for (const contract of applied) {
   const manifestEntry = manifest.ordered_migrations.find((entry) => entry.version === contract.version);
@@ -72,16 +81,23 @@ assert.match(v10Sql, /grant select, insert, update, delete on table public\.acco
 assert.doesNotMatch(v10Sql, /grant\s+[^;]*\b(?:insert|update|delete)\b[^;]*\bon\s+table\s+public\.account_personas\b[^;]*\bto\s+authenticated\b/i, "authenticated browser sessions must not receive direct persona write grants");
 assert.doesNotMatch(v10Sql, /create policy\s+"[^"]+"\s+on\s+public\.account_personas\s+for\s+(?:insert|update|delete)\s+to\s+authenticated/i, "authenticated browser sessions must not receive persona write policies");
 
-const pendingEntry = manifest.ordered_migrations.find((entry) => entry.version === pending.version);
-assert.deepEqual(pendingEntry, pending, "V14 manifest contract changed");
-assert.equal(Buffer.compare(bytes(pending.source_path), bytes(pending.migration_path)), 0, "V14 source and migration differ");
-assert.equal(sha256(bytes(pending.migration_path)), pending.sha256, "V14 migration hash changed");
-assert.deepEqual(manifest.generated_for.production.pending_execution, [pending.version], "V14 must be the only pending Production migration");
+for (const contract of pending) {
+  const pendingEntry = manifest.ordered_migrations.find((entry) => entry.version === contract.version);
+  assert.deepEqual(pendingEntry, contract, `${contract.version} pending manifest contract changed`);
+  assert.equal(Buffer.compare(bytes(contract.source_path), bytes(contract.migration_path)), 0, `${contract.version} source and migration differ`);
+  assert.equal(sha256(bytes(contract.migration_path)), contract.sha256, `${contract.version} migration hash changed`);
+}
+assert.deepEqual(manifest.generated_for.production.pending_execution, pending.map((entry) => entry.version), "Production pending migration order changed");
 
-const v14Sql = text(pending.migration_path);
+const v14Sql = text(pending[1].migration_path);
 assert.match(v14Sql, /grant select on table public\.candidate_job_lifecycle to authenticated;/i, "candidate lifecycle owner reads must remain explicit");
 assert.match(v14Sql, /grant select, insert, update, delete on table public\.candidate_job_lifecycle to service_role;/i, "trusted server lifecycle mutation authority is missing");
 assert.doesNotMatch(v14Sql, /grant\s+[^;]*\b(?:insert|update|delete)\b[^;]*\bon\s+table\s+public\.candidate_job_lifecycle\b[^;]*\bto\s+authenticated\b/i, "authenticated browser sessions must not receive lifecycle write grants");
 assert.doesNotMatch(v14Sql, /create policy\s+"[^"]+"\s+on\s+public\.candidate_job_lifecycle\s+for\s+(?:insert|update|delete)\s+to\s+authenticated/i, "authenticated browser sessions must not receive latent lifecycle write policies");
 
-console.log(`PASS production migration integrity fixtures (${applied.length} applied, 1 pending)`);
+const v15Sql = text(pending[0].migration_path);
+assert.match(v15Sql, /force row level security/i, "OAuth deletion intent table must force RLS");
+assert.match(v15Sql, /revoke all on table public\.oauth_deletion_reauth_intents from public, anon, authenticated/i, "OAuth deletion intents must remain server-only");
+assert.match(v15Sql, /grant execute on function public\.consume_oauth_deletion_reauth_intent[^;]+to service_role/i, "OAuth proof consumption must remain service-role-only");
+
+console.log(`PASS production migration integrity fixtures (${applied.length} applied, ${pending.length} pending)`);
