@@ -2,7 +2,7 @@ const SAFE_ACCOUNT_DELETION_MESSAGES: Record<string, string> = {
   invalid_request: "The deletion request was not accepted. Reopen the dialog and try again.",
   request_too_large: "The deletion request was not accepted. Reopen the dialog and try again.",
   not_authenticated: "Sign in again before deleting your account.",
-  recent_authentication_required: "Reauthenticate with your current password before deleting your account.",
+  recent_authentication_required: "Reauthenticate before deleting your account.",
   unsupported_authentication_method: "Account deletion is not available for this sign-in method yet.",
   not_configured: "Account deletion is not configured on this server.",
   account_data_cleanup_failed: "Account deletion did not finish. Please try again.",

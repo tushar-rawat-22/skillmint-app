@@ -11,6 +11,7 @@ on:
       - "scripts/production-local-migration-rehearsal-fixtures.mjs"
       - "scripts/production-migration-lock-timing-rehearsal.mjs"
       - "scripts/production-logical-recovery-drill.mjs"
+      - "scripts/oauth-deletion-reauth-database-integration.mjs"
       - "scripts/production-pending-migration-integrity-fixtures.mjs"
       - "scripts/production-rollout-foundation-fixtures.mjs"
       - "supabase/migrations/**"
@@ -78,8 +79,11 @@ jobs:
       - name: Start isolated local Supabase
         run: supabase start
 
-      - name: Execute V1-V14 rehearsal
+      - name: Execute all ordered migrations
         run: node scripts/production-local-migration-rehearsal.mjs --execute
+
+      - name: Verify OAuth deletion reauthentication database boundaries
+        run: npm run test:oauth-deletion-reauth:database
 
       - name: Verify bounded migration timing and lock recovery
         run: node scripts/production-migration-lock-timing-rehearsal.mjs

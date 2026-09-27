@@ -1,6 +1,6 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION` — Production history is verified through V13; V14 is repository-pending and unapplied; SkillMint is launched with controlled account admission
+**Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION` — Production history is verified through V13; V15 OAuth deletion reauthentication and V14 are repository-pending and unapplied; SkillMint is launched with controlled account admission
 
 This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize V14 Production execution, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
 
@@ -23,12 +23,13 @@ Fresh connected inspection on September 12, 2026 reconfirmed the canonical Supab
 13. `20260829001200`
 14. `20260911001300`
 
-Production migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V14 exists only in the repository and remains unapplied:
+Production migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V15 OAuth deletion reauthentication and V14 exist only in the repository and remain unapplied:
 
 - `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 - `20260823001100_schema_v11_recruiter_evidence_review.sql`
 - `20260829001200_schema_v12_account_persona_authority.sql`
 - `20260911001300_schema_v13_access_requests.sql`
+- `20260911001350_schema_v15_oauth_deletion_reauthentication.sql` — repository-pending and unapplied; bounded #130 rollout only
 - `20260912001400_schema_v14_candidate_job_lifecycle.sql` — repository-pending and unapplied
 
 The same live lineage now contains twelve ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, and `access_requests`. Every ordinary `public` table was verified as owned by `postgres` with RLS enabled. `analytics_events` remains force-RLS with no authenticated table access.
@@ -55,7 +56,7 @@ No backup contents, credentials, row contents, or user identifiers were recorded
 
 ## Source of truth
 
-Before rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest is authoritative for migration file order, paths, and hashes. Its `generated_for.production` metadata is reconciled to connected Production history: V1–V13 are verified as applied and V14 is the only pending repository migration.
+Before rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest is authoritative for migration file order, paths, and hashes. Its `generated_for.production` metadata is reconciled to connected Production history: V1–V13 are verified as applied; V15 OAuth deletion reauthentication and V14 are pending repository migrations.
 
 If migration order/hashes, connected Production evidence, and this authority disagree, stop before any Production write.
 
@@ -75,9 +76,10 @@ The repository manifest currently defines this exact ordered chain:
 12. `20260823001100_schema_v11_recruiter_evidence_review.sql`
 13. `20260829001200_schema_v12_account_persona_authority.sql`
 14. `20260911001300_schema_v13_access_requests.sql`
-15. `20260912001400_schema_v14_candidate_job_lifecycle.sql`
+15. `20260911001350_schema_v15_oauth_deletion_reauthentication.sql`
+16. `20260912001400_schema_v14_candidate_job_lifecycle.sql`
 
-Production is reconciled through V13. V14 is the only pending repository migration and is **not authorized for Production execution by the merged schema-foundation work**. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.
+Production is reconciled through V13. V15 and V14 are pending repository migrations. V14 is **not authorized for Production execution by the merged schema-foundation work**; V15 may be executed only through the separately reviewed, exact-head #130 OAuth deletion rollout. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately controlled.
 

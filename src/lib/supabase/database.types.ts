@@ -222,6 +222,39 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_deletion_reauth_intents: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          nonce_hash: string
+          provider: string
+          purpose: string
+          returned_at: string | null
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          nonce_hash: string
+          provider: string
+          purpose: string
+          returned_at?: string | null
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          nonce_hash?: string
+          provider?: string
+          purpose?: string
+          returned_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           career_goal: string | null
@@ -427,6 +460,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_oauth_deletion_reauth_intent: {
+        Args: {
+          expected_provider: string
+          expected_user_id: string
+          requested_nonce_hash: string
+          requested_purpose: string
+        }
+        Returns: boolean
+      }
+      create_oauth_deletion_reauth_intent: {
+        Args: {
+          expected_user_id: string
+          requested_nonce_hash: string
+          requested_provider: string
+          requested_purpose: string
+        }
+        Returns: boolean
+      }
       create_recruiter_role_evidence_map: {
         Args: {
           expected_recruiter_user_id: string
@@ -455,6 +506,19 @@ export type Database = {
         Returns: Json
       }
       is_active_skillmint_user: { Args: never; Returns: boolean }
+      invalidate_oauth_deletion_reauth_intent: {
+        Args: { requested_nonce_hash: string }
+        Returns: boolean
+      }
+      mark_oauth_deletion_reauth_returned: {
+        Args: {
+          requested_nonce_hash: string
+          requested_purpose: string
+          returned_provider: string
+          returned_user_id: string
+        }
+        Returns: boolean
+      }
       prepare_account_deletion: {
         Args: { target_user_id: string }
         Returns: {

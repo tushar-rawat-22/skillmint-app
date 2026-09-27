@@ -55,12 +55,24 @@ Resume Reality
 | Two-sided beta — public IA and synthetic recruiter demo | Implemented and merged through PR #45 | Both demos remain deterministic, gated, and structurally isolated from Supabase session refresh, analytics, storage, and external requests |
 | Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; Production migration remains unapplied |
 | Two-sided beta — recruiter evidence review | Engineering implementation, isolated verification, and independent security/privacy review complete | Server-owned recruiter persona, deterministic role maps, atomic live-token review submission, and candidate-owned structured feedback; V11 remains unapplied |
+| Google OAuth account-deletion reauthentication | Engineering implementation and isolated browser/database acceptance complete; hosted rollout pending | One-time user/provider/purpose-bound proof preserves the frozen password-AMR deletion path; no provider token persistence and no public OAuth activation |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
 Block 5 merge commit: `3cb5e28050cf93e42e53405f0f2be9d12e756e27`
 
 Blocks 1–5 are frozen. Future work may extend the product only while preserving their behavior, evidence, identities, and non-claims.
+
+The Google deletion extension keeps the existing password-AMR contract intact
+and adds a separate server-derived flow for Google-linked accounts. Its
+dedicated PKCE callback stores only an HttpOnly verifier during the round trip,
+does not persist the returned OAuth session or provider tokens, requires the
+same verified Auth user, and produces a ten-minute proof consumed atomically by
+the protected deletion route. The V15 migration is timestamped after deployed
+V13 but before the unrelated pending V14 candidate-job migration so the bounded
+provider gate can be rolled out independently. This repository result does not
+claim a hosted migration, Preview acceptance, Production deletion, or public
+OAuth activation.
 
 Block 6 engineering implementation and isolated verification are complete. The isolated hosted migration and ACL verification passed, including the V7 additive ACL repair, and the isolated live-security gate passed. These results do not prove Production behavior or authorize Production rollout.
 

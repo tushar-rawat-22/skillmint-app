@@ -75,6 +75,7 @@ equal(
     "20260823001100",
     "20260829001200",
     "20260911001300",
+    "20260911001350",
     "20260912001400",
   ],
   "migration order is not exact",
@@ -86,7 +87,7 @@ equal(
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  ["20260912001400"],
+  ["20260911001350", "20260912001400"],
   "Production pending order is not exact",
 );
 const expectedClassifications = new Map([
@@ -104,6 +105,7 @@ const expectedClassifications = new Map([
   ["20260823001100", "existing_production_migration_history_verified"],
   ["20260829001200", "existing_production_migration_history_verified"],
   ["20260911001300", "existing_production_migration_history_verified"],
+  ["20260911001350", "pending_oauth_deletion_reauthentication"],
   ["20260912001400", "pending_candidate_job_lifecycle"],
 ]);
 equal(
@@ -132,7 +134,9 @@ for (const pendingVersion of productionPendingVersions) {
     `${pendingVersion} cannot have an existing Production classification`,
   );
 }
-for (const appliedVersion of manifest.ordered_migrations.slice(0, -1).map((entry) => entry.version)) {
+for (const appliedVersion of manifest.ordered_migrations
+  .filter((entry) => !productionPendingVersions.has(entry.version))
+  .map((entry) => entry.version)) {
   check(
     !productionPendingVersions.has(appliedVersion),
     `${appliedVersion} cannot be pending execution`,

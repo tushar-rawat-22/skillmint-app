@@ -122,6 +122,9 @@ jobs:
       - name: Run existing password-recovery coverage
         run: npm run test:e2e:password-recovery
 
+      - name: Run protected account-deletion coverage
+        run: npm run test:block-5-3:chromium
+
       - name: Run owner-isolation regression
         run: npm run test:e2e:owner-isolation
 
@@ -172,6 +175,7 @@ jobs:
           node scripts/production-readonly-inventory-fixtures.mjs
           node scripts/smoke-production-fixtures.mjs
           node scripts/documentation-status-fixtures.mjs
+          node scripts/oauth-deletion-reauth-fixtures.mjs
           node scripts/greenhouse-source-adapter-fixtures.mjs
           node scripts/candidate-greenhouse-route-boundary-fixtures.mjs
           node scripts/candidate-jobs-recovery-fixtures.mjs

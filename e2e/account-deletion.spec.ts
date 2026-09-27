@@ -4,6 +4,8 @@ import type { Page, Route } from "@playwright/test";
 import {
   ACCOUNT_A,
   ACCOUNT_B,
+  APP_ORIGIN,
+  PROVIDER_ORIGIN,
   SYNTHETIC_PASSWORD,
   expect,
   login,
@@ -55,6 +57,116 @@ test("@block53 wrong password clears the credential and never reaches SkillMint 
   await expect(page.getByLabel("Current password")).toHaveValue("");
   expect(deletionRequests).toBe(0);
   await expectPasswordAbsentFromBrowser(page, "wrong-synthetic-password");
+});
+
+test("@block53 Google account deletion requires purpose-bound reauthentication and a second explicit confirmation", async ({ page, provider }) => {
+  provider.authProvider = "google";
+  let startBody: unknown;
+  let startAuthorization = "";
+  let deletionBody: unknown;
+  let deletionAuthorization = "";
+
+  await page.route("**/api/account/oauth-reauth", async (route) => {
+    startBody = route.request().postDataJSON();
+    startAuthorization = route.request().headers().authorization ?? "";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        redirectTo: `${PROVIDER_ORIGIN}/auth/v1/authorize?provider=google&scopes=openid%20email%20profile`,
+      }),
+    });
+  });
+  await page.route(`${PROVIDER_ORIGIN}/auth/v1/authorize**`, async (route) => {
+    await route.fulfill({
+      status: 303,
+      headers: {
+        location: `${APP_ORIGIN}/settings/data?account_reauth=ready`,
+      },
+      body: "",
+    });
+  });
+  await page.route("**/api/account/delete", async (route) => {
+    deletionBody = route.request().postDataJSON();
+    deletionAuthorization = route.request().headers().authorization ?? "";
+    await deletionSuccess(route);
+  });
+
+  await openDeletionDialog(page);
+  await expect(page.getByLabel("Current password")).toHaveCount(0);
+  await page.getByLabel("Type DELETE MY ACCOUNT").fill(CONFIRMATION);
+  await page.getByRole("dialog").getByRole("button", {
+    name: "Reauthenticate with Google",
+  }).click();
+
+  await expect(page).toHaveURL(`${APP_ORIGIN}/settings/data`);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByLabel("Type DELETE MY ACCOUNT")).toHaveValue("");
+  expect(startBody).toEqual({});
+  expect(startAuthorization).toMatch(/^Bearer /);
+
+  await page.getByLabel("Type DELETE MY ACCOUNT").fill(CONFIRMATION);
+  await confirmButton(page).click();
+  await expect(page.getByRole("status")).toContainText("Account access was deleted");
+  expect(deletionBody).toEqual({ confirmation: CONFIRMATION });
+  expect(deletionAuthorization).toMatch(/^Bearer /);
+  expect(JSON.stringify(startBody)).not.toMatch(/userId|expectedUser|provider_token|refresh_token/);
+});
+
+test("@block53 forged Google reauthentication UI state fails safely without exposing provider detail", async ({ page, provider }) => {
+  provider.authProvider = "google";
+  await login(page, ACCOUNT_A);
+  await page.route("**/api/account/delete", async (route) => {
+    await route.fulfill({
+      status: 403,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: false,
+        code: "recent_authentication_required",
+        error: "RAW_PROVIDER_DETAIL",
+      }),
+    });
+  });
+
+  await page.goto("/settings/data?account_reauth=ready");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByLabel("Type DELETE MY ACCOUNT").fill(CONFIRMATION);
+  await confirmButton(page).click();
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toContainText("Reauthenticate before deleting your account.");
+  await expect(alert).not.toContainText("RAW_PROVIDER_DETAIL");
+});
+
+test("@block53 @critical Google reauthentication dialog preserves focus, reduced motion, and narrow-screen reflow", async ({ page, provider }) => {
+  provider.authProvider = "google";
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await login(page, ACCOUNT_A);
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+    { width: 320, height: 720 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/settings/data");
+    const openButton = page.getByRole("button", { name: "Delete SkillMint account" });
+    await openButton.focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(page.getByLabel("Type DELETE MY ACCOUNT")).toBeFocused();
+    await expect(page.getByLabel("Current password")).toHaveCount(0);
+    const layout = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      pageWidth: document.documentElement.scrollWidth,
+    }));
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewport);
+    const box = await dialog.boundingBox();
+    expect(box?.width ?? viewport.width + 1).toBeLessThanOrEqual(viewport.width);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  }
 });
 
 test("@block53 delayed reauthentication blocks duplicates and processing dismissal", async ({ page, provider }) => {

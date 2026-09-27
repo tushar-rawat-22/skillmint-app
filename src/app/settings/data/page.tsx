@@ -36,6 +36,7 @@ import { useAuthSession } from "@/modules/auth/hooks/useAuthSession";
 import {
   createSupabaseAccountReauthenticationClient,
 } from "@/lib/supabase/client";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import {
   buildCurrentUserAccountDataExport,
   deleteCurrentUserSavedReports,
@@ -131,6 +132,7 @@ const IDLE_ACCOUNT_COUNTS: AccountCountsLoadState = {
 export default function DataSettingsPage() {
   const {
     user,
+    session,
     isConfigured,
     isLoading: isAuthLoading,
   } = useAuthSession();
@@ -227,6 +229,8 @@ export default function DataSettingsPage() {
   const [accountDeleteConfirmation, setAccountDeleteConfirmation] =
     useState("");
   const [accountDeletePassword, setAccountDeletePassword] = useState("");
+  const [oauthReauthenticationReady, setOAuthReauthenticationReady] =
+    useState(false);
   const accountDeletePasswordValueRef = useRef("");
   const accountDeleteConfirmationInputRef = useRef<HTMLInputElement>(null);
   const accountDeletionTokenRef = useRef(0);
@@ -418,6 +422,7 @@ export default function DataSettingsPage() {
     setImportDismissed(false);
     setShowSavedReportsDialog(false);
     setShowAccountDeleteDialog(false);
+    setOAuthReauthenticationReady(false);
     accountDeletePasswordValueRef.current = "";
     setAccountDeletePassword("");
     setAccountDeleteConfirmation("");
@@ -440,6 +445,36 @@ export default function DataSettingsPage() {
       });
     }
   }, [currentContextEpoch, loadAccountCounts, ownerKey]);
+
+  const isGoogleDeletionAccount = Boolean(
+    session?.user.app_metadata?.provider === "google" ||
+      (Array.isArray(session?.user.app_metadata?.providers) &&
+        session.user.app_metadata.providers.includes("google")) ||
+      session?.user.identities?.some((identity) => identity.provider === "google"),
+  );
+
+  useEffect(() => {
+    if (isAuthLoading || !user || !isGoogleDeletionAccount) return;
+    const url = new URL(window.location.href);
+    const result = url.searchParams.get("account_reauth");
+    if (result !== "ready" && result !== "failed") return;
+
+    url.searchParams.delete("account_reauth");
+    window.history.replaceState(window.history.state, "", url);
+    if (result === "ready") {
+      setOAuthReauthenticationReady(true);
+      setAccountDeleteConfirmation("");
+      setShowAccountDeleteDialog(true);
+      return;
+    }
+
+    publishAccountDeletionState({
+      status: "error",
+      data: null,
+      message: null,
+      error: "Google reauthentication did not finish. Your account was not deleted.",
+    });
+  }, [isAuthLoading, isGoogleDeletionAccount, user]);
 
   const browserPresentation = getVisibleBrowserSummaryState(
     ownerKey,
@@ -833,6 +868,80 @@ export default function DataSettingsPage() {
     }
   }
 
+  async function handleStartGoogleReauthentication() {
+    const live = liveRequestContextRef.current;
+    if (
+      accountDeleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION ||
+      !isGoogleDeletionAccount ||
+      !session?.access_token ||
+      !live.ownerKey ||
+      typeof live.currentUserId !== "string" ||
+      user?.id !== live.currentUserId
+    ) {
+      publishAccountDeletionState({
+        status: "error",
+        data: null,
+        message: null,
+        error: accountDeleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION
+          ? "Type DELETE MY ACCOUNT to confirm."
+          : "Sign in again before deleting your account.",
+      });
+      return;
+    }
+
+    const request: OwnedRequestIdentity = {
+      ownerKey: live.ownerKey,
+      contextEpoch: live.contextEpoch,
+      requestToken: accountDeletionTokenRef.current + 1,
+    };
+    accountDeletionTokenRef.current = request.requestToken;
+    activeAccountDeletionRef.current = request;
+    setAccountDeletionState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      status: "loading",
+      data: null,
+      message: null,
+      error: null,
+    });
+
+    try {
+      const response = await fetch("/api/account/oauth-reauth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: "{}",
+      });
+      const payload: unknown = await response.json().catch(() => null);
+      if (!isCurrentAccountDeletionRequest(request)) return;
+      if (!response.ok || !isOAuthReauthenticationRedirect(payload)) {
+        publishAccountDeletionState({
+          status: "error",
+          data: null,
+          message: null,
+          error: "Google reauthentication could not start. Your account was not deleted.",
+        });
+        return;
+      }
+      window.location.assign(payload.redirectTo);
+    } catch {
+      if (isCurrentAccountDeletionRequest(request)) {
+        publishAccountDeletionState({
+          status: "error",
+          data: null,
+          message: null,
+          error: "Google reauthentication could not start. Your account was not deleted.",
+        });
+      }
+    } finally {
+      if (isSameOwnedRequest(activeAccountDeletionRef.current, request)) {
+        activeAccountDeletionRef.current = null;
+      }
+    }
+  }
+
   async function handleDeleteAccount() {
     const live = liveRequestContextRef.current;
     const activeRequest = activeAccountDeletionRef.current;
@@ -865,7 +974,7 @@ export default function DataSettingsPage() {
       return;
     }
 
-    if (!accountDeletePassword) {
+    if (!isGoogleDeletionAccount && !accountDeletePassword) {
       publishAccountDeletionState({
         status: "error",
         data: null,
@@ -883,8 +992,6 @@ export default function DataSettingsPage() {
     accountDeletionTokenRef.current = request.requestToken;
     activeAccountDeletionRef.current = request;
     const deletionOwnerId = live.currentUserId;
-    const deletionEmail = user.email;
-    const password = accountDeletePasswordValueRef.current;
     setAccountDeletionState({
       ownerKey: request.ownerKey,
       contextEpoch: request.contextEpoch,
@@ -894,8 +1001,35 @@ export default function DataSettingsPage() {
       error: null,
     });
 
+    if (isGoogleDeletionAccount) {
+      try {
+        if (!oauthReauthenticationReady || !session?.access_token) {
+          publishAccountDeletionState({
+            status: "error",
+            data: null,
+            message: null,
+            error: "Reauthenticate with Google before deleting your account.",
+          });
+          return;
+        }
+        await submitAccountDeletion({
+          accessToken: session.access_token,
+          request,
+          deletionOwnerId,
+        });
+      } finally {
+        setOAuthReauthenticationReady(false);
+        if (isSameOwnedRequest(activeAccountDeletionRef.current, request)) {
+          activeAccountDeletionRef.current = null;
+        }
+      }
+      return;
+    }
+
     const reauthenticationClient =
       createSupabaseAccountReauthenticationClient();
+    const deletionEmail = user.email;
+    const password = accountDeletePasswordValueRef.current;
 
     try {
       const supabase = reauthenticationClient;
@@ -932,69 +1066,11 @@ export default function DataSettingsPage() {
         return;
       }
 
-      const accessToken = reauthentication.data.session.access_token;
-      let response: Response;
-      let payload: unknown;
-
-      try {
-        response = await fetch("/api/account/delete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            confirmation: accountDeleteConfirmation,
-          }),
-        });
-        payload = await response.json().catch(() => null);
-      } catch {
-        if (isCurrentAccountDeletionRequest(request)) {
-          publishAccountDeletionState({
-            status: "error",
-            data: null,
-            message: null,
-            error: "Account deletion did not finish. Your session and local data were kept.",
-          });
-        }
-        return;
-      }
-
-      const parsedResponse = parseAccountDeletionResponse(response.ok, payload);
-      if (!parsedResponse.ok) {
-        if (isCurrentAccountDeletionRequest(request)) {
-          publishAccountDeletionState({
-            status: "error",
-            data: null,
-            message: null,
-            error: parsedResponse.message,
-          });
-        }
-        return;
-      }
-
-      const ownerCleanupResult = removeSkillMintOwnerData({
-        currentUserId: deletionOwnerId,
+      await submitAccountDeletion({
+        accessToken: reauthentication.data.session.access_token,
+        request,
+        deletionOwnerId,
       });
-      if (!isCurrentAccountDeletionRequest(request)) return;
-
-      const cleanupWarnings = [
-        ...(ownerCleanupResult.failedKeys.length
-          ? ["Some browser data for the deleted account could not be removed automatically."]
-          : []),
-        "Automatic local sign-out was skipped so a different provider session could not be signed out by this old request. Review the currently active account and sign out manually before another person uses this browser.",
-      ];
-
-      setAccountDeletionState({
-        ownerKey: request.ownerKey,
-        contextEpoch: request.contextEpoch,
-        status: "success",
-        data: null,
-        message: "Account access was deleted. " +
-          `${cleanupWarnings.join(" ")} Anonymous and other-account browser workspaces were intentionally preserved.`,
-        error: null,
-      });
-      setShowAccountDeleteDialog(false);
     } catch {
       if (isCurrentAccountDeletionRequest(request)) {
         publishAccountDeletionState({
@@ -1011,6 +1087,79 @@ export default function DataSettingsPage() {
       }
       await reauthenticationClient?.auth.dispose();
     }
+  }
+
+  async function submitAccountDeletion({
+    accessToken,
+    request,
+    deletionOwnerId,
+  }: {
+    accessToken: string;
+    request: OwnedRequestIdentity;
+    deletionOwnerId: string;
+  }) {
+    let response: Response;
+    let payload: unknown;
+
+    try {
+      response = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          confirmation: accountDeleteConfirmation,
+        }),
+      });
+      payload = await response.json().catch(() => null);
+    } catch {
+      if (isCurrentAccountDeletionRequest(request)) {
+        publishAccountDeletionState({
+          status: "error",
+          data: null,
+          message: null,
+          error: "Account deletion did not finish. Your session and local data were kept.",
+        });
+      }
+      return;
+    }
+
+    const parsedResponse = parseAccountDeletionResponse(response.ok, payload);
+    if (!parsedResponse.ok) {
+      if (isCurrentAccountDeletionRequest(request)) {
+        publishAccountDeletionState({
+          status: "error",
+          data: null,
+          message: null,
+          error: parsedResponse.message,
+        });
+      }
+      return;
+    }
+
+    const ownerCleanupResult = removeSkillMintOwnerData({
+      currentUserId: deletionOwnerId,
+    });
+    if (!isCurrentAccountDeletionRequest(request)) return;
+
+    const cleanupWarnings = [
+      ...(ownerCleanupResult.failedKeys.length
+        ? ["Some browser data for the deleted account could not be removed automatically."]
+        : []),
+      "Automatic local sign-out was skipped so a different provider session could not be signed out by this old request. Review the currently active account and sign out manually before another person uses this browser.",
+    ];
+
+    setAccountDeletionState({
+      ownerKey: request.ownerKey,
+      contextEpoch: request.contextEpoch,
+      status: "success",
+      data: null,
+      message: "Account access was deleted. " +
+        `${cleanupWarnings.join(" ")} Anonymous and other-account browser workspaces were intentionally preserved.`,
+      error: null,
+    });
+    setShowAccountDeleteDialog(false);
   }
 
   function clearAccountDeletePassword() {
@@ -1397,6 +1546,7 @@ export default function DataSettingsPage() {
               onClick={() => {
                 accountDeletePasswordValueRef.current = "";
                 setAccountDeletePassword("");
+                setOAuthReauthenticationReady(false);
                 setAccountDeleteConfirmation("");
                 setShowAccountDeleteDialog(true);
               }}
@@ -1474,21 +1624,32 @@ export default function DataSettingsPage() {
         <ConfirmDialog
           isOpen={visibleShowAccountDeleteDialog}
           title="Delete SkillMint account"
-          confirmLabel="Delete SkillMint account"
+          confirmLabel={
+            isGoogleDeletionAccount && !oauthReauthenticationReady
+              ? "Reauthenticate with Google"
+              : "Delete SkillMint account"
+          }
           isProcessing={visibleAccountDeletionState.status === "loading"}
           confirmDisabled={
             accountDeleteConfirmation !== ACCOUNT_DELETE_CONFIRMATION
           }
-          onConfirm={handleDeleteAccount}
+          onConfirm={
+            isGoogleDeletionAccount && !oauthReauthenticationReady
+              ? handleStartGoogleReauthentication
+              : handleDeleteAccount
+          }
           initialFocusRef={accountDeleteConfirmationInputRef}
           onClose={() => {
             clearAccountDeletePassword();
+            setOAuthReauthenticationReady(false);
             setAccountDeleteConfirmation("");
             setShowAccountDeleteDialog(false);
           }}
         >
           <ul className="list-disc space-y-2 pl-5">
-            <li>Your current password is sent directly to the authentication provider for a fresh sign-in and is never sent to SkillMint’s deletion API.</li>
+            <li>{isGoogleDeletionAccount
+              ? "Google reauthentication is purpose-bound to this deletion request. Provider tokens are not persisted by SkillMint."
+              : "Your current password is sent directly to the authentication provider for a fresh sign-in and is never sent to SkillMint’s deletion API."}</li>
             <li>SkillMint will request removal of account access through its server boundary.</li>
             <li>Profile, saved-report, and feedback cascade behavior is declared in local schema files but is not yet verified against live infrastructure.</li>
             <li>Only this account’s SkillMint browser partitions will be removed after success.</li>
@@ -1498,24 +1659,28 @@ export default function DataSettingsPage() {
             <li>This action cannot be undone through the UI.</li>
           </ul>
 
-          <label
-            htmlFor="account-delete-password"
-            className="mt-5 block text-sm font-bold text-slate-950"
-          >
-            Current password
-          </label>
+          {!isGoogleDeletionAccount && (
+            <>
+              <label
+                htmlFor="account-delete-password"
+                className="mt-5 block text-sm font-bold text-slate-950"
+              >
+                Current password
+              </label>
 
-          <input
-            id="account-delete-password"
-            type="password"
-            autoComplete="current-password"
-            value={accountDeletePassword}
-            onChange={(event) => {
-              accountDeletePasswordValueRef.current = event.target.value;
-              setAccountDeletePassword(event.target.value);
-            }}
-            className="mt-2 w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-100"
-          />
+              <input
+                id="account-delete-password"
+                type="password"
+                autoComplete="current-password"
+                value={accountDeletePassword}
+                onChange={(event) => {
+                  accountDeletePasswordValueRef.current = event.target.value;
+                  setAccountDeletePassword(event.target.value);
+                }}
+                className="mt-2 w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-100"
+              />
+            </>
+          )}
 
           <label
             htmlFor="account-delete-confirmation"
@@ -1535,6 +1700,25 @@ export default function DataSettingsPage() {
       </main>
     </DashboardLayout>
   );
+}
+
+function isOAuthReauthenticationRedirect(
+  value: unknown,
+): value is { ok: true; redirectTo: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  if (candidate.ok !== true || typeof candidate.redirectTo !== "string") {
+    return false;
+  }
+  try {
+    const url = new URL(candidate.redirectTo);
+    const config = getSupabasePublicConfig();
+    if (!config) return false;
+    return url.origin === new URL(config.url).origin &&
+      url.pathname === "/auth/v1/authorize";
+  } catch {
+    return false;
+  }
 }
 
 function SectionHeader({
