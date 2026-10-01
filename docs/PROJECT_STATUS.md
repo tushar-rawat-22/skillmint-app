@@ -1,12 +1,12 @@
 # SkillMint Project Status
 
-**Last updated:** September 12, 2026
+**Last updated:** October 1, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
-**Current Production migration truth (September 12, 2026):** Production migration history from V1 through V13 is verified on `skillmint-beta`. V14 is pending Production execution and remains unapplied; PR #143 is review/rehearsal work only. SkillMint is launched with controlled account admission.
+**Current Production migration truth (October 1, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V15 OAuth deletion reauthentication is applied and catalog-verified. V14 candidate lifecycle is the sole pending migration and remains unapplied. SkillMint is launched with controlled account admission.
 
 ## Repository context
 
@@ -55,7 +55,7 @@ Resume Reality
 | Two-sided beta — public IA and synthetic recruiter demo | Implemented and merged through PR #45 | Both demos remain deterministic, gated, and structurally isolated from Supabase session refresh, analytics, storage, and external requests |
 | Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; Production migration remains unapplied |
 | Two-sided beta — recruiter evidence review | Engineering implementation, isolated verification, and independent security/privacy review complete | Server-owned recruiter persona, deterministic role maps, atomic live-token review submission, and candidate-owned structured feedback; V11 remains unapplied |
-| Google OAuth account-deletion reauthentication | Engineering implementation and isolated browser/database acceptance complete; hosted rollout pending | One-time user/provider/purpose-bound proof preserves the frozen password-AMR deletion path; no provider token persistence and no public OAuth activation |
+| Google OAuth account-deletion reauthentication | Engineering and V15 hosted rollout complete; destructive Production acceptance blocked before consent by a reproducible Google HTTP 400 | One-time user/provider/purpose-bound proof preserves the frozen password-AMR deletion path; public OAuth flags remain closed and no provider token is persisted |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
 
@@ -70,9 +70,12 @@ does not persist the returned OAuth session or provider tokens, requires the
 same verified Auth user, and produces a ten-minute proof consumed atomically by
 the protected deletion route. The V15 migration is timestamped after deployed
 V13 but before the unrelated pending V14 candidate-job migration so the bounded
-provider gate can be rolled out independently. This repository result does not
-claim a hosted migration, Preview acceptance, Production deletion, or public
-OAuth activation.
+provider gate could be rolled out independently. V15 is now applied and
+catalog-verified in Production.
+
+The disposable-identity deletion acceptance is still blocked by Google's
+reproducible pre-consent HTTP 400. This does not authorize public OAuth
+activation or a claim of Production deletion closure.
 
 Block 6 engineering implementation and isolated verification are complete. The isolated hosted migration and ACL verification passed, including the V7 additive ACL repair, and the isolated live-security gate passed. These results do not prove Production behavior or authorize Production rollout.
 

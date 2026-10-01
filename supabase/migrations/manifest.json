@@ -8,7 +8,7 @@
     },
     "production": {
       "catalog_proof_required_before_marking_applied": [],
-      "pending_execution": ["20260911001350", "20260912001400"],
+      "pending_execution": ["20260912001400"],
       "migration_history_repair": "history_only_no_sql_execution"
     }
   },
@@ -27,7 +27,7 @@
     {"version":"20260823001100","source_path":"supabase/schema_v11_recruiter_evidence_review.sql","migration_path":"supabase/migrations/20260823001100_schema_v11_recruiter_evidence_review.sql","sha256":"007c6076a68de87bc96f6e85b886d93add5458dbfdc96da8210c22081ecd8cee","rollout_classification":"existing_production_migration_history_verified"},
     {"version":"20260829001200","source_path":"supabase/schema_v12_account_persona_authority.sql","migration_path":"supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql","sha256":"2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507","rollout_classification":"existing_production_migration_history_verified"},
     {"version":"20260911001300","source_path":"supabase/schema_v13_access_requests.sql","migration_path":"supabase/migrations/20260911001300_schema_v13_access_requests.sql","sha256":"c35d9925a8861da4f20e1edd52d7b05e29d86dd924b73a32675d506555b87c19","rollout_classification":"existing_production_migration_history_verified"},
-    {"version":"20260911001350","source_path":"supabase/schema_v15_oauth_deletion_reauthentication.sql","migration_path":"supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql","sha256":"91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562","rollout_classification":"pending_oauth_deletion_reauthentication"},
+    {"version":"20260911001350","source_path":"supabase/schema_v15_oauth_deletion_reauthentication.sql","migration_path":"supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql","sha256":"91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562","rollout_classification":"existing_production_migration_history_verified"},
     {"version":"20260912001400","source_path":"supabase/schema_v14_candidate_job_lifecycle.sql","migration_path":"supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql","sha256":"fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b","rollout_classification":"pending_candidate_job_lifecycle"}
   ]
 }

@@ -17,9 +17,9 @@ This is the current operational release snapshot. Older phase, beta, rollout, an
 
 - Vercel is the current zero-cash web host. Match the active Production deployment to freshly resolved GitHub `main` on every acceptance run.
 - Supabase project `skillmint-beta` is the current Production data/auth provider on the Free plan. Availability is monitored rather than assumed; do not generate artificial keepalive traffic.
-- Production migration history is verified from V1 through V13 (`20260911001300_schema_v13_access_requests`).
-- V15 (`20260911001350_schema_v15_oauth_deletion_reauthentication`) is repository work for the bounded #130 OAuth deletion rollout and remains **pending** until exact-head gates authorize deliberate execution.
-- V14 (`20260912001400_schema_v14_candidate_job_lifecycle`) is repository work for #117 and remains **pending**. Its presence in a PR does not authorize or imply Production execution.
+- Production migration history is verified from V1 through V15 (`20260911001350_schema_v15_oauth_deletion_reauthentication`).
+- V15 is applied and catalog-verified in Production. Its intent table is empty and the expected RLS and server-only function boundary are present.
+- V14 (`20260912001400_schema_v14_candidate_job_lifecycle`) is repository work for #117 and remains **pending**. Founder authority dated October 1 permits exact-version execution only after the corrected authority merges and its recorded fresh preflight is green.
 - The V14 authority model is server-only mutation: authenticated browser sessions may read owner-scoped Candidate rows, while lifecycle writes and provider provenance remain trusted-server responsibilities. Both ACL grants and RLS policies must preserve that boundary.
 
 ## Launch acceptance
