@@ -83,11 +83,11 @@ equal(
 equal(
   manifest.generated_for.production.catalog_proof_required_before_marking_applied,
   [],
-  "Production catalog proof queue must be empty for verified V1-V13 history",
+  "Production catalog proof queue must be empty for verified history through V15",
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  ["20260911001350", "20260912001400"],
+  ["20260912001400"],
   "Production pending order is not exact",
 );
 const expectedClassifications = new Map([
@@ -105,7 +105,7 @@ const expectedClassifications = new Map([
   ["20260823001100", "existing_production_migration_history_verified"],
   ["20260829001200", "existing_production_migration_history_verified"],
   ["20260911001300", "existing_production_migration_history_verified"],
-  ["20260911001350", "pending_oauth_deletion_reauthentication"],
+  ["20260911001350", "existing_production_migration_history_verified"],
   ["20260912001400", "pending_candidate_job_lifecycle"],
 ]);
 equal(
@@ -840,9 +840,10 @@ check(
 );
 const rolloutAuthority = text("docs/PRODUCTION_SCHEMA_ROLLOUT.md");
 for (const requiredText of [
-  "Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION`",
-  "Production migration history is reconciled through **V13**",
+  "Current decision:** `V15 VERIFIED; V14 CONDITIONAL EXECUTION AUTHORITY`",
+  "Production migration history is reconciled through **V15**",
   "20260911001300_schema_v13_access_requests.sql",
+  "20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
   "20260912001400_schema_v14_candidate_job_lifecycle.sql",
   "repository-pending and unapplied",
   "launched with controlled account admission",

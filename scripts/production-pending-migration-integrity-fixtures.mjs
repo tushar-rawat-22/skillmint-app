@@ -49,15 +49,15 @@ const applied = [
     sha256: "c35d9925a8861da4f20e1edd52d7b05e29d86dd924b73a32675d506555b87c19",
     rollout_classification: "existing_production_migration_history_verified",
   },
-];
-const pending = [
   {
     version: "20260911001350",
     source_path: "supabase/schema_v15_oauth_deletion_reauthentication.sql",
     migration_path: "supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
     sha256: "91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562",
-    rollout_classification: "pending_oauth_deletion_reauthentication",
+    rollout_classification: "existing_production_migration_history_verified",
   },
+];
+const pending = [
   {
     version: "20260912001400",
     source_path: "supabase/schema_v14_candidate_job_lifecycle.sql",
@@ -89,13 +89,13 @@ for (const contract of pending) {
 }
 assert.deepEqual(manifest.generated_for.production.pending_execution, pending.map((entry) => entry.version), "Production pending migration order changed");
 
-const v14Sql = text(pending[1].migration_path);
+const v14Sql = text(pending[0].migration_path);
 assert.match(v14Sql, /grant select on table public\.candidate_job_lifecycle to authenticated;/i, "candidate lifecycle owner reads must remain explicit");
 assert.match(v14Sql, /grant select, insert, update, delete on table public\.candidate_job_lifecycle to service_role;/i, "trusted server lifecycle mutation authority is missing");
 assert.doesNotMatch(v14Sql, /grant\s+[^;]*\b(?:insert|update|delete)\b[^;]*\bon\s+table\s+public\.candidate_job_lifecycle\b[^;]*\bto\s+authenticated\b/i, "authenticated browser sessions must not receive lifecycle write grants");
 assert.doesNotMatch(v14Sql, /create policy\s+"[^"]+"\s+on\s+public\.candidate_job_lifecycle\s+for\s+(?:insert|update|delete)\s+to\s+authenticated/i, "authenticated browser sessions must not receive latent lifecycle write policies");
 
-const v15Sql = text(pending[0].migration_path);
+const v15Sql = text(applied[4].migration_path);
 assert.match(v15Sql, /force row level security/i, "OAuth deletion intent table must force RLS");
 assert.match(v15Sql, /revoke all on table public\.oauth_deletion_reauth_intents from public, anon, authenticated/i, "OAuth deletion intents must remain server-only");
 assert.match(v15Sql, /grant execute on function public\.consume_oauth_deletion_reauth_intent[^;]+to service_role/i, "OAuth proof consumption must remain service-role-only");

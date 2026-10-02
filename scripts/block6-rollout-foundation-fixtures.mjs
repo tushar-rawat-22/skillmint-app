@@ -212,7 +212,7 @@ const migrations = [
     source: "supabase/schema_v15_oauth_deletion_reauthentication.sql",
     migration: "supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
     hash: "91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562",
-    classification: "pending_oauth_deletion_reauthentication",
+    classification: appliedClassification,
   },
   {
     version: "20260912001400",
@@ -412,7 +412,7 @@ for (const [pattern, claim] of [
   [/Block 6\.1 and Block 6\.2 are merged and frozen pending rollout/i, "Block 6.1/6.2 merged and frozen"],
   [/fail-closed[^.]*automatically deployed|automatically deployed[^.]*fail-closed/i, "fail-closed automatic deployment"],
   [/skillmint-block6-test[^.]*contains no Production data[^.]*V1[–-]V7[^.]*passed the isolated live-security gate/i, "isolated project state"],
-  [/Production migration history[^.]*V1[^.]*V13|V1[^.]*V13[^.]*Production migration history/i, "Production migration history through V13"],
+  [/Production migration history[^.]*V1[^.]*V15|V1[^.]*V15[^.]*Production migration history/i, "Production migration history through V15"],
   [/V14[^.]*pending|pending[^.]*V14/i, "V14 pending Production execution"],
   [/analytics remains disabled/i, "analytics disabled"],
   [/founder UUID[^.]*WAF[^.]*retention[^.]*unconfigured/i, "founder/WAF/retention unconfigured"],

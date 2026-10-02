@@ -1,12 +1,12 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `V14 REVIEW ONLY — NO PRODUCTION EXECUTION` — Production history is verified through V13; V15 OAuth deletion reauthentication and V14 are repository-pending and unapplied; SkillMint is launched with controlled account admission
+**Current decision:** `V15 VERIFIED; V14 CONDITIONAL EXECUTION AUTHORITY` — Production history is verified through V15; V14 candidate lifecycle remains repository-pending and unapplied; SkillMint is launched with controlled account admission
 
-This is the current authority for SkillMint Production schema rollout. It is a review and execution gate. It does not authorize V14 Production execution, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
+This is the current authority for SkillMint Production schema rollout. Founder authority dated October 1, 2026 permits exact-version V14 Production execution only after this corrected authority is merged, the canonical migration bytes and hashes remain unchanged, and the fresh preflight below is green. It does not authorize any other migration, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
 
 ## Current connected Production evidence
 
-Fresh connected inspection on September 12, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and Production migration history is exactly:
+Fresh connected inspection on October 1, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and Production migration history is exactly:
 
 1. `20260723000100`
 2. `20260723000200`
@@ -22,17 +22,18 @@ Fresh connected inspection on September 12, 2026 reconfirmed the canonical Supab
 12. `20260823001100`
 13. `20260829001200`
 14. `20260911001300`
+15. `20260911001350`
 
-Production migration history is reconciled through **V13**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release. V15 OAuth deletion reauthentication and V14 exist only in the repository and remain unapplied:
+Production migration history is reconciled through **V15**. V10–V12 were applied during the September 2 maintenance window; V13 was applied later as the access-request release; V15 was applied during the bounded OAuth deletion rollout. Only V14 remains unapplied:
 
 - `20260823001000_schema_v10_two_sided_beta_foundation.sql`
 - `20260823001100_schema_v11_recruiter_evidence_review.sql`
 - `20260829001200_schema_v12_account_persona_authority.sql`
 - `20260911001300_schema_v13_access_requests.sql`
-- `20260911001350_schema_v15_oauth_deletion_reauthentication.sql` — repository-pending and unapplied; bounded #130 rollout only
+- `20260911001350_schema_v15_oauth_deletion_reauthentication.sql` — applied and catalog-verified in Production
 - `20260912001400_schema_v14_candidate_job_lifecycle.sql` — repository-pending and unapplied
 
-The same live lineage now contains twelve ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, and `access_requests`. Every ordinary `public` table was verified as owned by `postgres` with RLS enabled. `analytics_events` remains force-RLS with no authenticated table access.
+The same live lineage now contains thirteen ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, `access_requests`, and `oauth_deletion_reauth_intents`. Every ordinary `public` table was verified with RLS enabled. The V15 intent table is empty and its four expected server-only functions are present. `analytics_events` remains force-RLS with no authenticated table access.
 
 The live `public.rls_auto_enable()` contract remains present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog`. Its attached enabled event trigger is `ensure_rls`, on `ddl_command_end`, for `CREATE TABLE`, `CREATE TABLE AS`, and `SELECT INTO`. That shape matches the repository V9 contract.
 
@@ -56,7 +57,7 @@ No backup contents, credentials, row contents, or user identifiers were recorded
 
 ## Source of truth
 
-Before rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest is authoritative for migration file order, paths, and hashes. Its `generated_for.production` metadata is reconciled to connected Production history: V1–V13 are verified as applied; V15 OAuth deletion reauthentication and V14 are pending repository migrations.
+Before rollout work, fetch current `main` and re-read `supabase/migrations/manifest.json`. The manifest is authoritative for migration file order, paths, and hashes. Its `generated_for.production` metadata is reconciled to connected Production history: V1–V15 are verified as applied in timestamp order; V14 is the sole pending repository migration.
 
 If migration order/hashes, connected Production evidence, and this authority disagree, stop before any Production write.
 
@@ -79,7 +80,7 @@ The repository manifest currently defines this exact ordered chain:
 15. `20260911001350_schema_v15_oauth_deletion_reauthentication.sql`
 16. `20260912001400_schema_v14_candidate_job_lifecycle.sql`
 
-Production is reconciled through V13. V15 and V14 are pending repository migrations. V14 is **not authorized for Production execution by the merged schema-foundation work**; V15 may be executed only through the separately reviewed, exact-head #130 OAuth deletion rollout. Never edit an applied migration in place. Any future schema execution requires a reviewed forward migration and fresh rollout evidence.
+Production is reconciled through V15. V14 is the sole pending repository migration. V14 may be executed only through the exact-version, fresh-preflight gate recorded here; this authority does not permit editing any applied migration in place. Any later schema execution requires a reviewed forward migration and fresh rollout evidence.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately controlled.
 
@@ -115,8 +116,8 @@ This recovery result did not by itself authorize the later public launch. Public
 
 | Control | Current verified state | Gate |
 | --- | --- | --- |
-| Migration history | Exact connected Production history through V13; V14 repository-pending | **PASSED for current Production**; V14 remains review-only |
-| Public ordinary tables | Eleven expected lineage tables, all `postgres`-owned with RLS | **PASSED** |
+| Migration history | Exact connected Production history through V15; V14 repository-pending | **PASSED for current Production**; V14 is the sole pending migration |
+| Public ordinary tables | Thirteen expected lineage tables with RLS; V14 table absent | **PASSED** |
 | Public table ACLs | Direct and effective RLS/column/function privilege probes | **PASSED**; no anonymous table access or authenticated write path to the four new tables |
 | `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | **PASSED** |
 | Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | **PASSED** |
@@ -125,7 +126,7 @@ This recovery result did not by itself authorize the later public launch. Public
 | Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for the unchanged evidence set** |
 | Persona authority | Authenticated persona writes absent; service assignment preserved; identity immutable | **PASSED** |
 | Proof Brief and recruiter-review boundaries | Publish/revoke/review/feedback, cross-owner denials, and deletion cascades | **PASSED** in rollback-bound Production postflight |
-| Hosted Auth/security | Signup disabled; email login remains enabled | **PASSED** and unchanged |
+| Hosted Auth/security | Signup disabled; email login remains enabled; email confirmation disabled | **PASSED for fail-closed admission**; not sufficient for external email/password beta |
 | Analytics | Collection endpoint disabled; force-RLS and ACL boundary unchanged | **PASSED** and remains disabled |
 | Deployed application compatibility | Production deployment on exact preflight `main`; routes and protected APIs healthy; no runtime error cluster | **PASSED** |
 
@@ -205,6 +206,6 @@ At that time, controlled beta remained **CLOSED** after schema postflight until 
 
 ## Next gate
 
-The V10→V12 schema gate is complete, and the V1→V14 isolated rehearsal is green. Do not repeat those proofs while their verified inputs remain unchanged.
+The V10→V12 schema gate is complete, V15 is applied and catalog-verified, and the V1→V14 isolated rehearsal is green. Do not repeat unchanged proofs.
 
-V14 remains **review-only and unapplied to Production**. Its next schema gate is an explicitly authorized exact-version Production execution through the accepted pinned-CLI transport, followed by fresh postflight. This schema gate does not control whether the public site is launched: current public launch quality remains governed by #130, with controlled account admission kept separate from schema rollout and ungated provisioning.
+V14 remains **unapplied to Production**. Founder authority dated October 1, 2026 permits its exact-version Production execution through the accepted pinned-CLI transport only after the corrected manifest and authority merge, exact-head CI/security/Preview pass, connected history still ends at V15, the V14 hash is unchanged, and the accepted recovery evidence remains applicable. Postflight must prove the table/RLS/ACL/deletion contract and no unexpected migration version. This schema gate does not open signup or public OAuth; #130 continues to govern admission and launch quality.
