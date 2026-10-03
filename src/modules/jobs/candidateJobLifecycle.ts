@@ -185,8 +185,10 @@ function isWorkflowState(value: unknown): value is CandidateJobWorkflowState {
 
 function isIsoTimestamp(value: unknown): value is string {
   if (typeof value !== "string" || value.length > 40) return false;
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime()) && date.toISOString() === value;
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/u.test(value)
+  ) return false;
+  return !Number.isNaN(new Date(value).getTime());
 }
 
 function isHttpUrl(value: unknown): value is string {
