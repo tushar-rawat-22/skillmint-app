@@ -49,8 +49,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Audit dependency vulnerabilities
-        run: npm audit --audit-level=high
+      - name: Audit production dependency vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Enforce bounded dev dependency advisory policy
+        run: node scripts/audit-dev-dependency-policy.mjs
 
       - name: Install Chromium
         run: npx playwright install chromium --with-deps
