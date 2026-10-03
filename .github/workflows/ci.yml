@@ -182,6 +182,7 @@ jobs:
           node scripts/greenhouse-source-adapter-fixtures.mjs
           node scripts/candidate-greenhouse-route-boundary-fixtures.mjs
           node scripts/candidate-jobs-recovery-fixtures.mjs
+          node scripts/candidate-job-lifecycle-fixtures.mjs
           node scripts/explainable-job-fit-fixtures.mjs
           node scripts/target-role-hydration-race-fixtures.mjs
 
