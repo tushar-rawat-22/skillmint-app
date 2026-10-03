@@ -82,6 +82,33 @@ assert.equal(parseCandidateJobLifecycleMutation({ action: "save", userId: USER_B
 assert.equal(parseCandidateJobLifecycleMutation({ action: "set_follow_up", followUpAt: "tomorrow" }), null);
 
 assert.equal(parseCandidateJobLifecycleRecord(row, USER_A)?.sourceKey, SOURCE_KEY);
+
+const postgrestTimestamp = "2026-10-03T15:38:10.755425+00:00";
+const postgrestRow = {
+  ...row,
+  source_updated_at: "2026-09-30T00:00:54+00:00",
+  source_fetched_at: "2026-10-03T15:38:10.704+00:00",
+  created_at: postgrestTimestamp,
+  updated_at: postgrestTimestamp,
+};
+assert.equal(
+  parseCandidateJobLifecycleRecord(postgrestRow, USER_A)?.sourceFetchedAt,
+  "2026-10-03T15:38:10.704+00:00",
+  "PostgREST timestamptz offsets and microseconds must reconstruct as valid lifecycle timestamps",
+);
+for (const invalidTimestamp of [
+  "2026-10-03",
+  "2026-10-03T15:38:10",
+  "2026-10-03T15:38:10.704",
+  "not-a-timestamp",
+]) {
+  assert.equal(
+    parseCandidateJobLifecycleRecord({ ...row, source_fetched_at: invalidTimestamp }, USER_A),
+    null,
+    `timezone-aware lifecycle timestamp required: ${invalidTimestamp}`,
+  );
+}
+
 assert.equal(parseCandidateJobLifecycleRecord(row, USER_B), null, "Account A lifecycle rows must fail closed for Account B");
 assert.equal(parseCandidateJobLifecycleRecord({ ...row, source_key: "greenhouse:figma:999" }, USER_A), null);
 assert.equal(parseCandidateJobLifecycleRecord({ ...row, workflow_state: "rejected" }, USER_A), null, "employer outcomes are outside the candidate workflow contract");
