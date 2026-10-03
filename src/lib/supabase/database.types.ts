@@ -183,6 +183,72 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_job_lifecycle: {
+        Row: {
+          applied_at: string | null
+          company_name: string
+          created_at: string
+          follow_up_at: string | null
+          follow_up_completed_at: string | null
+          id: string
+          location: string | null
+          original_apply_url: string
+          provider: string
+          provider_account_id: string
+          provider_availability: string
+          role_title: string
+          source_fetched_at: string
+          source_key: string
+          source_native_id: string
+          source_updated_at: string | null
+          updated_at: string
+          user_id: string
+          workflow_state: string
+        }
+        Insert: {
+          applied_at?: string | null
+          company_name: string
+          created_at?: string
+          follow_up_at?: string | null
+          follow_up_completed_at?: string | null
+          id?: string
+          location?: string | null
+          original_apply_url: string
+          provider: string
+          provider_account_id: string
+          provider_availability?: string
+          role_title: string
+          source_fetched_at: string
+          source_key: string
+          source_native_id: string
+          source_updated_at?: string | null
+          updated_at?: string
+          user_id: string
+          workflow_state?: string
+        }
+        Update: {
+          applied_at?: string | null
+          company_name?: string
+          created_at?: string
+          follow_up_at?: string | null
+          follow_up_completed_at?: string | null
+          id?: string
+          location?: string | null
+          original_apply_url?: string
+          provider?: string
+          provider_account_id?: string
+          provider_availability?: string
+          role_title?: string
+          source_fetched_at?: string
+          source_key?: string
+          source_native_id?: string
+          source_updated_at?: string | null
+          updated_at?: string
+          user_id?: string
+          workflow_state?: string
+        }
+        Relationships: []
+      }
       job_matches: {
         Row: {
           company_name: string | null

@@ -50,6 +50,7 @@ test("@critical signed-in candidate restores account career direction on a fresh
 test("@critical controlled beta candidate reaches a private Proof Brief through the core product loop", async ({
   page,
   request,
+  browserName,
 }) => {
   await request.post(`${PROVIDER_ORIGIN}/__reset`);
   const persona = await request.post(
@@ -188,6 +189,78 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     });
   });
 
+  let lifecycleRecord: Record<string, unknown> | null = null;
+  let refreshedAvailability: "live" | "unavailable" = "live";
+  await page.route("**/api/candidate/jobs**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname === "/api/candidate/jobs" && request.method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ records: lifecycleRecord ? [lifecycleRecord] : [] }),
+      });
+      return;
+    }
+    if (
+      url.pathname === "/api/candidate/jobs/greenhouse%3Asynthetic%3A123" &&
+      request.method() === "PUT"
+    ) {
+      const mutation = JSON.parse(request.postData() ?? "{}");
+      const now = new Date().toISOString();
+      if (mutation.action === "save") {
+        lifecycleRecord = {
+          id: "abababab-abab-4bab-8bab-abababababab",
+          userId: ACCOUNT_A.id,
+          provider: "greenhouse",
+          providerAccountId: "synthetic",
+          sourceNativeId: "123",
+          sourceKey: "greenhouse:synthetic:123",
+          originalApplyUrl: "https://boards.greenhouse.io/synthetic/jobs/123",
+          roleTitle: "Frontend Developer",
+          companyName: "Synthetic Jobs Co",
+          location: "Bengaluru, India",
+          sourceUpdatedAt: "2026-09-08T02:00:00.000Z",
+          sourceFetchedAt: now,
+          providerAvailability: "live",
+          workflowState: "saved",
+          appliedAt: null,
+          followUpAt: null,
+          followUpCompletedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+      } else if (lifecycleRecord && mutation.action === "mark_applied") {
+        lifecycleRecord = {
+          ...lifecycleRecord,
+          workflowState: "applied",
+          appliedAt: now,
+          updatedAt: now,
+        };
+      } else if (lifecycleRecord && mutation.action === "set_follow_up") {
+        lifecycleRecord = {
+          ...lifecycleRecord,
+          followUpAt: mutation.followUpAt,
+          followUpCompletedAt: null,
+          updatedAt: now,
+        };
+      } else if (lifecycleRecord && mutation.action === "refresh_provider") {
+        lifecycleRecord = {
+          ...lifecycleRecord,
+          providerAvailability: refreshedAvailability,
+          updatedAt: now,
+        };
+      }
+      await route.fulfill({
+        status: lifecycleRecord ? 200 : 404,
+        contentType: "application/json",
+        body: JSON.stringify(lifecycleRecord ? { record: lifecycleRecord } : { code: "not_found" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
   await login(page, ACCOUNT_A);
 
   await page.goto("/setup");
@@ -287,21 +360,98 @@ test("@critical controlled beta candidate reaches a private Proof Brief through 
     page.getByRole("heading", { name: "Not evidenced in this resume (1)" }),
   ).toBeVisible();
   await expect(
-    page.getByText("Experience building production interfaces with TypeScript is required."),
+    page.getByRole("heading", { name: "Supported by this resume (1)" })
+      .locator("..")
+      .getByText(
+        "Experience building production interfaces with TypeScript is required.",
+        { exact: true },
+      ),
   ).toBeVisible();
   await expect(
-    page.getByText("Experience deploying services on AWS is required."),
+    page.getByRole("heading", { name: "Not evidenced in this resume (1)" })
+      .locator("..")
+      .getByText("Experience deploying services on AWS is required.", {
+        exact: true,
+      }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "View original job" }),
   ).toHaveAttribute("href", "https://boards.greenhouse.io/synthetic/jobs/123");
+  await expect(
+    page.getByRole("button", { name: "Save job" }),
+  ).toBeVisible();
 
-  expect(observedJobsRequests).toHaveLength(1);
-  const observedJobsRequest = observedJobsRequests[0];
-  expect(observedJobsRequest.method).toBe("GET");
-  expect(observedJobsRequest.url).toContain("targetRole=Frontend%20Developer");
-  expect(observedJobsRequest.postData).toBeNull();
-  expect(observedJobsRequest.authorization).toMatch(/^Bearer\s+\S+/u);
-  expect(observedJobsRequest.url).not.toContain("TypeScript");
-  expect(observedJobsRequest.url).not.toContain("PostgreSQL");
+  await page.getByRole("button", { name: "Save job" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Saved to your private candidate workspace.",
+  );
+  await expect(page.getByRole("button", { name: "Mark as applied" })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Mark as applied" })).toBeVisible();
+  await expect(page.getByLabel("Application progression")).toContainText("Saved");
+
+  await page.getByRole("button", { name: "Mark as applied" }).click();
+  await expect(page.getByRole("status")).toContainText("Applied recorded by you");
+  await page.getByLabel("Follow-up date").fill("2026-10-10");
+  await page.getByRole("button", { name: "Set follow-up" }).click();
+  await expect(page.getByRole("status")).toContainText("Follow-up date saved.");
+
+  await page.reload();
+  await expect(page.getByLabel("Application progression")).toContainText("Planned");
+  await expect(page.getByLabel("Application progression")).toContainText("Applied");
+
+  refreshedAvailability = "unavailable";
+  await page.getByRole("button", { name: "Refresh posting status" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Provider unavailable; saved candidate state preserved",
+  );
+  await expect(page.getByLabel("Application progression")).toContainText(
+    "Provider unavailable; saved candidate state preserved",
+  );
+  await expect(page.getByLabel("Application progression")).toContainText("Applied");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+    { width: 320, height: 760 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const overflow = await page.evaluate(() => ({
+      body: document.body.scrollWidth - document.body.clientWidth,
+      document: document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    }));
+    expect(overflow.body).toBeLessThanOrEqual(1);
+    expect(overflow.document).toBeLessThanOrEqual(1);
+    const refreshStatus = page.getByRole("button", {
+      name: "Refresh posting status",
+    });
+    await refreshStatus.focus();
+    if (browserName === "chromium") {
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
+    }
+    await expect(refreshStatus).toBeFocused();
+    if (browserName === "chromium") {
+      expect(
+        await refreshStatus.evaluate(
+          (element) => getComputedStyle(element).outlineStyle,
+        ),
+      ).not.toBe("none");
+    } else {
+      await expect(refreshStatus).toHaveClass(/focus-visible:outline/u);
+    }
+  }
+
+  expect(observedJobsRequests.length).toBeGreaterThanOrEqual(3);
+  for (const observedJobsRequest of observedJobsRequests) {
+    expect(observedJobsRequest.method).toBe("GET");
+    expect(observedJobsRequest.url).toContain("targetRole=Frontend%20Developer");
+    expect(observedJobsRequest.postData).toBeNull();
+    expect(observedJobsRequest.authorization).toMatch(/^Bearer\s+\S+/u);
+    expect(observedJobsRequest.url).not.toContain("TypeScript");
+    expect(observedJobsRequest.url).not.toContain("PostgreSQL");
+  }
 });
