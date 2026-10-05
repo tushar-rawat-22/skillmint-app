@@ -28,3 +28,27 @@ test("@critical candidate public entry keeps the evidence loop ahead of privacy 
     /recruiter confidence|hire probability|shortlist probability|salary guarantee/i,
   );
 });
+
+test("@critical authenticated candidate workspace leads with the decision hierarchy", () => {
+  const dashboardPage = fs.readFileSync(
+    path.join(process.cwd(), "src/app/dashboard/page.tsx"),
+    "utf8",
+  );
+  const evidenceSummary = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/components/dashboard/EvidenceSummaryCard.tsx",
+    ),
+    "utf8",
+  );
+
+  expect(dashboardPage.indexOf("<ActiveTargetCard")).toBeLessThan(
+    dashboardPage.indexOf("<EvidenceSummaryCard"),
+  );
+  expect(evidenceSummary.indexOf('title="Strongest support"')).toBeLessThan(
+    evidenceSummary.indexOf('title="Main evidence gap"'),
+  );
+  expect(evidenceSummary.indexOf('title="Main evidence gap"')).toBeLessThan(
+    evidenceSummary.indexOf('title="Best next move"'),
+  );
+});

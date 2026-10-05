@@ -880,6 +880,8 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className={premiumPageStack}>
+        <ActiveTargetCard result={dashboardActiveTarget} />
+
         <EvidenceSummaryCard
           profile={data.profile}
           proof={data.proof}
@@ -937,8 +939,6 @@ export default function DashboardPage() {
             </section>
           </div>
         </details>
-
-        <ActiveTargetCard result={dashboardActiveTarget} />
 
         <SkillDistribution
           title="Proof Evidence"
