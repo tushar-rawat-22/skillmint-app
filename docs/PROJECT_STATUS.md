@@ -1,12 +1,12 @@
 # SkillMint Project Status
 
-**Last updated:** October 1, 2026
+**Last updated:** October 5, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
-**Current Production migration truth (October 1, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V15 OAuth deletion reauthentication is applied and catalog-verified. V14 candidate lifecycle is the sole pending migration and remains unapplied. SkillMint is launched with controlled account admission.
+**Current Production migration truth (October 5, 2026):** Production migration history through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
 
 ## Repository context
 
