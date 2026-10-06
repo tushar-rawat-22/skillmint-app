@@ -6,7 +6,7 @@
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
-**Current Production migration truth (October 5, 2026):** Production migration history through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
+**Current Production migration truth (October 5, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
 
 ## Repository context
 
