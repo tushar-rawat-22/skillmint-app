@@ -60,7 +60,7 @@ const ACL_NORMALIZATION_SHA256 =
 const BASELINE_PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
 const SECURITY_PACKAGE_LOCK_SHA256 =
-  "a55b27a22fa5fbbeb5ba0046d4f934248beda814095fd81590a5bf78704918e9";
+  "4942827f4e1866245a40a7cdf174fde05d12f22686092a6cf3cdb2d77d221703";
 
 const FROZEN_MIGRATIONS = [
   {
@@ -1649,13 +1649,15 @@ test("package metadata permits only authorized fixture scripts and audited lock 
 
   assert.equal(currentPackage.dependencies.next, "16.3.8");
   assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.8");
+  assert.equal(currentPackage.overrides["source-map-js"], "1.2.2");
   assert.equal(currentPackage.overrides["js-yaml"], "4.3.2");
-  assert.equal(currentPackage.overrides.next.sharp, "0.35.4");
+  assert.equal(currentPackage.overrides.next.sharp, "0.35.5");
   const normalizedCurrentWithoutScripts = structuredClone(currentWithoutScripts);
   normalizedCurrentWithoutScripts.dependencies.next =
     baselineWithoutScripts.dependencies.next;
   normalizedCurrentWithoutScripts.devDependencies["eslint-config-next"] =
     baselineWithoutScripts.devDependencies["eslint-config-next"];
+  delete normalizedCurrentWithoutScripts.overrides["source-map-js"];
   delete normalizedCurrentWithoutScripts.overrides["js-yaml"];
   normalizedCurrentWithoutScripts.overrides.next.sharp =
     baselineWithoutScripts.overrides.next.sharp;
@@ -1786,6 +1788,20 @@ test("package metadata permits only authorized fixture scripts and audited lock 
   );
   assert.equal(currentLock.packages["node_modules/nanoid"].version, "3.3.18");
   assert.equal(currentLock.packages["node_modules/js-yaml"].version, "4.3.2");
+  assert.equal(currentLock.packages["node_modules/sharp"].version, "0.35.5");
+  assert.equal(
+    currentLock.packages["node_modules/source-map-js"].version,
+    "1.2.2",
+  );
+  assert.equal(currentLock.packages["node_modules/mammoth"].version, "1.12.0");
+  assert.equal(
+    currentLock.packages["node_modules/mammoth/node_modules/argparse"].version,
+    "1.0.10",
+  );
+  assert.equal(
+    currentLock.packages["node_modules/sprintf-js"].version,
+    "1.0.3",
+  );
   assert.equal(
     currentLock.packages["node_modules/brace-expansion"].version,
     "1.1.21",
