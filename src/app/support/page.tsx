@@ -32,7 +32,13 @@ export default function SupportPage() {
               {contact.status === "configured" ? (
                 <p className="mt-3 text-sm leading-6 text-slate-600">
                   Contact the monitored SkillMint operations mailbox at{" "}
-                  <a className="font-bold text-emerald-800 underline underline-offset-4" href={contact.href ?? undefined}>{contact.email}</a>.
+                  <a
+                    className="inline-flex min-h-11 items-center font-bold text-emerald-800 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+                    href={contact.href ?? undefined}
+                  >
+                    {contact.email}
+                  </a>
+                  .
                   Do not send passwords or authentication secrets.
                 </p>
               ) : (

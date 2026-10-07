@@ -164,3 +164,60 @@ test("@launch-discovery shared public navigation remains persona-neutral and com
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
   }
 });
+
+test("@launch-discovery landing secondary actions remain keyboard-visible and touch-sized at 320px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  for (const name of [
+    "Access details",
+    "Hiring? See the recruiter workflow",
+  ]) {
+    const action = page.getByRole("link", { name, exact: true });
+    await action.focus();
+    await expect(action).toBeFocused();
+    expect(
+      await action.evaluate((element) => getComputedStyle(element).outlineStyle),
+      `${name} should keep a visible keyboard focus indicator`,
+    ).not.toBe("none");
+
+    const rectangle = await action.boundingBox();
+    expect(rectangle, `${name} should have a rendered hit target`).not.toBeNull();
+    expect(
+      rectangle!.height,
+      `${name} touch target should be at least 44 CSS pixels high`,
+    ).toBeGreaterThanOrEqual(44);
+  }
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+});
+
+test("@launch-discovery privacy and support contacts remain keyboard-visible and touch-sized at 320px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  for (const path of ["/privacy", "/support"]) {
+    await page.goto(path);
+    const contact = page.locator('main a[href^="mailto:"]');
+    await expect(contact).toHaveCount(1);
+    await contact.focus();
+    await expect(contact).toBeFocused();
+    expect(
+      await contact.evaluate((element) => getComputedStyle(element).outlineStyle),
+      `${path} contact should keep a visible keyboard focus indicator`,
+    ).not.toBe("none");
+
+    const rectangle = await contact.boundingBox();
+    expect(rectangle, `${path} contact should have a rendered hit target`).not.toBeNull();
+    expect(
+      rectangle!.height,
+      `${path} contact touch target should be at least 44 CSS pixels high`,
+    ).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  }
+});

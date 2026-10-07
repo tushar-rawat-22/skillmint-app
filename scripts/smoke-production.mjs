@@ -83,7 +83,7 @@ async function checkHtmlRoute(route) {
       return;
     }
 
-    if (route === "/signup" && !checkClosedSignup(html)) {
+    if (route === "/signup" && !checkControlledAccessSignup(html)) {
       return;
     }
 
@@ -190,14 +190,24 @@ async function checkProtectedApi({ route, status, code }) {
   }
 }
 
-function checkClosedSignup(html) {
-  if (!html.includes("Account creation is currently closed.")) {
-    fail("/signup: controlled-beta signup closure copy is missing");
+function checkControlledAccessSignup(html) {
+  const requiredControlledAccessCopy = [
+    "Account access is currently controlled",
+    "Request access",
+    "A request does not create an account",
+    "Already have access?",
+  ];
+
+  if (requiredControlledAccessCopy.some((copy) => !html.includes(copy))) {
+    fail("/signup: controlled-access request contract is missing");
     return false;
   }
 
-  if (/<form(?:\s|>)/i.test(html)) {
-    fail("/signup: a signup form is exposed while public registration must stay closed");
+  if (
+    /<input\b[^>]*\btype=(?:["']?password["']?)/i.test(html) ||
+    /(?:Create your SkillMint account|Create account|Continue with Google|Continue with GitHub)/i.test(html)
+  ) {
+    fail("/signup: an account-creation control is exposed while public registration must stay closed");
     return false;
   }
 
