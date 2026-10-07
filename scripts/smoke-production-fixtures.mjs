@@ -55,8 +55,8 @@ const server = http.createServer((request, response) => {
   if (pathname === "/signup") {
     response.end(
       state.exposeSignup
-        ? "<!doctype html><html><body><form><input name=\"email\"></form></body></html>"
-        : "<!doctype html><html><body><p>Account creation is currently closed.</p></body></html>",
+        ? "<!doctype html><html><body><h1>Create your SkillMint account</h1><form><input name=\"email\"><input type=\"password\" name=\"password\"><button>Create account</button></form></body></html>"
+        : "<!doctype html><html><body><h1>Account access is currently controlled</h1><h2>Request access</h2><p>A request does not create an account, and no resume is required.</p><form><input type=\"radio\" name=\"intent\" value=\"CANDIDATE\"><input type=\"email\" name=\"email\"><button>Request access</button></form><h2>Already have access?</h2></body></html>",
     );
     return;
   }
@@ -100,7 +100,7 @@ try {
   assert.notEqual(openSignup.code, 0);
   assert.match(
     openSignup.output,
-    /\/signup: controlled-beta signup closure copy is missing|\/signup: a signup form is exposed/,
+    /\/signup: controlled-access request contract is missing|\/signup: an account-creation control is exposed/,
   );
   state.exposeSignup = false;
 

@@ -66,11 +66,17 @@ export default function Hero({
               </Link>
             ) : null}
             {!publicDemoEnabled && !publicSignupEnabled ? (
-              <Link className="font-semibold text-slate-300 underline-offset-4 hover:text-white hover:underline" href={ROUTES.SIGNUP}>
+              <Link
+                className="inline-flex min-h-11 items-center font-semibold text-slate-300 underline-offset-4 hover:text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-200"
+                href={ROUTES.SIGNUP}
+              >
                 Access details
               </Link>
             ) : null}
-            <Link className="text-slate-400 underline-offset-4 hover:text-white hover:underline" href={ROUTES.RECRUITERS}>
+            <Link
+              className="inline-flex min-h-11 items-center text-slate-400 underline-offset-4 hover:text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-200"
+              href={ROUTES.RECRUITERS}
+            >
               Hiring? See the recruiter workflow
             </Link>
           </div>

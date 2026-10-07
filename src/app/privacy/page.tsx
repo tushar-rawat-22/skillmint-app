@@ -110,7 +110,7 @@ export default function PrivacyPage() {
                 SkillMint operations mailbox at{" "}
                 <a
                   href={privacyContact.href ?? undefined}
-                  className="font-bold text-emerald-800 underline underline-offset-4"
+                  className="inline-flex min-h-11 items-center font-bold text-emerald-800 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
                 >
                   {privacyContact.email}
                 </a>
