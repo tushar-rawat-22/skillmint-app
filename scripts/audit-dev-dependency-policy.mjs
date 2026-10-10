@@ -17,11 +17,17 @@ function fail(message) {
 }
 
 const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8"));
-const result = spawnSync(
-  process.execPath,
-  [process.env.npm_execpath, "audit", "--json", "--audit-level=high"],
-  { encoding: "utf8", env: process.env }
-);
+const auditArgs = ["audit", "--json", "--audit-level=high"];
+const npmExecPath = process.env.npm_execpath?.trim();
+const result = npmExecPath
+  ? spawnSync(process.execPath, [npmExecPath, ...auditArgs], {
+      encoding: "utf8",
+      env: process.env,
+    })
+  : spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", auditArgs, {
+      encoding: "utf8",
+      env: process.env,
+    });
 
 if (result.error) {
   fail(`Unable to execute npm audit: ${result.error.message}`);
