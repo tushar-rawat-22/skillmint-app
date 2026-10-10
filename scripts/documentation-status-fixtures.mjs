@@ -351,12 +351,30 @@ for (const [pattern, label] of [
 for (const [pattern, label] of [
   [/public beta (?:is|remains) not (?:currently )?authorized/i, "public beta remains unauthorized"],
   [
+    /Current Production migration truth \(verified October 9, 2026\):[\s\S]{0,500}Production migration history through V15/i,
+    "Production migration history through V15 is current authority",
+  ],
+  [
+    /secured application baseline before this documentation tranche is [`']?d9f9fe1944a977f4ff616792d6075897732e4c5f/i,
+    "the post-PR #176 secured application baseline is recorded",
+  ],
+  [
+    /Exact-main quality run [`']?38075088519[`']?, OAuth run [`']?38075088410[`']?, and CodeQL run [`']?38075088218[`']? passed/i,
+    "the exact-main PR #176 post-merge checks are recorded",
+  ],
+  [
     /exact V1\+V2 versioned catalog baseline[\s\S]{0,160}known untracked [`']?public\.rls_auto_enable\(\)/i,
     "Production catalog separates the V1+V2 versioned baseline from known drift",
   ],
-  [/V3–V8 remain (?:catalog-)?pending/i, "Production V3–V8 remain pending"],
+  [
+    /Historical July 30 inventory \(superseded by the current migration checkpoint above\)[\s\S]{0,240}At that time only V1\+V2 were catalog-verified, V3–V8 were pending/i,
+    "the former Production V3–V8 pending state is classified as historical",
+  ],
   [/analytics (?:collection )?remains disabled/i, "analytics remains disabled"],
-  [/(?:public )?(?:brand|name)[^\n]*(?:domain)[^\n]*(?:pending|remain pending)|(?:public )?brand[^\n]*pending[\s\S]{0,120}domain[^\n]*pending/i, "brand and domain remain pending"],
+  [
+    /SkillMint is the public product name used by the live website[\s\S]{0,180}future brand\/domain purchase remains a separate decision/i,
+    "the public product name is distinct from a future brand/domain purchase",
+  ],
 ]) {
   check(pattern.test(currentStatus), `current status does not confirm that ${label}`);
 }

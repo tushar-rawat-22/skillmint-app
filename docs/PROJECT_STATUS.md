@@ -1,12 +1,16 @@
 # SkillMint Project Status
 
-**Last updated:** October 5, 2026
+**Last updated:** October 10, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
-**Current Production migration truth (October 5, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
+**Current Production migration truth (verified October 9, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
+
+**Release checkpoint (October 10, 2026):** The secured application baseline before this documentation tranche is `d9f9fe1944a977f4ff616792d6075897732e4c5f` (PR #176 merged). Exact-main quality run `38075088519`, OAuth run `38075088410`, and CodeQL run `38075088218` passed, and Vercel reported success on that SHA. `skillmint-beta` remains recorded as `ACTIVE_HEALTHY`, with migrations V1–V15 present in the last verified Production inventory.
+
+The public site is discoverable, but self-signup remains controlled. [Issue #130](https://github.com/tushar-rawat-22/skillmint-app/issues/130) controls Product and launch acceptance. Full public and authenticated browser journeys, Proof Brief expiry enforcement, adversarial cross-persona/recovery/deletion checks, and controlled load/scalability testing are not yet certified. No broad public launch or paid acquisition is approved. This is an operational checkpoint, not a substitute for exact-head checks before a new release.
 
 ## Repository context
 
@@ -53,8 +57,8 @@ Resume Reality
 | Phase 5A — Controlled Access Foundation | Engineering implementation complete | Application signup defaults closed; the later bounded inventory verified provider signup disabled and email login enabled |
 | Phase 5B — Production Rollout Foundation | Offline validator, forward ACL repair, rollout authority, and deterministic repository coverage implemented | Readiness remains `NO-GO`; no Production or hosted change is authorized or claimed |
 | Two-sided beta — public IA and synthetic recruiter demo | Implemented and merged through PR #45 | Both demos remain deterministic, gated, and structurally isolated from Supabase session refresh, analytics, storage, and external requests |
-| Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; Production migration remains unapplied |
-| Two-sided beta — recruiter evidence review | Engineering implementation, isolated verification, and independent security/privacy review complete | Server-owned recruiter persona, deterministic role maps, atomic live-token review submission, and candidate-owned structured feedback; V11 remains unapplied |
+| Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; V10 is applied in Production. Expired-link rejection remains a launch-acceptance gap |
+| Two-sided beta — recruiter evidence review | Engineering implementation, isolated verification, and independent security/privacy review complete | Server-owned recruiter persona, deterministic role maps, atomic live-token review submission, and candidate-owned structured feedback; V11 is applied in Production |
 | Google OAuth account-deletion reauthentication | Engineering and V15 hosted rollout complete; destructive Production acceptance blocked before consent by a reproducible Google HTTP 400 | One-time user/provider/purpose-bound proof preserves the frozen password-AMR deletion path; public OAuth flags remain closed and no provider token is persisted |
 
 Block 5 feature commit: `5a8364b25f3f0ae657f55a9a354158d6181f1083`
@@ -154,7 +158,7 @@ The August 23 isolated database rehearsal replayed V1 through V10 from an empty
 local PostgreSQL database. Ten rollback-contained probes then confirmed owner
 read isolation, denial of browser DML and token-hash reads, denial of anonymous
 table reads, exact allowlisted public RPC projection, revocation, and cascade
-deletion. No hosted database was contacted; V10 remains unapplied to Production.
+deletion. No hosted database was contacted during that August 23 rehearsal; V10 was subsequently applied to Production and is present in the current migration history.
 
 The subsequent local V1–V11 replay passed. Twenty additional database probes
 confirmed that authenticated browsers cannot mutate personas, role maps,
@@ -211,9 +215,11 @@ Production rollout
 
 Production schema inventory and rollout, environment/origin coordination, operational ownership, incident and rollback handling, legal review, and provider backup/log retention claims remain outside the verified repository closure. A Vercel deployment or successful build does not by itself satisfy this boundary.
 
-The automatic fail-closed deployment is not a Production database rollout claim. The July 30 inventory verified only the V1+V2 Production catalog; V3–V8 remain catalog-pending, while V8 is applied only to isolated staging. The new post-V8 ACL repair is also unapplied. No collection flag is enabled.
+Historical July 30 inventory (superseded by the current migration checkpoint above): the automatic fail-closed deployment was not a Production database rollout claim. At that time only V1+V2 were catalog-verified, V3–V8 were pending, and V8 was applied only to isolated staging. This is retained as dated evidence, not current database state. Analytics collection remains disabled.
 
-## Current approved sequence
+## Historical August 23 sequence (superseded)
+
+The list below records the August 23 build sequence, not the present release plan. [Issue #130](https://github.com/tushar-rawat-22/skillmint-app/issues/130) controls current Product and launch acceptance; no public self-signup or market release is authorized until its gates and the broader pre-market checks pass.
 
 1. Follow the [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md).
 2. Build candidate and recruiter public entry points and isolated synthetic demos.
@@ -227,8 +233,7 @@ The automatic fail-closed deployment is not a Production database rollout claim.
 6. Keep payments, candidate discovery, automated decisions, broad rebranding,
    domain purchase, and third-party analytics outside this beta.
 
-The public name, backup name, and domain remain pending. SkillMint is now a
-collision-screened internal codename, not an approved broad public brand.
+SkillMint is the public product name used by the live website. A future brand/domain purchase remains a separate decision; no paid domain or unrestricted launch is authorized.
 
 ## Question-specific authority
 
