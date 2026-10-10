@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** October 9, 2026
+**Last updated:** October 10, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -8,7 +8,7 @@ This is the current-state entry point for the founder and maintainers. Before pl
 
 **Current Production migration truth (verified October 9, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
 
-**Release checkpoint (October 9, 2026):** GitHub `main` is `ccd3d893b87401a34dea57af808d8358f3a9c629` (PR #175 merged). Vercel Production is READY on that SHA; `skillmint-beta` is ACTIVE_HEALTHY, with migrations V1–V15 recorded. The post-merge quality rerun, OAuth, and CodeQL checks are reported green. The public site is discoverable, but self-signup remains controlled. [Issue #130](https://github.com/tushar-rawat-22/skillmint-app/issues/130) controls Product and launch acceptance. Full public and authenticated browser journeys, Proof Brief expiry enforcement, adversarial cross-persona/recovery/deletion checks, and controlled load/scalability testing are not yet certified. No broad public launch or paid acquisition is approved. This is an operational checkpoint, not a substitute for exact-head checks before a new release.
+**Release checkpoint (October 10, 2026):** The secured application baseline before this documentation tranche is `d9f9fe1944a977f4ff616792d6075897732e4c5f` (PR #176 merged). Exact-main quality run `38075088519`, OAuth run `38075088410`, and CodeQL run `38075088218` passed, and Vercel reported success on that SHA. `skillmint-beta` remains recorded as `ACTIVE_HEALTHY`, with migrations V1–V15 present in the last verified Production inventory. The public site is discoverable, but self-signup remains controlled. [Issue #130](https://github.com/tushar-rawat-22/skillmint-app/issues/130) controls Product and launch acceptance. Full public and authenticated browser journeys, Proof Brief expiry enforcement, adversarial cross-persona/recovery/deletion checks, and controlled load/scalability testing are not yet certified. No broad public launch or paid acquisition is approved. This is an operational checkpoint, not a substitute for exact-head checks before a new release.
 
 ## Repository context
 
