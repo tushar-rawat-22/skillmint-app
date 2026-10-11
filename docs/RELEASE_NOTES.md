@@ -2,7 +2,7 @@
 
 ## Unreleased — bounded prelaunch reliability baseline
 
-- Added a zero-cost executable reliability gate against a loopback production build and the repository synthetic Auth/PostgREST provider. It runs one-VU smoke before a three-VU mixed public/Candidate/Recruiter average stage and records sanitized p50/p95/p99, status/error classes, 5xx, correctness, retry idempotency, revocation and recovery evidence.
+- Added a zero-cost executable reliability gate against a loopback production build and the repository synthetic Auth/PostgREST provider. Clean implementation commit `71ad7a35010ec706141cfb76c09cbe6c7971c9b9` passed one-VU smoke and a three-VU mixed public/Candidate/Recruiter average stage with p95 619.21/615.65 ms, zero unexpected errors, zero 5xx, exact expected negative classes, retry idempotency, revocation and recovery evidence.
 - Rejected the draft's unmeasured 200-request-per-journey target and automatic stress/spike/soak/breakpoint sequence. The initial gate treats concurrency as a regression workload rather than human-demand evidence; heavier stages remain blocked until an isolated hosted target has known free quotas plus CPU, memory and connection observability.
 - The gate does not contact Production, real user data, email/recovery providers, Greenhouse, analytics or paid services, and it does not authorize public signup or close issue #130. See [Prelaunch Reliability Baseline](PRELAUNCH_RELIABILITY_BASELINE.md).
 

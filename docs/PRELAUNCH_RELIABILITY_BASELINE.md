@@ -1,6 +1,6 @@
 # Prelaunch Reliability Baseline
 
-**Status:** executable local smoke and average-load gate implemented; clean exact-commit evidence is recorded below after the harness implementation commit.
+**Status:** executable local smoke and average-load gate passed on the clean implementation commit `71ad7a35010ec706141cfb76c09cbe6c7971c9b9` on October 12, 2026 (IST). Exact-head GitHub CI remains a separate merge gate.
 
 This is the bounded zero-cost reliability slice for GitHub issue #130 and PR #178. It is isolated browser evidence against a local production build and repository provider mocks. It is not Production load evidence, a hosted-capacity result, a customer SLO, or human beta evidence.
 
@@ -26,7 +26,25 @@ Target CPU, target memory and database-connection utilization are unavailable on
 
 ## Clean measurement record
 
-The clean implementation SHA and measured smoke/average results are added after the executable slice is committed and replayed. The final PR head must also pass exact-head CI, including this gate, before PR #178 can be marked ready.
+The clean run used Node `v24.17.0`, Chromium, macOS/Darwin `25.6.0`, eight logical CPUs and 8 GiB host memory. The target was the optimized loopback build at `127.0.0.1`; analytics, signup and public demo were disabled, browser egress was blocked, and the synthetic provider had no database or external provider connection.
+
+| Stage | Workload | Samples / requests | Aggregate p50 / p95 / p99 | HTTP classification | Recovery | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| Smoke | 1 sequential VU; one public, Candidate, Recruiter, negative/retry and recovery pass | 52 / 28 | 14.82 / 619.21 / 689.99 ms | 22×200, 1×201, expected 2×403, 1×404, 2×409; 0×5xx | 200 in 3.81 ms | PASS |
+| Average | 3 concurrent mixed VUs; 5 iterations each, then one-user recovery | 164 / 92 | 18.71 / 615.65 / 718.69 ms | 86×200, 1×201, expected 2×403, 1×404, 2×409; 0×5xx | 200 in 3.66 ms | PASS |
+
+The aggregate distributions combine observed application document/API response samples and completed journey-step timings; they are not server-only response time. The average stage lasted 20.33 seconds and observed about 4.52 application requests per second. Its per-journey distributions were:
+
+| Journey | Samples | p50 | p95 | p99 |
+| --- | ---: | ---: | ---: | ---: |
+| Public | 60 | 22.58 ms | 615.65 ms | 718.69 ms |
+| Candidate | 50 | 20.93 ms | 638.14 ms | 742.47 ms |
+| Recruiter | 49 | 15.65 ms | 607.89 ms | 698.83 ms |
+| Revocation/recovery | 5 | 8.57 ms | 51.05 ms | 51.05 ms |
+
+All 14 correctness gates passed, including owner/persona denial, absence of unrelated candidate data from recruiter/public output, one stored review after an identical retry, revoked-token rejection and fixture recovery. The average run recorded zero unexpected request, transport, console, journey or server errors.
+
+Peak harness RSS was 296,796,160 bytes in smoke and 313,704,448 bytes in average. These are test-runner diagnostics, not target memory. Target CPU, target memory, database connections and service quota consumption were unavailable by construction and are recorded as unavailable rather than zero. The final PR head must pass exact-head CI, including this gate, before PR #178 can be marked ready.
 
 ## Non-claims
 
