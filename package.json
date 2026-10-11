@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:reliability": "NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=synthetic-reliability-publishable-key NEXT_PUBLIC_APP_URL=http://127.0.0.1:3100 SUPABASE_SECRET_KEY=synthetic-reliability-secret-key SKILLMINT_PRIVACY_CONTACT_EMAIL=privacy@example.test NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=false SKILLMINT_PUBLIC_SIGNUP_ENABLED= SKILLMINT_PUBLIC_DEMO_ENABLED=false next build",
     "start": "next start",
     "lint": "eslint",
     "fixtures:analytics": "node scripts/analytics-contract-fixtures.mjs",
@@ -35,6 +36,9 @@
     "test:e2e:webkit": "playwright test --project=webkit --grep @critical --grep-invert @block53",
     "test:e2e:cross-browser": "npm run test:e2e:firefox && npm run test:e2e:webkit",
     "test:e2e:closure": "npm run test:e2e:chromium && npm run test:e2e:cross-browser",
+    "test:reliability:smoke": "SKILLMINT_RELIABILITY_STAGE=smoke playwright test e2e/prelaunch-reliability.spec.ts --config=playwright.reliability.config.ts --project=chromium --workers=1 --retries=0",
+    "test:reliability:average": "SKILLMINT_RELIABILITY_STAGE=average playwright test e2e/prelaunch-reliability.spec.ts --config=playwright.reliability.config.ts --project=chromium --workers=1 --retries=0",
+    "test:reliability:baseline": "npm run build:reliability && npm run test:reliability:smoke && npm run test:reliability:average",
     "test:e2e:race": "playwright test --project=chromium --grep @race --repeat-each=3",
     "test:e2e:owner-isolation": "playwright test e2e/resume-owner-isolation.spec.ts --project=chromium --workers=1 --retries=0",
     "test:e2e:resume-workspace": "playwright test e2e/resume-workspace.spec.ts --project=chromium --workers=1 --retries=0",

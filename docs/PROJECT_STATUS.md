@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** October 10, 2026
+**Last updated:** October 12, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -11,6 +11,8 @@ This is the current-state entry point for the founder and maintainers. Before pl
 **Release checkpoint (October 10, 2026):** The secured application baseline before this documentation tranche is `d9f9fe1944a977f4ff616792d6075897732e4c5f` (PR #176 merged). Exact-main quality run `38075088519`, OAuth run `38075088410`, and CodeQL run `38075088218` passed, and Vercel reported success on that SHA. `skillmint-beta` remains recorded as `ACTIVE_HEALTHY`, with migrations V1–V15 present in the last verified Production inventory.
 
 The public site is discoverable, but self-signup remains controlled. [Issue #130](https://github.com/tushar-rawat-22/skillmint-app/issues/130) controls Product and launch acceptance. Full public and authenticated browser journeys, Proof Brief expiry enforcement, adversarial cross-persona/recovery/deletion checks, and controlled load/scalability testing are not yet certified. No broad public launch or paid acquisition is approved. This is an operational checkpoint, not a substitute for exact-head checks before a new release.
+
+The bounded [Prelaunch Reliability Baseline](PRELAUNCH_RELIABILITY_BASELINE.md) now provides an executable zero-cost local production-build gate for sequential smoke and three-way mixed public/Candidate/Recruiter average load. It uses repository provider mocks and synthetic data, blocks unexpected browser egress, and keeps Production, real email/recovery, Greenhouse, analytics and paid services outside the run. The initial local gate does not establish hosted capacity or authorize stress, spike, soak, breakpoint, public signup or launch; target resource/quota observability is still required before heavier stages.
 
 ## Repository context
 

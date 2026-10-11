@@ -52,45 +52,43 @@ For public self-service work, issue #130 adds stricter gates: server-side CAPTCH
 
 ## Pre-release workload certification (Issue #130)
 
-These are **proposed acceptance targets**, not measured service levels. They apply to a first controlled cohort of 5–10 consented Candidate/Recruiter users; revise them after observing real consented usage. A READY deployment or passing unit tests do not certify load readiness.
+This gate is an executable regression baseline, not a customer service level or a prediction about human usage. It runs only against a loopback production build with the repository synthetic Auth/PostgREST provider, analytics and signup disabled, and unexpected browser egress blocked. A READY deployment, passing unit tests, or virtual-user count do not certify hosted load readiness.
 
 ### Critical journeys and workload assumptions
 
 | Journey | Test behavior | Boundary |
 | --- | --- | --- |
-| Public discovery | Read `/`, `/candidates`, `/recruiters`, `/privacy`, `/support`; check status, security headers, and content | No account or analytics identifiers |
-| Candidate | Sign in to a disposable isolated account; set Active Target; analyze a synthetic resume; save/reload; match one synthetic JD; recover from unavailable Jobs provider | No real resume, external job-provider traffic, or Production account |
-| Collaboration | Publish/revoke a synthetic Proof Brief; authorized Recruiter reads and submits feedback; revoked/expired/wrong-owner tokens fail closed | Do not load-test token enumeration or generate public share links |
-| Recruiter | Sign in to an isolated Recruiter account; review an authorized brief and role evidence map; submit/retry structured feedback | Candidate raw resume and unrelated account data must remain inaccessible |
-| Negative paths | Unauthenticated API access, wrong-persona access, malformed inputs, duplicate/retry behavior, stale sessions | Small, bounded functional probes only; not repeated attack traffic |
+| Public discovery | Read `/`, `/candidates`, `/recruiters`, `/privacy`, `/support`, and one synthetic candidate-authorized brief; check status, content and identifier absence | No account or analytics identifiers |
+| Candidate | Sign in to a disposable isolated Candidate account; analyze a synthetic resume through the real upload UI and parser route; read dashboard/resume/JD surfaces | No real resume, external job-provider traffic, or Production account |
+| Collaboration | Read/revoke/recover a seeded synthetic Proof Brief; one authorized Recruiter submits feedback and retries the same review | Do not load-test token enumeration or generate a real public share link |
+| Recruiter | Sign in to an isolated Recruiter account; read its role evidence workspace and the authorized brief/review flow | Candidate raw resume and unrelated account data must remain inaccessible |
+| Negative paths | Wrong-owner and wrong-persona API access, duplicate/retry behavior, revoked-token access | Small, bounded functional probes only; not repeated attack traffic |
 
-Assume **1–3 concurrent users normally** and **5–10 during a small-cohort peak** until usage evidence replaces those assumptions. A load virtual user is not a real beta participant. Do not claim 10 virtual users proves 10 real users' experience.
+The initial implemented workload is one sequential smoke virtual user followed by three concurrent mixed virtual users: one public reader, one Candidate journey, and one Recruiter journey. The average stage runs five journey iterations per virtual user by default. These are deliberately small regression workloads selected to exercise concurrency and Product boundaries at zero cash; they are **not observed concurrency**, capacity estimates, cohort sizes, or evidence that three virtual users represent three people.
 
 ### Provisional service objectives
 
 - **Correctness and isolation:** zero cross-user/cross-persona disclosure, zero unauthorized writes, zero lost acknowledged state changes, and no duplicate effects from retries. Any violation fails immediately.
-- **First-party public HTML:** p95 server response time at most **2 seconds** at the proposed average load, excluding browser rendering. Separately record 1440/390/320 real-browser interaction and accessibility results.
-- **First-party authenticated API:** p95 at most **2 seconds** at average load for routes not waiting on third-party services. Record p99 and identify slow endpoints rather than averaging them away.
-- **Reliability:** no unexplained 5xx in smoke; at average load, fewer than **1%** failed requests over a meaningful sample (target at least 200 requests per journey), with zero auth/privacy correctness failures. HTTP 401/403/429 expected by a negative-path test are not service errors.
+- **Latency observation:** record p50/p95/p99 for the aggregate and each journey. The earlier two-second p95 proposal was not derived from hosted resource limits or user evidence, so the local baseline records it rather than treating it as a launch SLO. Any later hosted objective must separate server response, browser completion, and provider latency.
+- **Reliability:** smoke and the deterministic local average stage require zero unexpected request, transport, browser-console, journey, and 5xx errors. Expected 403/404/409 results from named negative probes are classified separately and must match exactly. The earlier target of 200 requests per journey is not a statistical reliability claim and would add synthetic repetition without known quota value; preserve request counts and expand only for a stated question.
 - **External providers and recovery:** record separate provider latency and failure rates; show a bounded, truthful fallback rather than a fabricated result. Email verification, password recovery, deletion and provider quotas are **single-journey acceptance**, never automated load traffic.
 
-These are release candidates, not promises to customers. Adjust only from recorded baseline and resource quotas, not to make a failing run appear green.
+These are regression rules, not promises to customers. Adjust workload or objectives only from recorded evidence and known resource quotas, not to make a failing run appear green.
 
 ### Execution order — isolated environment only
 
-1. **Preflight:** pin exact tested commit, verify clean fixtures and synthetic accounts, separate database and secrets, isolated host, provider mocks, no analytics/replay, and no paid infrastructure. Establish resource/rate limits and a rollback/reset procedure. If an isolated target or free-tier capacity cannot be confirmed, **do not start**.
-2. **Smoke:** 1 virtual user, 2 minutes; verify responses, privacy boundaries, error handling and metrics. Stop on any correctness failure.
-3. **Average:** 3 virtual users, 10 minutes; capture p50/p95/p99, throughput, error classes, DB connection use and process memory.
-4. **Stress:** increase to 5 then 10 virtual users for at most 5 minutes per step. Evaluate saturation and recovery, not just request success.
-5. **Spike:** 3 → 15 → 3 virtual users within a bounded 5-minute window; verify rate limits, queueing and return to baseline.
-6. **Soak:** 3 virtual users for 30 minutes; look for memory/connection growth, stale sessions and retry accumulation.
-7. **Breakpoint:** isolated target only; increase in steps of 5 to a hard cap of 20 virtual users, stopping at the first objective or resource failure. Record the last safe level; **do not** seek a crash or run this against Production.
+1. **Preflight:** pin the exact Git commit and require a clean worktree for certifying runs. Build with explicit synthetic loopback values; keep analytics, public signup, public demo, Production services and third-party providers off. The harness refuses non-loopback targets.
+2. **Smoke:** run `npm run test:reliability:smoke` after `npm run build:reliability`. One virtual user executes public, Candidate, Recruiter, negative/retry, revocation and recovery journeys sequentially. Stop on any correctness failure.
+3. **Average:** only after smoke passes, run `npm run test:reliability:average`. Three mixed virtual users execute concurrently for five iterations each by default, then return to a one-user recovery probe. Capture p50/p95/p99, status classes, 5xx, correctness and available host/harness memory.
+4. **Stress/spike/soak/breakpoint:** deferred. Do not infer safe limits from the local synthetic target. A later stage requires an isolated hosted target, explicit free quota/resource caps, target CPU/memory/connection observability, provider mocks, and a stated decision question. Do not seek a crash.
 
-Abort immediately for tenant/privacy leakage, unauthorized state mutation, an unexplained 5xx burst, more than 1% failures over a rolling 60-second window, p95 exceeding twice its objective, resource use above 80% of a confirmed quota, unexpected paid usage, provider throttling, or loss of observability. Reset synthetic data between stages; do not repeatedly invoke account deletion, send real email, or stress third-party APIs.
+`npm run test:reliability:baseline` builds the isolated target and runs smoke before average. Set `SKILLMINT_RELIABILITY_AVERAGE_ITERATIONS` only to an integer from 1 through 20 for a bounded diagnostic variation. Certifying runs refuse a dirty worktree; `SKILLMINT_RELIABILITY_ALLOW_DIRTY=true` exists only for non-certifying harness development.
+
+Abort immediately for tenant/privacy leakage, unauthorized state mutation, acknowledged-state loss, duplicate retry effects, any unexplained local error or 5xx, unexpected egress, provider throttling, paid-usage risk, or missing request/correctness observability. For a later hosted stage, also stop above 80% of a confirmed quota or the stage's predeclared latency/error abort line. Reset synthetic data between stages; do not repeatedly invoke account deletion, send real email, or stress third-party APIs.
 
 ### Evidence and release decision
 
-Capture the exact SHA, environment and resource caps, synthetic data version, command/configuration, stage duration, per-journey request count, p50/p95/p99, 4xx/5xx classification, CPU/memory/DB connections, quota consumption, observed failure point, recovery behavior and a short operator verdict. Redact tokens, resume text, email addresses and personal data. Keep results with the existing #130 acceptance record, not a parallel launch authority.
+The harness writes sanitized JSON to `test-results/prelaunch-reliability/<sha>-<stage>.json` and attaches it to Playwright output. It captures exact SHA/tree/cleanliness, environment, workload, journey/request counts, p50/p95/p99, 4xx/5xx classification, correctness gates, recovery, harness RSS, and explicit unavailable resource fields. Tokens and email-shaped values are redacted. `test-results` remains ignored; durable results belong in the [Prelaunch Reliability Baseline](PRELAUNCH_RELIABILITY_BASELINE.md) and the existing #130 acceptance record, not a parallel launch authority.
 
 Only a fully passing isolated run permits a **separately authorized, low-volume Production smoke** against the exact READY release. Production smoke must not include stress, spike, soak or breakpoint stages. Load evidence is one prerequisite among security, data recovery, accessibility, real-user validation and commercial gates; it never opens public signup by itself.
 

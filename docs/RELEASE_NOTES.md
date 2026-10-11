@@ -1,5 +1,11 @@
 # SkillMint Release Notes
 
+## Unreleased — bounded prelaunch reliability baseline
+
+- Added a zero-cost executable reliability gate against a loopback production build and the repository synthetic Auth/PostgREST provider. It runs one-VU smoke before a three-VU mixed public/Candidate/Recruiter average stage and records sanitized p50/p95/p99, status/error classes, 5xx, correctness, retry idempotency, revocation and recovery evidence.
+- Rejected the draft's unmeasured 200-request-per-journey target and automatic stress/spike/soak/breakpoint sequence. The initial gate treats concurrency as a regression workload rather than human-demand evidence; heavier stages remain blocked until an isolated hosted target has known free quotas plus CPU, memory and connection observability.
+- The gate does not contact Production, real user data, email/recovery providers, Greenhouse, analytics or paid services, and it does not authorize public signup or close issue #130. See [Prelaunch Reliability Baseline](PRELAUNCH_RELIABILITY_BASELINE.md).
+
 ## July 28, 2026 — Version 2 Resume Workspace Phase 1B closure
 
 - Phase 1A merged through PR #21 at `9eb2318269f835a7f9cc249e8ab014c73a9271ae`; lifecycle ACL normalization merged through PR #22 at the Phase 1B baseline `9db3a832e5ffd2c806a787a8438dfb3946fea879`.
