@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:reliability": "NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=synthetic-reliability-publishable-key NEXT_PUBLIC_APP_URL=http://127.0.0.1:3100 SUPABASE_SECRET_KEY=synthetic-reliability-secret-key SKILLMINT_PRIVACY_CONTACT_EMAIL=privacy@example.test NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=false SKILLMINT_PUBLIC_SIGNUP_ENABLED= SKILLMINT_PUBLIC_DEMO_ENABLED=false next build",
+    "build:reliability": "NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=synthetic-reliability-publishable-key NEXT_PUBLIC_APP_URL=http://127.0.0.1:3100 SUPABASE_SECRET_KEY=synthetic-local-key SKILLMINT_PRIVACY_CONTACT_EMAIL=privacy@example.test NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=false SKILLMINT_PUBLIC_SIGNUP_ENABLED= SKILLMINT_PUBLIC_DEMO_ENABLED=false next build",
     "start": "next start",
     "lint": "eslint",
     "fixtures:analytics": "node scripts/analytics-contract-fixtures.mjs",
