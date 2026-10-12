@@ -1670,6 +1670,7 @@ test("package metadata permits only authorized fixture scripts and audited lock 
       .filter((name) => !(name in baselinePackage.scripts))
       .sort(),
     [
+      "build:reliability",
       "check:controlled-access-client-bundles",
       "check:production-rollout-readiness",
       "check:public-evidence-demo-client-bundles",
@@ -1698,7 +1699,26 @@ test("package metadata permits only authorized fixture scripts and audited lock 
       "test:e2e:resume-workspace",
       "test:oauth-deletion-reauth:database",
       "test:oauth-deletion-reauth:fixtures",
+      "test:reliability:average",
+      "test:reliability:baseline",
+      "test:reliability:smoke",
     ],
+  );
+  assert.equal(
+    currentPackage.scripts["build:reliability"],
+    "NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=synthetic-reliability-publishable-key NEXT_PUBLIC_APP_URL=http://127.0.0.1:3100 SUPABASE_SECRET_KEY=synthetic-local-key SKILLMINT_PRIVACY_CONTACT_EMAIL=privacy@example.test NEXT_PUBLIC_ANALYTICS_COLLECTION_ENABLED=false SKILLMINT_PUBLIC_SIGNUP_ENABLED= SKILLMINT_PUBLIC_DEMO_ENABLED=false next build",
+  );
+  assert.equal(
+    currentPackage.scripts["test:reliability:smoke"],
+    "SKILLMINT_RELIABILITY_STAGE=smoke playwright test e2e/prelaunch-reliability.spec.ts --config=playwright.reliability.config.ts --project=chromium --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:reliability:average"],
+    "SKILLMINT_RELIABILITY_STAGE=average playwright test e2e/prelaunch-reliability.spec.ts --config=playwright.reliability.config.ts --project=chromium --workers=1 --retries=0",
+  );
+  assert.equal(
+    currentPackage.scripts["test:reliability:baseline"],
+    "npm run build:reliability && npm run test:reliability:smoke && npm run test:reliability:average",
   );
   assert.equal(
     currentPackage.scripts["check:controlled-access-client-bundles"],

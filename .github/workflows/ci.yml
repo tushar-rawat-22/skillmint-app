@@ -149,6 +149,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Run isolated prelaunch reliability smoke and average baseline
+        run: |
+          npm run build:reliability
+          npm run test:reliability:smoke
+          npm run test:reliability:average
+
+      - name: Restore release build after synthetic reliability target
+        run: npm run build
+
       - name: Verify controlled-access client bundle boundary
         run: npm run check:controlled-access-client-bundles
 

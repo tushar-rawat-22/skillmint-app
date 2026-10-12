@@ -73,6 +73,7 @@ Frozen evidence must not be casually rewritten. The Phase 1B closure is isolated
 - [Current Release Status — 2026-09-08](CURRENT_RELEASE_STATUS_20260908.md)
 - [Project Status](PROJECT_STATUS.md)
 - [Release Notes](RELEASE_NOTES.md)
+- [Prelaunch Reliability Baseline](PRELAUNCH_RELIABILITY_BASELINE.md)
 - [Changelog](CHANGELOG.md)
 - [Beta Tester Script](BETA_TESTER_SCRIPT.md), currently a draft rather than outreach authorization
 
