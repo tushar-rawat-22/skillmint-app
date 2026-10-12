@@ -9,6 +9,12 @@ Safe repo-local mitigation:
 
 Do not remove a parent-directory lockfile from this repository. If that lockfile is accidental, remove it manually from its own directory.
 
+## `braces` dev-tool advisory boundary — October 12, 2026
+
+GHSA-vfj7-8cjw-p6xm affects `braces <=3.0.3`, and no patched upstream release exists. The only repository path is `eslint-config-next@16.3.8 -> @next/eslint-plugin-next@16.3.8 -> fast-glob@3.3.1 -> micromatch@4.0.8 -> braces@3.0.3`. Every node is dev-only, `npm query ':not(.dev)#braces'` is empty, and the separate Production high-severity audit remains blocking.
+
+Removing `eslint-config-next` would remove the active Next.js Core Web Vitals and TypeScript lint contracts, while the latest published Next lint plugin still retains this path. CI therefore permits only this exact advisory, version and path through October 19, 2026. It fails closed on path or dev-scope drift, runtime reachability, any unrelated high/critical advisory, incomplete audit output, or expiry. Issue #167 remains open for the upstream removal or patched-path follow-up.
+
 ## PostCSS security maintenance — July 24, 2026
 
 The repository override pinned Next.js's PostCSS child to 8.5.10. CVE-2026-45623 / GHSA-6g55-p6wh-862q affects PostCSS through 8.5.11, so the override now uses the minimum patched release, 8.5.12. The dependency audit classified exposure as build-time only: repository code does not process user-controlled CSS at runtime, accept CSS uploads, enable `unsafeMap`, or return PostCSS errors to browser clients.
