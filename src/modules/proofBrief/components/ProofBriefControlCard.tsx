@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/premium";
 import type { CandidateProofBrief } from "@/modules/proofBrief/types";
 import {
+  proofBriefShareExpiresAt,
+  PROOF_BRIEF_SHARE_LIFETIME_DAYS,
+} from "@/modules/proofBrief/shareGrantPolicy";
+import {
   createOrRefreshPrivateProofBrief,
   getProofBriefForSource,
   publishProofBrief,
@@ -120,7 +124,7 @@ function ProofBriefControlCardForSource({
         setBrief(result.data.brief);
         setShareUrl(url);
         setShareConfirmed(false);
-        setStatus({ tone: "success", message: "Link created. Copy it now; the raw link token is not stored in your account." });
+        setStatus({ tone: "success", message: `Link created for ${PROOF_BRIEF_SHARE_LIFETIME_DAYS} days. Copy it now; the raw link token is not stored in your account.` });
       } else {
         setStatus({ tone: "error", message: result.message });
       }
@@ -165,6 +169,9 @@ function ProofBriefControlCardForSource({
   }
 
   const isLoading = status.tone === "loading";
+  const expiresAt = brief?.sharedAt
+    ? proofBriefShareExpiresAt(brief.sharedAt)
+    : null;
   return (
     <section className={premiumSurface} aria-labelledby="proof-brief-control-title">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -225,8 +232,12 @@ function ProofBriefControlCardForSource({
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     Anyone who has the link can view the derived brief. It is
                     not listed or searchable. A signed-in recruiter can send
-                    one structured review for a role map. Revoke the link to
-                    stop further viewing and review submissions.
+                    one structured review for a role map. The link expires
+                    {expiresAt
+                      ? ` ${new Date(expiresAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}`
+                      : ` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS} days after it was created`}.
+                    Revoke it sooner or replace it to start a fresh
+                    {` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS}`}-day window.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" disabled={isLoading} onClick={handleRevoke} className={premiumSecondaryCta}>Revoke link</button>
@@ -244,7 +255,7 @@ function ProofBriefControlCardForSource({
               )}
               <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-slate-700">
                 <input type="checkbox" checked={shareConfirmed} onChange={(event) => setShareConfirmed(event.target.checked)} className="mt-1 h-4 w-4 rounded border-slate-300 accent-emerald-700" />
-                <span>I understand that anyone with the new link can view this derived brief, and a signed-in recruiter can send bounded structured feedback, until I revoke or replace it.</span>
+                <span>I understand that anyone with the new link can view this derived brief, and a signed-in recruiter can send bounded structured feedback, for up to {PROOF_BRIEF_SHARE_LIFETIME_DAYS} days or until I revoke or replace it.</span>
               </label>
             </div>
           ) : null}

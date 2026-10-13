@@ -1,5 +1,11 @@
 # SkillMint Release Notes
 
+## Unreleased — finite Proof Brief share grants
+
+- Proof Brief links now have one explainable 14-day authorization window derived from the existing `share_created_at`; candidates may revoke sooner or republish to replace the token and start a fresh window.
+- Public lookup, recruiter API preflight, the transactional recruiter-review RPC, and the synthetic acceptance runtime enforce the same exact-boundary rule. The database review transaction locks the Proof Brief and rechecks wall-clock expiry before insertion, preserving revocation/replacement race safety.
+- The forward-only V16 migration changes only the two existing authorization functions and their exact grants/comments. It adds no table, payload field, provider, dependency, analytics, or signup change.
+
 ## Unreleased — bounded prelaunch reliability baseline
 
 - Added a zero-cost executable reliability gate against a loopback production build and the repository synthetic Auth/PostgREST provider. Clean implementation commit `71ad7a35010ec706141cfb76c09cbe6c7971c9b9` passed one-VU smoke and a three-VU mixed public/Candidate/Recruiter average stage with p95 619.21/615.65 ms, zero unexpected errors, zero 5xx, exact expected negative classes, retry idempotency, revocation and recovery evidence.

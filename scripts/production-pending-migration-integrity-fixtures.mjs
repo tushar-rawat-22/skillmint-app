@@ -56,14 +56,21 @@ const applied = [
     sha256: "91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562",
     rollout_classification: "existing_production_migration_history_verified",
   },
-];
-const pending = [
   {
     version: "20260912001400",
     source_path: "supabase/schema_v14_candidate_job_lifecycle.sql",
     migration_path: "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
     sha256: "fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b",
-    rollout_classification: "pending_candidate_job_lifecycle",
+    rollout_classification: "existing_production_migration_history_verified",
+  },
+];
+const pending = [
+  {
+    version: "20261013184117",
+    source_path: "supabase/schema_v16_proof_brief_share_expiry.sql",
+    migration_path: "supabase/migrations/20261013184117_proof_brief_share_expiry.sql",
+    sha256: "99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12",
+    rollout_classification: "pending_proof_brief_share_expiry",
   },
 ];
 
@@ -89,7 +96,7 @@ for (const contract of pending) {
 }
 assert.deepEqual(manifest.generated_for.production.pending_execution, pending.map((entry) => entry.version), "Production pending migration order changed");
 
-const v14Sql = text(pending[0].migration_path);
+const v14Sql = text(applied[5].migration_path);
 assert.match(v14Sql, /grant select on table public\.candidate_job_lifecycle to authenticated;/i, "candidate lifecycle owner reads must remain explicit");
 assert.match(v14Sql, /grant select, insert, update, delete on table public\.candidate_job_lifecycle to service_role;/i, "trusted server lifecycle mutation authority is missing");
 assert.doesNotMatch(v14Sql, /grant\s+[^;]*\b(?:insert|update|delete)\b[^;]*\bon\s+table\s+public\.candidate_job_lifecycle\b[^;]*\bto\s+authenticated\b/i, "authenticated browser sessions must not receive lifecycle write grants");
@@ -99,5 +106,10 @@ const v15Sql = text(applied[4].migration_path);
 assert.match(v15Sql, /force row level security/i, "OAuth deletion intent table must force RLS");
 assert.match(v15Sql, /revoke all on table public\.oauth_deletion_reauth_intents from public, anon, authenticated/i, "OAuth deletion intents must remain server-only");
 assert.match(v15Sql, /grant execute on function public\.consume_oauth_deletion_reauth_intent[^;]+to service_role/i, "OAuth proof consumption must remain service-role-only");
+
+const v16Sql = text(pending[0].migration_path);
+assert.match(v16Sql, /share_created_at\s*> pg_catalog\.statement_timestamp\(\) - interval '14 days'/i, "public Proof Brief lookup must enforce the finite share lifetime");
+assert.match(v16Sql, /selected_share_created_at[\s\S]*<= pg_catalog\.clock_timestamp\(\) - interval '14 days'/i, "review submission must recheck wall-clock expiry inside the transaction");
+assert.match(v16Sql, /for update of proof_briefs/i, "review submission must retain the Proof Brief row lock");
 
 console.log(`PASS production migration integrity fixtures (${applied.length} applied, ${pending.length} pending)`);

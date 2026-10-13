@@ -8,6 +8,10 @@ import {
 } from "@/components/ui/premium";
 import { ROUTES } from "@/constants/routes";
 import { getSharedProofBrief } from "@/modules/proofBrief/proofBriefServer";
+import {
+  proofBriefShareExpiresAt,
+  PROOF_BRIEF_SHARE_LIFETIME_DAYS,
+} from "@/modules/proofBrief/shareGrantPolicy";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +47,7 @@ export default async function SharedProofBriefPage({
   }
 
   const { payload, sharedAt } = result.brief;
+  const expiresAt = proofBriefShareExpiresAt(sharedAt);
   return (
     <main className="min-h-screen bg-[#f7f5ef] px-6 py-8 text-slate-950 md:py-12">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -128,7 +133,11 @@ export default async function SharedProofBriefPage({
             shortlist, interview, hire, or rejection.
           </p>
           <p className="mt-4 text-xs text-slate-500">
-            Shared {new Date(sharedAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}. The candidate can revoke this link.
+            Shared {new Date(sharedAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}.
+            {expiresAt
+              ? ` Expires ${new Date(expiresAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}.`
+              : ` Expires ${PROOF_BRIEF_SHARE_LIFETIME_DAYS} days after sharing.`}
+            {" "}The candidate can revoke or replace this link sooner.
           </p>
           <div className="mt-6 border-t border-slate-200 pt-6">
             <h2 className="text-lg font-black">Review this evidence for one role</h2>

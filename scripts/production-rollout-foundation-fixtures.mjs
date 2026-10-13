@@ -77,6 +77,7 @@ equal(
     "20260911001300",
     "20260911001350",
     "20260912001400",
+    "20261013184117",
   ],
   "migration order is not exact",
 );
@@ -87,7 +88,7 @@ equal(
 );
 equal(
   manifest.generated_for.production.pending_execution,
-  ["20260912001400"],
+  ["20261013184117"],
   "Production pending order is not exact",
 );
 const expectedClassifications = new Map([
@@ -106,7 +107,8 @@ const expectedClassifications = new Map([
   ["20260829001200", "existing_production_migration_history_verified"],
   ["20260911001300", "existing_production_migration_history_verified"],
   ["20260911001350", "existing_production_migration_history_verified"],
-  ["20260912001400", "pending_candidate_job_lifecycle"],
+  ["20260912001400", "existing_production_migration_history_verified"],
+  ["20261013184117", "pending_proof_brief_share_expiry"],
 ]);
 equal(
   new Map(
@@ -840,12 +842,13 @@ check(
 );
 const rolloutAuthority = text("docs/PRODUCTION_SCHEMA_ROLLOUT.md");
 for (const requiredText of [
-  "Current decision:** `V15 VERIFIED; V14 CONDITIONAL EXECUTION AUTHORITY`",
-  "Production migration history is reconciled through **V15**",
+  "Current decision:** `V1–V15 VERIFIED; V16 CONDITIONAL EXECUTION AUTHORITY`",
+  "Production migration history is reconciled through **V15**, including the later-timestamped V14",
   "20260911001300_schema_v13_access_requests.sql",
   "20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
   "20260912001400_schema_v14_candidate_job_lifecycle.sql",
-  "repository-pending and unapplied",
+  "20261013184117_proof_brief_share_expiry.sql",
+  "V16 is the sole pending repository migration",
   "launched with controlled account admission",
   "Backup files and user data must never enter Git",
   "Analytics remains disabled",

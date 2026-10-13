@@ -30,16 +30,16 @@ equal(
   "rehearsal scenarios changed",
 );
 equal(BASELINE_VERSION, "20260723000200", "baseline is not exact V1+V2");
-equal(ORDERED_VERSIONS.length, 16, "migration chain length changed");
+equal(ORDERED_VERSIONS.length, 17, "migration chain length changed");
 equal(
   ORDERED_VERSIONS.at(-1),
-  "20260912001400",
+  "20261013184117",
   "rehearsal no longer ends at the latest ordered migration",
 );
 equal(
-  ORDERED_VERSIONS.slice(-2),
-  ["20260911001350", "20260912001400"],
-  "V15 OAuth deletion proof must remain independently deployable before pending V14",
+  ORDERED_VERSIONS.slice(-3),
+  ["20260911001350", "20260912001400", "20261013184117"],
+  "V15 and V14 must remain ordered before pending V16",
 );
 equal(
   {

@@ -254,3 +254,19 @@ test("@proof-brief malformed or absent share tokens fail closed", async ({
     authUserRequests: 0,
   });
 });
+
+test("@proof-brief expired shares deny anonymous and authenticated lookup", async ({
+  page,
+  request,
+}) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  await request.post(`${PROVIDER_ORIGIN}/__seed-shared-proof-brief`);
+  await request.post(`${PROVIDER_ORIGIN}/__expire-shared-proof-brief`);
+
+  const anonymous = await page.goto(`/brief/${SHARED_TOKEN}`);
+  expect(anonymous?.status()).toBe(404);
+
+  await login(page, ACCOUNT_A);
+  const authenticated = await page.goto(`/brief/${SHARED_TOKEN}`);
+  expect(authenticated?.status()).toBe(404);
+});

@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 const HOST = "127.0.0.1";
 const PORT = 54321;
 const CREATED_AT = "2026-01-02T03:04:05.000Z";
+const PROOF_BRIEF_SHARE_LIFETIME_MS = 14 * 24 * 60 * 60 * 1_000;
 export const SHARED_PROOF_BRIEF_TOKEN = "S".repeat(43);
 const SHARED_PROOF_BRIEF_TOKEN_HASH = createHash("sha256")
   .update(SHARED_PROOF_BRIEF_TOKEN, "utf8")
@@ -29,6 +30,7 @@ const candidateEvidenceReviews = [];
 const accessRequests = new Map();
 let proofSourceMode = "normal";
 let sharedProofBriefDisabled = false;
+let defaultSharedProofBriefCreatedAt = new Date().toISOString();
 let accessRequestMode = "normal";
 
 const server = http.createServer(async (request, response) => {
@@ -44,6 +46,7 @@ const server = http.createServer(async (request, response) => {
     "/__seed-recruiter-context",
     "/__revoke-shared-proof-brief",
     "/__replace-shared-proof-brief",
+    "/__expire-shared-proof-brief",
     "/__candidate-reviews",
     "/__access-requests",
     "/__access-request-mode",
@@ -72,6 +75,7 @@ const server = http.createServer(async (request, response) => {
     accessRequests.clear();
     proofSourceMode = "normal";
     sharedProofBriefDisabled = false;
+    defaultSharedProofBriefCreatedAt = new Date().toISOString();
     accessRequestMode = "normal";
     send(response, 200, { ok: true });
     return;
@@ -115,6 +119,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (request.method === "POST" && url.pathname === "/__seed-shared-proof-brief") {
+    const sharedAt = new Date().toISOString();
     const row = {
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2",
       user_id: "11111111-1111-4111-8111-111111111111",
@@ -122,7 +127,7 @@ const server = http.createServer(async (request, response) => {
       brief_payload: syntheticSharedProofBrief().payload,
       visibility: "LINK_ONLY",
       share_token_hash: SHARED_PROOF_BRIEF_TOKEN_HASH,
-      share_created_at: CREATED_AT,
+      share_created_at: sharedAt,
       revoked_at: null,
       created_at: CREATED_AT,
       updated_at: CREATED_AT,
@@ -162,6 +167,21 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === "POST" && url.pathname === "/__expire-shared-proof-brief") {
+    const expiredAt = new Date(
+      Date.now() - PROOF_BRIEF_SHARE_LIFETIME_MS,
+    ).toISOString();
+    const row = [...proofBriefs.values()].find(
+      (candidate) => candidate.share_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH,
+    );
+    if (row) {
+      proofBriefs.set(row.user_id, { ...row, share_created_at: expiredAt });
+    }
+    defaultSharedProofBriefCreatedAt = expiredAt;
+    send(response, 200, { ok: true });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/auth/v1/user") {
     authUserRequests += 1;
     const account = accountFromAuthorization(request.headers.authorization);
@@ -179,11 +199,14 @@ const server = http.createServer(async (request, response) => {
   ) {
     const body = await readJsonBody(request);
     const row = [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === body.requested_token_hash && candidate.visibility === "LINK_ONLY" && candidate.revoked_at === null);
+    const sharedAt = row?.share_created_at ?? defaultSharedProofBriefCreatedAt;
     send(
       response,
       200,
-      row || (!sharedProofBriefDisabled && body.requested_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH)
-        ? syntheticSharedProofBrief()
+      !sharedProofBriefDisabled &&
+        body.requested_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH &&
+        isProofBriefShareActive(sharedAt)
+        ? syntheticSharedProofBrief(sharedAt)
         : null,
     );
     return;
@@ -206,7 +229,7 @@ const server = http.createServer(async (request, response) => {
   if (request.method === "POST" && url.pathname === "/rest/v1/rpc/submit_candidate_evidence_review") {
     const body = await readJsonBody(request);
     const roleMap = recruiterRoleMaps.get(body.requested_role_map_id);
-    const brief = [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === body.requested_token_hash && candidate.visibility === "LINK_ONLY" && candidate.revoked_at === null);
+    const brief = [...proofBriefs.values()].find((candidate) => candidate.share_token_hash === body.requested_token_hash && candidate.visibility === "LINK_ONLY" && candidate.revoked_at === null && isProofBriefShareActive(candidate.share_created_at));
     if (accountPersonas.get(body.expected_recruiter_user_id)?.persona !== "RECRUITER" || !roleMap || roleMap.user_id !== body.expected_recruiter_user_id || !brief) { send(response, 200, null); return; }
     if (candidateEvidenceReviews.some((row) => row.proof_brief_id === brief.id && row.role_map_id === roleMap.id)) { send(response, 409, { code: "23505", message: "Synthetic duplicate" }); return; }
     const row = { id: `99999999-9999-4999-8999-${String(candidateEvidenceReviews.length + 1).padStart(12, "0")}`, user_id: brief.user_id, proof_brief_id: brief.id, role_map_id: roleMap.id, role_title: roleMap.role_title, question_category: body.requested_question_category, question_text: body.requested_question_text, feedback_category: body.requested_feedback_category, review_ease: body.requested_review_ease, review_time_signal: body.requested_review_time_signal, note: body.requested_note, created_at: CREATED_AT };
@@ -294,7 +317,8 @@ const server = http.createServer(async (request, response) => {
       send(
         response,
         200,
-        row && (!sourceId || row.source_resume_analysis_id === sourceId) &&
+        row && (!tokenHash || isProofBriefShareActive(row.share_created_at)) &&
+            (!sourceId || row.source_resume_analysis_id === sourceId) &&
             (!briefId || row.id === briefId)
           ? [publicProofBriefRow(row)]
           : [],
@@ -424,7 +448,7 @@ function createUser(account) {
   };
 }
 
-function syntheticSharedProofBrief() {
+function syntheticSharedProofBrief(sharedAt = defaultSharedProofBriefCreatedAt) {
   return {
     payload: {
       schemaVersion: 1,
@@ -451,8 +475,15 @@ function syntheticSharedProofBrief() {
         evidenceCandidateLinks: 0,
       },
     },
-    shared_at: CREATED_AT,
+    shared_at: sharedAt,
   };
+}
+
+function isProofBriefShareActive(sharedAt, nowMs = Date.now()) {
+  if (typeof sharedAt !== "string") return false;
+  const sharedAtMs = Date.parse(sharedAt);
+  return Number.isFinite(sharedAtMs) &&
+    sharedAtMs + PROOF_BRIEF_SHARE_LIFETIME_MS > nowMs;
 }
 
 function syntheticResumeAnalysis(account, id) {

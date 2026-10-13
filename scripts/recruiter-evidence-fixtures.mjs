@@ -81,7 +81,7 @@ test("V11 is byte-identical, ordered, least-privilege, and cascade-aware", () =>
 
 test("mutation API verifies session, origin, persona, role ownership, and live share token", () => {
   const source = fs.readFileSync(path.join(root, "src/app/api/recruiter-evidence/route.ts"), "utf8");
-  for (const required of ["getServerAuthorization", "isAllowedMutationOrigin", "authorization.userId !== mutation.expectedUserId", 'persona.value !== "RECRUITER"', '.eq("user_id", authorization.userId)', 'createHash("sha256")', '.eq("visibility", "LINK_ONLY")', '.is("revoked_at", null)', "allowedLabels.has", "deriveRoleEvidenceMap", '.rpc("create_recruiter_role_evidence_map"', '.rpc("submit_candidate_evidence_review"']) assert.ok(source.includes(required), `missing ${required}`);
+  for (const required of ["getServerAuthorization", "isAllowedMutationOrigin", "authorization.userId !== mutation.expectedUserId", 'persona.value !== "RECRUITER"', '.eq("user_id", authorization.userId)', 'createHash("sha256")', '.eq("visibility", "LINK_ONLY")', '.is("revoked_at", null)', '.gt("share_created_at", activeAfter)', "isProofBriefShareActive(brief.sharedAt)", "allowedLabels.has", "deriveRoleEvidenceMap", '.rpc("create_recruiter_role_evidence_map"', '.rpc("submit_candidate_evidence_review"']) assert.ok(source.includes(required), `missing ${required}`);
   assert.doesNotMatch(source, /\.from\("candidate_evidence_reviews"\)\s*\.insert/iu);
   assert.doesNotMatch(source, /getSession\s*\(/u);
   assert.doesNotMatch(source, /analytics|localStorage|sessionStorage/iu);

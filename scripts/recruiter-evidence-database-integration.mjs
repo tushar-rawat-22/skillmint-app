@@ -56,6 +56,19 @@ try {
   await db.query("update public.proof_briefs set visibility = 'LINK_ONLY', share_token_hash = $2, share_created_at = now(), revoked_at = null where id = $1", [BRIEF, TOKEN_HASH]);
   await assertLinkMutationWins("replacement", "update public.proof_briefs set share_token_hash = $2, share_created_at = now() where id = $1", TOKEN_HASH, REPLACEMENT_HASH);
 
+  const malformedToken = await db.query("select public.submit_candidate_evidence_review($1,$2,$3,'OWNERSHIP_CONTEXT','What part of the strongest example did you own, and which decisions were yours?','NEEDS_MORE_OWNERSHIP_CONTEXT','EASIER','NOT_SURE',null) as result", [RECRUITER, "not-a-token-hash", ROLE_MAP]);
+  assert.equal(malformedToken.rows[0].result, null); pass("malformed review token fails closed");
+
+  await db.query("update public.proof_briefs set share_created_at = pg_catalog.statement_timestamp() - interval '14 days' where id = $1", [BRIEF]);
+  const expired = await db.query("select public.submit_candidate_evidence_review($1,$2,$3,'OWNERSHIP_CONTEXT','What part of the strongest example did you own, and which decisions were yours?','NEEDS_MORE_OWNERSHIP_CONTEXT','EASIER','NOT_SURE',null) as result", [RECRUITER, REPLACEMENT_HASH, ROLE_MAP]);
+  assert.equal(expired.rows[0].result, null);
+  assert.equal((await db.query("select count(*)::integer as count from public.candidate_evidence_reviews where proof_brief_id = $1", [BRIEF])).rows[0].count, 0);
+  pass("recruiter review is denied at the exact share-expiry boundary");
+
+  await db.query("update public.proof_briefs set share_created_at = pg_catalog.clock_timestamp() where id = $1", [BRIEF]);
+  await assertExpiryRaceDenied();
+  await db.query("update public.proof_briefs set share_created_at = pg_catalog.clock_timestamp() where id = $1", [BRIEF]);
+
   const submitted = await db.query("select public.submit_candidate_evidence_review($1,$2,$3,'OWNERSHIP_CONTEXT','What part of the strongest example did you own, and which decisions were yours?','NEEDS_MORE_OWNERSHIP_CONTEXT','EASIER','LESS_TIME','Add one concrete decision.') as result", [RECRUITER, REPLACEMENT_HASH, ROLE_MAP]);
   assert.equal(submitted.rows[0].result.role_title, "Frontend role");
   assert.equal(Object.hasOwn(submitted.rows[0].result, "role_map_id"), false);
@@ -109,6 +122,28 @@ async function assertLinkMutationWins(name, updateSql, staleHash, replacementHas
     assert.equal(result.rows[0].result, null);
     const stored = await db.query("select count(*)::integer as count from public.candidate_evidence_reviews where proof_brief_id = $1", [BRIEF]);
     assert.equal(stored.rows[0].count, 0); pass(`atomic review submission rejects a token after concurrent ${name}`);
+  } finally {
+    try { await mutator.query("rollback"); } catch {}
+    await mutator.end(); await submitter.end();
+  }
+}
+
+async function assertExpiryRaceDenied() {
+  const mutator = new Client(connection);
+  const submitter = new Client(connection);
+  await mutator.connect(); await submitter.connect();
+  try {
+    await mutator.query("begin");
+    await mutator.query("select id from public.proof_briefs where id = $1 for update", [BRIEF]);
+    await mutator.query("update public.proof_briefs set share_created_at = pg_catalog.clock_timestamp() - interval '14 days' + interval '150 milliseconds' where id = $1", [BRIEF]);
+    const pending = submitter.query("select public.submit_candidate_evidence_review($1,$2,$3,'OWNERSHIP_CONTEXT','What part of the strongest example did you own, and which decisions were yours?','NEEDS_MORE_OWNERSHIP_CONTEXT','EASIER','NOT_SURE',null) as result", [RECRUITER, REPLACEMENT_HASH, ROLE_MAP]);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await mutator.query("commit");
+    const result = await pending;
+    assert.equal(result.rows[0].result, null);
+    const stored = await db.query("select count(*)::integer as count from public.candidate_evidence_reviews where proof_brief_id = $1", [BRIEF]);
+    assert.equal(stored.rows[0].count, 0);
+    pass("database transaction rechecks wall-clock expiry after a blocking row lock");
   } finally {
     try { await mutator.query("rollback"); } catch {}
     await mutator.end(); await submitter.end();

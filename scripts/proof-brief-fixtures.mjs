@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -49,6 +50,11 @@ const {
   publishProofBriefWithAdapter,
   revokeProofBriefWithAdapter,
 } = require("../src/modules/proofBrief/proofBriefRepository.ts");
+const {
+  isProofBriefShareActive,
+  proofBriefShareExpiresAt,
+  PROOF_BRIEF_SHARE_LIFETIME_DAYS,
+} = require("../src/modules/proofBrief/shareGrantPolicy.ts");
 
 const USER_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const USER_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -199,6 +205,17 @@ test("share token contract accepts only exact 32-byte base64url shape", () => {
   }
 });
 
+test("share-grant policy accepts fresh shares and denies the exact boundary", () => {
+  const sharedAt = "2026-10-01T00:00:00.000Z";
+  const expiresAt = proofBriefShareExpiresAt(sharedAt);
+  assert.equal(PROOF_BRIEF_SHARE_LIFETIME_DAYS, 14);
+  assert.equal(expiresAt, "2026-10-15T00:00:00.000Z");
+  assert.equal(isProofBriefShareActive(sharedAt, Date.parse(expiresAt) - 1), true);
+  assert.equal(isProofBriefShareActive(sharedAt, Date.parse(expiresAt)), false);
+  assert.equal(isProofBriefShareActive(sharedAt, Date.parse(expiresAt) + 1), false);
+  assert.equal(isProofBriefShareActive(null, Date.parse(expiresAt)), false);
+});
+
 test("new briefs are private and checked against the same account twice", async () => {
   const adapter = createAdapter();
   const result = await createOrRefreshPrivateProofBriefWithAdapter(
@@ -338,6 +355,30 @@ test("V10 migration is byte-identical and preserves privacy/deletion boundaries"
   );
   assert.match(source, /delete from public\.proof_briefs\s+where user_id = current_user_id/u);
   assert.match(source, /delete from public\.account_personas where user_id = target_user_id/u);
+});
+
+test("V16 is byte-identical, replay-safe, bounded, and least-privilege", () => {
+  const source = fs.readFileSync(
+    path.join(repoRoot, "supabase/schema_v16_proof_brief_share_expiry.sql"),
+  );
+  const migration = fs.readFileSync(
+    path.join(repoRoot, "supabase/migrations/20261013184117_proof_brief_share_expiry.sql"),
+  );
+  assert.equal(Buffer.compare(source, migration), 0);
+  assert.equal(
+    createHash("sha256").update(source).digest("hex"),
+    "99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12",
+  );
+  const sql = source.toString("utf8");
+  assert.match(sql, /^begin;[\s\S]*commit;\s*$/mu);
+  assert.match(sql, /create or replace function public\.get_shared_proof_brief/u);
+  assert.match(sql, /share_created_at\s*> pg_catalog\.statement_timestamp\(\) - interval '14 days'/u);
+  assert.match(sql, /create or replace function public\.submit_candidate_evidence_review/u);
+  assert.match(sql, /for update of proof_briefs[\s\S]*selected_share_created_at[\s\S]*<= pg_catalog\.clock_timestamp\(\) - interval '14 days'/u);
+  assert.match(sql, /grant execute on function public\.get_shared_proof_brief\(text\)\s+to anon, authenticated/u);
+  assert.match(sql, /grant execute on function public\.submit_candidate_evidence_review[\s\S]{0,180}to service_role/u);
+  assert.doesNotMatch(sql, /\b(?:insert into|update|delete from) public\.proof_briefs\b/iu);
+  assert.doesNotMatch(sql, /\b(?:create|alter|drop) table\b/iu);
 });
 
 test("server mutation derives payload from the owned saved analysis and accepts no client payload", () => {

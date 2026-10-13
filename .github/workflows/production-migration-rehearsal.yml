@@ -12,6 +12,9 @@ on:
       - "scripts/production-migration-lock-timing-rehearsal.mjs"
       - "scripts/production-logical-recovery-drill.mjs"
       - "scripts/oauth-deletion-reauth-database-integration.mjs"
+      - "scripts/proof-brief-database-integration.mjs"
+      - "scripts/proof-brief-share-expiry-migration-integration.mjs"
+      - "scripts/recruiter-evidence-database-integration.mjs"
       - "scripts/production-pending-migration-integrity-fixtures.mjs"
       - "scripts/production-rollout-foundation-fixtures.mjs"
       - "supabase/migrations/**"
@@ -84,6 +87,12 @@ jobs:
 
       - name: Verify OAuth deletion reauthentication database boundaries
         run: npm run test:oauth-deletion-reauth:database
+
+      - name: Verify Proof Brief share-expiry database boundaries
+        run: |
+          node scripts/proof-brief-share-expiry-migration-integration.mjs
+          npm run fixtures:proof-brief:database
+          npm run fixtures:recruiter-evidence:database
 
       - name: Verify bounded migration timing and lock recovery
         run: node scripts/production-migration-lock-timing-rehearsal.mjs

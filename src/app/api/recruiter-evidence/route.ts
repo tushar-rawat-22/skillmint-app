@@ -22,6 +22,10 @@ import {
   REVIEW_TIME_OPTIONS,
 } from "@/modules/recruiterEvidence";
 import { isValidProofBriefShareToken, parseCandidateProofBriefRow, PROOF_BRIEF_PUBLIC_COLUMNS } from "@/modules/proofBrief/proofBriefContract";
+import {
+  isProofBriefShareActive,
+  PROOF_BRIEF_SHARE_LIFETIME_MS,
+} from "@/modules/proofBrief/shareGrantPolicy";
 
 const MAX_BODY_BYTES = 16_384;
 const MAX_ROLE_MAPS = 10;
@@ -140,17 +144,25 @@ export async function POST(request: Request) {
     const roleMap = parseRecruiterRoleMapRow(roleResponse.data[0], authorization.userId);
     if (!roleMap) return error("temporarily_unavailable", 503);
     const tokenHash = createHash("sha256").update(mutation.shareToken, "utf8").digest("hex");
+    const activeAfter = new Date(
+      Date.now() - PROOF_BRIEF_SHARE_LIFETIME_MS,
+    ).toISOString();
     const briefResponse = await admin.from("proof_briefs")
       .select(PROOF_BRIEF_PUBLIC_COLUMNS)
       .eq("share_token_hash", tokenHash)
       .eq("visibility", "LINK_ONLY")
       .is("revoked_at", null)
+      .gt("share_created_at", activeAfter)
       .limit(2);
     if (briefResponse.error || !Array.isArray(briefResponse.data) || briefResponse.data.length !== 1) return error("brief_not_available", 404);
     const rawBrief = briefResponse.data[0];
     if (!isUuid(rawBrief.user_id)) return error("temporarily_unavailable", 503);
     const brief = parseCandidateProofBriefRow(rawBrief, { userId: rawBrief.user_id });
-    if (!brief || brief.visibility !== "LINK_ONLY") return error("brief_not_available", 404);
+    if (
+      !brief ||
+      brief.visibility !== "LINK_ONLY" ||
+      !isProofBriefShareActive(brief.sharedAt)
+    ) return error("brief_not_available", 404);
     const allowedLabels = new Set(brief.payload.evidenceSignals.map((signal) => signal.label));
     if (mutation.evidenceLabel !== null && !allowedLabels.has(mutation.evidenceLabel)) return error("invalid_request", 400);
     const questionText = buildEvidenceQuestion(mutation.questionCategory, mutation.evidenceLabel);
