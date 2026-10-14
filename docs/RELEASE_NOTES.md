@@ -4,7 +4,7 @@
 
 - Proof Brief links now have one explainable 14-day authorization window derived from the existing `share_created_at`; candidates may revoke sooner or republish to replace the token and start a fresh window.
 - Public lookup, recruiter API preflight, the transactional recruiter-review RPC, and the synthetic acceptance runtime enforce the same exact-boundary rule. The database review transaction locks the Proof Brief and rechecks wall-clock expiry before insertion, preserving revocation/replacement race safety.
-- The forward-only V16 migration changes only the two existing authorization functions and their exact grants/comments. It adds no table, payload field, provider, dependency, analytics, or signup change.
+- The forward-only V16 migration changes only the two existing authorization functions and their exact grants/comments. It adds no table, payload field, provider, dependency, analytics, or signup change. Merge does not apply or authorize V16; direct Production RPC enforcement remains a separately approved rollout gate.
 
 ## Unreleased — bounded prelaunch reliability baseline
 

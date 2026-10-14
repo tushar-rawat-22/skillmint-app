@@ -83,6 +83,14 @@ test("@proof-brief candidate creates, shares, and revokes a derived-only brief",
   expect(stored?.share_token_hash).toMatch(/^[0-9a-f]{64}$/u);
   expect(JSON.stringify(stored)).not.toContain(rawToken);
 
+  await request.post(
+    `${PROVIDER_ORIGIN}/__expire-shared-proof-brief?user=${encodeURIComponent(ACCOUNT_A.id)}`,
+  );
+  await page.reload();
+  await expect(page.getByText("Link expired", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This brief's link has expired." })).toBeVisible();
+  await expect(page.getByText("This brief currently has an active link.")).toHaveCount(0);
+
   await page.getByRole("button", { name: "Revoke link", exact: true }).click();
   await expect(page.getByRole("status")).toContainText(
     "Link revoked. The brief is private again.",

@@ -1,12 +1,12 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `V1–V15 VERIFIED; V16 CONDITIONAL EXECUTION AUTHORITY` — Production history includes V14 and V15; V16 Proof Brief share expiry is repository-pending; SkillMint is launched with controlled account admission
+**Current decision:** `V1–V15 VERIFIED; V16 NOT AUTHORIZED` — Production history includes V14 and V15; V16 Proof Brief share expiry is repository-pending; SkillMint is launched with controlled account admission
 
-This is the current authority for SkillMint Production schema rollout. Founder authority dated October 14, 2026 permits exact-version V16 Production execution only after the bounded Proof Brief expiry PR has passed exact-head CI, OAuth contract, CodeQL, READY Preview, isolated migration replay and database boundary tests; the canonical migration bytes and hashes must remain unchanged and a fresh aggregate preflight must confirm no active unrevoked `LINK_ONLY` shares would be invalidated. It does not authorize any other migration, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
+This is the current authority for SkillMint Production schema rollout. No separately verified dated approval authorizes V16 Production execution. This document records the prerequisites for a future, separately approved rollout; satisfying them does not grant execution authority. Any approval must identify the exact V16 artifact and merged `main` SHA, Production target, operator and maintenance window, abort/recovery contract, and required postflight. It must not authorize any other migration, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
 
-## Current connected Production evidence
+## Latest recorded connected Production evidence
 
-Fresh connected inspection on October 14, 2026 reconfirmed the canonical Supabase project `skillmint-beta` is healthy and Production migration history is exactly:
+Repository handoff evidence dated October 14, 2026 records the canonical Supabase project `skillmint-beta` as healthy with this Production migration history. The PR #180 correction and merge gate did not reconnect to Production or independently recertify that provider state; the separate V16 preflight must do so before any approval or write:
 
 1. `20260723000100`
 2. `20260723000200`
@@ -35,9 +35,9 @@ Production migration history is reconciled through **V15**, including the later-
 - `20260912001400_schema_v14_candidate_job_lifecycle.sql` — applied and catalog-verified in Production
 - `20261013184117_proof_brief_share_expiry.sql` — repository-pending and unapplied
 
-The same live lineage now contains fourteen ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, `access_requests`, `oauth_deletion_reauth_intents`, and `candidate_job_lifecycle`. Every ordinary `public` table was verified with RLS enabled. `analytics_events` remains force-RLS with no authenticated table access.
+The same recorded lineage contains fourteen ordinary `public` tables: the seven V1–V9 tables plus `account_personas`, `proof_briefs`, `recruiter_role_evidence_maps`, `candidate_evidence_reviews`, `access_requests`, `oauth_deletion_reauth_intents`, and `candidate_job_lifecycle`. The connected inspection recorded every ordinary `public` table with RLS enabled and `analytics_events` as force-RLS with no authenticated table access.
 
-The live `public.rls_auto_enable()` contract remains present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog`. Its attached enabled event trigger is `ensure_rls`, on `ddl_command_end`, for `CREATE TABLE`, `CREATE TABLE AS`, and `SELECT INTO`. That shape matches the repository V9 contract.
+That inspection also recorded `public.rls_auto_enable()` as present, owned by `postgres`, `SECURITY DEFINER`, with `search_path=pg_catalog`. Its attached enabled event trigger was `ensure_rls`, on `ddl_command_end`, for `CREATE TABLE`, `CREATE TABLE AS`, and `SELECT INTO`. That shape matches the repository V9 contract.
 
 Direct catalog ACL inspection previously observed table-specific grants rather than an all-zero API-role ACL surface:
 
@@ -83,7 +83,7 @@ The repository manifest currently defines this exact ordered chain:
 16. `20260912001400_schema_v14_candidate_job_lifecycle.sql`
 17. `20261013184117_proof_brief_share_expiry.sql`
 
-Production is reconciled through V15, including V14. V16 is the sole pending repository migration. V16 may be executed only through the exact-version, fresh-preflight gate recorded here; this authority does not permit editing any applied migration in place. Any later schema execution requires a reviewed forward migration and fresh rollout evidence.
+Production is reconciled through V15, including V14. V16 is the sole pending repository migration. V16 must not be executed without separate dated approval after the exact-version, fresh-preflight gate recorded here passes; the gate is a prerequisite, not standing or conditional execution authority. No applied migration may be edited in place. Any later schema execution requires a reviewed forward migration, fresh rollout evidence, and its own approval.
 
 Provider signup, analytics activation, invitations, hosted Auth changes, SMTP, domains, billing, and account-level provider configuration remain separately controlled.
 
@@ -124,7 +124,7 @@ This recovery result did not by itself authorize the later public launch. Public
 | Public table ACLs | Direct and effective RLS/column/function privilege probes | **PASSED**; no anonymous table access or authenticated write path to the four new tables |
 | `public.rls_auto_enable()` | Present; owner `postgres`; `SECURITY DEFINER`; `search_path=pg_catalog` | **PASSED** |
 | Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | **PASSED** |
-| Isolated migration rehearsal | V1–V16 full-chain hosted rehearsal, exact V16 replay, and rollback-contained expiry/review probes passed October 14; the Docker-backed concurrent lock race is wired into the PR rehearsal workflow | **LOCAL/HOSTED PASS**; exact-head PR rehearsal is still required before Production execution |
+| Isolated migration rehearsal | Repository evidence records a V1–V16 isolated hosted rehearsal, exact V16 replay, and rollback-contained expiry/review probes on October 14; the Docker-backed concurrent lock race is wired into the PR rehearsal workflow | **RECORDED ISOLATED EVIDENCE**; exact-head PR rehearsal and separate Production approval are still required |
 | Lock/timing rehearsal | Bounded lock failure/recovery passed; real-host representative V10→V12 completed in 2.66s | **PASSED**; Production statements ran under the reviewed lock and statement limits |
 | Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for the unchanged evidence set** |
 | Persona authority | Authenticated persona writes absent; service assignment preserved; identity immutable | **PASSED** |
@@ -164,7 +164,7 @@ Immediately before and during the maintenance window, the operator:
 
 Every listed execution item passed. A future schema rollout returns to `NO-GO` until a new forward migration and fresh evidence satisfy a new authority.
 
-## Rollback contract
+## Historical V10→V12 rollback contract
 
 Before the first Production write, record the maintenance-window rollback contract in the operator session:
 
@@ -207,6 +207,19 @@ At that time, controlled beta remained **CLOSED** after schema postflight until 
 - Final CLI history matched all thirteen repository versions and the final dry run reported the remote database up to date.
 - Signup remained closed, email login remained enabled, analytics remained disabled, and controlled beta remained closed at that September 2 checkpoint.
 
-## Next gate
+## V16 independent execution gate
 
-V14 and V15 are applied and catalog-verified. V16 remains **unapplied to Production**. Before its exact-version execution, require the reviewed hash, zero active unrevoked Production shares, isolated replay/idempotency and rollback evidence, exact-head CI/OAuth/CodeQL, READY Preview, and database tests covering fresh, boundary, expired, revoked, replaced, malformed, cross-owner, deletion, and transactional race behavior. Apply database enforcement before application promotion so old application code also fails closed. Postflight must prove both function definitions, owners, search paths, grants, expiry behavior, unchanged allowlisted projection, no unexpected migration version, and zero durable synthetic rows. This schema gate does not open signup or public OAuth; #130 continues to govern admission and launch quality.
+V14 and V15 are applied and catalog-verified. V16 remains **unapplied to Production and unauthorized**. PR merge or application deployment may add defense-in-depth denial at SkillMint application routes, but it does not close the direct anonymous RPC boundary or establish Production expiry enforcement.
+
+Before seeking separate exact-version V16 approval, require:
+
+1. the exact merged `main` SHA and V16 SHA-256 to match the reviewed manifest and both byte-identical SQL copies;
+2. a read-only Production preflight confirming the exact target, history through V15 including V14, V16 absent, both current function definitions/owners/search paths/grants, no unexpected drift, and the count and age distribution of active unrevoked `LINK_ONLY` shares without exposing tokens or candidate data;
+3. exact-head `quality`, OAuth, CodeQL, READY Preview, isolated V1–V16 replay/idempotency, bounded lock recovery, and database tests for fresh, exact-boundary, expired, revoked, replaced, malformed, cross-owner, deletion, and transactional race behavior;
+4. pinned Supabase CLI `2.109.1` from a trusted operator environment, with a dry run proving V16 is the only pending version; never use a transport that invents a timestamp or manually repair history;
+5. a dated approval naming the exact artifact, target, operator/window, abort thresholds, and recovery owner; and
+6. postflight proving the exact history, both function definitions, owners, search paths and grants, expiry behavior, unchanged allowlisted projection, zero unexpected versions, and zero durable synthetic rows.
+
+V16 is transactional and changes only two function definitions plus their grants/comments. Before execution, the operator must record that a pre-commit error rolls the transaction back; after commit, containment is to stop promotion and direct traffic as needed, then use a reviewed forward repair or the verified backup/isolated-restore procedure. Do not restore the indefinite-share definitions merely to make the UI green, and do not treat an older Vercel deployment as a database rollback.
+
+Even if every prerequisite passes, this document does not authorize execution. V16 Production application requires the separate dated approval above. This schema gate does not open signup or public OAuth; #130 continues to govern admission and launch quality.

@@ -402,10 +402,16 @@ test("public Proof Brief routes bypass unrelated auth-session refresh", () => {
     path.join(repoRoot, "src/app/brief/[token]/page.tsx"),
     "utf8",
   );
+  const server = fs.readFileSync(
+    path.join(repoRoot, "src/modules/proofBrief/proofBriefServer.ts"),
+    "utf8",
+  );
   assert.match(proxy, /\(\?:demo\|recruiters\/demo\|brief\)\(\?:\/\|\$\)/u);
   assert.equal((proxy.match(/updateSupabaseSession\(request\)/gu) ?? []).length, 1);
   assert.equal((page.match(/<Link\b/gu) ?? []).length, 3);
   assert.equal((page.match(/prefetch=\{false\}/gu) ?? []).length, 3);
+  assert.match(server, /isProofBriefShareActive\(brief\.sharedAt\)/u);
+  assert.match(server, /\? \{ status: "available", brief \}\s*: \{ status: "not_found" \}/u);
 });
 
 for (const { name, callback } of tests) {

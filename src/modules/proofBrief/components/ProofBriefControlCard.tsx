@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/premium";
 import type { CandidateProofBrief } from "@/modules/proofBrief/types";
 import {
+  isProofBriefShareActive,
   proofBriefShareExpiresAt,
   PROOF_BRIEF_SHARE_LIFETIME_DAYS,
 } from "@/modules/proofBrief/shareGrantPolicy";
@@ -169,6 +170,9 @@ function ProofBriefControlCardForSource({
   }
 
   const isLoading = status.tone === "loading";
+  const isShareActive = brief?.visibility === "LINK_ONLY" &&
+    isProofBriefShareActive(brief.sharedAt);
+  const isShareExpired = brief?.visibility === "LINK_ONLY" && !isShareActive;
   const expiresAt = brief?.sharedAt
     ? proofBriefShareExpiresAt(brief.sharedAt)
     : null;
@@ -184,7 +188,11 @@ function ProofBriefControlCardForSource({
           </p>
         </div>
         <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${brief?.visibility === "LINK_ONLY" ? "border-amber-300 bg-amber-50 text-amber-900" : "border-emerald-300 bg-emerald-50 text-emerald-900"}`}>
-          {brief?.visibility === "LINK_ONLY" ? "Link only" : "Private"}
+          {isShareExpired
+            ? "Link expired"
+            : brief?.visibility === "LINK_ONLY"
+              ? "Link only"
+              : "Private"}
         </span>
       </div>
 
@@ -228,17 +236,31 @@ function ProofBriefControlCardForSource({
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               {brief.visibility === "LINK_ONLY" ? (
                 <div>
-                  <h3 className="font-bold">This brief currently has an active link.</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Anyone who has the link can view the derived brief. It is
-                    not listed or searchable. A signed-in recruiter can send
-                    one structured review for a role map. The link expires
-                    {expiresAt
-                      ? ` ${new Date(expiresAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}`
-                      : ` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS} days after it was created`}.
-                    Revoke it sooner or replace it to start a fresh
-                    {` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS}`}-day window.
-                  </p>
+                  {isShareActive ? (
+                    <>
+                      <h3 className="font-bold">This brief currently has an active link.</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Anyone who has the link can view the derived brief. It is
+                        not listed or searchable. A signed-in recruiter can send
+                        one structured review for a role map. The link expires
+                        {expiresAt
+                          ? ` ${new Date(expiresAt).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" })}`
+                          : ` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS} days after it was created`}.
+                        Revoke it sooner or replace it to start a fresh
+                        {` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS}`}-day window.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="font-bold">This brief&apos;s link has expired.</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        The previous link can no longer open the brief or accept
+                        new recruiter feedback. Revoke it to return the brief to
+                        private state, or replace it to start a fresh
+                        {` ${PROOF_BRIEF_SHARE_LIFETIME_DAYS}`}-day window.
+                      </p>
+                    </>
+                  )}
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" disabled={isLoading} onClick={handleRevoke} className={premiumSecondaryCta}>Revoke link</button>
                     <button type="button" disabled={isLoading || !shareConfirmed} onClick={handlePublish} className={premiumPrimaryCta}>Replace with a new link</button>

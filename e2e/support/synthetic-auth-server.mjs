@@ -171,9 +171,12 @@ const server = http.createServer(async (request, response) => {
     const expiredAt = new Date(
       Date.now() - PROOF_BRIEF_SHARE_LIFETIME_MS,
     ).toISOString();
-    const row = [...proofBriefs.values()].find(
-      (candidate) => candidate.share_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH,
-    );
+    const requestedUserId = url.searchParams.get("user");
+    const row = requestedUserId
+      ? proofBriefs.get(requestedUserId)
+      : [...proofBriefs.values()].find(
+        (candidate) => candidate.share_token_hash === SHARED_PROOF_BRIEF_TOKEN_HASH,
+      );
     if (row) {
       proofBriefs.set(row.user_id, { ...row, share_created_at: expiredAt });
     }

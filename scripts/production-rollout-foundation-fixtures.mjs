@@ -842,7 +842,11 @@ check(
 );
 const rolloutAuthority = text("docs/PRODUCTION_SCHEMA_ROLLOUT.md");
 for (const requiredText of [
-  "Current decision:** `V1–V15 VERIFIED; V16 CONDITIONAL EXECUTION AUTHORITY`",
+  "Current decision:** `V1–V15 VERIFIED; V16 NOT AUTHORIZED`",
+  "No separately verified dated approval authorizes V16 Production execution",
+  "satisfying them does not grant execution authority",
+  "PR merge or application deployment may add defense-in-depth denial",
+  "this document does not authorize execution",
   "Production migration history is reconciled through **V15**, including the later-timestamped V14",
   "20260911001300_schema_v13_access_requests.sql",
   "20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
