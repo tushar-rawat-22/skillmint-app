@@ -90,8 +90,8 @@ test("@recruiter-evidence mutation boundaries fail closed without writing", asyn
   expect(stored).toEqual([]);
 });
 
-test("@recruiter-evidence revoked and replaced links reject new feedback", async ({ page, request }) => {
-  for (const control of ["__revoke-shared-proof-brief", "__replace-shared-proof-brief"]) {
+test("@recruiter-evidence expired, revoked, and replaced links reject new feedback", async ({ page, request }) => {
+  for (const control of ["__expire-shared-proof-brief", "__revoke-shared-proof-brief", "__replace-shared-proof-brief"]) {
     await request.post(`${PROVIDER_ORIGIN}/__reset`);
     await request.post(`${PROVIDER_ORIGIN}/__seed-shared-proof-brief`);
     await request.post(`${PROVIDER_ORIGIN}/__seed-recruiter-context`, { data: { userId: ACCOUNT_B.id, roleTitle: "Revocation test role" } });

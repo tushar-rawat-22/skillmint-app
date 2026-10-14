@@ -83,6 +83,14 @@ test("@proof-brief candidate creates, shares, and revokes a derived-only brief",
   expect(stored?.share_token_hash).toMatch(/^[0-9a-f]{64}$/u);
   expect(JSON.stringify(stored)).not.toContain(rawToken);
 
+  await request.post(
+    `${PROVIDER_ORIGIN}/__expire-shared-proof-brief?user=${encodeURIComponent(ACCOUNT_A.id)}`,
+  );
+  await page.reload();
+  await expect(page.getByText("Link expired", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This brief's link has expired." })).toBeVisible();
+  await expect(page.getByText("This brief currently has an active link.")).toHaveCount(0);
+
   await page.getByRole("button", { name: "Revoke link", exact: true }).click();
   await expect(page.getByRole("status")).toContainText(
     "Link revoked. The brief is private again.",
@@ -253,4 +261,20 @@ test("@proof-brief malformed or absent share tokens fail closed", async ({
     applicationRequests: 1,
     authUserRequests: 0,
   });
+});
+
+test("@proof-brief expired shares deny anonymous and authenticated lookup", async ({
+  page,
+  request,
+}) => {
+  await request.post(`${PROVIDER_ORIGIN}/__reset`);
+  await request.post(`${PROVIDER_ORIGIN}/__seed-shared-proof-brief`);
+  await request.post(`${PROVIDER_ORIGIN}/__expire-shared-proof-brief`);
+
+  const anonymous = await page.goto(`/brief/${SHARED_TOKEN}`);
+  expect(anonymous?.status()).toBe(404);
+
+  await login(page, ACCOUNT_A);
+  const authenticated = await page.goto(`/brief/${SHARED_TOKEN}`);
+  expect(authenticated?.status()).toBe(404);
 });

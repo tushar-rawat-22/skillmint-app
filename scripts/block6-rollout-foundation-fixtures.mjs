@@ -88,6 +88,7 @@ const rolloutFoundationPaths = [
   "supabase/schema_v13_access_requests.sql",
   "supabase/schema_v15_oauth_deletion_reauthentication.sql",
   "supabase/schema_v14_candidate_job_lifecycle.sql",
+  "supabase/schema_v16_proof_brief_share_expiry.sql",
   "supabase/migrations/20260723000100_schema_v1.sql",
   "supabase/migrations/20260723000200_schema_v2_feedback.sql",
   "supabase/migrations/20260723000300_schema_v3_data_controls.sql",
@@ -104,6 +105,7 @@ const rolloutFoundationPaths = [
   "supabase/migrations/20260911001300_schema_v13_access_requests.sql",
   "supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql",
   "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
+  "supabase/migrations/20261013184117_proof_brief_share_expiry.sql",
   "supabase/migrations/manifest.json",
 ];
 
@@ -219,7 +221,14 @@ const migrations = [
     source: "supabase/schema_v14_candidate_job_lifecycle.sql",
     migration: "supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql",
     hash: "fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b",
-    classification: "pending_candidate_job_lifecycle",
+    classification: appliedClassification,
+  },
+  {
+    version: "20261013184117",
+    source: "supabase/schema_v16_proof_brief_share_expiry.sql",
+    migration: "supabase/migrations/20261013184117_proof_brief_share_expiry.sql",
+    hash: "99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12",
+    classification: "pending_proof_brief_share_expiry",
   },
 ];
 
@@ -237,7 +246,7 @@ const migrationSqlFiles = readdirSync(join(root, "supabase/migrations"))
 equal(
   migrationSqlFiles,
   migrations.map((item) => basename(item.migration)),
-  "migration directory must contain the exact ordered sixteen SQL files",
+  "migration directory must contain the exact ordered seventeen SQL files",
 );
 
 const manifest = JSON.parse(text("supabase/migrations/manifest.json"));
@@ -272,7 +281,7 @@ equal(
   "history_only_no_sql_execution",
   "migration repair must be history-only",
 );
-equal(manifest.ordered_migrations.length, 16, "manifest must contain sixteen migrations");
+equal(manifest.ordered_migrations.length, 17, "manifest must contain seventeen migrations");
 
 manifest.ordered_migrations.forEach((entry, index) => {
   const expected = migrations[index];
@@ -311,7 +320,9 @@ equal(manifest.ordered_migrations[10].version, migrations[10].version, "two-side
 equal(manifest.ordered_migrations[11].version, migrations[11].version, "recruiter evidence review must follow the two-sided beta foundation");
 equal(manifest.ordered_migrations[12].version, migrations[12].version, "account persona authority must follow recruiter evidence review");
 equal(manifest.ordered_migrations[13].version, migrations[13].version, "access requests must follow account persona authority");
-equal(manifest.ordered_migrations[14].version, migrations[14].version, "candidate lifecycle must follow access requests");
+equal(manifest.ordered_migrations[14].version, migrations[14].version, "OAuth deletion reauthentication must follow access requests");
+equal(manifest.ordered_migrations[15].version, migrations[15].version, "candidate lifecycle must follow OAuth deletion reauthentication");
+equal(manifest.ordered_migrations[16].version, migrations[16].version, "Proof Brief expiry must follow candidate lifecycle");
 
 const config = text("supabase/config.toml");
 check(config.startsWith("# Generated with Supabase CLI 2.109.1 for local and migration tooling."), "config provenance missing");

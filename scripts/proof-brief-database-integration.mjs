@@ -15,6 +15,7 @@ const USER_B = "32222222-2222-4222-8222-222222222222";
 const SOURCE_ID = "33333333-3333-4333-8333-333333333333";
 const BRIEF_ID = "34444444-4444-4444-8444-444444444444";
 const TOKEN_HASH = "a".repeat(64);
+const REPLACEMENT_HASH = "b".repeat(64);
 
 const tests = [];
 function pass(name) {
@@ -87,7 +88,56 @@ try {
   ]);
   assert.equal(JSON.stringify(result).includes("rawResume"), false);
   assert.equal(JSON.stringify(result).includes("sourceUrl"), false);
-  pass("anonymous RPC returns only the exact allowlisted public projection");
+  pass("fresh anonymous share returns only the exact allowlisted public projection");
+
+  const authenticatedShared = await asRole("authenticated", USER_B, () =>
+    client.query(
+      "select public.get_shared_proof_brief($1) as result",
+      [TOKEN_HASH],
+    ));
+  assert.ok(authenticatedShared.rows[0]?.result);
+  pass("fresh link-only lookup remains available to an authenticated non-owner with the token");
+
+  await client.query(
+    `update public.proof_briefs
+     set share_created_at = pg_catalog.statement_timestamp() - interval '14 days'
+     where id = $1`,
+    [BRIEF_ID],
+  );
+  const exactBoundary = await asRole("anon", null, () =>
+    client.query("select public.get_shared_proof_brief($1) as result", [TOKEN_HASH]));
+  assert.equal(exactBoundary.rows[0]?.result, null);
+  pass("exact fourteen-day expiration boundary fails closed");
+
+  await client.query(
+    `update public.proof_briefs
+     set share_created_at = pg_catalog.statement_timestamp() - interval '14 days 1 millisecond'
+     where id = $1`,
+    [BRIEF_ID],
+  );
+  const expired = await asRole("anon", null, () =>
+    client.query("select public.get_shared_proof_brief($1) as result", [TOKEN_HASH]));
+  assert.equal(expired.rows[0]?.result, null);
+  pass("expired Proof Brief token fails closed");
+
+  const malformed = await asRole("anon", null, () =>
+    client.query("select public.get_shared_proof_brief($1) as result", ["not-a-token-hash"]));
+  assert.equal(malformed.rows[0]?.result, null);
+  pass("malformed token hash fails closed");
+
+  await client.query(
+    `update public.proof_briefs
+     set share_token_hash = $2, share_created_at = pg_catalog.clock_timestamp()
+     where id = $1`,
+    [BRIEF_ID, REPLACEMENT_HASH],
+  );
+  const staleToken = await asRole("anon", null, () =>
+    client.query("select public.get_shared_proof_brief($1) as result", [TOKEN_HASH]));
+  const replacementToken = await asRole("anon", null, () =>
+    client.query("select public.get_shared_proof_brief($1) as result", [REPLACEMENT_HASH]));
+  assert.equal(staleToken.rows[0]?.result, null);
+  assert.ok(replacementToken.rows[0]?.result);
+  pass("republishing starts a fresh window and denies the stale replaced token");
 
   await client.query(
     `update public.proof_briefs
@@ -99,10 +149,35 @@ try {
   const revoked = await asRole("anon", null, () =>
     client.query(
       "select public.get_shared_proof_brief($1) as result",
-      [TOKEN_HASH],
+      [REPLACEMENT_HASH],
     ));
   assert.equal(revoked.rows[0]?.result, null);
   pass("revoked Proof Brief token fails closed");
+
+  const userBSource = "35555555-5555-4555-8555-555555555555";
+  const userBBrief = "36666666-6666-4666-8666-666666666666";
+  await client.query(
+    `insert into public.resume_analyses (
+      id, user_id, file_name, file_type, extracted_text,
+      parsed_profile, user_profile
+    ) values ($1, $2, 'owner-deletion.txt', 'text/plain',
+      'Synthetic owner deletion fixture', '{}'::jsonb, '{}'::jsonb)`,
+    [userBSource, USER_B],
+  );
+  await client.query(
+    `insert into public.proof_briefs (
+      id, user_id, source_resume_analysis_id, brief_payload,
+      visibility, share_token_hash, share_created_at
+    ) values ($1, $2, $3, $4::jsonb, 'LINK_ONLY', $5, now())`,
+    [userBBrief, USER_B, userBSource, JSON.stringify(publicPayload()), "c".repeat(64)],
+  );
+  await client.query("delete from auth.users where id = $1", [USER_B]);
+  const ownerDeleted = await client.query(
+    "select count(*)::integer as count from public.proof_briefs where id = $1",
+    [userBBrief],
+  );
+  assert.equal(ownerDeleted.rows[0]?.count, 0);
+  pass("owner deletion removes the shared Proof Brief");
 
   await client.query("delete from public.resume_analyses where id = $1", [SOURCE_ID]);
   const cascaded = await client.query(

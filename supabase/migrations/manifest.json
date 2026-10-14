@@ -3,12 +3,12 @@
   "generated_for": {
     "empty_isolated_project": {
       "apply_in_order": [
-        "20260723000100", "20260723000200", "20260723000300", "20260723000400", "20260723000500", "20260723000600", "20260723000700", "20260727000750", "20260727000800", "20260730000900", "20260823001000", "20260823001100", "20260829001200", "20260911001300", "20260911001350", "20260912001400"
+        "20260723000100", "20260723000200", "20260723000300", "20260723000400", "20260723000500", "20260723000600", "20260723000700", "20260727000750", "20260727000800", "20260730000900", "20260823001000", "20260823001100", "20260829001200", "20260911001300", "20260911001350", "20260912001400", "20261013184117"
       ]
     },
     "production": {
       "catalog_proof_required_before_marking_applied": [],
-      "pending_execution": ["20260912001400"],
+      "pending_execution": ["20261013184117"],
       "migration_history_repair": "history_only_no_sql_execution"
     }
   },
@@ -28,6 +28,7 @@
     {"version":"20260829001200","source_path":"supabase/schema_v12_account_persona_authority.sql","migration_path":"supabase/migrations/20260829001200_schema_v12_account_persona_authority.sql","sha256":"2d9947abe9c4d4d2e5128998844c84a746041968b92c60cbcf6f1e4019c23507","rollout_classification":"existing_production_migration_history_verified"},
     {"version":"20260911001300","source_path":"supabase/schema_v13_access_requests.sql","migration_path":"supabase/migrations/20260911001300_schema_v13_access_requests.sql","sha256":"c35d9925a8861da4f20e1edd52d7b05e29d86dd924b73a32675d506555b87c19","rollout_classification":"existing_production_migration_history_verified"},
     {"version":"20260911001350","source_path":"supabase/schema_v15_oauth_deletion_reauthentication.sql","migration_path":"supabase/migrations/20260911001350_schema_v15_oauth_deletion_reauthentication.sql","sha256":"91c7b92691cdce10c315566ce44f0547fccd7ec674c992ac36d3c7989c69b562","rollout_classification":"existing_production_migration_history_verified"},
-    {"version":"20260912001400","source_path":"supabase/schema_v14_candidate_job_lifecycle.sql","migration_path":"supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql","sha256":"fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b","rollout_classification":"pending_candidate_job_lifecycle"}
+    {"version":"20260912001400","source_path":"supabase/schema_v14_candidate_job_lifecycle.sql","migration_path":"supabase/migrations/20260912001400_schema_v14_candidate_job_lifecycle.sql","sha256":"fef568bee5dfcd8e5a8a361c8da726026ed7c95c2ad9778fca7746530e3c650b","rollout_classification":"existing_production_migration_history_verified"},
+    {"version":"20261013184117","source_path":"supabase/schema_v16_proof_brief_share_expiry.sql","migration_path":"supabase/migrations/20261013184117_proof_brief_share_expiry.sql","sha256":"99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12","rollout_classification":"pending_proof_brief_share_expiry"}
   ]
 }

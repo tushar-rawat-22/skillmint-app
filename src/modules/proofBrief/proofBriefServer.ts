@@ -9,6 +9,7 @@ import {
   isValidProofBriefShareToken,
   parseSharedProofBrief,
 } from "@/modules/proofBrief/proofBriefContract";
+import { isProofBriefShareActive } from "@/modules/proofBrief/shareGrantPolicy";
 import type { SharedProofBrief } from "@/modules/proofBrief/types";
 
 export type SharedProofBriefResult =
@@ -39,9 +40,10 @@ export async function getSharedProofBrief(
     if (response.error) return { status: "temporarily_unavailable" };
     if (response.data === null) return { status: "not_found" };
     const brief = parseSharedProofBrief(response.data);
-    return brief
+    if (!brief) return { status: "temporarily_unavailable" };
+    return isProofBriefShareActive(brief.sharedAt)
       ? { status: "available", brief }
-      : { status: "temporarily_unavailable" };
+      : { status: "not_found" };
   } catch {
     return { status: "temporarily_unavailable" };
   }
