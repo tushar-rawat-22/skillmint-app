@@ -1,12 +1,12 @@
 # Production Schema Rollout Authority
 
-**Current decision:** `V1–V15 VERIFIED; V16 NOT AUTHORIZED` — Production history includes V14 and V15; V16 Proof Brief share expiry is repository-pending; SkillMint is launched with controlled account admission
+**Current decision:** `V1–V15 VERIFIED; V16 NOT AUTHORIZED` — the V16 technical preflight/recovery gate is ready for a separate founder decision; V16 remains repository-pending and unapplied; SkillMint is launched with controlled account admission
 
 This is the current authority for SkillMint Production schema rollout. No separately verified dated approval authorizes V16 Production execution. This document records the prerequisites for a future, separately approved rollout; satisfying them does not grant execution authority. Any approval must identify the exact V16 artifact and merged `main` SHA, Production target, operator and maintenance window, abort/recovery contract, and required postflight. It must not authorize any other migration, analytics activation, hosted Auth changes, SMTP, domains, billing, or ungated account provisioning.
 
 ## Latest recorded connected Production evidence
 
-Repository handoff evidence dated October 14, 2026 records the canonical Supabase project `skillmint-beta` as healthy with this Production migration history. The PR #180 correction and merge gate did not reconnect to Production or independently recertify that provider state; the separate V16 preflight must do so before any approval or write:
+Independent read-only evidence dated October 15, 2026 reconfirms the canonical Supabase project `skillmint-beta` as healthy with this Production migration history. It also reconfirms V16 absent, the expected relevant function/ACL state, and no material drift against the repository recovery contract:
 
 1. `20260723000100`
 2. `20260723000200`
@@ -115,6 +115,38 @@ For the exact recovery inputs and unchanged V10–V12 artifacts, **backup → is
 
 This recovery result did not by itself authorize the later public launch. Public launch status remains separate from schema execution and is now governed by #130's launched-with-controlled-throughput acceptance.
 
+### October 15, 2026 V16 preflight and recovery certification
+
+An independent read-only preflight against canonical `main` `4e2d8618a6658749d59a77a70eafcf4258d44d58` reconfirmed Production project `skillmint-beta` and its connected provider identity, Free plan, healthy PostgreSQL `17.6.1.141`, exact history through V15 including V14, and V16 absent. The raw project reference remains outside current release documentation. The V16 source and migration copies are byte-identical at SHA-256 `99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12`. Pinned Supabase CLI `2.109.1` produced a non-mutating dry run containing only `20261013184117_proof_brief_share_expiry.sql`, with no unexpected migration or seed operation.
+
+The existing October 14 logical backup was retained rather than replaced. The owner-only APFS sparse image is AES-256 encrypted, FileVault-protected, and opened read-only using a random key stored in the macOS login Keychain. The image SHA-256 is `32f7d7a0317698cecdd146ac0d96c58ff5bf2d8b14d230f966ff170a6a9819cf`; the private recovery manifest SHA-256 is `280628953a917ee0509eaaa09925c7f9c034ad0c8753d6de1469cca139b7deea`. Component checksums verified without exposing backup contents:
+
+| Component | Bytes | SHA-256 |
+| --- | ---: | --- |
+| roles | 358 | `4350a72b5ec109888e740c17f3eb4da2fcd95ab73af26499538ed0bf615db543` |
+| schema | 72,207 | `bf66271f00ae9fe8e55ce2eb649dd34272e68a841f2bc5556be67048b429a8cd` |
+| data | 82,732 | `dcc671094724a9cadb2da9d4f21bc436720016227558d96c0d107ae19cdf4af2` |
+| migration history | 127,781 | `c88c7a441329da568d6d58e9a9a6ecac0585f241ca9b59218505e58a5601356b` |
+
+The exact components restored in one transaction into a disposable local Supabase/PostgreSQL `17.11` target. The database restore completed in approximately **0.41 seconds**. Counts across application, Auth, migration-history, and Storage metadata matched the read-only Production inventory without retrieving row contents. All fourteen `public` tables had RLS; invalid constraints were zero; negative anonymous/authenticated probes failed closed; the rollback-contained automatic-RLS probe did not persist. Function definitions and execute grants matched Production, including anonymous/authenticated-only execution for `get_shared_proof_brief`, service-role-only execution for `submit_candidate_evidence_review`, and postgres-only execution for `rls_auto_enable`.
+
+After the documented local-only reconciliation steps, complete catalog fingerprints matched the read-only Production inventory:
+
+| Surface | Fingerprint |
+| --- | --- |
+| functions | `469337a3a9058e4884a08eaeb4b37c32` |
+| relations | `002ebed931927b484dbf7672b519070d` |
+| policies | `f0ba3157be26c3cba50fce26403471c6` |
+| constraints | `b2735eaf0e540cfe3611486365b3f722` |
+| triggers | `472a0fcd4a591871e402865c02308dae` |
+| event triggers | `ea8fb42a2e44732357c17c50fba00c44` |
+
+The official logical components require two explicit recovery steps: create the empty `supabase_migrations.schema_migrations` target before replaying migration history, then normalize API-role ACLs from the schema dump and recreate the global `ensure_rls` event trigger from the reviewed Production/repository contract. Both were proven only on the disposable target. The final local `postgres` role was returned to non-superuser state, the target was destroyed without another backup, the encrypted image was unmounted, and no container or volume remained.
+
+The dump covers roles, database schemas/data, Auth database rows, Storage database metadata, and migration history. It does **not** cover Storage object bytes, JWT/API/database credentials, custom-role passwords, hosted Auth/OAuth/SMTP/redirect/CAPTCHA configuration, Edge Functions or secrets, Vercel configuration, DNS, firewall, or other provider settings. The captured state contained zero Storage buckets and zero Storage objects, so there were no object bytes to transfer for this backup; that fact does not cover future Storage state. Total service-recovery time remains unmeasured, and provider-managed restore/PITR is not claimed.
+
+This backup certification expires at `2026-10-21T11:14:05Z`. If V16 is not separately authorized by then, create and certify a fresh backup before any rollout. After successful postflight or cancellation, delete the encrypted image and Keychain item within 24 hours under the private retention record.
+
 ## Production rollout gate result
 
 | Control | Current verified state | Gate |
@@ -126,7 +158,7 @@ This recovery result did not by itself authorize the later public launch. Public
 | Event trigger | `ensure_rls`, enabled on `ddl_command_end` for `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` | **PASSED** |
 | Isolated migration rehearsal | Repository evidence records a V1–V16 isolated hosted rehearsal, exact V16 replay, and rollback-contained expiry/review probes on October 14; the Docker-backed concurrent lock race is wired into the PR rehearsal workflow | **RECORDED ISOLATED EVIDENCE**; exact-head PR rehearsal and separate Production approval are still required |
 | Lock/timing rehearsal | Bounded lock failure/recovery passed; real-host representative V10→V12 completed in 2.66s | **PASSED**; Production statements ran under the reviewed lock and statement limits |
-| Backups/recovery | Real-host logical backup → isolated restore drill passed September 1 | **PASSED for the unchanged evidence set** |
+| Backups/recovery | Current encrypted October 14 logical backup checksum-verified and restored into isolated PostgreSQL 17.11 on October 15; exact catalog/data/permission checks passed | **PASSED through the stated retention deadline**; full-service/provider restore remains unproved |
 | Persona authority | Authenticated persona writes absent; service assignment preserved; identity immutable | **PASSED** |
 | Proof Brief and recruiter-review boundaries | Publish/revoke/review/feedback, cross-owner denials, and deletion cascades | **PASSED** in rollback-bound Production postflight |
 | Hosted Auth/security | Signup disabled; email login remains enabled; email confirmation disabled | **PASSED for fail-closed admission**; not sufficient for external email/password beta |
@@ -223,3 +255,33 @@ Before seeking separate exact-version V16 approval, require:
 V16 is transactional and changes only two function definitions plus their grants/comments. Before execution, the operator must record that a pre-commit error rolls the transaction back; after commit, containment is to stop promotion and direct traffic as needed, then use a reviewed forward repair or the verified backup/isolated-restore procedure. Do not restore the indefinite-share definitions merely to make the UI green, and do not treat an older Vercel deployment as a database rollback.
 
 Even if every prerequisite passes, this document does not authorize execution. V16 Production application requires the separate dated approval above. This schema gate does not open signup or public OAuth; #130 continues to govern admission and launch quality.
+
+### Tested recovery and forward-repair runbook
+
+1. Before the window, reverify canonical `main`, target identity, remote history, V16 absence/hash, active-share aggregate, the encrypted image and every component checksum, Keychain access, retention deadline, free disk space, operator, recovery owner, and observability.
+2. Require the pinned CLI dry run to list only V16 and no seed. Do not execute if any evidence has changed or expired.
+3. If execution is authorized, apply only the exact V16 artifact under the reviewed transaction/lock/statement bounds. A pre-commit failure must leave history and both function definitions unchanged.
+4. Immediately postflight the exact migration history, definitions, owners, search paths, grants, expiry boundary, unchanged RPC projection, current-share behavior, and absence of durable synthetic rows. Do not promote or widen admission while postflight is incomplete.
+5. If post-commit behavior is wrong, contain the affected sharing/review path and prepare a reviewed forward-only repair. Do not edit migration history, restore indefinite sharing merely to clear a UI failure, or assume a code rollback reverses the database.
+6. Restore only by incident decision into a freshly isolated PostgreSQL 17/Supabase environment first: verify checksums, restore roles/schema/data in one fail-fast transaction, recreate the migration-history target before its COPY, normalize API-role ACLs, recreate `ensure_rls`, and compare counts plus catalog fingerprints before considering any Production recovery plan.
+
+Measured database restore time is approximately 0.41 seconds on the disposable local host. That is not a full-service recovery-time objective: credential re-establishment, hosted Auth/provider configuration, Storage object transfer, Edge Functions, Vercel, DNS, traffic handling, and operational decision time were not restored or timed. Recovery point is the October 14 capture; later writes would not be present.
+
+### Unsigned V16 authorization record
+
+This record is deliberately incomplete and confers no authority:
+
+| Field | Required value |
+| --- | --- |
+| Decision | `UNSIGNED — V16 NOT AUTHORIZED` |
+| Canonical main | `4e2d8618a6658749d59a77a70eafcf4258d44d58` |
+| V16 artifact | `20261013184117_proof_brief_share_expiry.sql` |
+| V16 SHA-256 | `99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12` |
+| Production target | `skillmint-beta`; connected provider identity re-verification required |
+| Operator | `UNASSIGNED` |
+| Maintenance window | `UNSCHEDULED` |
+| Recovery owner | `UNASSIGNED` |
+| Recovery artifact | October 14 encrypted logical backup; certification expires `2026-10-21T11:14:05Z` |
+| Required approver | Founder or separately delegated release authority; name, decision, date, and scope required |
+
+Technical readiness is **READY FOR FOUNDER APPROVAL** only while the exact evidence above remains current. It is not a release approval. Abort on target/history/hash drift, a dry run listing anything except V16, an unreadable/expired backup, function/ACL/catalog mismatch, unexpected aggregate share state, absent operator or recovery ownership, incomplete observability, or any postflight failure.

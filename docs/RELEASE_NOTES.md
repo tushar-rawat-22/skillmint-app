@@ -1,5 +1,12 @@
 # SkillMint Release Notes
 
+## October 15, 2026 — V16 recovery certification and authority reconciliation
+
+- Reverified canonical `main` `4e2d8618a6658749d59a77a70eafcf4258d44d58`, the exact Production target and history through V15 including V14, and V16 as the sole pending migration at SHA-256 `99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12`.
+- Checksum-verified the existing October 14 encrypted logical backup and restored it into a disposable PostgreSQL 17.11 environment. Schema, data counts, migration history, RLS, permissions, functions, triggers, and event triggers matched the read-only Production inventory; the measured database restore step was approximately 0.41 seconds.
+- Recorded uncovered provider-managed state and the two explicit logical-recovery reconciliation steps. No Production write, V16 execution, credential change, payment, public launch, or second backup occurred.
+- V16 is technically ready for a separate founder decision, but the authorization record remains unsigned with operator, maintenance window, and recovery owner unassigned.
+
 ## Unreleased — finite Proof Brief share grants
 
 - Proof Brief links now have one explainable 14-day authorization window derived from the existing `share_created_at`; candidates may revoke sooner or republish to replace the token and start a fresh window.

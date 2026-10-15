@@ -8,6 +8,12 @@ and evidence sharing.
 
 SkillMint is the public product name used by the launched application.
 
+The website is public, including a fixed synthetic no-login demo when its
+server gate is enabled. Account admission is still controlled: public
+self-signup is disabled, Request Access does not create an account, and the
+authenticated Candidate and Recruiter workspaces are available only to
+admitted accounts.
+
 ## Why I built it
 
 I built SkillMint because most resume tools stop at a score. A score alone does not help someone decide which roles fit their current profile, which claims have supporting evidence, which role deserves focus, or what work to complete next.
@@ -180,6 +186,7 @@ For current operational truth, use the active GitHub launch issue and the newest
 - Block 7.1 resume owner isolation is complete and records a confirmed, repaired account-switch defect.
 - Payments remain deferred. No paid infrastructure, billing-enabled service, or domain is required for the current launch state.
 - Legal review, verified privacy/support operations, provider backup/log-retention evidence, and accountable Production operations remain unresolved.
+- A current encrypted logical Production backup has passed isolated PostgreSQL 17 recovery verification. See the [Production Schema Rollout Authority](docs/PRODUCTION_SCHEMA_ROLLOUT.md) for exact evidence and exclusions; this is not provider-managed PITR or full-service recovery proof.
 
 Longer-lived authority and historical context remain in the [Two-sided Public Beta Authority](docs/TWO_SIDED_PUBLIC_BETA.md), [Version 2 Dynamic Execution Roadmap](docs/V2_DYNAMIC_EXECUTION_ROADMAP.md), [Project Status](docs/PROJECT_STATUS.md), [Deployment Safety Guide](docs/DEPLOYMENT.md), and [documentation map](docs/README.md). Dated beta/pilot documents are historical evidence and do not override current launch truth.
 
@@ -189,7 +196,7 @@ Longer-lived authority and historical context remain in the [Two-sided Public Be
 - Resume evidence candidates are not third-party verification of every user claim.
 - The candidate Jobs surface does not auto-apply or predict hiring probability.
 - Public self-signup remains disabled while new-account admission is deliberately paced; the public Request Access path accepts candidate or recruiter intent without requiring a resume and does not automatically create an account or persona.
-- Durable Save -> Applied -> follow-up application lifecycle work remains a separate product lane and must not be confused with provider availability or inferred employer outcomes.
+- Durable Candidate Save -> Applied -> follow-up state is implemented and Production-proven under controlled admission. It remains separate from provider availability and must never be presented as an inferred employer outcome.
 - There is no payment or subscription system.
 - There is no production LLM career adviser.
 - Supabase Free availability can pause after inactivity; current service health is not a 24/7 guarantee.
