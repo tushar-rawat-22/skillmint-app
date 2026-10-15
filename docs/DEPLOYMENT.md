@@ -9,6 +9,7 @@ This is the current operator path for deploying SkillMint. Historical rollout no
 - Supabase project `skillmint-beta` is the active Auth and data backend.
 - Public self-service account creation is **not launch-ready** while GitHub issue #130 remains open. Do not remove controlled-admission behavior or claim open signup until that gate is closed with Production evidence.
 - `/support`, `/privacy`, authentication and recovery surfaces are production-facing and must remain usable even while signup is controlled.
+- The October 15 V16 database preflight and isolated restore are technically ready for a separate founder decision. V16 remains unapplied and unauthorized; use the exact evidence, expiry, runbook, abort criteria, and unsigned authorization record in [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md).
 - A READY deployment is necessary but not sufficient. Release acceptance requires exact-head checks plus affected-route Production verification.
 
 ## Environment contract
@@ -103,6 +104,8 @@ If a Production release introduces a P0/P1 regression:
 5. preserve evidence needed to understand the failure.
 
 Do not bypass Auth/RLS controls, disable security checks, or mutate Production data merely to restore a green UI.
+
+For V16, the tested logical database path has an approximately 0.41-second local restore step, but that is not a full-service RTO. The dump excludes Storage object bytes and separately managed credentials, hosted Auth/OAuth/SMTP/provider settings, Edge Functions/secrets, Vercel, DNS, and firewall state. Use a reviewed forward repair after a committed defect unless incident command explicitly chooses restoration; never repair migration history or treat an older application deployment as schema rollback.
 
 ## Provider constraints
 

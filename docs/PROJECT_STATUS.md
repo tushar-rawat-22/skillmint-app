@@ -1,6 +1,6 @@
 # SkillMint Project Status
 
-**Last updated:** October 12, 2026
+**Last updated:** October 15, 2026
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
 
@@ -9,6 +9,10 @@ This is the current-state entry point for the founder and maintainers. Before pl
 **Current Production migration truth (verified October 9, 2026):** Production migration history from V1 through V15 is verified on `skillmint-beta`. V14 candidate lifecycle and V15 OAuth deletion reauthentication are applied and catalog-verified. **Production migration history through V15** is the current authority. The durable candidate lifecycle is Production-proven through Save → reload → Applied → follow-up → reload → provider refresh/recovery → deletion completeness under controlled account admission; see Issue #117 for exact acceptance evidence.
 
 **Release checkpoint (October 10, 2026):** The secured application baseline before this documentation tranche is `d9f9fe1944a977f4ff616792d6075897732e4c5f` (PR #176 merged). Exact-main quality run `38075088519`, OAuth run `38075088410`, and CodeQL run `38075088218` passed, and Vercel reported success on that SHA. `skillmint-beta` remains recorded as `ACTIVE_HEALTHY`, with migrations V1–V15 present in the last verified Production inventory.
+
+**V16 recovery checkpoint (October 15, 2026):** Canonical `main` is `4e2d8618a6658749d59a77a70eafcf4258d44d58` (PR #180). A fresh read-only Production preflight reconfirmed the exact `skillmint-beta` target, migration history through V15 including V14, V16 absent, relevant function/ACL contracts, and no relevant catalog drift. The sole pending migration is `20261013184117_proof_brief_share_expiry.sql`, SHA-256 `99166341fa448a69fdc4a13e03610a724e38eaeb3313e089828e5487d3a39d12`.
+
+The existing October 14 encrypted logical backup passed checksum verification and a full isolated PostgreSQL 17.11 restore on October 15. Restored schema, data counts, migration history, RLS, constraints, policies, functions, ACLs, triggers, and event triggers matched the read-only Production inventory; the database restore completed in approximately 0.41 seconds. This proves the documented logical database recovery path, not provider-managed PITR or full-service recovery. Storage object bytes, credentials, hosted Auth/provider configuration, Edge Functions/secrets, Vercel, DNS, and firewall configuration remain separately managed. V16 is **READY FOR FOUNDER APPROVAL** at the technical gate, but remains unapplied and unauthorized; operator, window, recovery owner, and the founder decision are unsigned.
 
 The public site is discoverable, but self-signup remains controlled. [Issue #130](https://github.com/tushar-rawat-22/skillmint-app/issues/130) controls Product and launch acceptance. Full public and authenticated browser journeys, Proof Brief expiry enforcement, adversarial cross-persona/recovery/deletion checks, and controlled load/scalability testing are not yet certified. No broad public launch or paid acquisition is approved. This is an operational checkpoint, not a substitute for exact-head checks before a new release.
 
@@ -59,7 +63,7 @@ Resume Reality
 | Phase 3 — Explainability | Read-only inspection and one bounded readiness-truth repair complete through PR #28; broader expansion deferred | The unsupported forecast was removed without a replacement prediction; recurring comprehension evidence remains pending |
 | Phase 4 — Guided execution and onboarding | Read-only inspection and one bounded upload-accessibility repair complete through PR #30 | Broader Phase 4 work is deferred pending recurring controlled-user evidence; no controlled invitation or launch authorization |
 | Phase 5A — Controlled Access Foundation | Engineering implementation complete | Application signup defaults closed; the later bounded inventory verified provider signup disabled and email login enabled |
-| Phase 5B — Production Rollout Foundation | Offline validator, forward ACL repair, rollout authority, and deterministic repository coverage implemented | Readiness remains `NO-GO`; no Production or hosted change is authorized or claimed |
+| Phase 5B — Production Rollout Foundation | Implemented; later migrations through V15 are Production-verified and the V16 read-only/recovery gate passed | V16 is ready only for separate founder approval; it remains unapplied and unauthorized |
 | Two-sided beta — public IA and synthetic recruiter demo | Implemented and merged through PR #45 | Both demos remain deterministic, gated, and structurally isolated from Supabase session refresh, analytics, storage, and external requests |
 | Two-sided beta — candidate Proof Brief | Engineering implementation, isolated database verification, and independent security/privacy review complete | Default-private, revocable link-only sharing and V10 persona foundation; V10 is applied in Production. Expired-link rejection remains a launch-acceptance gap |
 | Two-sided beta — recruiter evidence review | Engineering implementation, isolated verification, and independent security/privacy review complete | Server-owned recruiter persona, deterministic role maps, atomic live-token review submission, and candidate-owned structured feedback; V11 is applied in Production |
@@ -135,13 +139,13 @@ Phase 5A adds a server-only `SKILLMINT_PUBLIC_SIGNUP_ENABLED` application gate. 
 
 This is an application-level public-registration gate, not an invitation system or authorization boundary. The hosted control was unverified and unchanged during Phase 5A. The bounded July 30 Production inventory later verified provider signup disabled and existing email login enabled; both states must be preserved. Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
 
-Phase 5B records a verified Production exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift, with unknown migration-history and table-grant visibility. Its offline validator keeps `CATALOG_BASELINE=V1+V2`, separately reports `CATALOG_DRIFT=public.rls_auto_enable`, returns `NO-GO`, and reports the zero-backup, no-PITR, disabled SSL enforcement, absent custom SMTP, disabled CAPTCHA, enabled email auto-confirm, six-character password minimum, unknown table-grant visibility, and untracked-function blockers.
+The following Phase 5B paragraph is a historical July checkpoint retained for fixture and decision provenance; the October 15 checkpoint at the top of this document supersedes its Production inventory. Phase 5B originally recorded a verified Production exact V1+V2 versioned catalog baseline plus the known untracked `public.rls_auto_enable()` drift, with unknown migration-history and table-grant visibility. Its offline validator kept `CATALOG_BASELINE=V1+V2`, separately reported `CATALOG_DRIFT=public.rls_auto_enable`, returned `NO-GO`, and reported the then-current zero-backup, no-PITR, disabled SSL enforcement, absent custom SMTP, disabled CAPTCHA, enabled email auto-confirm, six-character password minimum, unknown table-grant visibility, and untracked-function blockers.
 
-The inventory did not capture that function's live owner, exact event-trigger contract, or body. The forward migration after V8 therefore fails closed unless an authorized preflight matches the exact repository function-owner and event-trigger-owner contract, including `postgres` ownership for both; it snapshots that contract across the ACL-only change but intentionally does not inspect the body. Exact body verification remains an authorized rehearsal and postflight requirement. See [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md).
+That July inventory did not capture the function's live owner, exact event-trigger contract, or body. The forward migration after V8 therefore failed closed unless an authorized preflight matched the exact repository function-owner and event-trigger-owner contract, including `postgres` ownership for both; it snapshotted that contract across the ACL-only change but intentionally did not inspect the body. Exact body verification remained an authorized rehearsal and postflight requirement. See [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md) for the superseding evidence.
 
-This repository foundation does not resolve a blocker, apply V3–V8, normalize the live function, repair migration history, change Auth, enable analytics, contact a hosted service, or authorize invitations. Production rollout remains `NO-GO`.
+At that checkpoint, the repository foundation did not resolve a blocker, apply V3–V8, normalize the live function, repair migration history, change Auth, enable analytics, contact a hosted service, or authorize invitations. Production rollout remained `NO-GO`.
 
-The pending V10 foundation adds owner-qualified candidate Proof Briefs and a
+The then-pending V10 foundation added owner-qualified candidate Proof Briefs and a
 server-owned account persona. Proof Brief mutations use an authenticated
 same-origin server route that reloads the exact account-owned saved analysis
 and derives the public payload; browsers retain owner-only read access and
@@ -155,8 +159,7 @@ evidence payload, default to `PRIVATE`, and can be shared through a revocable
 table access and returns only the payload and sharing timestamp. Account export
 v4 includes the persona and brief without the owner or token hash; saved-report
 and account deletion remove the new records without changing their frozen
-public return contracts. This is repository and synthetic-browser evidence,
-not a Production schema claim.
+public return contracts. At that checkpoint this was repository and synthetic-browser evidence, not a Production schema claim. V10 was subsequently applied and is present in the current verified migration history.
 
 The August 23 isolated database rehearsal replayed V1 through V10 from an empty
 local PostgreSQL database. Ten rollback-contained probes then confirmed owner

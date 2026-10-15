@@ -4,7 +4,8 @@ SkillMint's documentation spans current contracts, frozen verification records, 
 
 ## Start here
 
-- [Current Release Status — 2026-09-08](CURRENT_RELEASE_STATUS_20260908.md) is the canonical operational release snapshot for current `main`, Production availability, #103 candidate-jobs acceptance, and #105 recruiter gating. When older phase documents conflict with it on current Production truth, use this release snapshot plus the active release-gate issues.
+- [Project Status](PROJECT_STATUS.md) is the current long-form project-state entry point. Pair it with the active release-gate issue and the rollout authority for exact Production decisions.
+- [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md) is the canonical database release/recovery authority. It records the October 15 V16 preflight and isolated recovery certification; it does not authorize V16 execution.
 - [Two-sided Public Beta Authority](TWO_SIDED_PUBLIC_BETA.md) is the current
   strategic authority: it preserves the accepted engineering foundation and
   authorizes gated implementation of a public candidate-and-recruiter beta.
@@ -12,11 +13,11 @@ SkillMint's documentation spans current contracts, frozen verification records, 
   sequence retained for its product evidence and preservation rationale.
 - [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md) is the current evidence-gated company-building sequence.
 - [Resume Workspace v1 Architecture](RESUME_WORKSPACE_V1_ARCHITECTURE.md) records the implemented Phase 1A contract, its local verification history, the bounded isolated-hosted Phase 1B evidence, and the real-user evidence still required before expansion.
-- [Project Status](PROJECT_STATUS.md) is the long-form project-state entry point. For current Production and release-gate truth, read the Current Release Status first.
+- [AI Executive Handover](CHATGPT_PROJECT_CONTEXT.md) is the current continuity/bootstrap summary and points back to these authorities.
 - [Pilot Charter](PILOT_CHARTER.md) defines the private-pilot audience, synthetic-demo boundary, non-claims, data handling, and validation exit criteria.
 - [Block 7.1 Closure](BLOCK_7_1_CLOSURE.md) records the confirmed resume owner-isolation defect, final security contract, repair identity, and independent verification.
 - [Beta v1 Build Roadmap](BETA_V1_BUILD_ROADMAP.md) is a preserved historical execution roadmap and frozen-contract boundary; its former launch sequence is superseded for current planning.
-- [TODO](TODO.md) distinguishes current Version 2 authority from completed, deferred, and historical work.
+- [TODO](TODO.md) is a retained historical work index. It is not current release authority.
 - [Repository engineering instructions](../AGENTS.md) define the operational rules for changes.
 
 Implementation, tests, schemas, and frozen current contracts override legacy speculative architecture documents when the question is what the application ships today. Durable founder decisions and the locked roadmap remain the authority for approved product direction; source code alone does not silently cancel them.
@@ -70,7 +71,7 @@ Frozen evidence must not be casually rewritten. The Phase 1B closure is isolated
 - [Deployment Safety Guide](DEPLOYMENT.md)
 - [Block 6 Rollout Runbook](BLOCK_6_ROLLOUT_RUNBOOK.md)
 - [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md)
-- [Current Release Status — 2026-09-08](CURRENT_RELEASE_STATUS_20260908.md)
+- [Release-status snapshot — 2026-09-12](CURRENT_RELEASE_STATUS_20260908.md), retained as dated historical evidence
 - [Project Status](PROJECT_STATUS.md)
 - [Release Notes](RELEASE_NOTES.md)
 - [Prelaunch Reliability Baseline](PRELAUNCH_RELIABILITY_BASELINE.md)
@@ -94,3 +95,5 @@ The directories below preserve useful chronology, assumptions, and product ratio
 - older phase, public-beta, and release planning documents not listed as current contracts above
 
 Historical documents remain for context and should not be treated as shipped functionality. In particular, older dark-cockpit design direction, speculative AI and API architecture, payments, public career products, employer or institution surfaces, and launch plans do not override current implementation, frozen Blocks 1–5, or the current release snapshot.
+
+The dated September release snapshot and older TODO states are also historical. They must not override the current Project Status, active issue #130, merged GitHub `main`, or the Production Schema Rollout Authority.

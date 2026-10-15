@@ -1,11 +1,11 @@
-# SkillMint TODO
+# SkillMint TODO — historical work index
 
-**Status:** Current work index
-**Authority:** [Version 2 Transition Gate](V2_TRANSITION_GATE.md), [Version 2 Dynamic Execution Roadmap](V2_DYNAMIC_EXECUTION_ROADMAP.md), and [Project Status](PROJECT_STATUS.md). The Beta v1 roadmap is historical context.
+**Status:** Retained historical work index; not current release authority
+**Current authority:** [Project Status](PROJECT_STATUS.md), [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md), active GitHub issue #130, and merged `main`.
 
-This file distinguishes current work from completed, blocked, deferred, and historical work. It is not a second roadmap and does not reopen frozen blocks.
+This file preserves earlier completed, blocked, deferred, and historical work and fixture-bound closure wording. Its July-era Production inventory and sequencing are superseded. It is not a second roadmap, a current blocker register, or authorization to reopen frozen blocks.
 
-## 1. Current authoritative status
+## 1. Historical authoritative-status snapshot
 
 - Blocks 1–5 are complete and frozen.
 - Block 6 engineering implementation and isolated verification are complete.

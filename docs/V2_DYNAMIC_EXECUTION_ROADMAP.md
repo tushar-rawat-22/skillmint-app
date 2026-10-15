@@ -1,5 +1,7 @@
 # Version 2 Dynamic Execution Roadmap
 
+This remains the strategic evidence-gated roadmap, not a live release ledger. Current implementation, Production, recovery, and authorization truth lives in [Project Status](PROJECT_STATUS.md), [Production Schema Rollout Authority](PRODUCTION_SCHEMA_ROLLOUT.md), active issue #130, and merged GitHub `main`.
+
 This is a company-building sequence, not a feature quota. A phase may be preserved, revised, deferred, or removed as evidence develops; passing a build or a checklist is not enough. The common invariant is that no phase may weaken frozen Blocks 1–5, Block 7.1 owner isolation, truthful product language, owner partitions, allowlisted export, or separate deletion controls.
 
 ## Operating rules
@@ -8,9 +10,11 @@ Work proceeds through the four named product phases below. Phase 2 is complete a
 
 Each phase uses the same decision rule: expand only when the evidence demonstrates repeatable value and safe operation; preserve when the smallest solution is working but evidence is incomplete; revise when users can articulate a correctable gap; defer when value or capacity is unproved; remove when the problem is not important enough to justify its privacy, support, or maintenance cost. On a failed assumption, stop new scope, preserve user data and frozen behavior, record the finding, and return to the smallest preceding usable state.
 
-## Current 15-day controlled-launch sequence
+## Historical 15-day controlled-launch sequence
 
-SkillMint targets, but does not guarantee, a controlled hosted Production launch within 15 days. Phase 1 is complete, Phase 2 is operationally closed for engineering and deployment after merge through PR #26, the Phase 3 read-only inspection and bounded readiness-truth repair are complete after merge through PR #28, and the completed read-only Phase 4 inspection and bounded upload-accessibility repair are complete after merge through PR #30. Broader Phase 3 expansion is deferred pending recurring comprehension evidence, and broader Phase 4 guided-execution and onboarding work is deferred pending recurring controlled-user evidence. The next work is separately gated launch-readiness and controlled-user preparation, not another automatic Phase 4 runtime slice. Separately, screen the pending public brand and domain and prepare only authorized Production-readiness work.
+This historical sequence targeted, but did not guarantee, a controlled hosted Production launch within 15 days. Phase 1 was complete, Phase 2 was operationally closed for engineering and deployment after merge through PR #26, the Phase 3 read-only inspection and bounded readiness-truth repair were complete after merge through PR #28, and the completed read-only Phase 4 inspection and bounded upload-accessibility repair were complete after merge through PR #30. Broader Phase 3 expansion was deferred pending recurring comprehension evidence, and broader Phase 4 guided-execution and onboarding work was deferred pending recurring controlled-user evidence. The next work at that checkpoint was separately gated launch-readiness and controlled-user preparation, not another automatic Phase 4 runtime slice. Current sequencing is governed by Project Status and issue #130.
+
+The standing evidence rule remains: broader Phase 4 guided-execution and onboarding work is deferred pending recurring controlled-user evidence.
 
 Phase 5A engineering implementation is complete. It makes public registration default closed through the server-only `SKILLMINT_PUBLIC_SIGNUP_ENABLED` setting, preserves existing-user login, removes open-registration claims from the default runtime, and adds a second guard around signup submission. Supabase Auth's hosted **Allow new users to sign up** setting remains unverified and unchanged; the application gate does not replace it. Enabling registration, changing hosted configuration, controlled invitations, public launch, Production schema work, and migrations remain separately authorized gates. Merge or deployment alone does not authorize controlled access.
 
