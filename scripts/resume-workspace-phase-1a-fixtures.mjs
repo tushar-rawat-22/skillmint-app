@@ -60,7 +60,7 @@ const ACL_NORMALIZATION_SHA256 =
 const BASELINE_PACKAGE_LOCK_SHA256 =
   "e7223d454d346a5f5407a0989731ec7d76964be77c5f16f3bf654f0903441ae5";
 const SECURITY_PACKAGE_LOCK_SHA256 =
-  "4942827f4e1866245a40a7cdf174fde05d12f22686092a6cf3cdb2d77d221703";
+  "0e1d179bdab0205f27fede8c39011ef33fa0cdf456b5aba7429d44645e4becf4";
 
 const FROZEN_MIGRATIONS = [
   {
@@ -1647,8 +1647,8 @@ test("package metadata permits only authorized fixture scripts and audited lock 
   delete currentWithoutScripts.scripts;
   delete baselineWithoutScripts.scripts;
 
-  assert.equal(currentPackage.dependencies.next, "16.3.8");
-  assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.3.8");
+  assert.equal(currentPackage.dependencies.next, "16.4.1");
+  assert.equal(currentPackage.devDependencies["eslint-config-next"], "16.4.1");
   assert.equal(currentPackage.overrides["source-map-js"], "1.2.2");
   assert.equal(currentPackage.overrides["js-yaml"], "4.3.2");
   assert.equal(currentPackage.overrides.next.sharp, "0.35.5");
