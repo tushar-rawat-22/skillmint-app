@@ -1,8 +1,10 @@
 # SkillMint Project Status
 
-**Last updated:** October 15, 2026
+**Last updated:** October 28, 2026 (dated commercial-hosting addendum; historical engineering checkpoints below retained)
 
 **Version 2 transition baseline:** `783e1837028b92cf1edbf29f4699acdaa50df9f8`
+
+**Commercial-readiness addendum (28 Oct 2026):** The connected Vercel team hosting `skillmint-app` is on Hobby, whose current terms restrict personal/non-commercial use. Paid SaaS compatibility is **not established**. See [hosting review](COMMERCIAL_HOSTING_REVIEW_20261028.md) and [issue #184](https://github.com/tushar-rawat-22/skillmint-app/issues/184). This addendum makes no claim that a contract was breached and changes no deployment. Production recovery email and V16 migration still have their own separate launch/approval gates.
 
 This is the current-state entry point for the founder and maintainers. Before planning new work, fetch the current `main` branch and confirm its HEAD; this SHA records the implementation baseline audited for this document, not a promise that it will remain current.
 
