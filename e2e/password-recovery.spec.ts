@@ -741,3 +741,48 @@ test(
     ).toBe(1);
   },
 );
+
+
+test(
+  "@password-recovery @a11y recovery request feedback announces validation, provider failure, and confirmation",
+  async ({ page, provider }) => {
+    await page.goto("/forgot-password");
+
+    const submit = page.getByRole("button", { name: "Send reset link" });
+    await submit.click();
+    await expect(page.locator("form").getByRole("alert")).toHaveText("Email is required.");
+
+    await page.getByLabel("Email").fill("account-a@example.test");
+    provider.passwordResetMode = "reject";
+    await submit.click();
+    await expect(page.locator("form").getByRole("alert")).toHaveText(
+      "We could not send a reset link. Please try again.",
+    );
+
+    provider.passwordResetMode = "success";
+    await submit.click();
+    await expect(page.locator("form").getByRole("status")).toHaveText(
+      "If an account exists for that email, a password reset link will be sent.",
+    );
+  },
+);
+
+test(
+  "@password-recovery @a11y password update validation and confirmation have live-region semantics",
+  async ({ page, provider }) => {
+    await establishValidRecovery(page, provider);
+
+    await page.getByLabel("New password").fill(NEW_PASSWORD);
+    await page.getByLabel("Confirm password").fill("mismatched-password");
+    await page.getByRole("button", { name: "Update password" }).click();
+    await expect(page.locator("form").getByRole("alert")).toHaveText(
+      "Passwords do not match.",
+    );
+
+    await page.getByLabel("Confirm password").fill(NEW_PASSWORD);
+    await page.getByRole("button", { name: "Update password" }).click();
+    await expect(page.locator("form").getByRole("status")).toHaveText(
+      "Password updated. Continue to account setup.",
+    );
+  },
+);
