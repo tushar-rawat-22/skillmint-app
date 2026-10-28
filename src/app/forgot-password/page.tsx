@@ -22,6 +22,8 @@ const RESET_SERVICE_UNAVAILABLE_MESSAGE =
   "Password recovery is temporarily unavailable. Please try again later.";
 const CAPTCHA_REQUIRED_MESSAGE =
   "Please complete the security check before requesting a reset link.";
+const CAPTCHA_LOAD_FAILURE_MESSAGE =
+  "Security check could not load. Check your connection or browser settings, then reload this page.";
 
 export default function ForgotPasswordPage() {
   const configStatus = useMemo(() => getSupabaseConfigStatus(), []);
@@ -29,6 +31,7 @@ export default function ForgotPasswordPage() {
   const submissionInFlight = useRef(false);
   const [email, setEmail] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaLoadFailed, setCaptchaLoadFailed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -122,6 +125,10 @@ export default function ForgotPasswordPage() {
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
             strategy="afterInteractive"
+            onError={() => {
+              setCaptchaToken("");
+              setCaptchaLoadFailed(true);
+            }}
           />
         </>
       ) : null}
@@ -157,6 +164,11 @@ export default function ForgotPasswordPage() {
         ) : null}
 
         <div role="alert" aria-atomic="true">
+          {captchaLoadFailed ? (
+            <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
+              {CAPTCHA_LOAD_FAILURE_MESSAGE}
+            </p>
+          ) : null}
           {error ? (
             <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
               {error}
