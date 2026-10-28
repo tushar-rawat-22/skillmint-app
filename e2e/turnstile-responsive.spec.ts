@@ -64,7 +64,7 @@ test(
       await expect(submit).toBeDisabled();
 
       expect(await widget.getAttribute("data-error-callback")).toBe(
-        "skillmintTurnstileExpired",
+        "skillmintTurnstileError",
       );
       await page.evaluate(() => {
         window.skillmintTurnstileSuccess("synthetic-turnstile-token");
@@ -115,6 +115,12 @@ test(
       "data-error-callback",
       "skillmintTurnstileError",
     );
+    await page.evaluate(() => {
+      window.skillmintTurnstileSuccess("token-before-runtime-error");
+    });
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeEnabled();
     await page.evaluate(() => {
       window.skillmintTurnstileError();
     });
