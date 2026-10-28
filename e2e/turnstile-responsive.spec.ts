@@ -134,6 +134,42 @@ test(
   },
 );
 
+test(
+  "@turnstile a signup widget runtime error explains blocked account creation at 320px",
+  async ({ page }) => {
+    await page.route(TURNSTILE_SCRIPT, async (route) => {
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: "",
+      });
+    });
+
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/signup");
+
+    await expect(page.locator(".cf-turnstile")).toHaveAttribute(
+      "data-error-callback",
+      "skillmintSignupTurnstileError",
+    );
+    await page.evaluate(() => {
+      window.skillmintSignupTurnstileSuccess("token-before-runtime-error");
+    });
+    await expect(
+      page.getByRole("button", { name: "Create account" }),
+    ).toBeEnabled();
+    await page.evaluate(() => {
+      window.skillmintSignupTurnstileError();
+    });
+    await expect(
+      page.getByRole("button", { name: "Create account" }),
+    ).toBeDisabled();
+    await expect(page.locator("form").getByRole("alert")).toContainText(
+      "Security check failed. Reload this page to try again.",
+    );
+    await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
+  },
+);
+
 
 test(
   "@turnstile a recovery request consumes its challenge before any retry",
@@ -187,5 +223,7 @@ declare global {
     skillmintTurnstileExpired: () => void;
     skillmintTurnstileError: () => void;
     skillmintTurnstileSuccess: (token: string) => void;
+    skillmintSignupTurnstileError: () => void;
+    skillmintSignupTurnstileSuccess: (token: string) => void;
   }
 }

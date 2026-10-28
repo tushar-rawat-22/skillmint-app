@@ -21,6 +21,8 @@ import {
 
 const CAPTCHA_REQUIRED_MESSAGE =
   "Please complete the security check before creating an account.";
+const CAPTCHA_WIDGET_FAILURE_MESSAGE =
+  "Security check failed. Reload this page to try again.";
 
 type AuthFormProps =
   | { mode: "login" }
@@ -38,6 +40,7 @@ export default function AuthForm(props: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaFailureMessage, setCaptchaFailureMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -46,11 +49,27 @@ export default function AuthForm(props: AuthFormProps) {
     if (mode !== "signup") return;
 
     const handleToken = (event: Event) => {
-      setCaptchaToken((event as CustomEvent<string>).detail ?? "");
+      const token = (event as CustomEvent<string>).detail ?? "";
+      setCaptchaToken(token);
+      if (token) setCaptchaFailureMessage("");
+    };
+    const handleWidgetError = () => {
+      setCaptchaToken("");
+      setCaptchaFailureMessage(CAPTCHA_WIDGET_FAILURE_MESSAGE);
     };
 
     window.addEventListener("skillmint-signup-turnstile", handleToken);
-    return () => window.removeEventListener("skillmint-signup-turnstile", handleToken);
+    window.addEventListener(
+      "skillmint-signup-turnstile-error",
+      handleWidgetError,
+    );
+    return () => {
+      window.removeEventListener("skillmint-signup-turnstile", handleToken);
+      window.removeEventListener(
+        "skillmint-signup-turnstile-error",
+        handleWidgetError,
+      );
+    };
   }, [mode]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -190,7 +209,7 @@ export default function AuthForm(props: AuthFormProps) {
       {mode === "signup" && turnstileSiteKey ? (
         <>
           <Script id="skillmint-signup-turnstile-callbacks" strategy="afterInteractive">
-            {`window.skillmintSignupTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile', { detail: token })); }; window.skillmintSignupTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile', { detail: '' })); };`}
+            {`window.skillmintSignupTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile', { detail: token })); }; window.skillmintSignupTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile', { detail: '' })); }; window.skillmintSignupTurnstileError = function() { window.dispatchEvent(new CustomEvent('skillmint-signup-turnstile-error')); };`}
           </Script>
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
@@ -249,16 +268,23 @@ export default function AuthForm(props: AuthFormProps) {
               data-size="flexible"
               data-callback="skillmintSignupTurnstileSuccess"
               data-expired-callback="skillmintSignupTurnstileExpired"
-              data-error-callback="skillmintSignupTurnstileExpired"
+              data-error-callback="skillmintSignupTurnstileError"
             />
           </div>
         ) : null}
 
-        {error && (
-          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
-            {error}
-          </p>
-        )}
+        <div role="alert" aria-atomic="true">
+          {captchaFailureMessage ? (
+            <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
+              {captchaFailureMessage}
+            </p>
+          ) : null}
+          {error ? (
+            <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
+              {error}
+            </p>
+          ) : null}
+        </div>
 
         {message && (
           <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-800">
