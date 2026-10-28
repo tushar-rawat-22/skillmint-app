@@ -93,6 +93,16 @@ export default function ForgotPasswordPage() {
     } catch {
       setError(RESET_REQUEST_FAILURE_MESSAGE);
     } finally {
+      if (turnstileSiteKey) {
+        setCaptchaToken("");
+        try {
+          (
+            window as Window & { turnstile?: { reset: () => void } }
+          ).turnstile?.reset();
+        } catch {
+          // Keep the consumed token invalidated even if the widget cannot reset.
+        }
+      }
       submissionInFlight.current = false;
       setIsSubmitting(false);
     }

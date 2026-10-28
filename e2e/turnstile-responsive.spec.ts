@@ -75,8 +75,56 @@ test(
   },
 );
 
+
+test(
+  "@turnstile a recovery request consumes its challenge before any retry",
+  async ({ page, provider }) => {
+    await page.route(TURNSTILE_SCRIPT, async (route) => {
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: "window.turnstile = { reset: () => { window.__syntheticTurnstileResets = (window.__syntheticTurnstileResets || 0) + 1; } };",
+      });
+    });
+
+    provider.passwordResetMode = "reject";
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill("account-a@example.test");
+    const submit = page.getByRole("button", { name: "Send reset link" });
+
+    await page.evaluate(() => {
+      window.skillmintTurnstileSuccess("consumed-token");
+    });
+    await expect(submit).toBeEnabled();
+    await submit.click();
+
+    await expect(
+      page.getByText("We could not send a reset link. Please try again."),
+    ).toBeVisible();
+    expect(provider.count("auth:password-reset")).toBe(1);
+    await expect(submit).toBeDisabled();
+    expect(
+      await page.evaluate(() => window.__syntheticTurnstileResets),
+    ).toBe(1);
+
+    provider.passwordResetMode = "success";
+    await page.evaluate(() => {
+      window.skillmintTurnstileSuccess("fresh-token");
+    });
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(
+      page.getByText(
+        "If an account exists for that email, a password reset link will be sent.",
+      ),
+    ).toBeVisible();
+    expect(provider.count("auth:password-reset")).toBe(2);
+    await expect(submit).toBeDisabled();
+  },
+);
+
 declare global {
   interface Window {
+    __syntheticTurnstileResets?: number;
     skillmintTurnstileExpired: () => void;
     skillmintTurnstileSuccess: (token: string) => void;
   }
