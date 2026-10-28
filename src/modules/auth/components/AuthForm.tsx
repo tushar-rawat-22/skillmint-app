@@ -157,6 +157,16 @@ export default function AuthForm(props: AuthFormProps) {
         "Account created. Check your email if confirmation is required, then use Data & privacy to import any anonymous browser workspace.",
       );
     } finally {
+      if (mode === "signup" && turnstileSiteKey) {
+        setCaptchaToken("");
+        try {
+          (
+            window as Window & { turnstile?: { reset: () => void } }
+          ).turnstile?.reset();
+        } catch {
+          // Never reuse a consumed token when the widget cannot reset.
+        }
+      }
       setIsSubmitting(false);
     }
   }
