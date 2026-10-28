@@ -89,7 +89,7 @@ test(
     await expect(
       page.getByRole("button", { name: "Send reset link" }),
     ).toBeDisabled();
-    await expect(page.getByRole("alert")).toContainText(
+    await expect(page.locator("form").getByRole("alert")).toContainText(
       "Security check could not load. Check your connection or browser settings, then reload this page.",
     );
     await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
