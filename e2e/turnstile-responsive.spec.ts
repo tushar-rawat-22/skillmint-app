@@ -171,6 +171,26 @@ test(
 );
 
 
+
+test(
+  "@turnstile a signup script-load failure explains blocked account creation at 320px",
+  async ({ page }) => {
+    await page.route(TURNSTILE_SCRIPT, async (route) => {
+      await route.abort("failed");
+    });
+
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/signup");
+
+    const submit = page.getByRole("button", { name: "Create account" });
+    await expect(submit).toBeDisabled();
+    await expect(page.locator("form").getByRole("alert")).toContainText(
+      "Security check could not load. Check your connection or browser settings, then reload this page.",
+    );
+    await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
+  },
+);
+
 test(
   "@turnstile a recovery request consumes its challenge before any retry",
   async ({ page, provider }) => {

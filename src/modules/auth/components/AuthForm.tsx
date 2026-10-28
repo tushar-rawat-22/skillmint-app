@@ -21,6 +21,8 @@ import {
 
 const CAPTCHA_REQUIRED_MESSAGE =
   "Please complete the security check before creating an account.";
+const CAPTCHA_LOAD_FAILURE_MESSAGE =
+  "Security check could not load. Check your connection or browser settings, then reload this page.";
 const CAPTCHA_WIDGET_FAILURE_MESSAGE =
   "Security check failed. Reload this page to try again.";
 
@@ -214,6 +216,10 @@ export default function AuthForm(props: AuthFormProps) {
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
             strategy="afterInteractive"
+            onError={() => {
+              setCaptchaToken("");
+              setCaptchaFailureMessage(CAPTCHA_LOAD_FAILURE_MESSAGE);
+            }}
           />
         </>
       ) : null}
