@@ -24,6 +24,8 @@ const CAPTCHA_REQUIRED_MESSAGE =
   "Please complete the security check before requesting a reset link.";
 const CAPTCHA_LOAD_FAILURE_MESSAGE =
   "Security check could not load. Check your connection or browser settings, then reload this page.";
+const CAPTCHA_WIDGET_FAILURE_MESSAGE =
+  "Security check failed. Reload this page to try again.";
 
 export default function ForgotPasswordPage() {
   const configStatus = useMemo(() => getSupabaseConfigStatus(), []);
@@ -31,18 +33,28 @@ export default function ForgotPasswordPage() {
   const submissionInFlight = useRef(false);
   const [email, setEmail] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
-  const [captchaLoadFailed, setCaptchaLoadFailed] = useState(false);
+  const [captchaFailureMessage, setCaptchaFailureMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     const handleToken = (event: Event) => {
-      setCaptchaToken((event as CustomEvent<string>).detail ?? "");
+      const token = (event as CustomEvent<string>).detail ?? "";
+      setCaptchaToken(token);
+      if (token) setCaptchaFailureMessage("");
+    };
+    const handleWidgetError = () => {
+      setCaptchaToken("");
+      setCaptchaFailureMessage(CAPTCHA_WIDGET_FAILURE_MESSAGE);
     };
 
     window.addEventListener("skillmint-turnstile", handleToken);
-    return () => window.removeEventListener("skillmint-turnstile", handleToken);
+    window.addEventListener("skillmint-turnstile-error", handleWidgetError);
+    return () => {
+      window.removeEventListener("skillmint-turnstile", handleToken);
+      window.removeEventListener("skillmint-turnstile-error", handleWidgetError);
+    };
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -120,14 +132,14 @@ export default function ForgotPasswordPage() {
       {turnstileSiteKey ? (
         <>
           <Script id="skillmint-turnstile-callbacks" strategy="afterInteractive">
-            {`window.skillmintTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint-turnstile', { detail: token })); }; window.skillmintTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint-turnstile', { detail: '' })); };`}
+            {`window.skillmintTurnstileSuccess = function(token) { window.dispatchEvent(new CustomEvent('skillmint-turnstile', { detail: token })); }; window.skillmintTurnstileExpired = function() { window.dispatchEvent(new CustomEvent('skillmint-turnstile', { detail: '' })); }; window.skillmintTurnstileError = function() { window.dispatchEvent(new CustomEvent('skillmint-turnstile-error')); };`}
           </Script>
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
             strategy="afterInteractive"
             onError={() => {
               setCaptchaToken("");
-              setCaptchaLoadFailed(true);
+              setCaptchaFailureMessage(CAPTCHA_LOAD_FAILURE_MESSAGE);
             }}
           />
         </>
@@ -158,15 +170,15 @@ export default function ForgotPasswordPage() {
               data-size="flexible"
               data-callback="skillmintTurnstileSuccess"
               data-expired-callback="skillmintTurnstileExpired"
-              data-error-callback="skillmintTurnstileExpired"
+              data-error-callback="skillmintTurnstileError"
             />
           </div>
         ) : null}
 
         <div role="alert" aria-atomic="true">
-          {captchaLoadFailed ? (
+          {captchaFailureMessage ? (
             <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">
-              {CAPTCHA_LOAD_FAILURE_MESSAGE}
+              {captchaFailureMessage}
             </p>
           ) : null}
           {error ? (
