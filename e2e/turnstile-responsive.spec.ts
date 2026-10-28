@@ -97,6 +97,38 @@ test(
 );
 
 
+
+test(
+  "@turnstile a widget runtime error explains blocked recovery at 320px",
+  async ({ page }) => {
+    await page.route(TURNSTILE_SCRIPT, async (route) => {
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: "",
+      });
+    });
+
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/forgot-password");
+
+    await expect(page.locator(".cf-turnstile")).toHaveAttribute(
+      "data-error-callback",
+      "skillmintTurnstileError",
+    );
+    await page.evaluate(() => {
+      window.skillmintTurnstileError();
+    });
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeDisabled();
+    await expect(page.locator("form").getByRole("alert")).toContainText(
+      "Security check failed. Reload this page to try again.",
+    );
+    await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
+  },
+);
+
+
 test(
   "@turnstile a recovery request consumes its challenge before any retry",
   async ({ page, provider }) => {
@@ -147,6 +179,7 @@ declare global {
   interface Window {
     __syntheticTurnstileResets?: number;
     skillmintTurnstileExpired: () => void;
+    skillmintTurnstileError: () => void;
     skillmintTurnstileSuccess: (token: string) => void;
   }
 }
