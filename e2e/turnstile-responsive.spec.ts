@@ -64,7 +64,7 @@ test(
       await expect(submit).toBeDisabled();
 
       expect(await widget.getAttribute("data-error-callback")).toBe(
-        "skillmintTurnstileExpired",
+        "skillmintTurnstileError",
       );
       await page.evaluate(() => {
         window.skillmintTurnstileSuccess("synthetic-turnstile-token");
@@ -91,6 +91,44 @@ test(
     ).toBeDisabled();
     await expect(page.locator("form").getByRole("alert")).toContainText(
       "Security check could not load. Check your connection or browser settings, then reload this page.",
+    );
+    await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
+  },
+);
+
+
+
+test(
+  "@turnstile a widget runtime error explains blocked recovery at 320px",
+  async ({ page }) => {
+    await page.route(TURNSTILE_SCRIPT, async (route) => {
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: "",
+      });
+    });
+
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/forgot-password");
+
+    await expect(page.locator(".cf-turnstile")).toHaveAttribute(
+      "data-error-callback",
+      "skillmintTurnstileError",
+    );
+    await page.evaluate(() => {
+      window.skillmintTurnstileSuccess("token-before-runtime-error");
+    });
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeEnabled();
+    await page.evaluate(() => {
+      window.skillmintTurnstileError();
+    });
+    await expect(
+      page.getByRole("button", { name: "Send reset link" }),
+    ).toBeDisabled();
+    await expect(page.locator("form").getByRole("alert")).toContainText(
+      "Security check failed. Reload this page to try again.",
     );
     await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 320);
   },
@@ -147,6 +185,7 @@ declare global {
   interface Window {
     __syntheticTurnstileResets?: number;
     skillmintTurnstileExpired: () => void;
+    skillmintTurnstileError: () => void;
     skillmintTurnstileSuccess: (token: string) => void;
   }
 }
