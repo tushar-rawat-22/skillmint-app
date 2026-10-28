@@ -229,7 +229,7 @@ test(
     });
     await expect(submit).toBeEnabled();
     await submit.click();
-    await expect(page).toHaveURL(/\\/auth\\/persona$/);
+    await expect(page).toHaveURL("http://127.0.0.1:3100/auth/persona");
     expect(provider.count("auth:signup")).toBe(2);
   },
 );
