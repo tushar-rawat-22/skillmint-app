@@ -192,6 +192,49 @@ test(
 );
 
 test(
+  "@turnstile signup consumes its challenge before retrying a failed request",
+  async ({ page, provider }) => {
+    await page.route(TURNSTILE_SCRIPT, async (route) => {
+      await route.fulfill({
+        contentType: "text/javascript",
+        body: "window.turnstile = { reset: () => { window.__syntheticTurnstileResets = (window.__syntheticTurnstileResets || 0) + 1; } };",
+      });
+    });
+
+    provider.signupMode = "reject";
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/signup");
+    await page.getByLabel("Email").fill("account-a@example.test");
+    await page.getByLabel("Password").fill("synthetic-password");
+    const submit = page.getByRole("button", { name: "Create account" });
+
+    await page.evaluate(() => {
+      window.skillmintSignupTurnstileSuccess("consumed-signup-token");
+    });
+    await expect(submit).toBeEnabled();
+    await submit.click();
+
+    await expect(
+      page.getByText("Account creation could not be completed. Please try again."),
+    ).toBeVisible();
+    expect(provider.count("auth:signup")).toBe(1);
+    await expect(submit).toBeDisabled();
+    expect(
+      await page.evaluate(() => window.__syntheticTurnstileResets),
+    ).toBe(1);
+
+    provider.signupMode = "success";
+    await page.evaluate(() => {
+      window.skillmintSignupTurnstileSuccess("fresh-signup-token");
+    });
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(page).toHaveURL("http://127.0.0.1:3100/auth/persona");
+    expect(provider.count("auth:signup")).toBe(2);
+  },
+);
+
+test(
   "@turnstile a recovery request consumes its challenge before any retry",
   async ({ page, provider }) => {
     await page.route(TURNSTILE_SCRIPT, async (route) => {
