@@ -320,6 +320,19 @@ check(
   ),
   "Version 2 roadmap is missing the UI and Information Architecture phase",
 );
+const deploymentGuide = text("docs/DEPLOYMENT.md");
+const supabasePublicKey = "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
+check(
+  deploymentGuide.includes(`- \`${supabasePublicKey}\``) &&
+    text(".env.example").includes(`${supabasePublicKey}=`) &&
+    text("src/lib/supabase/config.ts").includes(`"${supabasePublicKey}"`),
+  "deployment guide public Supabase key must match runtime and .env.example",
+);
+check(
+  !deploymentGuide.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+  "deployment guide retains obsolete Supabase public key",
+);
+
 check(
   !/(?:has no Vercel connection|is not connected to the Vercel project)/.test(
     text("docs/DEPLOYMENT.md"),
