@@ -8,9 +8,10 @@ type AdminAuthBoundary = {
 
 type Wait = (delayMs: number) => Promise<void>;
 
-// The first check is immediate. Two short follow-ups allow a competing server
-// process to finish deleting the Auth identity without extending the request
-// indefinitely. The total additional wait is capped at 150 ms.
+// Verify every provider response, including an accepted deletion. The first
+// check is immediate. Two short follow-ups allow the Auth identity to converge
+// to absence without extending the request indefinitely. The total additional
+// wait is capped at 150 ms.
 const AUTH_ABSENCE_VERIFICATION_DELAYS_MS = [0, 50, 100] as const;
 
 export async function deleteAuthUserWithVerifiedConvergence(
@@ -18,8 +19,7 @@ export async function deleteAuthUserWithVerifiedConvergence(
   validatedUserId: string,
   wait: Wait = sleep,
 ): Promise<{ ok: true; deleted: true } | { ok: false }> {
-  const deletion = await adminAuth.deleteUser(validatedUserId, false);
-  if (!deletion.error) return { ok: true, deleted: true };
+  await adminAuth.deleteUser(validatedUserId, false);
 
   for (const delayMs of AUTH_ABSENCE_VERIFICATION_DELAYS_MS) {
     if (delayMs > 0) await wait(delayMs);
