@@ -219,10 +219,32 @@ test("orchestration is ordered, validates adapters, and never reports partial su
 });
 
 test("Auth deletion converges only after bounded trusted absence verification", async () => {
-  const succeeded = authBoundary({ deletionError: null });
+  const acceptedButPresent = authBoundary({
+    deletionError: null,
+    verifications: Array.from({ length: 3 }, () => ({
+      error: null,
+      data: { user: { id: ACCOUNT_A } },
+    })),
+  });
+  assert.deepEqual(
+    await deleteAuthUserWithVerifiedConvergence(
+      acceptedButPresent.auth,
+      ACCOUNT_A,
+      acceptedButPresent.wait,
+    ),
+    { ok: false },
+  );
+  assert.equal(acceptedButPresent.deleteCalls, 1);
+  assert.equal(acceptedButPresent.lookupCalls, 3);
+  assert.deepEqual(acceptedButPresent.delays, [50, 100]);
+
+  const succeeded = authBoundary({
+    deletionError: null,
+    verifications: [{ error: { status: 404 }, data: { user: null } }],
+  });
   assert.deepEqual(await deleteAuthUserWithVerifiedConvergence(succeeded.auth, ACCOUNT_A, succeeded.wait), { ok: true, deleted: true });
   assert.equal(succeeded.deleteCalls, 1);
-  assert.equal(succeeded.lookupCalls, 0);
+  assert.equal(succeeded.lookupCalls, 1);
   assert.deepEqual(succeeded.delays, []);
 
   const alreadyAbsent = authBoundary({
